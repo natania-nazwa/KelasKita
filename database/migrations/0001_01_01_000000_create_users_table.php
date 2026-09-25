@@ -6,41 +6,55 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     */
     public function up(): void
     {
         // ==========================================
-        // USERS
+        // PENGGUNA
+        // USER DAN ADMIN ADA DI TABEL YANG SAMA
         // ==========================================
-        Schema::create('users', function (Blueprint $table) {
+
+        Schema::create('tb_pengguna', function (Blueprint $table) {
             $table->id();
 
-            $table->string('name');
-            $table->string('email')->unique();
-            $table->timestamp('email_verified_at')->nullable();
-            $table->string('password');
+            $table->string('nama');
 
-            // admin / user
-            $table->string('role')->default('user')->index();
+            $table->string('email')->unique();
+
+            $table->timestamp('email_verified_at')->nullable();
+
+            $table->string('kata_sandi');
+
+            // user / admin
+            $table->string('peran')
+                ->default('user')
+                ->index();
+
+            $table->boolean('aktif')
+                ->default(true);
 
             $table->rememberToken();
+
             $table->timestamps();
         });
+
 
         // ==========================================
         // PASSWORD RESET TOKENS
         // ==========================================
+
         Schema::create('password_reset_tokens', function (Blueprint $table) {
             $table->string('email')->primary();
+
             $table->string('token');
+
             $table->timestamp('created_at')->nullable();
         });
+
 
         // ==========================================
         // SESSIONS
         // ==========================================
+
         Schema::create('sessions', function (Blueprint $table) {
             $table->string('id')->primary();
 
@@ -48,148 +62,305 @@ return new class extends Migration
                 ->nullable()
                 ->index();
 
-            $table->string('ip_address', 45)->nullable();
-            $table->text('user_agent')->nullable();
+            $table->string('ip_address', 45)
+                ->nullable();
+
+            $table->text('user_agent')
+                ->nullable();
+
             $table->longText('payload');
-            $table->integer('last_activity')->index();
+
+            $table->integer('last_activity')
+                ->index();
         });
 
+
         // ==========================================
-        // SUBJECTS / PELAJARAN
+        // PELAJARAN / KATEGORI
         // ==========================================
-        Schema::create('subjects', function (Blueprint $table) {
+
+        Schema::create('tb_pelajaran', function (Blueprint $table) {
             $table->id();
 
-            $table->string('name');
-            $table->string('slug')->unique();
-            $table->text('description')->nullable();
-            $table->string('icon')->nullable();
-            $table->boolean('is_active')->default(true);
+            $table->string('nama');
+
+            $table->string('slug')
+                ->unique();
+
+            $table->text('deskripsi')
+                ->nullable();
+
+            $table->string('ikon')
+                ->nullable();
+
+            $table->boolean('aktif')
+                ->default(true);
 
             $table->timestamps();
         });
 
+
         // ==========================================
-        // MATERIALS / MATERI
+        // MATERI
         // ==========================================
-        Schema::create('materials', function (Blueprint $table) {
+
+        Schema::create('tb_materi', function (Blueprint $table) {
             $table->id();
 
-            $table->foreignId('subject_id')
-                ->constrained('subjects')
+            // Kategori materi
+            $table->foreignId('pelajaran_id')
+                ->constrained('tb_pelajaran')
                 ->cascadeOnDelete();
 
-            $table->string('name');
+            // Admin/user yang membuat materi
+            $table->foreignId('dibuat_oleh')
+                ->nullable()
+                ->constrained('tb_pengguna')
+                ->nullOnDelete();
+
+            $table->string('nama');
+
             $table->string('slug');
-            $table->text('description')->nullable();
-            $table->longText('content')->nullable();
-            $table->string('difficulty')->nullable();
-            $table->boolean('is_active')->default(true);
 
-            $table->timestamps();
+            $table->text('deskripsi')
+                ->nullable();
 
-            $table->index(['subject_id', 'slug']);
-        });
+            $table->longText('isi')
+                ->nullable();
 
-        // ==========================================
-        // QUESTIONS / BANK SOAL
-        // ==========================================
-        Schema::create('questions', function (Blueprint $table) {
-            $table->id();
+            $table->string('tingkat_kesulitan')
+                ->nullable();
 
-            $table->foreignId('material_id')
-                ->constrained('materials')
-                ->cascadeOnDelete();
-
-            $table->text('question');
-
-            $table->text('option_a');
-            $table->text('option_b');
-            $table->text('option_c');
-            $table->text('option_d');
-
-            $table->string('correct_answer');
-            $table->text('explanation')->nullable();
-            $table->string('difficulty')->nullable();
-            $table->boolean('is_active')->default(true);
-
-            $table->timestamps();
-
-            $table->index('material_id');
-        });
-
-        // ==========================================
-        // PRACTICE SESSIONS / SESI LATIHAN
-        // ==========================================
-        Schema::create('practice_sessions', function (Blueprint $table) {
-            $table->id();
-
-            $table->foreignId('user_id')
-                ->constrained('users')
-                ->cascadeOnDelete();
-
-            $table->foreignId('material_id')
-                ->constrained('materials')
-                ->cascadeOnDelete();
-
-            $table->string('mode')->default('practice');
-
-            $table->unsignedInteger('total_questions')->default(0);
-            $table->unsignedInteger('answered_questions')->default(0);
-            $table->unsignedInteger('correct_answers')->default(0);
-            $table->unsignedInteger('wrong_answers')->default(0);
-            $table->unsignedInteger('score')->default(0);
-
-            $table->timestamp('started_at')->nullable();
-            $table->timestamp('completed_at')->nullable();
-
-            $table->timestamps();
-
-            $table->index(['user_id', 'material_id']);
-        });
-
-        // ==========================================
-        // PRACTICE ANSWERS / JAWABAN LATIHAN
-        // ==========================================
-        Schema::create('practice_answers', function (Blueprint $table) {
-            $table->id();
-
-            $table->foreignId('practice_session_id')
-                ->constrained('practice_sessions')
-                ->cascadeOnDelete();
-
-            $table->foreignId('question_id')
-                ->constrained('questions')
-                ->cascadeOnDelete();
-
-            $table->string('selected_answer');
-            $table->string('correct_answer');
-
-            $table->boolean('is_correct')->default(false);
-
-            $table->timestamp('answered_at')->nullable();
+            $table->boolean('aktif')
+                ->default(true);
 
             $table->timestamps();
 
             $table->index([
-                'practice_session_id',
-                'question_id'
+                'pelajaran_id',
+                'slug'
+            ]);
+        });
+
+
+        // ==========================================
+        // QUIZ
+        // ==========================================
+
+        Schema::create('tb_quiz', function (Blueprint $table) {
+            $table->id();
+
+            // User yang membuat quiz
+            $table->foreignId('dibuat_oleh')
+                ->constrained('tb_pengguna')
+                ->cascadeOnDelete();
+
+            // Kategori / pelajaran quiz
+            $table->foreignId('pelajaran_id')
+                ->constrained('tb_pelajaran')
+                ->cascadeOnDelete();
+
+            $table->string('judul');
+
+            $table->string('slug');
+
+            $table->text('deskripsi')
+                ->nullable();
+
+            // Durasi dalam menit
+            $table->unsignedInteger('durasi')
+                ->nullable();
+
+            // public / private
+            $table->string('visibilitas')
+                ->default('public')
+                ->index();
+
+            /*
+             * Status quiz:
+             *
+             * draft     = masih dibuat
+             * pending   = menunggu persetujuan admin
+             * published = sudah disetujui
+             * rejected  = ditolak admin
+             */
+            $table->string('status')
+                ->default('draft')
+                ->index();
+
+            // Digunakan jika quiz private
+            $table->string('kode_akses')
+                ->nullable()
+                ->unique();
+
+            // Catatan admin jika quiz ditolak
+            $table->text('catatan_admin')
+                ->nullable();
+
+            $table->timestamp('dipublish_pada')
+                ->nullable();
+
+            $table->timestamps();
+
+            $table->index([
+                'dibuat_oleh',
+                'status'
+            ]);
+
+            $table->index([
+                'pelajaran_id',
+                'status'
+            ]);
+        });
+
+
+        // ==========================================
+        // SOAL
+        // ==========================================
+
+        Schema::create('tb_soal', function (Blueprint $table) {
+            $table->id();
+
+            // Soal milik quiz tertentu
+            $table->foreignId('quiz_id')
+                ->constrained('tb_quiz')
+                ->cascadeOnDelete();
+
+            $table->text('pertanyaan');
+
+            $table->text('pilihan_a');
+
+            $table->text('pilihan_b');
+
+            $table->text('pilihan_c');
+
+            $table->text('pilihan_d');
+
+            // A / B / C / D
+            $table->string('jawaban_benar', 1);
+
+            $table->text('pembahasan')
+                ->nullable();
+
+            // Urutan soal
+            $table->unsignedInteger('urutan')
+                ->default(1);
+
+            $table->string('tingkat_kesulitan')
+                ->nullable();
+
+            $table->boolean('aktif')
+                ->default(true);
+
+            $table->timestamps();
+
+            $table->index([
+                'quiz_id',
+                'urutan'
+            ]);
+        });
+
+
+        // ==========================================
+        // PENGERJAAN QUIZ
+        // ==========================================
+
+        Schema::create('tb_pengerjaan_quiz', function (Blueprint $table) {
+            $table->id();
+
+            // User yang mengerjakan
+            $table->foreignId('pengguna_id')
+                ->constrained('tb_pengguna')
+                ->cascadeOnDelete();
+
+            // Quiz yang dikerjakan
+            $table->foreignId('quiz_id')
+                ->constrained('tb_quiz')
+                ->cascadeOnDelete();
+
+            $table->unsignedInteger('jumlah_soal')
+                ->default(0);
+
+            $table->unsignedInteger('jumlah_dijawab')
+                ->default(0);
+
+            $table->unsignedInteger('jumlah_benar')
+                ->default(0);
+
+            $table->unsignedInteger('jumlah_salah')
+                ->default(0);
+
+            // Nilai akhir
+            $table->unsignedInteger('nilai')
+                ->default(0);
+
+            $table->timestamp('dimulai_pada')
+                ->nullable();
+
+            $table->timestamp('selesai_pada')
+                ->nullable();
+
+            $table->timestamps();
+
+            $table->index([
+                'pengguna_id',
+                'quiz_id'
+            ]);
+        });
+
+
+        // ==========================================
+        // JAWABAN QUIZ
+        // ==========================================
+
+        Schema::create('tb_jawaban_quiz', function (Blueprint $table) {
+            $table->id();
+
+            // Pengerjaan quiz
+            $table->foreignId('pengerjaan_quiz_id')
+                ->constrained('tb_pengerjaan_quiz')
+                ->cascadeOnDelete();
+
+            // Soal yang dijawab
+            $table->foreignId('soal_id')
+                ->constrained('tb_soal')
+                ->cascadeOnDelete();
+
+            // A / B / C / D
+            $table->string('jawaban_dipilih', 1)
+                ->nullable();
+
+            // Jawaban benar saat quiz dikerjakan
+            $table->string('jawaban_benar', 1);
+
+            $table->boolean('benar')
+                ->default(false);
+
+            $table->timestamp('dijawab_pada')
+                ->nullable();
+
+            $table->timestamps();
+
+            // Satu soal hanya boleh memiliki satu jawaban
+            // dalam satu pengerjaan quiz
+            $table->unique([
+                'pengerjaan_quiz_id',
+                'soal_id'
             ]);
         });
     }
 
-    /**
-     * Reverse the migrations.
-     */
+
     public function down(): void
     {
-        Schema::dropIfExists('practice_answers');
-        Schema::dropIfExists('practice_sessions');
-        Schema::dropIfExists('questions');
-        Schema::dropIfExists('materials');
-        Schema::dropIfExists('subjects');
+        Schema::dropIfExists('tb_jawaban_quiz');
+        Schema::dropIfExists('tb_pengerjaan_quiz');
+        Schema::dropIfExists('tb_soal');
+        Schema::dropIfExists('tb_quiz');
+        Schema::dropIfExists('tb_materi');
+        Schema::dropIfExists('tb_pelajaran');
         Schema::dropIfExists('sessions');
         Schema::dropIfExists('password_reset_tokens');
-        Schema::dropIfExists('users');
+        Schema::dropIfExists('tb_pengguna');
     }
 };

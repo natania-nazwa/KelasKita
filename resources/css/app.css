@@ -1,9 +1,69 @@
+@import url('https://fonts.googleapis.com/css2?family=Caveat:wght@600;700&family=JetBrains+Mono:wght@400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500;1,600;1,700&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap');
 @import 'tailwindcss';
 
 @source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
 @source '../../storage/framework/views/*.php';
 
 @theme {
-    --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
+    --font-sans: 'Plus Jakarta Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
         'Segoe UI Symbol', 'Noto Color Emoji';
+
+    --font-display: 'Space Grotesk', 'Plus Jakarta Sans', ui-sans-serif, system-ui, sans-serif;
+
+    --font-mono: 'JetBrains Mono', ui-monospace, 'Cascadia Code', 'Segoe UI Mono', monospace;
+
+    --font-serif: 'Playfair Display', Georgia, 'Times New Roman', serif;
+
+    --font-hand: 'Caveat', 'Plus Jakarta Sans', cursive;
+
+    --color-primary: #6c4de6;
+    --color-primary-dark: #5a3fd4;
+    --color-dark: #211a3a;
+    --color-lavender: #ede9fe;
+    --color-brand-bg: #f8f7fc;
+}
+
+h1,
+h2,
+h3,
+h4 {
+    font-family: 'Space Grotesk', 'Plus Jakarta Sans', ui-sans-serif, system-ui, sans-serif;
+    letter-spacing: -0.01em;
+}
+
+.nav-link {
+    position: relative;
+}
+
+.nav-bar {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 2px;
+    border-radius: 9999px;
+    background-color: var(--color-primary);
+    transform: scaleX(0);
+    transform-origin: left center;
+    transition: transform 0.35s ease-out;
+    pointer-events: none;
+}
+
+.nav-link:hover .nav-bar,
+.nav-link.active .nav-bar {
+    transform: scaleX(1);
+}
+
+.misi-bar {
+    background-size: 200% auto;
+    animation: kk-gradient-slide 2.5s linear infinite;
+}
+
+@keyframes kk-gradient-slide {
+    0% {
+        background-position: 200% 50%;
+    }
+    100% {
+        background-position: 0% 50%;
+    }
 }
