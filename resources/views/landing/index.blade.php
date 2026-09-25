@@ -161,7 +161,7 @@
                     <div class="mt-8 flex flex-wrap items-center gap-3">
                         <a
                             href="{{ url('/register') }}"
-                            class="inline-flex items-center justify-center gap-2.5 px-8 py-4 rounded-2xl bg-primary text-white text-sm font-semibold shadow-lg shadow-primary/25 hover:bg-primary-dark transition"
+                            class="inline-flex flex-1 items-center justify-center gap-2.5 rounded-2xl bg-primary px-3 py-4 text-sm font-semibold text-white shadow-lg shadow-primary/25 transition hover:bg-primary-dark md:flex-none md:px-8"
                         >
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M15.59 14.37a6 6 0 0 1-5.84 7.38v-4.8m5.84-2.58a14.98 14.98 0 0 0 6.16-12.12A14.98 14.98 0 0 0 9.63 8.41m5.96 5.96a14.926 14.926 0 0 1-5.841 2.58m-.119-8.54a6 6 0 0 0-7.381 5.84h4.8m2.581-5.84a14.927 14.927 0 0 0-2.58 5.841m2.581-5.841a14.927 14.927 0 0 1 5.841-2.58m-.119 8.54a6 6 0 0 0 7.381-5.84h-4.8m-2.581 5.84a14.927 14.927 0 0 1-2.58 5.841" />
@@ -171,7 +171,7 @@
 
                         <a
                             href="#quiz"
-                            class="inline-flex items-center justify-center gap-2.5 px-8 py-4 rounded-2xl bg-white text-primary border-2 border-primary/20 text-sm font-semibold hover:bg-[#f1ecff] hover:border-primary/40 transition"
+                            class="inline-flex flex-1 items-center justify-center gap-2.5 rounded-2xl border-2 border-primary/20 bg-white px-3 py-4 text-sm font-semibold text-primary transition hover:border-primary/40 hover:bg-[#f1ecff] md:flex-none md:px-8"
                         >
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
@@ -229,12 +229,11 @@
                 <h2 class="mt-4 text-3xl sm:text-4xl font-extrabold text-dark">
                     Kenapa <span class="text-primary">KelasKita</span> Dibuat?
                 </h2>
-                <p class="mt-4 font-light text-dark/70">KelasKita lahir dari keprihatinan sederhana: belajar seharusnya mudah dan bisa dinikmati siapa saja.</p>
             </div>
 
             <div class="mt-14 grid lg:grid-cols-2 gap-12 items-center">
                 <div>
-                    <p class="text-base font-light text-dark/70 leading-relaxed">Banyak pelajar kesulitan menemukan materi yang rapi dan latihan soal yang sesuai dalam satu tempat. KelasKita dibuat untuk menyatukan keduanya secara sederhana, terbuka, dan terus dikembangkan bersama-sama oleh komunitas penggunanya.</p>
+                    <p class="text-base font-light text-dark/70 leading-relaxed">KelasKita lahir dari keprihatinan sederhana: belajar seharusnya mudah dan bisa dinikmati siapa saja. Banyak pelajar kesulitan menemukan materi yang rapi dan latihan soal yang sesuai dalam satu tempat. KelasKita dibuat untuk menyatukan keduanya secara sederhana, terbuka, dan terus dikembangkan bersama-sama oleh komunitas penggunanya.</p>
 
                     <ul class="mt-8 space-y-4">
                         <li
@@ -552,7 +551,7 @@
                         class="misi-bar absolute inset-x-3 top-0 h-1 rounded-b-full bg-gradient-to-r from-white via-[#f492d3] to-[#ed78c1]"
                     ></span>
 
-                    <div class="relative flex items-center gap-3.5">
+                    <div class="relative flex flex-col items-start gap-3 sm:flex-row sm:items-center sm:gap-3.5">
                         <span
                             class="relative flex h-14 w-14 shrink-0 items-center justify-center"
                         >
@@ -567,7 +566,7 @@
                         </span>
                         <div class="min-w-0">
                             <h3
-                                class="truncate text-sm font-bold text-dark transition-colors duration-300 group-hover:text-[#d94da8]"
+                                class="line-clamp-2 text-sm font-bold text-dark transition-colors duration-300 group-hover:text-[#d94da8]"
                             >
                                 Bahasa Indonesia
                             </h3>
@@ -599,7 +598,7 @@
                         class="misi-bar absolute inset-x-3 top-0 h-1 rounded-b-full bg-gradient-to-r from-white via-[#f6cd6b] to-[#f2bd45]"
                     ></span>
 
-                    <div class="relative flex items-center gap-3.5">
+                    <div class="relative flex flex-col items-start gap-3 sm:flex-row sm:items-center sm:gap-3.5">
                         <span
                             class="relative flex h-14 w-14 shrink-0 items-center justify-center"
                         >
@@ -614,7 +613,7 @@
                         </span>
                         <div class="min-w-0">
                             <h3
-                                class="truncate text-sm font-bold text-dark transition-colors duration-300 group-hover:text-[#c99213]"
+                                class="line-clamp-2 text-sm font-bold text-dark transition-colors duration-300 group-hover:text-[#c99213]"
                             >
                                 PPKN
                             </h3>
@@ -646,7 +645,7 @@
                         class="misi-bar absolute inset-x-3 top-0 h-1 rounded-b-full bg-gradient-to-r from-white via-[#8b80e6] to-[#7164d9]"
                     ></span>
 
-                    <div class="relative flex items-center gap-3.5">
+                    <div class="relative flex flex-col items-start gap-3 sm:flex-row sm:items-center sm:gap-3.5">
                         <span
                             class="relative flex h-14 w-14 shrink-0 items-center justify-center"
                         >
@@ -661,7 +660,7 @@
                         </span>
                         <div class="min-w-0">
                             <h3
-                                class="truncate text-sm font-bold text-dark transition-colors duration-300 group-hover:text-[#5a4cc9]"
+                                class="line-clamp-2 text-sm font-bold text-dark transition-colors duration-300 group-hover:text-[#5a4cc9]"
                             >
                                 Sejarah
                             </h3>
@@ -693,7 +692,7 @@
                         class="misi-bar absolute inset-x-3 top-0 h-1 rounded-b-full bg-gradient-to-r from-white via-[#f0858b] to-[#ed6970]"
                     ></span>
 
-                    <div class="relative flex items-center gap-3.5">
+                    <div class="relative flex flex-col items-start gap-3 sm:flex-row sm:items-center sm:gap-3.5">
                         <span
                             class="relative flex h-14 w-14 shrink-0 items-center justify-center"
                         >
@@ -708,7 +707,7 @@
                         </span>
                         <div class="min-w-0">
                             <h3
-                                class="truncate text-sm font-bold text-dark transition-colors duration-300 group-hover:text-[#d94a53]"
+                                class="line-clamp-2 text-sm font-bold text-dark transition-colors duration-300 group-hover:text-[#d94a53]"
                             >
                                 Matematika
                             </h3>
@@ -740,7 +739,7 @@
                         class="misi-bar absolute inset-x-3 top-0 h-1 rounded-b-full bg-gradient-to-r from-white via-[#6bcb91] to-[#52bd7d]"
                     ></span>
 
-                    <div class="relative flex items-center gap-3.5">
+                    <div class="relative flex flex-col items-start gap-3 sm:flex-row sm:items-center sm:gap-3.5">
                         <span
                             class="relative flex h-14 w-14 shrink-0 items-center justify-center"
                         >
@@ -755,7 +754,7 @@
                         </span>
                         <div class="min-w-0">
                             <h3
-                                class="truncate text-sm font-bold text-dark transition-colors duration-300 group-hover:text-[#379458]"
+                                class="line-clamp-2 text-sm font-bold text-dark transition-colors duration-300 group-hover:text-[#379458]"
                             >
                                 IPA
                             </h3>
@@ -787,7 +786,7 @@
                         class="misi-bar absolute inset-x-3 top-0 h-1 rounded-b-full bg-gradient-to-r from-white via-[#4dbdcf] to-[#36a7bb]"
                     ></span>
 
-                    <div class="relative flex items-center gap-3.5">
+                    <div class="relative flex flex-col items-start gap-3 sm:flex-row sm:items-center sm:gap-3.5">
                         <span
                             class="relative flex h-14 w-14 shrink-0 items-center justify-center"
                         >
@@ -802,7 +801,7 @@
                         </span>
                         <div class="min-w-0">
                             <h3
-                                class="truncate text-sm font-bold text-dark transition-colors duration-300 group-hover:text-[#2088a0]"
+                                class="line-clamp-2 text-sm font-bold text-dark transition-colors duration-300 group-hover:text-[#2088a0]"
                             >
                                 Bahasa Inggris
                             </h3>
@@ -834,7 +833,7 @@
                         class="misi-bar absolute inset-x-3 top-0 h-1 rounded-b-full bg-gradient-to-r from-white via-[#f5a564] to-[#f2924a]"
                     ></span>
 
-                    <div class="relative flex items-center gap-3.5">
+                    <div class="relative flex flex-col items-start gap-3 sm:flex-row sm:items-center sm:gap-3.5">
                         <span
                             class="relative flex h-14 w-14 shrink-0 items-center justify-center"
                         >
@@ -849,7 +848,7 @@
                         </span>
                         <div class="min-w-0">
                             <h3
-                                class="truncate text-sm font-bold text-dark transition-colors duration-300 group-hover:text-[#d96a21]"
+                                class="line-clamp-2 text-sm font-bold text-dark transition-colors duration-300 group-hover:text-[#d96a21]"
                             >
                                 Seni Budaya
                             </h3>
@@ -881,7 +880,7 @@
                         class="misi-bar absolute inset-x-3 top-0 h-1 rounded-b-full bg-gradient-to-r from-white via-[#6ba0f5] to-[#4f8ff0]"
                     ></span>
 
-                    <div class="relative flex items-center gap-3.5">
+                    <div class="relative flex flex-col items-start gap-3 sm:flex-row sm:items-center sm:gap-3.5">
                         <span
                             class="relative flex h-14 w-14 shrink-0 items-center justify-center"
                         >
@@ -896,7 +895,7 @@
                         </span>
                         <div class="min-w-0">
                             <h3
-                                class="truncate text-sm font-bold text-dark transition-colors duration-300 group-hover:text-[#2a66cc]"
+                                class="line-clamp-2 text-sm font-bold text-dark transition-colors duration-300 group-hover:text-[#2a66cc]"
                             >
                                 PJOK
                             </h3>
@@ -928,7 +927,7 @@
                         class="misi-bar absolute inset-x-3 top-0 h-1 rounded-b-full bg-gradient-to-r from-white via-[#d8a06a] to-[#c88a4f]"
                     ></span>
 
-                    <div class="relative flex items-center gap-3.5">
+                    <div class="relative flex flex-col items-start gap-3 sm:flex-row sm:items-center sm:gap-3.5">
                         <span
                             class="relative flex h-14 w-14 shrink-0 items-center justify-center"
                         >
@@ -943,7 +942,7 @@
                         </span>
                         <div class="min-w-0">
                             <h3
-                                class="truncate text-sm font-bold text-dark transition-colors duration-300 group-hover:text-[#9c611f]"
+                                class="line-clamp-2 text-sm font-bold text-dark transition-colors duration-300 group-hover:text-[#9c611f]"
                             >
                                 Geografi
                             </h3>
@@ -975,7 +974,7 @@
                         class="misi-bar absolute inset-x-3 top-0 h-1 rounded-b-full bg-gradient-to-r from-white via-[#6c7cf0] to-[#4f46e5]"
                     ></span>
 
-                    <div class="relative flex items-center gap-3.5">
+                    <div class="relative flex flex-col items-start gap-3 sm:flex-row sm:items-center sm:gap-3.5">
                         <span
                             class="relative flex h-14 w-14 shrink-0 items-center justify-center"
                         >
@@ -990,7 +989,7 @@
                         </span>
                         <div class="min-w-0">
                             <h3
-                                class="truncate text-sm font-bold text-dark transition-colors duration-300 group-hover:text-[#3326c4]"
+                                class="line-clamp-2 text-sm font-bold text-dark transition-colors duration-300 group-hover:text-[#3326c4]"
                             >
                                 Ekonomi
                             </h3>
@@ -1299,11 +1298,11 @@
 
     <footer class="bg-dark text-white">
         <div class="mx-auto max-w-7xl px-6 sm:px-8 lg:px-10 py-10 lg:py-12">
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-10 lg:gap-16">
+            <div class="grid grid-cols-2 md:grid-cols-3 gap-10 lg:gap-16">
                 {{-- =========================
                  BRAND
             ========================== --}}
-                <div>
+                <div class="col-span-2 md:col-span-1">
                     <a
                         href="{{ url('/') }}"
                         class="inline-flex items-center gap-3"
@@ -1389,7 +1388,7 @@
                     {{-- Email --}}
                     <a
                         href="mailto:kelaskita@gmail.com"
-                        class="mt-4 flex items-center gap-2 text-sm text-white/60 hover:text-white transition"
+                        class="mt-4 flex w-fit max-w-full flex-wrap items-center gap-2 text-sm text-white/60 hover:text-white transition"
                     >
                         <svg
                             class="w-4 h-4"
@@ -1516,7 +1515,7 @@
              BOTTOM
         ========================== --}}
             <div class="relative mt-10 pt-6 border-t border-white/10">
-                <p class="text-right font-mono text-xs text-white/50">© 2026 KelasKita. All rights reserved.</p>
+                <p class="text-center font-mono text-xs text-white/50 md:text-right">© 2026 KelasKita. All rights reserved.</p>
             </div>
         </div>
     </footer>
