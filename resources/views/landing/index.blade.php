@@ -176,7 +176,7 @@
                             class="inline-flex flex-1 items-center justify-center gap-2.5 rounded-2xl bg-primary px-3 py-4 text-sm font-semibold text-white shadow-lg shadow-primary/25 transition hover:bg-primary-dark md:flex-none md:px-8"
                         >
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M15.59 14.37a6 6 0 0 1-5.84 7.38v-4.8m5.84-2.58a14.98 14.98 0 0 0 6.16-12.12A14.98 14.98 0 0 0 9.63 8.41m5.96 5.96a14.926 14.926 0 0 1-5.841 2.58m-.119-8.54a6 6 0 0 0-7.381 5.84h4.8m2.581-5.84a14.927 14.927 0 0 0-2.58 5.841m2.581-5.841a14.927 14.927 0 0 1 5.841-2.58m-.119 8.54a6 6 0 0 0 7.381-5.84h-4.8m-2.581 5.84a14.927 14.927 0 0 1-2.58 5.841" />
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M15.59 14.37a6 6 0 0 1-5.84 7.38v-4.8m5.84-2.58a14.98 14.98 0 0 0 6.16-12.12A14.98 14.98 0 0 0 9.63 8.41m5.96 5.96a14.926 14.926 0 0 1-5.841 2.58m-.119-8.54a6 6 0 0 0-7.381 5.84h4.8m2.581-5.84a14.927 14.927 0 0 0-2.58 5.841m2.581-5.841a14.927 14.927 0 0 1 5.841-2.58m-.119 8.54a6 6 0 0 0 7.381-5.84h-4.8m-2.581 5.84a14.926 14.926 0 0 0 2.58-5.841m-2.581 5.841a14.926 14.926 0 0 1-5.841 2.58" />
                             </svg>
                             Mulai Belajar
                         </a>

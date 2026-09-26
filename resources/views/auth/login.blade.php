@@ -50,8 +50,15 @@
 
                 <p class="mt-2 text-center text-sm text-dark/60">Masuk untuk melanjutkan belajarmu.</p>
 
-                <form action="#" method="POST" class="mt-8 space-y-5">
+                <form action="{{ route('login') }}" method="POST" class="mt-8 space-y-5">
                     @csrf
+
+                    @if ($errors->any())
+                        <div
+                            class="rounded-xl border border-[#ed6970]/30 bg-[#ed6970]/10 px-4 py-3 text-sm font-medium text-[#c2414a]">
+                            {{ $errors->first() }}
+                        </div>
+                    @endif
 
                     <div>
                         <label for="email" class="block text-sm font-semibold text-dark">Email</label>
@@ -69,7 +76,9 @@
                                 type="email"
                                 id="email"
                                 name="email"
+                                value="{{ old('email') }}"
                                 required
+                                autofocus
                                 autocomplete="email"
                                 placeholder="nama@email.com"
                                 class="w-full rounded-xl border border-dark/10 bg-brand-bg py-3 pl-11 pr-4 text-sm text-dark transition placeholder:text-dark/40 focus:border-primary focus:bg-white focus:outline-none focus:ring-2 focus:ring-primary/20"
