@@ -14,16 +14,16 @@
     <div class="lg:flex min-h-screen">
 
         {{-- Sidebar (desktop) --}}
-        <aside class="hidden lg:flex lg:flex-col lg:w-64 lg:fixed lg:inset-y-0 bg-dark text-white">
-            <div class="flex items-center gap-3 px-6 h-16 border-b border-white/10">
+<aside class="hidden lg:flex lg:flex-col lg:w-64 lg:fixed lg:inset-y-0 bg-brand-bg text-dark border-r border-lavender">
+            <div class="flex items-center gap-3 px-6 h-16 border-b border-lavender">
                 <a href="{{ route('user.dashboard') }}" class="flex items-center gap-3">
-                    <span class="flex items-center justify-center w-9 h-9 rounded-xl bg-primary text-white">
-                        <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
-                            <path fill-rule="evenodd" d="M9.664 1.319a.75.75 0 0 1 .672 0 41.059 41.059 0 0 1 8.198 5.424.751.751 0 0 1 0 1.141c-1.362 1.151-2.653 2.162-3.828 3.14-.54 1.89-1.892 3.507-3.641 5.269a.75.75 0 0 1-1.13 0c-1.75-1.762-3.101-3.379-3.641-5.269C4.669 10.045 3.378 9.034 2.016 7.883a.75.75 0 0 1 0-1.141 41.06 41.06 0 0 1 7.648-5.423ZM8.5 6.375a1.5 1.5 0 1 1 3 0 1.5 1.5 0 0 1-3 0Z" clip-rule="evenodd" />
-                        </svg>
-                    </span>
+                    <img
+                        src="{{ asset('images/logo.png') }}"
+                        alt="Logo KelasKita"
+                        class="w-9 h-9 object-contain"
+                    />
 
-                    <span class="text-lg font-semibold">KelasKita</span>
+                    <span class="text-lg font-semibold text-dark">KelasKita</span>
                 </a>
             </div>
 
@@ -39,7 +39,7 @@
 
                 @foreach ($menu as $item)
                     <a href="{{ route($item['route']) }}"
-                        class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium {{ request()->routeIs($item['route']) ? 'bg-primary text-white' : 'text-white/70 hover:bg-white/10 hover:text-white' }}">
+                        class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium {{ request()->routeIs($item['route']) ? 'bg-primary text-white' : 'text-primary/80 hover:bg-lavender hover:text-primary-dark' }}">
                         <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                             <path stroke-linecap="round" stroke-linejoin="round" d="{{ $item['ikon'] }}" />
                         </svg>
@@ -73,15 +73,11 @@
             </nav>
 
             <div class="p-4">
-                <p class="truncate px-1 pb-3 text-xs text-white/40">
-                    {{ auth()->user()?->nama }}
-                </p>
-
                 <form method="POST" action="{{ route('logout') }}">
                     @csrf
 
                     <button type="submit"
-                        class="flex w-full items-center justify-center gap-2 rounded-lg bg-white/10 px-4 py-2.5 text-sm font-semibold text-white/80 transition hover:bg-white/20 hover:text-white">
+                        class="flex w-full items-center justify-center gap-2 rounded-lg border border-lavender bg-white px-4 py-2.5 text-sm font-semibold text-dark transition hover:border-primary hover:bg-primary hover:text-white">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0 0 13.5 3h-6a2.25 2.25 0 0 0-2.25 2.25v13.5A2.25 2.25 0 0 0 7.5 21h6a2.25 2.25 0 0 0 2.25-2.25V15m3 0 3-3m0 0-3-3m3 3H9" />
                         </svg>
@@ -95,22 +91,22 @@
         <div class="flex-1 lg:ml-64">
 
             {{-- Header (mobile) --}}
-            <header class="lg:hidden sticky top-0 z-20 bg-dark text-white">
+<header class="lg:hidden sticky top-0 z-20 bg-white text-dark border-b border-lavender">
                 <div class="flex items-center justify-between h-16 px-4">
                     <a href="{{ route('user.dashboard') }}" class="flex items-center gap-2.5">
-                        <span class="flex items-center justify-center w-8 h-8 rounded-lg bg-primary text-white">
-                            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
-                                <path fill-rule="evenodd" d="M9.664 1.319a.75.75 0 0 1 .672 0 41.059 41.059 0 0 1 8.198 5.424.751.751 0 0 1 0 1.141c-1.362 1.151-2.653 2.162-3.828 3.14-.54 1.89-1.892 3.507-3.641 5.269a.75.75 0 0 1-1.13 0c-1.75-1.762-3.101-3.379-3.641-5.269C4.669 10.045 3.378 9.034 2.016 7.883a.75.75 0 0 1 0-1.141 41.06 41.06 0 0 1 7.648-5.423ZM8.5 6.375a1.5 1.5 0 1 1 3 0 1.5 1.5 0 0 1-3 0Z" clip-rule="evenodd" />
-                            </svg>
-                        </span>
+                        <img
+                            src="{{ asset('images/logo.png') }}"
+                            alt="Logo KelasKita"
+                            class="w-8 h-8 object-contain"
+                        />
 
-                        <span class="text-base font-semibold">KelasKita</span>
+                        <span class="text-base font-semibold text-primary">KelasKita</span>
                     </a>
 
                     <form method="POST" action="{{ route('logout') }}">
                         @csrf
 
-                        <button type="submit" class="text-sm text-white/70 hover:text-white">
+                        <button type="submit" class="text-sm text-primary hover:text-primary-dark">
                             Keluar
                         </button>
                     </form>
@@ -119,14 +115,14 @@
                 <nav class="flex gap-1 px-3 pb-3 overflow-x-auto">
                     @foreach ($menu as $item)
                         <a href="{{ route($item['route']) }}"
-                            class="shrink-0 px-3 py-1.5 rounded-lg text-xs font-semibold {{ request()->routeIs($item['route']) ? 'bg-primary text-white' : 'text-white/70' }}">
+                            class="shrink-0 px-3 py-1.5 rounded-lg text-xs font-semibold {{ request()->routeIs($item['route']) ? 'bg-primary text-white' : 'text-primary/80' }}">
                             {{ $item['label'] }}
                         </a>
                     @endforeach
 
                     @if (auth()->user()?->isAdmin())
                         <a href="{{ route('admin.dashboard') }}"
-                            class="shrink-0 px-3 py-1.5 rounded-lg text-xs font-semibold {{ request()->routeIs('admin.*') ? 'bg-primary text-white' : 'text-white/70' }}">
+                            class="shrink-0 px-3 py-1.5 rounded-lg text-xs font-semibold {{ request()->routeIs('admin.*') ? 'bg-primary text-white' : 'text-primary/80' }}">
                             Admin
                         </a>
                     @endif
