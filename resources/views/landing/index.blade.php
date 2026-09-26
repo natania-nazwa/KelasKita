@@ -3,6 +3,8 @@
 @section ('title', 'KelasKita - Belajar Lebih Mudah')
 
 @section ('content')
+    <div class="scroll-progress" data-scroll-progress aria-hidden="true"></div>
+
     <header
         class="fixed inset-x-0 top-0 z-50 bg-white border-b border-dark/5 shadow-md shadow-dark/5"
     >
@@ -136,6 +138,8 @@
                 <div class="relative z-10 py-14 lg:py-20">
                     {{-- Label --}}
                     <span
+                        data-reveal
+                        style="--reveal-delay: 60ms"
                         class="inline-flex items-center px-4 py-2 rounded-full bg-primary text-white border-2 border-white/50 ring-2 ring-white/20 font-mono text-xs sm:text-sm font-semibold uppercase tracking-[0.14em]"
                     >
                         Platform Belajar Online
@@ -143,6 +147,8 @@
 
                     {{-- Judul --}}
                     <h1
+                        data-reveal
+                        style="--reveal-delay: 140ms"
                         class="mt-5 text-4xl sm:text-5xl lg:text-[52px] font-extrabold leading-[1.12] text-dark"
                     >
                         Belajar lebih mudah,
@@ -154,11 +160,17 @@
 
                     {{-- Deskripsi --}}
                     <p
+                        data-reveal
+                        style="--reveal-delay: 220ms"
                         class="mt-5 max-w-lg text-base sm:text-lg font-light leading-relaxed text-dark/65"
                     >Pelajari materi dan uji pemahamanmu melalui soal-soal interaktif. Tingkatkan kemampuanmu bersama KelasKita!</p>
 
                     {{-- Button --}}
-                    <div class="mt-8 flex flex-wrap items-center gap-3">
+                    <div
+                        data-reveal
+                        style="--reveal-delay: 300ms"
+                        class="mt-8 flex flex-wrap items-center gap-3"
+                    >
                         <a
                             href="{{ url('/register') }}"
                             class="inline-flex flex-1 items-center justify-center gap-2.5 rounded-2xl bg-primary px-3 py-4 text-sm font-semibold text-white shadow-lg shadow-primary/25 transition hover:bg-primary-dark md:flex-none md:px-8"
@@ -185,6 +197,8 @@
                  BAGIAN KANAN
             ========================== --}}
                 <div
+                    data-reveal="zoom"
+                    style="--reveal-delay: 180ms"
                     class="relative mt-6 flex items-end justify-center self-end -mb-1 lg:mt-0 lg:justify-end lg:-mb-2"
                 >
                     {{-- Illustration --}}
@@ -226,17 +240,25 @@
             class="relative mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 py-16 lg:py-20"
         >
             <div class="text-center max-w-2xl mx-auto">
-                <h2 class="mt-4 text-3xl sm:text-4xl font-extrabold text-dark">
+                <h2
+                    data-reveal
+                    class="mt-4 text-3xl sm:text-4xl font-extrabold text-dark"
+                >
                     Kenapa <span class="text-primary">KelasKita</span> Dibuat?
                 </h2>
             </div>
 
             <div class="mt-14 grid lg:grid-cols-2 gap-12 items-center">
                 <div>
-                    <p class="text-base font-light text-dark/70 leading-relaxed">KelasKita lahir dari keprihatinan sederhana: belajar seharusnya mudah dan bisa dinikmati siapa saja. Banyak pelajar kesulitan menemukan materi yang rapi dan latihan soal yang sesuai dalam satu tempat. KelasKita dibuat untuk menyatukan keduanya secara sederhana, terbuka, dan terus dikembangkan bersama-sama oleh komunitas penggunanya.</p>
+                    <p
+                        data-reveal="left"
+                        class="text-base font-light text-dark/70 leading-relaxed"
+                    >KelasKita lahir dari keprihatinan sederhana: belajar seharusnya mudah dan bisa dinikmati siapa saja. Banyak pelajar kesulitan menemukan materi yang rapi dan latihan soal yang sesuai dalam satu tempat. KelasKita dibuat untuk menyatukan keduanya secara sederhana, terbuka, dan terus dikembangkan bersama-sama oleh komunitas penggunanya.</p>
 
                     <ul class="mt-8 space-y-4">
                         <li
+                            data-reveal="left"
+                            style="--reveal-delay: 80ms"
                             class="flex items-center gap-4 rounded-2xl bg-brand-bg border border-lavender px-5 py-4 hover:shadow-lg hover:shadow-dark/5 transition"
                         >
                             <span
@@ -249,6 +271,8 @@
                             <p class="text-base font-semibold text-dark">Membantu pelajar membaca dan memahami materi dengan tampilan yang rapi.</p>
                         </li>
                         <li
+                            data-reveal="left"
+                            style="--reveal-delay: 160ms"
                             class="flex items-center gap-4 rounded-2xl bg-brand-bg border border-lavender px-5 py-4 hover:shadow-lg hover:shadow-dark/5 transition"
                         >
                             <span
@@ -261,6 +285,8 @@
                             <p class="text-base font-semibold text-dark">Menyediakan tempat untuk menguji pemahaman melalui quiz interaktif.</p>
                         </li>
                         <li
+                            data-reveal="left"
+                            style="--reveal-delay: 240ms"
                             class="flex items-center gap-4 rounded-2xl bg-brand-bg border border-lavender px-5 py-4 hover:shadow-lg hover:shadow-dark/5 transition"
                         >
                             <span
@@ -276,6 +302,7 @@
                 </div>
 
                 <div
+                    data-reveal="right"
                     class="relative rounded-3xl bg-white border border-lavender shadow-xl shadow-dark/5 p-8"
                 >
                     <span
@@ -342,7 +369,7 @@
 
         <div class="relative mx-auto max-w-7xl px-6 py-16 lg:px-10 lg:py-20">
             {{-- HEADER --}}
-            <div class="text-center">
+            <div data-reveal class="text-center">
                 <span
                     class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-lavender text-primary font-mono text-xs font-semibold uppercase tracking-[0.14em]"
                 >
@@ -358,6 +385,7 @@
 
             {{-- CARDS --}}
             <div
+                data-reveal-stagger
                 class="mt-12 grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-4"
             >
                 {{-- 1 --}}
@@ -514,7 +542,7 @@
             {{-- =========================
              HEADER
         ========================== --}}
-            <div class="text-center">
+            <div data-reveal class="text-center">
                 <span
                     class="inline-flex items-center gap-2 rounded-full bg-lavender px-4 py-1.5 font-mono text-xs font-semibold uppercase tracking-[0.14em] text-primary"
                 >
@@ -536,6 +564,7 @@
              KATEGORI
         ========================== --}}
             <div
+                data-reveal-stagger
                 class="mt-10 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-5"
             >
                 {{-- Bahasa Indonesia --}}
@@ -1016,7 +1045,7 @@
             {{-- =========================
              HEADER
         ========================== --}}
-            <div class="text-center">
+            <div data-reveal class="text-center">
                 <div class="flex items-center justify-center gap-3">
                     <span class="w-10 h-px bg-primary/50"></span>
 
@@ -1061,7 +1090,7 @@
                     </svg>
                 </span>
 
-                <div class="grid grid-cols-2 min-[480px]:grid-cols-4 gap-5 lg:gap-6">
+                <div data-reveal-stagger class="grid grid-cols-2 min-[480px]:grid-cols-4 gap-5 lg:gap-6">
                     {{-- STEP 1 --}}
                     <div class="relative text-center">
                         <div class="relative mx-auto w-fit">
@@ -1238,6 +1267,7 @@
 
     <section class="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 py-8 lg:py-10">
         <div
+            data-reveal="zoom"
             class="relative overflow-hidden rounded-2xl bg-[#9d8df0] text-white px-6 py-5 lg:px-10 lg:py-6"
         >
             {{-- Dekorasi background --}}
@@ -1298,7 +1328,7 @@
 
     <footer class="bg-dark text-white">
         <div class="mx-auto max-w-7xl px-6 sm:px-8 lg:px-10 py-10 lg:py-12">
-            <div class="grid grid-cols-2 md:grid-cols-3 gap-10 lg:gap-16">
+            <div data-reveal-stagger class="grid grid-cols-2 md:grid-cols-3 gap-10 lg:gap-16">
                 {{-- =========================
                  BRAND
             ========================== --}}
@@ -1519,29 +1549,5 @@
             </div>
         </div>
     </footer>
-
-    <script>
-        (function () {
-            const links = Array.prototype.slice.call(
-                document.querySelectorAll(".nav-link"),
-            );
-
-            links.forEach(function (link) {
-                link.addEventListener("click", function () {
-                    links.forEach(function (l) {
-                        l.classList.remove(
-                            "text-slate-900",
-                            "text-primary",
-                            "text-primary-dark",
-                        );
-                        l.classList.add("text-primary");
-                        l.querySelector(".nav-bar").style.transform = "";
-                    });
-                    link.classList.remove("text-primary");
-                    link.classList.add("text-slate-900");
-                });
-            });
-        })();
-    </script>
 
 @endsection
