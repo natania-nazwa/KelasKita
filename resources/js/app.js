@@ -112,6 +112,55 @@ function initNavSpy() {
     activate(current());
 }
 
+/**
+ * Pencarian materi: ketik di kolom search submit setelah jeda, dan
+ * ganti kategori di dropdown langsung submit.
+ */
+function initCariMateri() {
+    const form = document.querySelector("[data-cari-form]");
+
+    if (!form) {
+        return;
+    }
+
+    const input = form.querySelector("[data-cari-input]");
+    const filter = form.querySelector("[data-cari-filter]");
+    const delay = input ? 450 : 0;
+    let timer = null;
+
+    const kirim = () => {
+        if (timer) {
+            window.clearTimeout(timer);
+            timer = null;
+        }
+
+        form.submit();
+    };
+
+    if (input) {
+        input.addEventListener("input", () => {
+            if (timer) {
+                window.clearTimeout(timer);
+            }
+
+            timer = window.setTimeout(kirim, delay);
+        });
+    }
+
+    if (filter) {
+        filter.addEventListener("change", kirim);
+    }
+
+    // Tekan Enter tetap jalan walau jeda debounce belum selesai.
+    form.addEventListener("submit", () => {
+        if (timer) {
+            window.clearTimeout(timer);
+            timer = null;
+        }
+    });
+}
+
 initReveal();
 initScrollProgress();
 initNavSpy();
+initCariMateri();

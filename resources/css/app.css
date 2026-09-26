@@ -218,3 +218,250 @@ html {
         background-position: 0% 50%;
     }
 }
+
+/* ============================================================
+   MATERI (khusus halaman Materi user)
+   ============================================================ */
+
+/*
+ * Latar halaman Materi: putih bersih dengan kabut lavender/nila di dua
+ * sudut. Tujuannya card putih tetap terbaca karena ada perbedaan nada.
+ * Diterapkan lewat wrapper di dalam view, jadi halaman lain tidak
+ * ikut berubah.
+ */
+.kanvas-materi {
+    background-color: #fdfcff;
+    background-image:
+        radial-gradient(60rem 32rem at 88% -8%, color-mix(in oklab, var(--color-lavender) 55%, transparent), transparent 70%),
+        radial-gradient(46rem 28rem at -6% 104%, color-mix(in oklab, var(--color-primary) 9%, transparent), transparent 72%);
+    background-attachment: fixed;
+}
+
+/* Kolom pencarian */
+.kolom-cari {
+    width: 100%;
+    border-radius: 9999px;
+    border: 1px solid var(--color-lavender);
+    background-color: var(--color-brand-bg);
+    padding: 0.7rem 3.5rem;
+    font-size: 0.875rem;
+    color: var(--color-dark);
+    transition:
+        border-color 0.25s ease,
+        box-shadow 0.25s ease,
+        background-color 0.25s ease;
+}
+
+.kolom-cari::placeholder {
+    color: color-mix(in oklab, var(--color-dark) 35%, transparent);
+}
+
+.kolom-cari:focus {
+    outline: none;
+    border-color: var(--color-primary);
+    background-color: #fff;
+    box-shadow: 0 0 0 4px color-mix(in oklab, var(--color-primary) 15%, transparent);
+}
+
+.kolom-cari::-webkit-search-cancel-button {
+    display: none;
+}
+
+/* Dropdown filter kategori, duduk di samping kolom search */
+.pilih-kategori {
+    width: 100%;
+    min-width: 0;
+    appearance: none;
+    -webkit-appearance: none;
+    border-radius: 9999px;
+    border: 1px solid var(--color-lavender);
+    background-color: var(--color-brand-bg);
+    padding: 0.7rem 2.5rem 0.7rem 3rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--color-dark);
+    cursor: pointer;
+    transition:
+        border-color 0.25s ease,
+        box-shadow 0.25s ease,
+        background-color 0.25s ease;
+}
+
+.pilih-kategori:hover {
+    border-color: color-mix(in oklab, var(--color-primary) 45%, var(--color-lavender));
+}
+
+.pilih-kategori:focus {
+    outline: none;
+    border-color: var(--color-primary);
+    background-color: #fff;
+    box-shadow: 0 0 0 4px color-mix(in oklab, var(--color-primary) 15%, transparent);
+}
+
+/* Panah bawaan select digantikan ikon chevron di markup */
+.pilih-kategori::-ms-expand {
+    display: none;
+}
+
+/*
+ * Kartu materi. Warna tiap kartu berasal dari --k / --k-gelap yang diset
+ * inline dari Pelajaran::warna(), jadi satu komponen bisa dipakai untuk
+ * semua mata pelajaran.
+ */
+.kartu-materi {
+    --k: var(--color-primary);
+    --k-gelap: var(--color-primary-dark);
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    /* height:100% + min-height membuat semua kartu dalam satu baris sama
+       tinggi, jadi bentuknya konsisten dan tidak ikut melebar karena isi. */
+    height: 100%;
+    min-height: 15rem;
+    min-width: 0;
+    overflow: hidden;
+    border-radius: 1.5rem;
+    border: 1px solid color-mix(in oklab, var(--color-lavender) 85%, transparent);
+    background-color: #fff;
+    box-shadow:
+        0 1px 2px rgba(33, 26, 58, 0.04),
+        0 12px 26px -22px rgba(33, 26, 58, 0.45);
+    transition:
+        transform 0.35s cubic-bezier(0.22, 1, 0.36, 1),
+        border-color 0.35s ease,
+        box-shadow 0.35s ease;
+}
+
+.kartu-materi::before {
+    content: '';
+    position: absolute;
+    top: -3.5rem;
+    right: -3.5rem;
+    height: 8rem;
+    width: 8rem;
+    border-radius: 9999px;
+    background-color: color-mix(in oklab, var(--k) 12%, transparent);
+    transition: transform 0.5s ease;
+}
+
+.kartu-materi:hover,
+.kartu-materi:focus-within {
+    transform: translateY(-6px);
+    border-color: var(--k);
+    box-shadow:
+        0 2px 4px rgba(33, 26, 58, 0.05),
+        0 30px 55px -28px color-mix(in oklab, var(--k) 70%, transparent);
+}
+
+.kartu-materi:hover::before {
+    transform: scale(2.2);
+}
+
+/* Banner di atas card: tinggi ringkas supaya card tidak terlalu besar,
+   dan ikut warna kategori sebagai identitas visual tiap mapel. */
+.kartu-materi__gambar {
+    position: relative;
+    display: flex;
+    width: 100%;
+    aspect-ratio: 16 / 7;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    background:
+        radial-gradient(circle at 78% 18%, color-mix(in oklab, var(--k) 26%, transparent), transparent 58%),
+        linear-gradient(135deg, color-mix(in oklab, var(--k) 18%, white), color-mix(in oklab, var(--k) 38%, white));
+    box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--k) 16%, transparent);
+}
+
+/* Gradasi putih di bawah banner biar menyatu ke badan card */
+.kartu-materi__gambar::after {
+    content: '';
+    position: absolute;
+    inset: auto 0 0 0;
+    height: 1.75rem;
+    background: linear-gradient(to top, #fff, transparent);
+    opacity: 0.6;
+    pointer-events: none;
+}
+
+.kartu-materi__gambar-ikon {
+    display: flex;
+    height: 2.75rem;
+    width: 2.75rem;
+    align-items: center;
+    justify-content: center;
+    border-radius: 1rem;
+    background: linear-gradient(135deg, color-mix(in oklab, var(--k) 78%, white), var(--k));
+    box-shadow: 0 14px 26px -14px color-mix(in oklab, var(--k) 75%, transparent);
+    font-size: 1.25rem;
+    line-height: 1;
+    transition: transform 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.kartu-materi:hover .kartu-materi__gambar-ikon,
+.kartu-materi:focus-within .kartu-materi__gambar-ikon {
+    transform: rotate(-6deg) scale(1.08);
+}
+
+.lencana {
+    display: inline-flex;
+    align-items: center;
+    border-radius: 9999px;
+    padding: 0.2rem 0.6rem;
+    font-size: 0.6875rem;
+    font-weight: 600;
+}
+
+.lencana-di-gambar {
+    position: absolute;
+    left: 0.625rem;
+    bottom: 0.5rem;
+    background-color: #fff;
+    padding: 0.15rem 0.5rem;
+    font-size: 0.625rem;
+    box-shadow: 0 6px 14px -10px color-mix(in oklab, var(--color-dark) 45%, transparent);
+}
+
+/* Tombol "Baca Materi" di kartu */
+.kartu-materi__tombol {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    border-radius: 9999px;
+    background-color: color-mix(in oklab, var(--k) 12%, transparent);
+    padding: 0.3rem 0.625rem;
+    font-size: 0.6875rem;
+    font-weight: 700;
+    color: var(--k-gelap);
+    transition:
+        background-color 0.3s ease,
+        color 0.3s ease,
+        gap 0.3s ease;
+}
+
+.kartu-materi__tombol svg {
+    transition: transform 0.3s ease;
+}
+
+.kartu-materi:hover .kartu-materi__tombol,
+.kartu-materi:focus-within .kartu-materi__tombol {
+    background-color: var(--k);
+    color: #fff;
+    gap: 0.5rem;
+}
+
+.kartu-materi:hover .kartu-materi__tombol svg,
+.kartu-materi:focus-within .kartu-materi__tombol svg {
+    transform: translateX(2px);
+}
+
+/* Isi materi di halaman detail */
+.isi-materi {
+    color: color-mix(in oklab, var(--color-dark) 82%, transparent);
+    font-size: 0.9375rem;
+    line-height: 1.85;
+}
+
+.isi-materi > p + p {
+    margin-top: 1rem;
+}

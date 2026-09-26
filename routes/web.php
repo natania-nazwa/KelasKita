@@ -71,6 +71,7 @@ Route::middleware('auth')
         Route::get('/dashboard', User\DashboardController::class)->name('dashboard');
 
         Route::get('/materi', User\MateriController::class)->name('materi');
+        Route::get('/materi/{materi}', User\MateriDetailController::class)->name('materi.detail');
         Route::get('/quiz', User\QuizController::class)->name('quiz');
         Route::get('/profil', User\ProfilController::class)->name('profil');
     });
