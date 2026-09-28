@@ -5,6 +5,7 @@ namespace Database\Seeders;
 use App\Models\User;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\Hash;
 
 class DatabaseSeeder extends Seeder
 {
@@ -15,14 +16,21 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // Kategori + materi untuk halaman Materi user.
+        // Kategori, materi, dan pembuatnya untuk halaman Materi user.
         $this->call(MateriSeeder::class);
 
-        // User::factory(10)->create();
+        // Quiz beserta soal-soalnya untuk halaman Quiz user.
+        $this->call(QuizSeeder::class);
 
-        User::factory()->create([
-            'name' => 'Test User',
-            'email' => 'test@example.com',
-        ]);
+        // firstOrCreate supaya seeder aman dijalankan berulang kali.
+        User::query()->firstOrCreate(
+            ['email' => 'test@example.com'],
+            [
+                'nama' => 'Test User',
+                'kata_sandi' => Hash::make('password'),
+                'peran' => User::PERAN_USER,
+                'aktif' => true,
+            ]
+        );
     }
 }

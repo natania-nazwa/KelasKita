@@ -64,4 +64,51 @@ class User extends Authenticatable
     {
         return (bool) $this->aktif;
     }
+
+    /**
+     * Inisial untuk avatar. Maksimal dua huruf supaya bulatannya tetap
+     * proporsional: "Natania" jadi "N", "Siti Aminah" jadi "SA".
+     */
+    public function inisial(): string
+    {
+        $kata = preg_split('/\s+/', trim((string) $this->nama)) ?: [];
+        $kata = array_values(array_filter($kata, 'strlen'));
+
+        if ($kata === []) {
+            return '?';
+        }
+
+        if (count($kata) === 1) {
+            return mb_strtoupper(mb_substr($kata[0], 0, 2));
+        }
+
+        return mb_strtoupper(mb_substr($kata[0], 0, 1).mb_substr($kata[count($kata) - 1], 0, 1));
+    }
+
+    /**
+     * Warna avatar diturunkan dari nama, jadi user yang sama selalu punya
+     * warna yang sama di seluruh aplikasi tanpa perlu kolom avatar.
+     *
+     * @return array{warna: string, warna_gelap: string}
+     */
+    public function warnaAvatar(): array
+    {
+        $palet = [
+            ['#8b7bf0', '#5b46cf'],
+            ['#f78299', '#d63a63'],
+            ['#4fd0e0', '#0e8ba0'],
+            ['#5fd6ae', '#12946f'],
+            ['#f6cd6b', '#b8830c'],
+            ['#7cc0f7', '#2b81cf'],
+            ['#f492d3', '#cc3f9c'],
+            ['#f9a86b', '#cf671c'],
+        ];
+
+        [$warna, $warnaGelap] = $palet[abs(crc32((string) $this->nama)) % count($palet)];
+
+        return [
+            'warna' => $warna,
+            'warna_gelap' => $warnaGelap,
+        ];
+    }
 }

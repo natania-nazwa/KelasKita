@@ -29,10 +29,20 @@
 
             <nav class="flex-1 overflow-y-auto px-4 py-6 space-y-1">
                 @php
+                    /*
+                     * Menu utama user. Satu array dipakai dua kali: sidebar
+                     * desktop (dengan ikon) dan navigasi mobile (label saja).
+                     *
+                     * "Karya Saya" adalah pusat pengelolaan materi dan quiz
+                     * milik pengguna sendiri: satu-satunya tempat membuat,
+                     * mengubah, dan menghapus karya. Menu Materi dan Quiz
+                     * tetap menampilkan seluruh isi aplikasi.
+                     */
                     $menu = [
                         ['route' => 'user.dashboard', 'label' => 'Dashboard', 'ikon' => 'm2.25 12 8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25'],
                         ['route' => 'user.materi', 'label' => 'Materi', 'ikon' => 'M12 6.042A8.967 8.967 0 0 0 6 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 0 1 6 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 0 1 6-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0 0 18 18a8.967 8.967 0 0 0-6 2.292m0-14.25v14.25'],
                         ['route' => 'user.quiz', 'label' => 'Quiz', 'ikon' => 'M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z'],
+                        ['route' => 'user.karya-saya', 'label' => 'Karya Saya', 'ikon' => \App\Support\Ikon::path('pena')],
                         ['route' => 'user.profil', 'label' => 'Profil', 'ikon' => 'M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z'],
                     ];
                 @endphp
@@ -88,10 +98,49 @@
             </div>
         </aside>
 
-        <div class="flex-1 lg:ml-64">
+        <div class="flex min-w-0 flex-1 flex-col lg:ml-64">
 
-            {{-- Header (mobile) --}}
-<header class="lg:hidden sticky top-0 z-20 bg-white text-dark border-b border-lavender">
+            @php
+                /*
+                 * Halaman mana yang dituju kolom cari di top bar.
+                 * Default-nya Materi, jadi setiap halaman baru tetap punya
+                 * perilaku yang masuk akal tanpa harus mengatur apa pun.
+                 *
+                 * Di "Karya Saya" tab yang sedang aktif ikut dibawa, supaya
+                 * mengetik di sana tetap mencari karya pada tab yang sama.
+                 */
+                $cariTopbar = match (true) {
+                    request()->routeIs('user.quiz*') => [
+                        'aksi' => 'user.quiz',
+                        'placeholder' => 'Cari kuis...',
+                        'param' => [],
+                    ],
+                    request()->routeIs('user.karya-saya*') => [
+                        'aksi' => 'user.karya-saya',
+                        'placeholder' => 'Cari karya...',
+                        'param' => ['tab' => request('tab') === 'quiz' ? 'quiz' : 'materi'],
+                    ],
+                    default => [
+                        'aksi' => 'user.materi',
+                        'placeholder' => 'Cari materi...',
+                        'param' => [],
+                    ],
+                };
+            @endphp
+
+            {{-- Top bar: pencarian, notifikasi, dan identitas pengguna.
+     Muncul di semua ukuran layar, menempel di atas halaman.
+
+     Kolom cari mengikuti halaman yang sedang dibuka supaya placeholder
+     dan tujuannya tidak membingungkan: mengetik di halaman Quiz mencari
+     quiz, di halaman lain mencari materi. --}}
+            <x-app.topbar :aksi="$cariTopbar['aksi']" :placeholder="$cariTopbar['placeholder']"
+                :param="$cariTopbar['param']" />
+
+            {{-- Header (mobile). top-16: menempel tepat di bawah top bar, jadi
+     keduanya tidak saling menutupi. Latarnya juga .latar-atas supaya
+     tidak ada garis sambung antara top bar dan header ini. --}}
+<header class="lg:hidden latar-atas sticky top-16 z-20 text-dark">
                 <div class="flex items-center justify-between h-16 px-4">
                     <a href="{{ route('user.dashboard') }}" class="flex items-center gap-2.5">
                         <img

@@ -21,6 +21,8 @@ use Illuminate\Support\Str;
     'slug',
     'deskripsi',
     'isi',
+    'thumbnail',
+    'audio',
     'tingkat_kesulitan',
     'aktif',
 ])]
@@ -57,6 +59,39 @@ class Materi extends Model
     public function scopeAktif(Builder $query): Builder
     {
         return $query->where('aktif', true);
+    }
+
+    /**
+     * Materi milik satu pengguna.
+     *
+     * Dipakai halaman "Karya Saya": filter ini yang membuat materi milik
+     * orang lain tidak pernah ikut tampil di sana. Sengaja tanpa scope
+     * aktif(), supaya materi milik sendiri yang sedang disembunyikan tetap
+     * bisa diedit atau dihapus pemiliknya.
+     */
+    public function scopeMilik(Builder $query, ?int $idPembuat): Builder
+    {
+        return $query->where('dibuat_oleh', $idPembuat);
+    }
+
+    /**
+     * Satu-satunya sumber kebenaran untuk "¿ini karya saya?".
+     *
+     * Dipakai halaman detail, form edit, dan hapus supaya satu tempat yang
+     * menentukan apakah pengguna yang sedang login berhak mengelola materi ini.
+     */
+    public function dimilikiOleh(?int $idPengguna): bool
+    {
+        return $idPengguna !== null && (int) $this->dibuat_oleh === $idPengguna;
+    }
+
+    /**
+     * Label status untuk kartu di "Karya Saya", supaya pemilik tahu
+     * materinya masih tayang atau sedang disembunyikan.
+     */
+    public function labelStatus(): string
+    {
+        return $this->aktif ? 'Aktif' : 'Nonaktif';
     }
 
     /**
@@ -146,5 +181,32 @@ class Materi extends Model
     public function getWaktuBacaMenitAttribute(): int
     {
         return $this->waktuBaca();
+    }
+
+    /**
+     * Perkiraan jumlah bab untuk ditampilkan di kartu.
+     *
+     * Bab tidak disimpan sebagai tabel sendiri: form "Tambah Materi" menyusun
+     * seluruh bab menjadi satu teks polos di kolom "isi" (lihat
+     * resources/js/materi-tambah.js). Dua bentuk penanda itu yang dibaca di
+     * sini:
+     *
+     *   "Bab 2: Mengenal Blade"  -> satu baris per bab, ditulis form
+     *   "# Judul Seksi"          -> penanda seksi untuk materi yang diketik manual
+     *
+     * Materi tanpa penanda apa pun dihitung sebagai satu bab, jadi angkanya
+     * tidak pernah nol.
+     */
+    public function jumlahBab(): int
+    {
+        $isi = (string) $this->isi;
+
+        $dariForm = preg_match_all('/^\s*Bab\s+\d+\s*:.*$/mu', $isi);
+
+        if ($dariForm > 0) {
+            return $dariForm;
+        }
+
+        return max(1, preg_match_all('/^\s*#{1,2}\s+\S.*$/mu', $isi));
     }
 }

@@ -15,20 +15,24 @@ class UserFactory extends Factory
     /**
      * The current password being used by the factory.
      */
-    protected static ?string $password;
+    protected static ?string $kataSandi;
 
     /**
      * Define the model's default state.
+     *
+     * Nama kolom mengikuti tabel tb_pengguna, bukan default Laravel.
      *
      * @return array<string, mixed>
      */
     public function definition(): array
     {
         return [
-            'name' => fake()->name(),
+            'nama' => fake()->name(),
             'email' => fake()->unique()->safeEmail(),
             'email_verified_at' => now(),
-            'password' => static::$password ??= Hash::make('password'),
+            'kata_sandi' => static::$kataSandi ??= Hash::make('password'),
+            'peran' => User::PERAN_USER,
+            'aktif' => true,
             'remember_token' => Str::random(10),
         ];
     }

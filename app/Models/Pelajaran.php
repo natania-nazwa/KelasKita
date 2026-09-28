@@ -86,6 +86,34 @@ class Pelajaran extends Model
             'warna' => '#4fd0e0',
             'warna_gelap' => '#0e9bb0',
         ],
+        [
+            'nama' => 'Pemrograman',
+            'slug' => 'pemrograman',
+            'ikon' => '</>',
+            'warna' => '#6c8cf5',
+            'warna_gelap' => '#2f5bc7',
+        ],
+        [
+            'nama' => 'Desain Web',
+            'slug' => 'desain-web',
+            'ikon' => '🎨',
+            'warna' => '#ff9fc4',
+            'warna_gelap' => '#d94b86',
+        ],
+        [
+            'nama' => 'Database',
+            'slug' => 'database',
+            'ikon' => '🗄️',
+            'warna' => '#3fb8c9',
+            'warna_gelap' => '#0e7d8c',
+        ],
+        [
+            'nama' => 'Teknologi',
+            'slug' => 'teknologi',
+            'ikon' => '⚡',
+            'warna' => '#b39ef5',
+            'warna_gelap' => '#6a45c9',
+        ],
     ];
 
     public function materi(): HasMany

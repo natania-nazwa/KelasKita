@@ -3,9 +3,34 @@
 namespace App\Http\Controllers\User;
 
 use App\Http\Controllers\Controller;
+use App\Models\Pelajaran;
+use App\Models\User;
+use App\Support\Ikon;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 use Illuminate\View\View;
 
+/**
+ * Halaman dashboard untuk pengguna (siswa).
+ *
+ * Semua data di bawah sengaja dibuat sebagai array polos supaya komponen di
+ * resources/views/components/dashboard tidak tahu-menahu soal Eloquent. Nanti
+ * tinggal ganti isi tiap method dengan hasil query (Model / API) tanpa
+ * menyentuh markup di user/dashboard.blade.php.
+ *
+ * Bentuk yang dipakai tiap kelompok data:
+ *   ringkasan     => [label, nilai, perubahan, ikon, warna]
+ *   aksiCepat     => [judul, deskripsi, ikon, warna, warna_gelap, tautan, sorot]
+ *   aksesCepat    => [judul, deskripsi, ikon, warna, warna_gelap, tautan]
+ *   materiTerbaru => [slug, judul, deskripsi, jumlah_materi, kategori[], pembuat[]]
+ *   quizTerbaru   => [slug, judul, jumlah_soal, durasi, kategori[], tautan]
+ *   jadwal        => [mulai, selesai, judul, kelas, ikon, warna, warna_gelap, status]
+ *   peringkat     => [peringkat, skor, nama, inisial, warna, warna_gelap, ...]
+ *   kalender      => [nama_bulan, nama_hari, sel[], sebelumnya, berikutnya]
+ *
+ * Path ikon diambil dari App\Support\Ikon supaya tiap path hanya ditulis sekali.
+ */
 class DashboardController extends Controller
 {
     public function __invoke(Request $request): View
@@ -13,83 +38,361 @@ class DashboardController extends Controller
         return view('user.dashboard', [
             'pengguna' => $request->user(),
 
-            /*
-             * Data di bawah masih dummy dan sengaja dibuat sebagai array
-             * di view. Nanti tinggal ganti isi arraynya dengan hasil query
-             * (Model / API) tanpa mengubah struktur di dashboard.blade.php.
-             */
-            'ringkasan' => [
-                [
-                    'label' => 'Total Materi',
-                    'nilai' => '8',
-                    'perubahan' => '+2% dari bulan lalu',
-                    'ikon' => 'M12 6.042A8.967 8.967 0 0 0 6 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 0 1 6 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 0 1 6-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0 0 18 18a8.967 8.967 0 0 0-6 2.292m0-14.25v14.25',
-                    'warna' => 'hijau',
-                ],
-                [
-                    'label' => 'Total Quiz',
-                    'nilai' => '5',
-                    'perubahan' => '+1% dari bulan lalu',
-                    'ikon' => 'M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z',
-                    'warna' => 'kuning',
-                ],
-                [
-                    'label' => 'Rata-rata Nilai',
-                    'nilai' => '85%',
-                    'perubahan' => '+5% dari bulan lalu',
-                    'ikon' => 'M16.5 18.75h-9m9 0a3 3 0 0 1 3 3h-15a3 3 0 0 1 3-3m9 0v-3.375c0-.621-.503-1.125-1.125-1.125h-.871M7.5 18.75v-3.375c0-.621.504-1.125 1.125-1.125h.872m5.007 0H9.497m5.007 0a7.454 7.454 0 0 1-.982-3.172M9.497 14.25a7.454 7.454 0 0 0 .981-3.172M5.25 10.5c.372 0 .741.101 1.06.286m6.345-.286a7.454 7.454 0 0 0-1.06-.286M6.75 18a3.75 3.75 0 1 0 0-7.5 3.75 3.75 0 0 0 0 7.5Z',
-                    'warna' => 'oranye',
-                ],
-                [
-                    'label' => 'Progress Belajar',
-                    'nilai' => '60%',
-                    'perubahan' => '+10% dari bulan lalu',
-                    'ikon' => 'M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 0 1 3 19.875v-6.75ZM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 0 1-1.125-1.125V8.625ZM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 0 1-1.125-1.125V4.125Z',
-                    'warna' => 'pink',
-                ],
-            ],
-
-            'lanjutkan' => [
-                'judul' => 'JavaScript Dasar',
-                'deskripsi' => 'Pahami konsep variabel, function, array, dan DOM.',
-                'progress' => 70,
-                'ikon' => 'M12 6.042A8.967 8.967 0 0 0 6 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 0 1 6 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 0 1 6-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0 0 18 18a8.967 8.967 0 0 0-6 2.292m0-14.25v14.25',
-            ],
-
-            'materiTerbaru' => [
-                [
-                    'kode' => '<>',
-                    'judul' => 'HTML Dasar',
-                    'kategori' => 'Kategori: HTML & CSS',
-                    'waktu' => '2 hari yang lalu',
-                    'warna' => 'pink',
-                ],
-                [
-                    'kode' => '<?',
-                    'judul' => 'Mengenal PHP',
-                    'kategori' => 'Kategori: PHP',
-                    'waktu' => '3 hari yang lalu',
-                    'warna' => 'ungu',
-                ],
-                [
-                    'kode' => 'lr',
-                    'judul' => 'Routing Laravel',
-                    'kategori' => 'Kategori: Laravel',
-                    'waktu' => '5 hari yang lalu',
-                    'warna' => 'merah',
-                ],
-            ],
-
-            /*
-             * Streak belajar harian.
-             * "aktif" = true saat pengguna membaca materi atau mengerjakan
-             * soal pada hari ini. Kalau sehari penuh tidak ada aktivitas
-             * (misal 1 hari beruntun kosong) streak-nya padam dan tampil abu.
-             */
-            'streak' => [
-                'jumlah' => 1,
-                'aktif' => true,
-            ],
+            'ringkasan' => $this->ringkasan(),
+            'aksiCepat' => $this->aksiCepat(),
+            'aksesCepat' => $this->aksesCepat(),
+            'materiTerbaru' => $this->materiTerbaru(),
+            'quizTerbaru' => $this->quizTerbaru(),
+            'jadwal' => $this->jadwal(),
+            'peringkat' => $this->peringkat($request->user()),
+            'kalender' => $this->kalender($request),
+            'streak' => $this->streak(),
         ]);
+    }
+
+    /**
+     * Empat kartu ringkasan di bawah banner selamat datang.
+     */
+    private function ringkasan(): array
+    {
+        return [
+            [
+                'label' => 'Total Materi',
+                'nilai' => '8',
+                'perubahan' => '+2% dari bulan lalu',
+                'ikon' => Ikon::path('buku'),
+                'warna' => 'hijau',
+            ],
+            [
+                'label' => 'Total Quiz',
+                'nilai' => '5',
+                'perubahan' => '+1% dari bulan lalu',
+                'ikon' => Ikon::path('benar'),
+                'warna' => 'kuning',
+            ],
+            [
+                'label' => 'Rata-rata Nilai',
+                'nilai' => '85%',
+                'perubahan' => '+5% dari bulan lalu',
+                'ikon' => Ikon::path('piala'),
+                'warna' => 'oranye',
+            ],
+            [
+                'label' => 'Progress Belajar',
+                'nilai' => '60%',
+                'perubahan' => '+10% dari bulan lalu',
+                'ikon' => Ikon::path('grafik'),
+                'warna' => 'pink',
+            ],
+        ];
+    }
+
+    /**
+     * Tiga kartu aksi yang membawanya ke halaman inti aplikasi.
+     * "sorot" menandai kartu pertama supaya jadi titik masuk paling menonjol.
+     */
+    private function aksiCepat(): array
+    {
+        return [
+            [
+                'judul' => 'Jelajahi Materi',
+                'deskripsi' => 'Temukan materi menarik dari guru dan teman-temanmu.',
+                'ikon' => Ikon::path('buku'),
+                'warna' => '#a78bfa',
+                'warna_gelap' => '#6c4de6',
+                'tautan' => route('user.materi'),
+                'sorot' => true,
+            ],
+            [
+                'judul' => 'Buat Quiz',
+                'deskripsi' => 'Uji pemahamanmu dengan membuat atau mengerjakan quiz.',
+                'ikon' => Ikon::path('dokumen'),
+                'warna' => '#8b80e6',
+                'warna_gelap' => '#5a4cc9',
+                'tautan' => route('user.quiz'),
+                'sorot' => false,
+            ],
+            [
+                'judul' => 'Masukkan Kode',
+                'deskripsi' => 'Gabung ke quiz yang sudah dibuat dengan kode.',
+                'ikon' => Ikon::path('gembok'),
+                'warna' => '#b39ef5',
+                'warna_gelap' => '#6a45c9',
+                'tautan' => route('user.sesi.gabung'),
+                'sorot' => false,
+            ],
+        ];
+    }
+
+    /**
+     * Dua tombol ringkas di panel "Akses Cepat" sidebar. Menunjuk ke fitur
+     * yang paling sering dipakai; bedanya dengan kartu aksi cepat di kolom
+     * utama hanya tampilan bodynya yang lebih ringkas.
+     */
+    private function aksesCepat(): array
+    {
+        return [
+            [
+                'judul' => 'Buat Quiz',
+                'deskripsi' => 'Buat kuis baru dengan soal sendiri',
+                'ikon' => Ikon::path('tambah'),
+                'warna' => '#a78bfa',
+                'warna_gelap' => '#6c4de6',
+                'tautan' => route('user.quiz'),
+            ],
+            [
+                'judul' => 'Masukkan Kode',
+                'deskripsi' => 'Gabung ke quiz dengan kode',
+                'ikon' => Ikon::path('kode'),
+                'warna' => '#8b80e6',
+                'warna_gelap' => '#5a4cc9',
+                'tautan' => route('user.sesi.gabung'),
+            ],
+        ];
+    }
+
+    /**
+     * Empat materi terbaru. Bentuk array-nya sengaja dibuat sama persis
+     * dengan App\Support\DaftarMateri supaya kartu yang dirender
+     * (x-materi.kartu) tidak perlu tahu asal datanya.
+     */
+    private function materiTerbaru(): array
+    {
+        $daftar = [
+            ['kategori' => 'pemrograman', 'judul' => 'HTML Dasar', 'deskripsi' => 'Materi dasar HTML untuk pemula.', 'pembuat' => 'Admin', 'jumlah' => 10],
+            ['kategori' => 'pemrograman', 'judul' => 'CSS Dasar', 'deskripsi' => 'Membuat tampilan web lebih menarik.', 'pembuat' => 'Natania', 'jumlah' => 8],
+            ['kategori' => 'desain-web', 'judul' => 'UI/UX Design', 'deskripsi' => 'Mengenal dasar desain antarmuka.', 'pembuat' => 'Keyla', 'jumlah' => 6],
+            ['kategori' => 'pemrograman', 'judul' => 'JavaScript Dasar', 'deskripsi' => 'Logika dan interaksi pada website.', 'pembuat' => 'Irma', 'jumlah' => 12],
+        ];
+
+        return array_map(function (array $baris, int $urut) {
+            return [
+                'id' => $urut + 1,
+                'slug' => Str::slug($baris['judul']),
+                'judul' => $baris['judul'],
+                'deskripsi' => $baris['deskripsi'],
+                // Belum ada kolom gambar, jadi banner kartu memakai gradasi
+                // warna kategori (lihat .kartu-materi__gambar).
+                'thumbnail' => null,
+                'tingkat_kesulitan' => 'Mudah',
+                'jumlah_materi' => $baris['jumlah'],
+                'tautan' => route('user.materi'),
+                'kategori' => Pelajaran::warna($baris['kategori']),
+                'pembuat' => $this->orang($baris['pembuat']),
+            ];
+        }, $daftar, array_keys($daftar));
+    }
+
+    /**
+     * Empat quiz terbaru. Durasi disimpan sebagai angka menit supaya
+     * komponen bebas memformatnya sendiri.
+     */
+    private function quizTerbaru(): array
+    {
+        $daftar = [
+            ['kategori' => 'pemrograman', 'judul' => 'Pengantar HTML', 'soal' => 5, 'durasi' => 2],
+            ['kategori' => 'pemrograman', 'judul' => 'Dasar-Dasar CSS', 'soal' => 5, 'durasi' => 3],
+            ['kategori' => 'pemrograman', 'judul' => 'Logika Pemrograman', 'soal' => 10, 'durasi' => 5],
+            ['kategori' => 'desain-web', 'judul' => 'Desain UI/UX', 'soal' => 8, 'durasi' => 4],
+        ];
+
+        return array_map(fn (array $baris) => [
+            'slug' => Str::slug($baris['judul']),
+            'judul' => $baris['judul'],
+            'jumlah_soal' => $baris['soal'],
+            'durasi' => $baris['durasi'],
+            'tautan' => route('user.quiz'),
+            'kategori' => Pelajaran::warna($baris['kategori']),
+        ], $daftar);
+    }
+
+    /**
+     * Jadwal pelajaran hari ini.
+     *
+     * Warna diambil dari katalog Pelajaran supaya indikator warna di list
+     * konsisten dengan kartu materi. Statusnya dihitung dari jam sekarang,
+     * jadi baris yang sudah lewat otomatis tampil redup.
+     */
+    private function jadwal(): array
+    {
+        $daftar = [
+            ['mulai' => '08:00', 'selesai' => '09:30', 'judul' => 'Pemrograman Web', 'kelas' => 'Kelas 11 RPL 2', 'kategori' => 'pemrograman', 'ikon' => Ikon::path('kode')],
+            ['mulai' => '10:00', 'selesai' => '11:30', 'judul' => 'Matematika', 'kelas' => 'Kelas 11 RPL 2', 'kategori' => 'matematika', 'ikon' => Ikon::path('kalkulator')],
+            ['mulai' => '13:00', 'selesai' => '14:30', 'judul' => 'Bahasa Indonesia', 'kelas' => 'Kelas 11 RPL 2', 'kategori' => 'bahasa-indonesia', 'ikon' => Ikon::path('pena')],
+        ];
+
+        $sekarang = now();
+
+        return array_map(function (array $baris) use ($sekarang) {
+            $warna = Pelajaran::warna($baris['kategori']);
+
+            // Jam pelajaran dibandingkan dengan waktu hari ini, bukan tanggal,
+            // jadi cukup digabung dengan tanggal hari ini.
+            $mulai = now()->startOfDay()->setTimeFromTimeString($baris['mulai']);
+            $selesai = now()->startOfDay()->setTimeFromTimeString($baris['selesai']);
+
+            return [
+                'mulai' => $baris['mulai'],
+                'selesai' => $baris['selesai'],
+                'judul' => $baris['judul'],
+                'kelas' => $baris['kelas'],
+                'ikon' => $baris['ikon'],
+                'warna' => $warna['warna'],
+                'warna_gelap' => $warna['warna_gelap'],
+                'status' => match (true) {
+                    $sekarang->greaterThanOrEqualTo($selesai) => 'Selesai',
+                    $sekarang->greaterThanOrEqualTo($mulai) => 'Berlangsung',
+                    default => 'Akan datang',
+                },
+            ];
+        }, $daftar);
+    }
+
+    /**
+     * Lima peringkat teratas. Baris milik pengguna yang sedang login ditandai
+     * lewat flag "saya" supaya bisa disorot di komponen.
+     */
+    private function peringkat(User $pengguna): array
+    {
+        $daftar = [
+            ['nama' => 'Keyla', 'skor' => 980],
+            ['nama' => 'Khanif', 'skor' => 960],
+            ['nama' => 'Irma', 'skor' => 940],
+            ['nama' => 'Heysell', 'skor' => 920],
+            ['nama' => 'Natania', 'skor' => 890],
+        ];
+
+        return array_map(function (array $baris, int $urut) use ($pengguna) {
+            return [
+                ...$this->orang($baris['nama']),
+                'peringkat' => $urut + 1,
+                'skor' => $baris['skor'],
+                'medali' => match ($urut + 1) {
+                    1 => 'emas',
+                    2 => 'perak',
+                    3 => 'perunggu',
+                    default => null,
+                },
+                'saya' => $baris['nama'] === $pengguna->nama,
+            ];
+        }, $daftar, array_keys($daftar));
+    }
+
+    /**
+     * Kalender bulanan untuk sidebar.
+     *
+     * Grid dihitung di server (bukan JavaScript) supaya tombol sebelumnya /
+     * berikutnya cukup berupa link biasa (?bulan=YYYY-MM) dan tetap jalan
+     * walau JavaScript dimatikan.
+     */
+    private function kalender(Request $request): array
+    {
+        $bulan = $this->bulanTerpilih($request->query('bulan'));
+
+        $awal = $bulan->copy()->startOfMonth();
+        $akhir = $bulan->copy()->endOfMonth();
+        $jumlahHari = (int) $akhir->day;
+
+        // Acara dummy, dikunci ke tanggal 3/12/19/26. Angkanya dibatasi dengan
+        // min() supaya tidak keluar dari bulan yang hanya punya 28/29/30 hari.
+        $acara = [
+            min(3, $jumlahHari) => 'Kuis Pemrograman',
+            min(12, $jumlahHari) => 'Ulangan Matematika',
+            min(19, $jumlahHari) => 'Deadline Project',
+            min(26, $jumlahHari) => 'Diskusi Kelompok',
+        ];
+
+        // Hari dalam seminggu dimulai dari Minggu (0). Sel kosong di depan
+        // supaya tanggal 1 jatuh di kolom yang benar, dan baris terakhir
+        // dilengkapi ke tujuh kolom.
+        $geser = (int) $awal->dayOfWeek;
+        $jumlahSel = (int) (ceil(($geser + $jumlahHari) / 7) * 7);
+
+        // Jangkar grid adalah tanggal 1 bulan ini yang digeser mundur sebanyak
+        // kolom kosong. Kalau memakai tanggal hari ini sebagai jangkar, grid
+        // akan selalu mulai dari tanggal yang sama, berapa pun bulan yang
+        // sedang dibuka.
+        $jangkar = $awal->copy()->subDays($geser);
+
+        $sel = [];
+        for ($i = 0; $i < $jumlahSel; $i++) {
+            $hari = $jangkar->copy()->addDays($i);
+            $dalamBulan = $hari->month === $awal->month;
+            $hariIni = $hari->isSameDay(now());
+
+            $sel[] = [
+                'angka' => (int) $hari->day,
+                'dalam_bulan' => $dalamBulan,
+                'hari_ini' => $hariIni,
+                'acara' => match (true) {
+                    ! $dalamBulan => null,
+                    isset($acara[$hari->day]) => $acara[$hari->day],
+                    $hariIni => 'Belajar hari ini',
+                    default => null,
+                },
+            ];
+        }
+
+        return [
+            'nama_bulan' => $bulan->translatedFormat('F Y'),
+            'nama_hari' => ['Min', 'Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab'],
+            'sel' => $sel,
+            'sebelumnya' => route('user.dashboard', ['bulan' => $bulan->copy()->subMonth()->format('Y-m')]),
+            'berikutnya' => route('user.dashboard', ['bulan' => $bulan->copy()->addMonth()->format('Y-m')]),
+        ];
+    }
+
+    /**
+     * Membaca parameter ?bulan=YYYY-MM. Nilai di luar kalender yang nyata
+     * diabaikan dan diganti bulan berjalan supaya halaman tidak error.
+     */
+    private function bulanTerpilih(mixed $nilai): Carbon
+    {
+        $nilai = is_string($nilai) ? $nilai : '';
+
+        $cocok = preg_match('/^(\d{4})-(\d{2})$/', $nilai, $bagian) === 1
+            && checkdate((int) $bagian[2], 1, (int) $bagian[1]);
+
+        return $cocok
+            ? Carbon::createFromFormat('Y-m', $nilai)->startOfMonth()
+            : now()->startOfMonth();
+    }
+
+    /**
+     * Avatar + nama untuk penulis materi, pembuat quiz, atau peringkat.
+     *
+     * Warnanya diambil dari User::warnaAvatar() supaya warna avatar konsisten
+     * di seluruh aplikasi tanpa kolom avatar di database.
+     *
+     * Catatan: warnaAvatar() saat ini mengembalikan daftar posisional
+     * ([0 => terang, 1 => gelap]), bukan ['warna' =>, 'warna_gelap' =>]
+     * seperti di docblock-nya. Helper ini menerima dua-duanya supaya tetap
+     * aman kalau nanti bentuknya dirapikan.
+     */
+    private function orang(string $nama): array
+    {
+        $user = new User(['nama' => $nama]);
+        $warna = $user->warnaAvatar();
+
+        return [
+            'nama' => $nama,
+            'inisial' => $user->inisial(),
+            'warna' => $warna['warna'] ?? $warna[0] ?? '#a78bfa',
+            'warna_gelap' => $warna['warna_gelap'] ?? $warna[1] ?? '#6c4de6',
+        ];
+    }
+
+    /**
+     * Streak belajar harian.
+     * "aktif" = true saat pengguna membaca materi atau mengerjakan
+     * soal pada hari ini. Kalau sehari penuh tidak ada aktivitas
+     * (misal 1 hari beruntun kosong) streak-nya padam dan tampil abu.
+     */
+    private function streak(): array
+    {
+        return [
+            'jumlah' => 1,
+            'aktif' => true,
+        ];
     }
 }

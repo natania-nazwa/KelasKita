@@ -5,47 +5,56 @@ namespace App\Http\Controllers\User;
 use App\Http\Controllers\Controller;
 use App\Models\Materi;
 use App\Models\Pelajaran;
+use App\Support\DaftarMateri;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use Illuminate\View\View;
 
+/**
+ * Halaman Materi: seluruh materi yang tersedia di aplikasi.
+ *
+ * Materi buatan siapa pun ikut tampil di sini, termasuk milik pengguna yang
+ * sedang login. Pengelolaan materi milik sendiri (buat, ubah, hapus) ada di
+ * halaman "Karya Saya", bukan di sini.
+ */
 class MateriController extends Controller
 {
-    /**
-     * Jumlah materi per halaman.
-     */
-    private const PER_HALAMAN = 9;
-
     public function __invoke(Request $request): View
     {
         $kataKunci = trim((string) $request->query('q', ''));
         $kategori = trim((string) $request->query('kategori', ''));
 
-        $materi = Materi::query()
-            ->aktif()
-            ->with(['pelajaran', 'pembuat'])
+        $materi = $this->daftarMateri()
             ->cari($kataKunci)
             ->kategori($kategori)
-            ->latest()
-            ->paginate(self::PER_HALAMAN)
+            ->paginate(DaftarMateri::perHalaman())
             ->withQueryString();
 
         return view('user.materi', [
             'materi' => $materi,
-            'totalMateri' => Materi::query()->aktif()->count(),
+            'daftar' => DaftarMateri::petakan($materi->items()),
+            'kategori' => $this->daftarKategori(),
             'kataKunci' => $kataKunci,
             'kategoriAktif' => $kategori,
-            'kategori' => $this->daftarKategori(),
+            'totalMateri' => Materi::query()->aktif()->count(),
         ]);
     }
 
     /**
+     * Query dasar daftar materi: semua materi yang aktif, terbaru dulu.
+     * Pencarian dan filter kategori ditambahkan setelahnya di __invoke().
+     */
+    private function daftarMateri(): Builder
+    {
+        return Materi::query()
+            ->aktif()
+            ->with(['pelajaran', 'pembuat'])
+            ->latest();
+    }
+
+    /**
      * Daftar kategori untuk dropdown filter.
-     *
-     * Hanya kategori yang benar-benar punya materi aktif yang ditampilkan,
-     * supaya user tidak memilih kategori kosong. Urutan mengikuti
-     * Pelajaran::KATALOG agar tampilan konsisten, dan warnanya diambil dari
-     * katalog tersebut supaya kartu dan filter memakai warna yang sama.
      *
      * @return Collection<int, array<string, mixed>>
      */

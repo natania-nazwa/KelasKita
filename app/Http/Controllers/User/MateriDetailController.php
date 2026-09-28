@@ -4,6 +4,8 @@ namespace App\Http\Controllers\User;
 
 use App\Http\Controllers\Controller;
 use App\Models\Materi;
+use App\Support\DaftarMateri;
+use App\Support\DetailMateri;
 use Illuminate\View\View;
 
 class MateriDetailController extends Controller
@@ -59,8 +61,15 @@ class MateriDetailController extends Controller
             : $sesuaiKategori;
 
         return view('user.materi-detail', [
-            'materi' => $item,
-            'terkini' => $terkini,
+            // Halaman detail memakai array polos supaya komponen tampilan
+            // tidak terikat Eloquent. Isi materinya dipecah jadi seksi +
+            // blok di dalam petikan().
+            'detail' => DetailMateri::petikan($item),
+            // Saran baca dirender lewat komponen kartu yang sama dengan
+            // halaman daftar, jadi cukup array polos.
+            'terkini' => DaftarMateri::petakan($terkini),
+            'semuaSatuKategori' => (bool) $item->pelajaran
+                && $terkini->every(fn (Materi $saran) => $saran->pelajaran_id === $item->pelajaran_id),
         ]);
     }
 }
