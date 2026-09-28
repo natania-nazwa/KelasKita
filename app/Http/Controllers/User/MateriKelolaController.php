@@ -42,7 +42,7 @@ class MateriKelolaController extends Controller
     public function update(MateriIsianRequest $request, string $materi): RedirectResponse
     {
         $item = $this->materiMilik($request, $materi);
-        $data = $request->validated();
+        $data = $request->isian();
         $berkasBaru = BerkasMateri::simpan($request);
 
         // Berkas yang diganti harus dihapus supaya storage tidak menumpuk
@@ -55,9 +55,45 @@ class MateriKelolaController extends Controller
 
         $item->fill([...$data, ...$berkasBaru])->save();
 
+        /*
+         * Status tidak pernah diubah diam-diam oleh pemilik. Satu-satunya
+         * jalan masuk ke daftar tunggu admin adalah tombol publikasi, dan
+         * tombol itu hanya muncul kalau materinya masih boleh diajukan
+         * (draft, ditolak di bawah batas pengajuan, atau sudah terbit lalu
+         * direvisi).
+         *
+         * Materi yang sudah terbit pun ikut diturunkan ke daftar tunggu,
+         * bukan tetap tayang. Kalau tidak, perubahannya bisa langsung
+         * menjangkau pengguna tanpa pernah ditinjau admin.
+         */
+        $pernahTerbit = $item->pernahTerbit();
+        $dikirim = $request->boolean('publikasikan') && $item->bolehDiajukan();
+
+        if ($dikirim) {
+            $item->ajukanPersetujuan();
+        }
+
         return redirect()
             ->route('user.karya-saya', ['tab' => 'materi'])
-            ->with('sukses', 'Materi "'.$item->nama.'" berhasil diperbarui.');
+            ->with('sukses', $this->pesanSimpan($item, $dikirim, $pernahTerbit));
+    }
+
+    /**
+     * Pesan setelah materi edit tersimpan.
+     *
+     * Diberi kasus tersendiri karena akibatnya berbeda: materi yang tayang
+     * lalu ditarik kembali ke daftar tunggu hilang dari halaman publik, jadi
+     * pemiliknya perlu tahu supaya tidak mengira materinya masih dibaca.
+     */
+    private function pesanSimpan(Materi $item, bool $dikirim, bool $pernahTerbit): string
+    {
+        if (! $dikirim) {
+            return 'Materi "'.$item->nama.'" berhasil diperbarui.';
+        }
+
+        return $pernahTerbit
+            ? 'Materi "'.$item->nama.'" diperbarui dan dikirim ulang ke admin. Materi ini berhenti tayang sampai disetujui lagi.'
+            : 'Materi "'.$item->nama.'" diperbarui dan dikirim ke admin untuk ditinjau.';
     }
 
     public function destroy(Request $request, string $materi): RedirectResponse

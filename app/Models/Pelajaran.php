@@ -114,6 +114,17 @@ class Pelajaran extends Model
             'warna' => '#b39ef5',
             'warna_gelap' => '#6a45c9',
         ],
+        [
+            // Praktikum dan Projek. Awalnya jadwal contoh memakai slug "pjkr"
+            // supaya tidak bentrok dengan kode yang lebih panjang, sekarang
+            // slug itu jadi nama resmi supaya bisa dipilih di form jadwal
+            // dan filter kategori.
+            'nama' => 'Praktikum dan Projek',
+            'slug' => 'pjkr',
+            'ikon' => '🛠️',
+            'warna' => '#a5b4fc',
+            'warna_gelap' => '#5b5fd6',
+        ],
     ];
 
     public function materi(): HasMany

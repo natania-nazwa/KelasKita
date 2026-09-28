@@ -12,6 +12,10 @@
     sedang tampil: jadi jumlahnya tetap sama walau berpindah tab atau
     memuat halaman berikutnya.
 
+    Kartu "Menunggu Persetujuan" menghitung materi dan quiz sekaligus karena
+    keduanya lewat persetujuan admin yang sama, jadi pemiliknya tidak perlu
+    membuka tiap tab untuk tahu apakah masih ada yang ditunggu.
+
     Kartu putih dan kotak ikon memakai .dash-kartu / .dash-ikon-kotak yang
     sama dengan kartu dashboard, supaya deret ini terasa sebagai bagian dari
     aplikasi ini, bukan widget yang ditempel.
@@ -46,7 +50,7 @@
         [
             'nilai' => $menunggu,
             'label' => 'Menunggu Persetujuan',
-            'catatan' => $menunggu > 0 ? 'quiz sedang ditinjau admin' : 'semua quiz sudah ditinjau',
+            'catatan' => $menunggu > 0 ? 'materi & quiz sedang ditinjau admin' : 'sudah ditinjau admin',
             'ikon' => 'jam',
             'warna' => '#f6cd6b',
             'warna_gelap' => '#b8830c',

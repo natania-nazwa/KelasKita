@@ -34,6 +34,36 @@ final class Angka
     }
 
     /**
+     * Angka pendek untuk metadata, misalnya jumlah tampilan materi.
+     *
+     * 999 => "999", 2400 => "2.4k", 12500 => "12.5k", 2400000 => "2.4jt".
+     * Angka di bawah sepuluh ribu tidak dipotong supaya jarak pandangnya
+     * tetap terasa nyata ("128 tampilan" lebih jujur daripada "128").
+     */
+    public static function ringkas(int $nilai): string
+    {
+        $nilai = max(0, $nilai);
+
+        if ($nilai < 1000) {
+            return (string) $nilai;
+        }
+
+        if ($nilai < 1_000_000) {
+            return self::pendek($nilai / 1000).'k';
+        }
+
+        return self::pendek($nilai / 1_000_000).'jt';
+    }
+
+    /**
+     * Satu angka desimal tanpa nol di belakang koma: 2.0 => "2", 2.4 => "2.4".
+     */
+    private static function pendek(float $nilai): string
+    {
+        return rtrim(rtrim(number_format($nilai, 1, '.', ''), '0'), '.');
+    }
+
+    /**
      * Panjang busur lingkaran untuk persentase tertentu.
      *
      * Keliling lingkaran (2 * PI * r) dikalikan persentase, lalu

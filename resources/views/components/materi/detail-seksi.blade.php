@@ -1,20 +1,24 @@
 @props([
     'seksi',
+    'babAwal' => false,
 ])
 
 @php
     /*
      * Satu seksi materi: judul bernomor + isi.
      *
-     * id pada <section> dipakai dua pihak: tautan Daftar Isi untuk
-     * scroll ke sini, dan scrollspy di materi-detail.js untuk menentukan
-     * seksi mana yang sedang dibaca.
+     * id pada <section> dipakai sebagai jangkar tautan Daftar Isi, sementara
+     * data-bab dipakai materi-detail.js untuk memilih bab mana yang sedang
+     * tampil. Bab pertama tampil lebih dulu; sisanya diberi atribut hidden
+     * oleh JS. Tanpa JS semuanya terlihat (lihat <noscript> di layout).
      */
 @endphp
 
-<section id="{{ $seksi['slug'] }}" class="kartu-detail materi-seksi p-5 sm:p-7">
+<section id="{{ $seksi['slug'] }}" data-bab="{{ $seksi['slug'] }}"
+    @unless($babAwal) hidden @endunless
+    class="kartu-detail materi-seksi p-5 sm:p-6 lg:p-7">
 
-    <h2 class="text-lg font-extrabold tracking-tight text-dark sm:text-xl">
+    <h2 class="materi-seksi__judul">
         {{ $seksi['nomor'] }}. {{ $seksi['judul'] }}
     </h2>
 

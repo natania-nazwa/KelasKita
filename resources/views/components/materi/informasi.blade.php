@@ -174,7 +174,7 @@
                      mengunggah yang baru. --}}
                 @if ($materi && filled($materi->thumbnail))
                     <div class="mt-2 flex items-center gap-3 rounded-xl border border-ungu-line bg-white p-2">
-                        <img src="{{ asset('storage/'.basename($materi->thumbnail)) }}" alt="Thumbnail materi ini"
+                        <img src="{{ \App\Support\BerkasMateri::url($materi->thumbnail) }}" alt="Thumbnail materi ini"
                             class="h-14 w-24 shrink-0 rounded-lg object-cover">
 
                         <p class="text-xs leading-relaxed text-muted">

@@ -27,8 +27,12 @@ final class IsiMateri
     /**
      * Kata kunci pada judul seksi yang menandai bagian latihan. Seksi
      * seperti ini dirender sebagai kartu latihan, bukan paragraf biasa.
+     *
+     * Dibatasi tanda kata supaya judul seperti "Pengujian dan Deployment"
+     * tidak ikut terbaca sebagai bagian latihan hanya karena mengandung
+     * huruf "ujian".
      */
-    private const KATA_LATIHAN = 'latihan|tugas|soal|ujian|evaluasi|kuis';
+    private const KATA_LATIHAN = '\b(?:latihan|tugas|soal|ujian|evaluasi|kuis)\b';
 
     /**
      * Pecah isi materi menjadi daftar seksi.

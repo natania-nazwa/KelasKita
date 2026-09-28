@@ -746,11 +746,26 @@ html {
    (ungu soft), bukan palet terpisah halaman Tambah Materi.
    ============================================================ */
 
+/*
+ * Garis kartu. Dipisah dari --color-lavender supaya mode terang bisa tepat
+ * seperti rancangan (#e9e5f5) tanpa mengubah border-lavender yang dipakai
+ * halaman lain. Mode gelap menimpa nilai ini di bawah.
+ */
+:root {
+    --garis-kartu: #e9e5f5;
+    --teks-isi: #4b4b65;
+}
+
+[data-theme='gelap'] {
+    --garis-kartu: #3a3168;
+    --teks-isi: #c8c2e8;
+}
+
 /* Kartu putih generik: kepala materi, daftar isi, dan tiap seksi. */
 .kartu-detail {
     min-width: 0;
-    border-radius: 1.5rem;
-    border: 1px solid var(--color-lavender);
+    border-radius: 0.75rem;
+    border: 1px solid var(--garis-kartu);
     background-color: #fff;
     box-shadow:
         0 1px 2px rgba(33, 26, 58, 0.04),
@@ -772,41 +787,113 @@ html {
     }
 }
 
+/*
+ * Bab non-aktif disembunyikan lewat atribut hidden oleh materi-detail.js.
+ * Atribut polos cukup di sini (tidak ada aturan display lain di elemen
+ * ini), tapi ditegas di bawah supaya tidak gampang patah kalau ada kelas
+ * utilitas yang ikut ditambahkan. <noscript> di layouts/app.blade.php
+ * melepasnya lagi ketika JavaScript mati.
+ */
+.materi-seksi[hidden] {
+    display: none;
+}
+
+/* Judul seksi: angka + judul bab, warna teks utama, tanpa hiasan. */
+.materi-seksi__judul {
+    font-size: 1.0625rem;
+    font-weight: 800;
+    line-height: 1.35;
+    letter-spacing: -0.01em;
+    color: var(--color-dark);
+}
+
+@media (min-width: 640px) {
+    .materi-seksi__judul {
+        font-size: 1.25rem;
+    }
+}
+
+/* Bab baru muncul dengan geseran halus dari bawah. */
+.materi-seksi.is-aktif {
+    animation: bab-masuk 0.32s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes bab-masuk {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .materi-seksi.is-aktif {
+        animation: none;
+    }
+}
+
 /* ---------- Tombol Kembali ---------- */
+/*
+ * Tautan teks ungu biasa, bukan pil ber-border: rancangan halaman meminta
+ * "Kembali" yang tidak bersaing dengan kartu putih di bawahnya.
+ */
 .tombol-kembali {
     display: inline-flex;
     align-items: center;
-    gap: 0.5rem;
-    border-radius: 9999px;
-    border: 1px solid var(--color-lavender);
-    background-color: #fff;
-    padding: 0.5rem 1rem;
-    font-size: 0.75rem;
+    gap: 0.4rem;
+    font-size: 0.8125rem;
     font-weight: 700;
-    color: color-mix(in oklab, var(--color-dark) 70%, transparent);
+    color: var(--color-primary);
     transition:
-        border-color 0.2s ease,
-        color 0.2s ease;
+        color 0.2s ease,
+        gap 0.2s ease;
 }
 
 .tombol-kembali:hover {
-    border-color: var(--color-primary);
-    color: var(--color-primary);
+    gap: 0.55rem;
+    color: var(--color-primary-dark);
 }
 
 /* ---------- Thumbnail materi ---------- */
+/*
+ * Di ponsel thumbnail memakai lebar penuh dengan rasio 16:9; mulai 768px
+ * ukurannya dikunci ke 280 x 150 persis seperti rancangan. Nilainya ada di
+ * sini (bukan utilitas Tailwind) supaya tidak kalah dari aturan kartu yang
+ * tidak memakai lapisan @layer.
+ */
 .thumb-materi {
     position: relative;
     display: flex;
     width: 100%;
     aspect-ratio: 16 / 9;
+    flex-shrink: 0;
     align-items: center;
     justify-content: center;
     overflow: hidden;
-    border-radius: 1rem;
+    border-radius: 0.75rem;
     background-image:
         radial-gradient(circle at 78% 18%, color-mix(in oklab, var(--k) 42%, transparent), transparent 62%),
         linear-gradient(135deg, color-mix(in oklab, var(--k) 22%, white), color-mix(in oklab, var(--k) 52%, white));
+}
+
+@media (min-width: 768px) {
+    .thumb-materi {
+        width: 17.5rem;
+        height: 9.375rem;
+        aspect-ratio: auto;
+    }
+}
+
+.thumb-materi__foto {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
 }
 
 .thumb-materi__ikon {
@@ -816,6 +903,95 @@ html {
     line-height: 1;
     color: #fff;
     text-shadow: 0 8px 22px color-mix(in oklab, var(--k-gelap) 45%, transparent);
+}
+
+/* ---------- Kepala materi ---------- */
+/*
+ * Susunannya: thumbnail di kiri (mulai 768px) dan identitas di kanan.
+ * Di ponsel semuanya menumpuk vertikal dan tombol Simpan melebar penuh.
+ */
+.kartu-kepala__isi {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    padding: 1rem;
+}
+
+@media (min-width: 768px) {
+    .kartu-kepala__isi {
+        flex-direction: row;
+        gap: 1.25rem;
+        padding: 1.25rem;
+    }
+}
+
+.kartu-kepala__identitas {
+    display: flex;
+    min-width: 0;
+    flex: 1;
+    flex-direction: column;
+    gap: 0.6rem;
+}
+
+.kartu-kepala__judul {
+    font-size: 1.375rem;
+    font-weight: 800;
+    line-height: 1.25;
+    letter-spacing: -0.02em;
+    color: var(--color-dark);
+}
+
+@media (min-width: 768px) {
+    .kartu-kepala__judul {
+        font-size: clamp(1.5rem, 2vw, 1.875rem);
+    }
+}
+
+.kartu-kepala__deskripsi {
+    font-size: 0.875rem;
+    line-height: 1.65;
+    color: color-mix(in oklab, var(--color-dark) 62%, transparent);
+}
+
+/*
+ * Baris metadata + tombol Simpan. gap horizontal 1rem (16px) berada di
+ * rentang 14–18px yang diminta rancangan, dan margin-left:auto menekan
+ * tombolnya ke ujung kanan pada layar lebar.
+ */
+.kartu-kepala__meta {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem 1rem;
+    margin-top: 0.35rem;
+    font-size: 0.8125rem;
+    color: color-mix(in oklab, var(--color-dark) 60%, transparent);
+}
+
+.kartu-kepala__butir {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    white-space: nowrap;
+}
+
+.kartu-kepala__ikon {
+    height: 0.9375rem;
+    width: 0.9375rem;
+    flex-shrink: 0;
+    color: var(--color-primary);
+}
+
+.kartu-kepala__simpan {
+    margin-left: auto;
+}
+
+@media (max-width: 639px) {
+    .kartu-kepala__simpan {
+        width: 100%;
+        margin-top: 0.25rem;
+        margin-left: 0;
+    }
 }
 
 /* ---------- Tombol Simpan ---------- */
@@ -847,6 +1023,58 @@ html {
 }
 
 /* ---------- Daftar Isi ---------- */
+
+.daftar-isi {
+    padding: 1rem;
+}
+
+@media (min-width: 640px) {
+    .daftar-isi {
+        padding: 1.25rem;
+    }
+}
+
+.daftar-isi__judul {
+    font-size: 0.875rem;
+    font-weight: 800;
+    letter-spacing: -0.01em;
+    color: var(--color-dark);
+}
+
+.daftar-isi__alih {
+    display: flex;
+    height: 2rem;
+    width: 2rem;
+    align-items: center;
+    justify-content: center;
+    border-radius: 0.5rem;
+    border: 1px solid var(--garis-kartu);
+    background-color: #fff;
+    color: color-mix(in oklab, var(--color-dark) 60%, transparent);
+    transition:
+        border-color 0.2s ease,
+        color 0.2s ease;
+}
+
+.daftar-isi__alih:hover {
+    border-color: var(--color-primary);
+    color: var(--color-primary);
+}
+
+/*
+ * Tombol lipat hanya relevan di bawah lg. Disimpan sebagai media query di
+ * sini, bukan kelas lg:hidden, karena .daftar-isi__alih menulis display
+ * sendiri dan aturan tanpa @layer selalu mengalah utilitas Tailwind.
+ */
+@media (min-width: 1024px) {
+    .daftar-isi__alih {
+        display: none;
+    }
+}
+
+[data-theme='gelap'] .daftar-isi__alih {
+    background-color: #191336;
+}
 
 /*
  * Atribut hidden dipakai JS (materi-detail.js) untuk menutup daftar isi di
@@ -897,12 +1125,16 @@ html {
 }
 
 /*
- * Seksi yang sedang dibaca. Kelas is-aktif dipasang JS (materi-detail.js)
- * mengikuti posisi scroll, jadi penanda ini ikut berganti dengan sendirinya.
+ * Bab yang sedang aktif. Latar #ede7ff persis seperti rancangan; mode gelap
+ * memakai padanan ungu tua supaya teks tetap kontras.
  */
 .daftar-isi__item.is-aktif {
-    background-color: color-mix(in oklab, var(--color-primary) 12%, white);
+    background-color: #ede7ff;
     color: var(--color-primary-dark);
+}
+
+[data-theme='gelap'] .daftar-isi__item.is-aktif {
+    background-color: #3b2f7d;
 }
 
 .daftar-isi__item.is-aktif .daftar-isi__nomor {
@@ -910,41 +1142,111 @@ html {
     color: #fff;
 }
 
+/* ---------- Navigasi antar bab ---------- */
+/*
+ * Tersembunyi secara bawaan supaya tanpa JavaScript tidak muncul tombol
+ * yang tidak berfungsi. materi-detail.js memberi kelas is-aktif untuk
+ * memunculkannya lalu mengisi judul bab tetangga.
+ */
+.bab-nav {
+    display: none;
+    justify-content: space-between;
+    gap: 0.75rem;
+    margin-top: 1rem;
+}
+
+.bab-nav.is-aktif {
+    display: flex;
+}
+
+.bab-nav__tombol {
+    display: inline-flex;
+    max-width: 48%;
+    align-items: center;
+    gap: 0.7rem;
+    border-radius: 0.75rem;
+    border: 1px solid var(--garis-kartu);
+    background-color: #fff;
+    padding: 0.7rem 1rem;
+    transition:
+        border-color 0.2s ease,
+        box-shadow 0.2s ease,
+        transform 0.2s ease;
+}
+
+.bab-nav__tombol[hidden] {
+    display: none;
+}
+
+.bab-nav__tombol:hover {
+    border-color: color-mix(in oklab, var(--color-primary) 55%, var(--garis-kartu));
+    box-shadow: 0 14px 26px -22px rgba(33, 26, 58, 0.6);
+    transform: translateY(-1px);
+}
+
+.bab-nav__tombol--kanan {
+    text-align: right;
+}
+
+[data-theme='gelap'] .bab-nav__tombol {
+    background-color: #191336;
+}
+
+.bab-nav__teks {
+    display: flex;
+    min-width: 0;
+    flex-direction: column;
+    gap: 0.1rem;
+}
+
+.bab-nav__label {
+    font-size: 0.6875rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: color-mix(in oklab, var(--color-dark) 45%, transparent);
+}
+
+.bab-nav__judul {
+    overflow: hidden;
+    font-size: 0.875rem;
+    font-weight: 700;
+    line-height: 1.35;
+    color: var(--color-dark);
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.bab-nav__ikon {
+    height: 1rem;
+    width: 1rem;
+    flex-shrink: 0;
+    color: var(--color-primary);
+}
+
+.bab-nav__ikon--kanan {
+    order: 1;
+}
+
 /* ---------- Blok kode ---------- */
+/*
+ * Kepala dibuat minim: hanya tombol Copy di pojok kanan, tanpa titik warna
+ * dan tanpa label bahasa, supaya isi kode tetap jadi fokus halaman.
+ * Latar #252b3a mengikuti rancangan (bukan ungu tua seperti sebelumnya).
+ */
 .kode-blok {
     overflow: hidden;
-    border-radius: 1rem;
-    background-color: #1d1636;
-    box-shadow: inset 0 0 0 1px rgba(167, 139, 250, 0.16);
+    border-radius: 0.75rem;
+    background-color: #252b3a;
+    box-shadow: inset 0 0 0 1px rgba(148, 163, 184, 0.14);
 }
 
 .kode-blok__kepala {
     display: flex;
     align-items: center;
-    gap: 0.65rem;
-    padding: 0.55rem 0.6rem 0.55rem 0.9rem;
-    border-bottom: 1px solid rgba(167, 139, 250, 0.14);
-}
-
-.kode-blok__titik {
-    display: inline-flex;
-    gap: 0.3rem;
-}
-
-.kode-blok__titik i {
-    height: 0.5rem;
-    width: 0.5rem;
-    border-radius: 9999px;
-    background-color: rgba(167, 139, 250, 0.35);
-}
-
-.kode-blok__bahasa {
-    font-family: var(--font-mono);
-    font-size: 0.625rem;
-    font-weight: 600;
-    letter-spacing: 0.12em;
-    text-transform: uppercase;
-    color: rgba(237, 233, 254, 0.5);
+    justify-content: flex-end;
+    padding: 0.5rem 0.6rem;
+    border-bottom: 1px solid rgba(148, 163, 184, 0.16);
 }
 
 .tombol-salin {
@@ -2454,6 +2756,35 @@ html {
     background-color: color-mix(in oklab, var(--k) 35%, transparent);
 }
 
+/* Kaki panel: jumlah jadwal yang tidak ditampilkan karena panelnya dipotong
+   di empat baris pertama. Ditulis eksplisit, bukan disembunyikan diam-diam,
+   supaya pengguna tidak mengira jadwal hari ini cuma segitu. */
+.dash-jadwal__sisa {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    margin-top: 0.4rem;
+    border-top: 1px dashed color-mix(in oklab, var(--color-lavender) 80%, transparent);
+    padding-top: 0.45rem;
+    font-size: 0.6875rem;
+    font-weight: 600;
+    color: color-mix(in oklab, var(--color-dark) 45%, transparent);
+}
+
+.dash-jadwal__sisa-tautan {
+    flex-shrink: 0;
+    font-size: 0.6875rem;
+    font-weight: 700;
+    color: var(--color-primary);
+    transition: color 0.25s ease;
+}
+
+.dash-jadwal__sisa-tautan:hover,
+.dash-jadwal__sisa-tautan:focus-visible {
+    color: var(--color-primary-dark);
+}
+
 /* Leaderboard */
 .dash-peringkat {
     display: flex;
@@ -2689,11 +3020,12 @@ html {
     font-size: 0.6875rem;
     font-weight: 600;
 }
-/* Isi materi di halaman detail */
+/* Isi materi di halaman detail: 14px, #4b4b65, leading 1.7 seperti
+   rancangan halaman. Mode gelap memakai --teks-isi yang sudah dibalik. */
 .isi-materi {
-    color: color-mix(in oklab, var(--color-dark) 82%, transparent);
-    font-size: 0.9375rem;
-    line-height: 1.85;
+    color: var(--teks-isi);
+    font-size: 0.875rem;
+    line-height: 1.7;
 }
 
 .isi-materi > p + p {
@@ -4435,23 +4767,23 @@ html {
     isolation: isolate;
     overflow: hidden;
     min-width: 0;
+    /* Panjang banner dijaga di 7rem (112px) supaya tetap strip rata
+       walaupun isinya berubah, dan tidak ikut memendek atau melar
+       sendiri. */
+    min-height: 7rem;
     border-radius: 1rem;
     padding: 1.15rem 1.25rem;
     background: linear-gradient(100deg, #5a3fd4 0%, #6c4de6 42%, #a78bfa 100%);
     box-shadow: 0 10px 26px -18px rgba(90, 63, 212, 0.85);
 }
 
-.hasil-banner__ikon {
-    display: flex;
-    align-items: center;
-    justify-content: center;
+/* Emoji piala di paling kiri banner. Emoji punya ukuran glyph-nya
+   sendiri, jadi cukup diatur lewat font-size, tanpa kotak transparan
+   seperti ikon SVG. */
+.hasil-banner__piala {
     flex-shrink: 0;
-    width: 2.875rem;
-    height: 2.875rem;
-    border-radius: 0.9rem;
-    color: #fff;
-    background-color: rgba(255, 255, 255, 0.18);
-    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.32);
+    font-size: 2rem;
+    line-height: 1;
 }
 
 .hasil-banner__label {
@@ -5218,17 +5550,14 @@ html {
     box-shadow: 0 1px 2px rgba(33, 26, 58, 0.04), 0 14px 30px -26px rgba(108, 77, 230, 0.5);
 }
 
-.hasil-motivasi__pita {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 2.75rem;
-    height: 2.75rem;
-    margin-inline: auto;
-    border-radius: 0.9rem;
-    color: var(--color-primary);
-    background-color: rgba(255, 255, 255, 0.72);
-    box-shadow: 0 8px 18px -14px rgba(108, 77, 230, 0.9);
+/* Emoji piala di atas kutipan. Emoji punya ukuran glyph-nya sendiri,
+   jadi cukup diatur lewat font-size dan line-height, tanpa kotak
+   background seperti ikon SVG. */
+.hasil-motivasi__piala {
+    display: block;
+    font-size: 1.75rem;
+    line-height: 1;
+    text-align: center;
 }
 
 .hasil-motivasi__bintang {
@@ -5244,7 +5573,7 @@ html {
 }
 
 .hasil-motivasi__teks {
-    margin-top: 0.7rem;
+    margin-top: 0.55rem;
     font-size: 0.8125rem;
     font-weight: 700;
     line-height: 1.65;
@@ -5521,4 +5850,1396 @@ html {
     letter-spacing: 0.1em;
     text-transform: uppercase;
     color: var(--color-primary);
+}
+
+/* ================================================================
+   HALAMAN JADWAL
+   ================================================================
+   Tujuan tombol "Lihat Semua" di panel "Jadwal Hari Ini" milik
+   dashboard: papan kepala, strip tujuh hari, daftar pelajaran,
+   ringkasan, dan kalender mini.
+
+   Latar halaman (.kanvas-jadwal) memakai ungu soft, lebih pekat dari
+   .kanvas-halaman yang nyaris putih. Kartu di dalamnya tetap putih
+   penuh, jadi perbedaan nada itulah yang membuat kartunya tetap
+   terlihat. Warna headline, tombol, dan badge status tetap memakai
+   token @theme yang sudah ada; tidak ada palet baru selain ungu soft
+   untuk latar.
+   ================================================================ */
+
+/* ---------- Latar halaman ----------
+   Kabut ungu lembut di dua sudut, sama seperti .kanvas-halaman tapi
+   lebih terasa supaya kartu putih di atasnya terlihat mengambang. */
+.kanvas-jadwal {
+    background-color: #f6f3ff;
+    background-image:
+        radial-gradient(58rem 30rem at 86% -10%, color-mix(in oklab, var(--color-ungu-soft) 26%, transparent), transparent 70%),
+        radial-gradient(44rem 26rem at -6% 104%, color-mix(in oklab, var(--color-primary) 14%, transparent), transparent 72%);
+    background-attachment: fixed;
+}
+
+/* ---------- Kepala halaman ----------
+   Papan ungu pastel (soft) berisi lencana hari, judul, deskripsi,
+   angka ringkas, dan strip tujuh hari.
+
+   Pola warnanya sengaja mengikuti .materi-kepala supaya kepala halaman
+   Jadwal dan Materi terasa satu keluarga: ungu muda dengan teks ungu
+   tua, bukan ungu pekat dengan teks putih seperti halaman Hasil. */
+.jadwal-kepala {
+    position: relative;
+    overflow: hidden;
+    border-radius: 1.75rem;
+    background-image:
+        radial-gradient(38rem 20rem at 88% -10%, rgba(255, 255, 255, 0.75), transparent 62%),
+        linear-gradient(135deg, #f0ecff 0%, #e6ddff 48%, #d6cbfb 100%);
+    box-shadow:
+        0 28px 55px -34px rgba(107, 85, 220, 0.55),
+        inset 0 0 0 1px rgba(124, 96, 235, 0.16);
+}
+
+.jadwal-kepala::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image: radial-gradient(rgba(107, 85, 220, 0.25) 1px, transparent 1px);
+    background-size: 18px 18px;
+    opacity: 0.5;
+    pointer-events: none;
+}
+
+.jadwal-kepala::after {
+    content: '';
+    position: absolute;
+    right: -6rem;
+    bottom: -8rem;
+    width: 22rem;
+    height: 22rem;
+    border-radius: 9999px;
+    background: radial-gradient(circle, rgba(255, 255, 255, 0.7), transparent 68%);
+    pointer-events: none;
+}
+
+/* Isi kepala naik satu tingkat supaya tidak tertutup ::before / ::after. */
+.jadwal-kepala__isi {
+    position: relative;
+    z-index: 1;
+}
+
+.jadwal-kepala__lencana {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    border-radius: 9999px;
+    background-color: rgba(255, 255, 255, 0.72);
+    padding: 0.35rem 0.8rem;
+    font-family: var(--font-mono);
+    font-size: 0.6875rem;
+    font-weight: 600;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: #5a48c8;
+    box-shadow: inset 0 0 0 1px rgba(90, 72, 200, 0.22);
+}
+
+.jadwal-kepala__judul {
+    margin-top: 0.85rem;
+    font-size: clamp(1.5rem, 3.4vw, 2.125rem);
+    font-weight: 800;
+    line-height: 1.15;
+    letter-spacing: -0.02em;
+    color: #3a2f8f;
+}
+
+.jadwal-kepala__deskripsi {
+    margin-top: 0.5rem;
+    max-width: 34rem;
+    font-size: 0.875rem;
+    line-height: 1.65;
+    color: rgba(58, 47, 143, 0.72);
+}
+
+.jadwal-kepala__statistik {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-top: 1.1rem;
+}
+
+.jadwal-kepala__statistik > div {
+    display: flex;
+    align-items: baseline;
+    gap: 0.4rem;
+    border-radius: 0.9rem;
+    background-color: rgba(255, 255, 255, 0.66);
+    padding: 0.45rem 0.75rem;
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.95);
+}
+
+.jadwal-kepala__angka {
+    font-family: var(--font-mono);
+    font-size: 1.0625rem;
+    font-weight: 700;
+    line-height: 1;
+    color: #4a3ab8;
+    font-variant-numeric: tabular-nums;
+}
+
+.jadwal-kepala__satuan {
+    font-size: 0.6875rem;
+    font-weight: 600;
+    color: rgba(74, 58, 184, 0.65);
+}
+
+/* Kolom cari dan dropdown filter diletakkan di dalam papan, jadi
+   keduanya ikut jadi putih penuh. */
+.jadwal-kepala .kolom-cari,
+.jadwal-kepala .pilih-kategori {
+    border-color: transparent;
+    background-color: #fff;
+    box-shadow: 0 14px 28px -20px rgba(74, 58, 184, 0.55);
+}
+
+.jadwal-kepala .kolom-cari:focus,
+.jadwal-kepala .pilih-kategori:focus {
+    box-shadow: 0 0 0 4px rgba(90, 72, 200, 0.3);
+}
+
+.jadwal-kepala .kepala-cari__ikon {
+    color: color-mix(in oklab, var(--color-dark) 42%, transparent);
+}
+
+/* ---------- Strip tujuh hari ----------
+   Tujuh kotak side-by-side dalam satu baris, selalu muat di lebar
+   berapa pun karena tiap kolom minmax(0, 1fr) dan teks di dalamnya
+   dipangkas, jadi tidak pernah ada scroll horizontal di ponsel. */
+.jadwal-hari {
+    display: grid;
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+    gap: 0.5rem;
+    margin-top: 1.25rem;
+}
+
+.jadwal-hari__item {
+    display: flex;
+    align-items: center;
+    flex-direction: column;
+    gap: 0.1rem;
+    min-width: 0;
+    border-radius: 0.9rem;
+    background-color: rgba(255, 255, 255, 0.66);
+    padding: 0.5rem 0.35rem 0.45rem;
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.95);
+    transition:
+        background-color 0.25s ease,
+        box-shadow 0.25s ease,
+        transform 0.25s ease;
+}
+
+.jadwal-hari__item:hover {
+    background-color: #fff;
+    transform: translateY(-2px);
+    box-shadow: 0 12px 22px -16px rgba(74, 58, 184, 0.7);
+}
+
+.jadwal-hari__nama {
+    font-family: var(--font-mono);
+    font-size: 0.5625rem;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: rgba(74, 58, 184, 0.6);
+}
+
+.jadwal-hari__angka {
+    font-size: 1rem;
+    font-weight: 800;
+    line-height: 1.1;
+    color: #3a2f8f;
+    font-variant-numeric: tabular-nums;
+}
+
+.jadwal-hari__jumlah {
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 0.5625rem;
+    font-weight: 600;
+    color: rgba(74, 58, 184, 0.55);
+}
+
+.jadwal-hari__jumlah--kosong {
+    color: rgba(74, 58, 184, 0.35);
+}
+
+.jadwal-hari__item--aktif,
+.jadwal-hari__item--aktif:hover {
+    background: linear-gradient(150deg, var(--color-primary) 0%, var(--color-primary-dark) 100%);
+    box-shadow: 0 14px 26px -16px color-mix(in oklab, var(--color-primary) 85%, transparent);
+}
+
+.jadwal-hari__item--aktif .jadwal-hari__nama,
+.jadwal-hari__item--aktif .jadwal-hari__angka,
+.jadwal-hari__item--aktif .jadwal-hari__jumlah {
+    color: #fff;
+}
+
+.jadwal-hari__item--aktif .jadwal-hari__nama,
+.jadwal-hari__item--aktif .jadwal-hari__jumlah {
+    opacity: 0.78;
+}
+
+/* Di ponsel kotak-kotaknya tetap tujuh, cuma tinggi dan jaraknya
+   dikecilkan supaya tidak memakan terlalu banyak layar. */
+@media (max-width: 639px) {
+    .jadwal-hari {
+        gap: 0.35rem;
+    }
+
+    .jadwal-hari__item {
+        padding: 0.4rem 0.15rem 0.35rem;
+    }
+
+    .jadwal-hari__jumlah {
+        font-size: 0.5rem;
+    }
+}
+
+/* ---------- Panel daftar pelajaran ---------- */
+.jadwal-panel {
+    overflow: hidden;
+    min-width: 0;
+    border-radius: 0.875rem;
+    border: 1px solid color-mix(in oklab, var(--color-lavender) 85%, transparent);
+    background-color: #fff;
+    box-shadow: 0 1px 2px rgba(33, 26, 58, 0.04), 0 12px 26px -22px rgba(33, 26, 58, 0.45);
+}
+
+.jadwal-panel__kepala {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem 1rem;
+    flex-wrap: wrap;
+    min-width: 0;
+    padding: 0.9rem 1.15rem;
+    border-bottom: 1px solid color-mix(in oklab, var(--color-lavender) 70%, transparent);
+}
+
+.jadwal-panel__kepala-judul {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    min-width: 0;
+}
+
+.jadwal-panel__ikon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    width: 1.875rem;
+    height: 1.875rem;
+    border-radius: 0.6rem;
+    color: var(--color-primary);
+    background-color: color-mix(in oklab, var(--color-lavender) 60%, white);
+}
+
+.jadwal-panel__judul {
+    min-width: 0;
+    font-size: 0.9375rem;
+    font-weight: 800;
+    letter-spacing: -0.01em;
+    color: var(--color-dark);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.jadwal-panel__lencana {
+    flex-shrink: 0;
+    border-radius: 9999px;
+    background-color: var(--color-brand-bg);
+    padding: 0.2rem 0.6rem;
+    font-size: 0.625rem;
+    font-weight: 700;
+    color: var(--color-primary-dark);
+    box-shadow: inset 0 0 0 1px var(--color-lavender);
+}
+
+.jadwal-panel__badan {
+    min-width: 0;
+    padding: 1.1rem 1.15rem 1.15rem;
+}
+
+.jadwal-panel__catatan {
+    margin-top: 0.9rem;
+    border-top: 1px dashed color-mix(in oklab, var(--color-lavender) 80%, transparent);
+    padding-top: 0.8rem;
+    font-size: 0.6875rem;
+    line-height: 1.6;
+    color: color-mix(in oklab, var(--color-dark) 50%, transparent);
+}
+
+/* ---------- Daftar pelajaran ----------
+   Empat kolom: jam (tetap), isi (menyerap sisa ruang), ikon, dan aksi
+   edit/hapus. minmax(0, 1fr) pada kolom kedua menjaga judul panjang tidak
+   mendorong kolom lain keluar, jadi tidak pernah ada scroll horizontal. */
+.jadwal-daftar {
+    display: grid;
+    gap: 0.6rem;
+    min-width: 0;
+}
+
+.jadwal-item {
+    position: relative;
+    display: grid;
+    align-items: center;
+    gap: 0.5rem 0.9rem;
+    min-width: 0;
+    grid-template-columns: auto minmax(0, 1fr) auto auto;
+    border-radius: 0.875rem;
+    border: 1px solid color-mix(in oklab, var(--color-lavender) 80%, transparent);
+    background-color: #fff;
+    padding: 0.8rem 0.9rem;
+    transition:
+        transform 0.35s cubic-bezier(0.22, 1, 0.36, 1),
+        border-color 0.35s,
+        box-shadow 0.35s;
+}
+
+.jadwal-item:hover {
+    transform: translateY(-2px);
+    border-color: color-mix(in oklab, var(--k) 30%, var(--color-lavender));
+    box-shadow: 0 1px 2px rgba(33, 26, 58, 0.04), 0 18px 32px -28px color-mix(in oklab, var(--k-gelap) 60%, transparent);
+}
+
+.jadwal-item__waktu {
+    display: flex;
+    flex-shrink: 0;
+    flex-direction: column;
+    align-items: center;
+    border-radius: 0.625rem;
+    background-color: color-mix(in oklab, var(--k) 12%, white);
+    padding: 0.4rem 0.5rem;
+    line-height: 1.25;
+}
+
+.jadwal-item__mulai {
+    font-size: 0.8125rem;
+    font-weight: 700;
+    color: var(--k-gelap);
+    font-variant-numeric: tabular-nums;
+}
+
+.jadwal-item__selesai {
+    font-size: 0.625rem;
+    font-weight: 500;
+    color: color-mix(in oklab, var(--k-gelap) 65%, transparent);
+    font-variant-numeric: tabular-nums;
+}
+
+.jadwal-item__isi {
+    min-width: 0;
+}
+
+.jadwal-item__kepala {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.4rem 0.6rem;
+    min-width: 0;
+}
+
+.jadwal-item__judul {
+    min-width: 0;
+    font-size: 0.875rem;
+    font-weight: 800;
+    letter-spacing: -0.01em;
+    line-height: 1.3;
+    color: var(--color-dark);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.jadwal-item__kategori {
+    display: inline-block;
+    margin-top: 0.25rem;
+    border-radius: 9999px;
+    background-color: color-mix(in oklab, var(--k) 10%, white);
+    padding: 0.1rem 0.5rem;
+    font-size: 0.625rem;
+    font-weight: 700;
+    color: var(--k-gelap);
+    box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--k) 22%, transparent);
+}
+
+/* Kelas, ruang, durasi. disembunyikan di layar sempit supaya baris tidak
+   jadi tinggi sekali di ponsel; jam dan judul sudah cukup untuk tahu
+   pelajaran apa yang sedang atau akan berjalan. */
+.jadwal-item__meta {
+    display: none;
+    flex-wrap: wrap;
+    gap: 0.4rem 1.1rem;
+    margin-top: 0.5rem;
+    min-width: 0;
+}
+
+.jadwal-item__meta > div {
+    min-width: 0;
+}
+
+.jadwal-item__meta dt {
+    font-size: 0.5625rem;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: color-mix(in oklab, var(--color-dark) 38%, transparent);
+}
+
+.jadwal-item__meta dd {
+    margin-top: 0.05rem;
+    font-size: 0.6875rem;
+    font-weight: 600;
+    color: color-mix(in oklab, var(--color-dark) 68%, transparent);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+@media (min-width: 640px) {
+    .jadwal-item__meta {
+        display: flex;
+    }
+}
+
+/* Pelajaran yang sudah lewat tampil redup, sama seperti di panel
+   dashboard, supaya daftar hari ini bisa dipindai sekilas. */
+.jadwal-item--lewat .jadwal-item__judul,
+.jadwal-item--lewat .jadwal-item__kategori {
+    opacity: 0.55;
+}
+
+.jadwal-item--lewat .jadwal-item__waktu {
+    background-color: color-mix(in oklab, var(--k) 7%, white);
+}
+
+/* Pelajaran yang sedang berlangsung diberi garis aksen di kiri supaya
+   mudah dicari di daftar yang panjang. */
+.jadwal-item--sedang::before {
+    content: '';
+    position: absolute;
+    inset: 0.55rem auto 0.55rem 0;
+    width: 0.1875rem;
+    border-radius: 9999px;
+    background: linear-gradient(180deg, var(--k) 0%, var(--k-gelap) 100%);
+}
+
+.jadwal-ikon-kotak {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    width: 2.25rem;
+    height: 2.25rem;
+    border-radius: 0.75rem;
+    background-color: color-mix(in oklab, var(--k) 12%, white);
+    color: var(--k-gelap);
+    transition:
+        transform 0.3s cubic-bezier(0.22, 1, 0.36, 1),
+        background-color 0.3s ease;
+}
+
+.jadwal-item:hover .jadwal-ikon-kotak {
+    transform: scale(1.06);
+}
+
+/* ---------- Badge status ---------- */
+.jadwal-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    flex-shrink: 0;
+    border-radius: 9999px;
+    padding: 0.18rem 0.55rem;
+    font-size: 0.625rem;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.jadwal-status--sedang {
+    background-color: color-mix(in oklab, #0f9d76 12%, white);
+    color: #0f7a5b;
+}
+
+/* Titik berdenyut di badge "sedang berlangsung": satu-satunya animasi
+   di halaman ini, dan langsung dimatikan kalau pengguna minta gerakan
+   dikurangi. */
+.jadwal-status__titik {
+    width: 0.375rem;
+    height: 0.375rem;
+    border-radius: 9999px;
+    background-color: currentColor;
+    animation: jadwal-denak 1.6s ease-in-out infinite;
+}
+
+@keyframes jadwal-denak {
+    0%,
+    100% {
+        opacity: 0.35;
+        transform: scale(0.8);
+    }
+
+    50% {
+        opacity: 1;
+        transform: scale(1.15);
+    }
+}
+
+.jadwal-status--selesai {
+    background-color: color-mix(in oklab, var(--color-dark) 6%, white);
+    color: color-mix(in oklab, var(--color-dark) 45%, transparent);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .jadwal-status__titik {
+        animation: none;
+    }
+}
+
+/* ---------- Kartu di sidebar ----------
+   Ringkasan dan kalender memakai satu bentuk kartu yang sama supaya
+   sidebar terbaca sebagai satu blok, bukan dua panel yang kebetulan
+   berdekatan. */
+.jadwal-kartu {
+    --k: var(--color-primary);
+    --k-gelap: var(--color-primary-dark);
+    min-width: 0;
+    border-radius: 0.875rem;
+    border: 1px solid color-mix(in oklab, var(--color-lavender) 85%, transparent);
+    background-color: #fff;
+    padding: 1rem 1.05rem;
+    box-shadow: 0 1px 2px rgba(33, 26, 58, 0.04), 0 10px 22px -18px rgba(33, 26, 58, 0.5);
+}
+
+.jadwal-kartu__kepala {
+    display: flex;
+    align-items: center;
+    gap: 0.55rem;
+    min-width: 0;
+}
+
+.jadwal-kartu__ikon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    width: 1.875rem;
+    height: 1.875rem;
+    border-radius: 0.6rem;
+    color: var(--color-primary);
+    background-color: color-mix(in oklab, var(--color-lavender) 60%, white);
+}
+
+.jadwal-kartu__judul {
+    min-width: 0;
+    font-size: 0.9375rem;
+    font-weight: 800;
+    letter-spacing: -0.01em;
+    color: var(--color-dark);
+}
+
+.jadwal-kartu__catatan {
+    margin-top: 0.75rem;
+    border-top: 1px dashed color-mix(in oklab, var(--color-lavender) 80%, transparent);
+    padding-top: 0.7rem;
+    font-size: 0.6875rem;
+    line-height: 1.6;
+    color: color-mix(in oklab, var(--color-dark) 50%, transparent);
+}
+
+.jadwal-kartu__catatan strong {
+    color: color-mix(in oklab, var(--color-dark) 75%, transparent);
+}
+
+/* ---------- Blok "sedang berlangsung" ---------- */
+.jadwal-sekarang {
+    margin-top: 0.85rem;
+    border-radius: 0.75rem;
+    background-color: color-mix(in oklab, var(--k) 10%, white);
+    padding: 0.7rem 0.8rem;
+    box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--k) 22%, transparent);
+}
+
+.jadwal-sekarang__label {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    font-size: 0.5625rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--k-gelap);
+}
+
+.jadwal-sekarang__titik {
+    width: 0.375rem;
+    height: 0.375rem;
+    border-radius: 9999px;
+    background-color: currentColor;
+    animation: jadwal-denak 1.6s ease-in-out infinite;
+}
+
+.jadwal-sekarang__judul {
+    margin-top: 0.3rem;
+    font-size: 0.875rem;
+    font-weight: 800;
+    letter-spacing: -0.01em;
+    color: var(--color-dark);
+}
+
+.jadwal-sekarang__waktu {
+    margin-top: 0.15rem;
+    font-size: 0.6875rem;
+    font-weight: 500;
+    font-variant-numeric: tabular-nums;
+    color: color-mix(in oklab, var(--color-dark) 55%, transparent);
+}
+
+/* ---------- Tiga angka ringkas ---------- */
+.jadwal-angka {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.4rem;
+    margin-top: 0.85rem;
+}
+
+.jadwal-angka > div {
+    min-width: 0;
+    border-radius: 0.7rem;
+    background-color: var(--color-brand-bg);
+    padding: 0.5rem 0.4rem;
+    text-align: center;
+    box-shadow: inset 0 0 0 1px var(--color-lavender);
+}
+
+.jadwal-angka dt {
+    font-size: 0.5625rem;
+    font-weight: 600;
+    color: color-mix(in oklab, var(--color-dark) 45%, transparent);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.jadwal-angka dd {
+    margin-top: 0.15rem;
+    font-size: 0.9375rem;
+    font-weight: 800;
+    line-height: 1;
+    color: var(--color-dark);
+    font-variant-numeric: tabular-nums;
+}
+
+/* ---------- Empty state ---------- */
+.jadwal-kosong {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 2.5rem 1.5rem;
+    text-align: center;
+}
+
+.jadwal-kosong__ikon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 3.5rem;
+    height: 3.5rem;
+    border-radius: 9999px;
+    color: var(--color-primary);
+    background-color: color-mix(in oklab, var(--color-lavender) 55%, white);
+}
+
+.jadwal-kosong__judul {
+    margin-top: 0.9rem;
+    font-size: 1rem;
+    font-weight: 800;
+    letter-spacing: -0.01em;
+    color: var(--color-dark);
+}
+
+.jadwal-kosong__deskripsi {
+    margin-top: 0.4rem;
+    max-width: 24rem;
+    font-size: 0.8125rem;
+    line-height: 1.7;
+    color: color-mix(in oklab, var(--color-dark) 50%, transparent);
+}
+
+/* ============================================================
+   TEMA GELAP (MODE GELAP)
+   ============================================================
+   Mode gelap diaktifkan lewat atribut data-theme="gelap" pada
+   elemen <html>, bukan lewat kelas dark:.
+
+   Alasannya: halaman Dashboard, Materi, Quiz, dan Hasil sudah
+   ditulis lengkap dengan warna terang dan tidak boleh ikut
+   diubah. Dengan memindahkan palet ke atribut di <html>, seluruh
+   aplikasi ikut gelap tanpa satu pun file halaman disentuh.
+
+   Yang ditulis di sini sengaja TIDAK memakai @layer. Aturan tanpa
+   layer selalu menang atas aturan Tailwind yang berada di
+   @layer utilities, jadi satu blok ini cukup untuk mengalahkan
+   semua kelas utilitas seperti .bg-white, .text-dark, dan
+   .border-lavender sekaligus.
+
+   Urutan blok: (1) palet, (2) utilitas yang jadi permukaan dan
+   garis, (3) komponen yang menulis #fff secara langsung, (4)
+   teks ungu, (5) penyesuaian kecil. */
+
+[data-theme='gelap'] {
+    /*
+     * Primary dinaikkan sedikit supaya lebih hidup di atas dasar gelap,
+     * tapi tetap cukup gelap untuk teks putih di atasnya.
+     */
+    --color-primary: #7c5cff;
+    --color-primary-dark: #9377ff;
+
+    /* --color-dark bukan lagi "teks gelap": di mode gelap fungsinya
+       berubah jadi warna teks utama, jadi isinya dibalik. Semua
+       teks redup hasil color-mix() ikut ikut terang. */
+    --color-dark: #ece8ff;
+
+    /* Dipakai border-lavender, bg-lavender, divide-lavender, dan
+       color-mix() untuk isian, jadi satu nilai ini mengatur garis
+       sekaligus isian lembut. */
+    --color-lavender: #2b2352;
+
+    /* Latar halaman dan latar kolom pencarian. */
+    --color-brand-bg: #100d24;
+
+    /* Palet khusus halaman Tambah Materi, mengikuti palet utama. */
+    --color-ungu: #a58bff;
+    --color-ungu-dark: #c4b3ff;
+    --color-ungu-soft: #8b6dff;
+    --color-ungu-bg: #1c1738;
+    --color-ungu-line: #3a3168;
+    --color-muted: #a49dc7;
+
+    /* Membuat scrollbar, caret, dan kontrol formulir bawaan browser
+       ikut gelap, jadi tidak ada elemen putih yang menyinggung. */
+    color-scheme: dark;
+}
+
+/* ---------- (2) Permukaan dan garis ---------- */
+
+/* .bg-white adalah permukaan kartu di hampir seluruh aplikasi, jadi
+   inilah satu perubahan yang paling besar pengaruhnya. */
+[data-theme='gelap'] .bg-white {
+    background-color: #191336;
+}
+
+/* Latar bertekstur (top bar dan kanvas Materi/Quiz). Ditimpa
+   background-color saja; gradasinya ikut gelap sendiri karena
+   dicampur dari --color-lavender dan --color-primary. */
+[data-theme='gelap'] .latar-atas,
+[data-theme='gelap'] .kanvas-materi,
+[data-theme='gelap'] .kanvas-halaman {
+    background-color: #100d24;
+}
+
+/* Fokus kolom cari dan dropdown kategori memulihkan warna putih
+   di mode terang, jadi di mode gelap harus mengembalikan kartu. */
+[data-theme='gelap'] .kolom-cari:focus,
+[data-theme='gelap'] .pilih-kategori:focus,
+[data-theme='gelap'] .kolom-form:focus {
+    background-color: #221b45;
+}
+
+/* Placeholder kolom form ditulis warna tetap di mode terang. */
+[data-theme='gelap'] .kolom-form::placeholder {
+    color: color-mix(in oklab, var(--color-dark) 40%, transparent);
+}
+
+/* ---------- (3) Komponen yang menulis #fff langsung ---------- */
+
+/*
+ * Daftar di bawah diambil dari komponen yang tetap menulis
+ * background-color: #fff secara harfiah, bukan lewat var(). Tanpa
+ * daftar ini kartu-kartu itu akan tetap putih di atas latar gelap.
+ *
+ * Yang SENGAJA tidak ada di sini:
+ *   - .saklar::after  tombol bulat di saklar harus tetap putih supaya
+ *                     kelihatan melayang di atas relnya.
+ *   - .quiz-kepala dan .materi-kepala
+ *                     papan ungu di kepala halaman; teksnya sudah putih
+ *     dan ungu tua, jadi mengubah latarnya justru merusak kontrasnya.
+ *   - .kolom-cari, .kolom-form, .pilih-kategori
+ *                     #fff di sana hanya keadaan :focus, dan itu sudah
+ *                     ditimpa di blok (2) di atas.
+ */
+[data-theme='gelap'] :is(
+        .kartu-materi,
+        .kartu-quiz,
+        .dash-kartu,
+        .dash-akses,
+        .kartu-detail,
+        .kartu-form,
+        .hasil-kartu,
+        .hasil-panel,
+        .hasil-item,
+        .hasil-item__tombol,
+        .hasil-soal__huruf,
+        .jadwal-kepala,
+        .jadwal-panel,
+        .jadwal-item,
+        .jadwal-kartu,
+        .jadwal-hari__item,
+        .lobi-kartu,
+        .lobi-langkah__angka,
+        .lobi-daftar__item,
+        .lobi-pilihan,
+        .lobi-kode__salin,
+        .karya-aksi__tombol,
+        .tab-quiz__item,
+        .tab-unsur__tombol,
+        .bab-chip,
+        .bab-menu,
+        .bab-nav__tombol,
+        .bab-tambah-chip,
+        .daftar-isi__alih,
+        .alat-editor,
+        .alat-pilih,
+        .kertas-editor,
+        .pratinjau-frame,
+        .pratinjau-outline__item,
+        .pratinjau-outline__nomor,
+        .area-unggah,
+        .kendali-zoom,
+        .tombol-garis,
+        .tombol-kembali,
+        .profil-kartu,
+        .profil-kepala,
+        .modal__panel
+    ) {
+    background-color: #191336;
+}
+
+
+/* Kartu aksi menempel di pojok thumbnail: tombol simpan, lencana durasi,
+   dan tombol aksi. Warnanya dibuat gelap supaya tidak menyala
+   di atas banner yang sudah gelap. */
+[data-theme='gelap'] :is(.kartu-materi__simpan, .kartu-quiz__simpan, .dash-materi__simpan, .kartu-materi__aksi, .kartu-quiz__aksi) {
+    background-color: rgba(30, 24, 62, 0.94);
+}
+
+/* ---------- (4) Teks ungu ---------- */
+
+/*
+ * --color-primary harus cukup pekat supaya teks putih di atasnya
+ * (tombol ungu) tetap terbaca. Akibatnya kontrasnya ke latar gelap
+ * belum maksimal, jadi kelas teks ungu punya nilai tersendiri di sini.
+ */
+[data-theme='gelap'] .text-primary {
+    color: #b09bff;
+}
+
+[data-theme='gelap'] .text-primary-dark {
+    color: #c9b8ff;
+}
+
+/* ---------- (5) Penyesuaian kecil ---------- */
+
+/* Blok kode memakai latar batu kebiruan (#252b3a). Mode gelap menurunkan
+   brightness-nya saja supaya tetap satu keluarga, bukan kembali ungu. */
+[data-theme='gelap'] .kode-blok {
+    background-color: #1a2030;
+}
+
+/* Scrollbar: track dan thumb mengikuti --color-brand-bg dan
+   --color-lavender, jadi sudah ikut gelap. Yang perlu diatur
+   hanya agar warnanya sedikit lebih terang supaya tetap terlihat. */
+[data-theme='gelap'] ::-webkit-scrollbar-thumb {
+    background-color: #3a3168;
+}
+
+[data-theme='gelap'] ::-webkit-scrollbar-thumb:hover {
+    background-color: #4c4090;
+}
+
+/* Kartu "Zona Berbahaya" di halaman Profil: satu-satunya tempat
+   merah muncul, jadi mode gelap hanya menyesuaikan latarnya. */
+.profil-bahaya {
+    border-color: rgba(220, 38, 38, 0.35);
+}
+
+[data-theme='gelap'] .profil-bahaya {
+    background-image: linear-gradient(135deg, rgba(220, 38, 38, 0.12), rgba(220, 38, 38, 0.04));
+}
+
+/* ============================================================
+   PROFIL
+   ============================================================
+   Halaman pengaturan akun: kartu kepala, kartu informasi, dialog
+   form, dan zona berbahaya. Semua memakai palet brand (ungu soft)
+   supaya tidak terasa seperti halaman foreign di dalam aplikasi. */
+
+    /* ---------- Kartu kepala profil ---------- */
+    .profil-kepala {
+        position: relative;
+        overflow: hidden;
+        border-radius: 1.25rem;
+        border: 1px solid var(--color-lavender);
+        background-color: #fff;
+        background-image:
+            radial-gradient(28rem 18rem at 92% -30%, color-mix(in oklab, var(--color-primary) 16%, transparent), transparent 66%),
+            radial-gradient(20rem 14rem at 6% 118%, color-mix(in oklab, var(--color-primary) 9%, transparent), transparent 70%);
+        box-shadow:
+            0 1px 2px rgba(33, 26, 58, 0.04),
+            0 22px 44px -34px rgba(33, 26, 58, 0.45);
+    }
+
+    /* Avatar besar di kartu kepala: lingkaran penuh, foto di dalam
+      selalu sama ukurannya, dan inisial memakai gradasi ungu soft
+       dengan teks putih, sama seperti avatar di top bar. */
+    .profil-avatar {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        width: 5.5rem;
+        height: 5.5rem;
+        border-radius: 9999px;
+        overflow: hidden;
+        background-image: linear-gradient(135deg, var(--a, var(--color-primary)), var(--a-gelap, var(--color-primary-dark)));
+        color: #fff;
+        font-size: 2rem;
+        font-weight: 800;
+        line-height: 1;
+        letter-spacing: -0.02em;
+        user-select: none;
+        box-shadow:
+            0 0 0 4px color-mix(in oklab, var(--color-primary) 12%, transparent),
+            0 16px 32px -18px color-mix(in oklab, var(--color-primary) 80%, transparent);
+    }
+
+    .profil-avatar--kecil {
+        width: 2.5rem;
+        height: 2.5rem;
+        font-size: 0.875rem;
+        box-shadow: 0 0 0 3px color-mix(in oklab, var(--color-primary) 12%, transparent);
+    }
+
+    .profil-avatar__foto {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+    /* ---------- Kartu isi ---------- */
+    .profil-kartu {
+        min-width: 0;
+        border-radius: 1.25rem;
+        border: 1px solid var(--color-lavender);
+        background-color: #fff;
+        box-shadow:
+            0 1px 2px rgba(33, 26, 58, 0.04),
+            0 18px 38px -32px rgba(33, 26, 58, 0.4);
+    }
+
+    /* Chip ungu di pojok kiri judul kartu, penanda jenis isi kartu. */
+    .profil-kartu__ikon {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        width: 2.25rem;
+        height: 2.25rem;
+        border-radius: 0.85rem;
+        background-color: color-mix(in oklab, var(--color-primary) 12%, transparent);
+        color: var(--color-primary);
+    }
+
+    .profil-kartu__judul {
+        min-width: 0;
+        font-size: 1rem;
+        font-weight: 800;
+        letter-spacing: -0.01em;
+        color: var(--color-dark);
+    }
+
+    .profil-kartu__deskripsi {
+        margin-top: 0.15rem;
+        font-size: 0.8125rem;
+        line-height: 1.6;
+        color: color-mix(in oklab, var(--color-dark) 55%, transparent);
+    }
+
+    /* ---------- Baris informasi akun ---------- */
+    /* Ikon di kiri, label dan nilai di kanan, dipisah garis tipis
+       seperti daftar pengaturan pada umumnya. */
+    .profil-info {
+        display: flex;
+        align-items: center;
+        gap: 0.85rem;
+        min-width: 0;
+        padding: 0.8rem 0;
+        border-top: 1px solid color-mix(in oklab, var(--color-lavender) 80%, transparent);
+    }
+
+    .profil-info__ikon {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        width: 2.25rem;
+        height: 2.25rem;
+        border-radius: 0.75rem;
+        background-color: color-mix(in oklab, var(--color-primary) 9%, transparent);
+        color: var(--color-primary);
+    }
+
+    .profil-info__label {
+        font-size: 0.75rem;
+        font-weight: 600;
+        color: color-mix(in oklab, var(--color-dark) 50%, transparent);
+    }
+
+    .profil-info__nilai {
+        font-size: 0.875rem;
+        font-weight: 700;
+        color: var(--color-dark);
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    /* ---------- Pesan validasi ---------- */
+    .profil-galat {
+        display: flex;
+        align-items: flex-start;
+        gap: 0.4rem;
+        margin-top: 0.4rem;
+        font-size: 0.75rem;
+        font-weight: 600;
+        line-height: 1.5;
+        color: #c2414a;
+    }
+
+    [data-theme='gelap'] .profil-galat {
+        color: #f8a4ab;
+    }
+
+    /* ---------- Dialog ---------- */
+    /*
+     * Mekanisme buka/tutup sengaja sama persis dengan .dialog-bab
+     * (hapus bab di halaman Tambah Materi): display:none sebagai
+     * keadaan awal, lalu .is-buka membuatnya flex. Dengan begitu
+     * kalau JavaScript mati, dialog tetap tidak pernah menutupi
+     * halaman.
+     */
+    .modal {
+        position: fixed;
+        inset: 0;
+        z-index: 70;
+        display: none;
+        align-items: center;
+        justify-content: center;
+        padding: 1.25rem;
+        overflow-y: auto;
+        background-color: rgba(20, 14, 44, 0.55);
+        backdrop-filter: blur(3px);
+    }
+
+    .modal.is-buka {
+        display: flex;
+    }
+
+    .modal__panel {
+        width: 100%;
+        max-width: 30rem;
+        margin: auto;
+        border-radius: 1.15rem;
+        border: 1px solid var(--color-lavender);
+        background-color: #fff;
+        box-shadow: 0 30px 60px -30px rgba(33, 26, 58, 0.75);
+    }
+
+    /* ---------- Baris tombol dialog ---------- */
+    /* Tombol selalu rata kanan di layar lebar, dan jadi satu kolom
+       penuh di ponsel supaya tidak pernah keluar layar. */
+    .modal__aksi {
+        display: flex;
+        flex-direction: column-reverse;
+        gap: 0.6rem;
+    }
+
+    @media (min-width: 480px) {
+        .modal__aksi {
+            flex-direction: row;
+            justify-content: flex-end;
+        }
+    }
+
+    .modal__aksi > * {
+        width: 100%;
+    }
+
+    @media (min-width: 480px) {
+        .modal__aksi > * {
+            width: auto;
+        }
+    }
+
+    /* ---------- Panel pilihan tema ---------- */
+    /* Segmented control: dua pilihan duduk dalam satu rel, yang aktif
+       diberi permukaan putih dan bayangan halus. */
+    .tema-pilih {
+        display: inline-flex;
+        gap: 0.25rem;
+        padding: 0.25rem;
+        border-radius: 9999px;
+        background-color: color-mix(in oklab, var(--color-lavender) 60%, transparent);
+        max-width: 100%;
+    }
+
+    .tema-pilih__item {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.4rem;
+        flex: 1;
+        white-space: nowrap;
+        border-radius: 9999px;
+        padding: 0.5rem 0.9rem;
+        font-size: 0.8125rem;
+        font-weight: 700;
+        color: color-mix(in oklab, var(--color-dark) 60%, transparent);
+        cursor: pointer;
+        transition:
+            background-color 0.25s ease,
+            color 0.25s ease,
+            box-shadow 0.25s ease;
+    }
+
+    .tema-pilih__item:hover {
+        color: var(--color-primary);
+    }
+
+    .tema-pilih__item[aria-pressed='true'] {
+        background-color: #fff;
+        color: var(--color-primary-dark);
+        box-shadow: 0 6px 14px -10px rgba(33, 26, 58, 0.5);
+    }
+
+    [data-theme='gelap'] .tema-pilih {
+        background-color: #221b45;
+    }
+
+    [data-theme='gelap'] .tema-pilih__item[aria-pressed='true'] {
+        background-color: #2f2657;
+        color: #fff;
+    }
+/* ---------- Aksi di header panel ----------
+   Pencarian dan tombol "Tambah Jadwal" duduk berdampingan. Group ini
+   membungkus keduanya supaya di layar sempit keduanya turun ke bawah
+   dan tombol tambah tetap berada di kanan. */
+.jadwal-panel__aksi {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    min-width: 0;
+}
+
+/* ---------- Catatan "jadwal contoh" ---------- */
+.jadwal-contoh {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.5rem;
+    margin-bottom: 0.9rem;
+    border-radius: 0.7rem;
+    background-color: color-mix(in oklab, #d99a06 9%, white);
+    padding: 0.6rem 0.75rem;
+    font-size: 0.75rem;
+    line-height: 1.6;
+    color: color-mix(in oklab, #8a6208 88%, transparent);
+    box-shadow: inset 0 0 0 1px color-mix(in oklab, #d99a06 22%, transparent);
+}
+
+.jadwal-contoh strong {
+    color: #7a5606;
+}
+
+/* ---------- Aksi di tiap baris jadwal ----------
+   Edit dan hapus muncul saat baris itu disorot, jadi daftar tetap
+   bersih kalau tidak ada yang sedang dikerjakan. Di layar sentuh
+   (tanpa hover) keduanya selalu terlihat.
+
+   Ruangnya tetap dialokasikan walau opacity-nya 0, jadi baris tidak
+   melompat saat kursor lewat di atasnya. */
+.jadwal-item__aksi {
+    display: flex;
+    align-items: center;
+    flex-shrink: 0;
+    gap: 0.25rem;
+    opacity: 0;
+    transition: opacity 0.25s ease;
+}
+
+.jadwal-item:hover .jadwal-item__aksi,
+.jadwal-item:focus-within .jadwal-item__aksi {
+    opacity: 1;
+}
+
+.jadwal-item__aksi a,
+.jadwal-item__aksi button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.875rem;
+    height: 1.875rem;
+    border-radius: 0.6rem;
+    color: color-mix(in oklab, var(--color-dark) 45%, transparent);
+    background-color: var(--color-brand-bg);
+    transition:
+        background-color 0.25s ease,
+        color 0.25s ease;
+}
+
+.jadwal-item__aksi a:hover,
+.jadwal-item__aksi a:focus-visible {
+    background-color: var(--color-lavender);
+    color: var(--color-primary-dark);
+}
+
+.jadwal-item__aksi button:hover,
+.jadwal-item__aksi button:focus-visible {
+    background-color: #fdecee;
+    color: #c2414a;
+}
+
+@media (hover: none) {
+    /* Di perangkat sentuh tidak ada hover, jadi tombolnya tidak boleh
+       ikut hilang. */
+    .jadwal-item__aksi {
+        opacity: 1;
+    }
+}
+
+/* Di ponsel, ikon pelajaran disembunyikan: ia cuma pemanis (sudah
+   ada nama pelajaran di bawah judul), sementara ruangnya lebih
+   berguna diberikan ke tombol aksi. */
+@media (max-width: 639px) {
+    .jadwal-item {
+        grid-template-columns: auto minmax(0, 1fr) auto;
+    }
+
+    .jadwal-ikon-kotak {
+        display: none;
+    }
+}
+
+/* ---------- Pesan sukses ----------
+   Melayang di pojok kanan bawah supaya tidak mendorong isi halaman
+   saat jadwal baru saja disimpan atau dihapus. */
+.jadwal-sukses {
+    position: fixed;
+    right: 1.25rem;
+    bottom: 1.25rem;
+    z-index: 60;
+    display: flex;
+    align-items: flex-start;
+    gap: 0.5rem;
+    max-width: min(24rem, calc(100vw - 2.5rem));
+    border-radius: 0.75rem;
+    background-color: #fff;
+    padding: 0.75rem 1rem;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    line-height: 1.5;
+    color: #0f7a5b;
+    box-shadow:
+        inset 0 0 0 1px color-mix(in oklab, #0f9d76 24%, transparent),
+        0 18px 36px -22px rgba(33, 26, 58, 0.6);
+}
+
+/* ---------- PR di dalam baris jadwal ----------
+   Satu baris berisi label PR, isi tugasnya, dan tenggat. Isi tugas
+   dipangkas ke dua baris supaya baris jadwal tidak ikut jadi tinggi
+   sekali kalau PR-nya panjang. */
+.jadwal-pr {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.3rem 0.5rem;
+    margin-top: 0.45rem;
+    min-width: 0;
+    border-radius: 0.6rem;
+    background-color: color-mix(in oklab, var(--k) 7%, white);
+    padding: 0.3rem 0.5rem;
+    box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--k) 16%, transparent);
+}
+
+.jadwal-pr__label {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.2rem;
+    flex-shrink: 0;
+    border-radius: 0.4rem;
+    background-color: color-mix(in oklab, var(--k) 16%, white);
+    padding: 0.1rem 0.35rem;
+    font-family: var(--font-mono);
+    font-size: 0.5625rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    color: var(--k-gelap);
+}
+
+.jadwal-pr__isi {
+    min-width: 0;
+    flex: 1 1 8rem;
+    font-size: 0.6875rem;
+    font-weight: 500;
+    line-height: 1.5;
+    color: color-mix(in oklab, var(--color-dark) 70%, transparent);
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+    -webkit-box-orient: vertical;
+}
+
+.jadwal-pr__tempo {
+    flex-shrink: 0;
+    border-radius: 9999px;
+    padding: 0.1rem 0.45rem;
+    font-size: 0.5625rem;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+/* Tenggat yang sudah lewat dibedakan dari yang masih aman, karena itu
+   informasi paling penting dari sebuah PR. */
+.jadwal-pr__tempo--terlambat {
+    background-color: color-mix(in oklab, #d0505e 14%, white);
+    color: #a8323c;
+}
+
+.jadwal-pr__tempo--sekarang {
+    background-color: color-mix(in oklab, #d99a06 18%, white);
+    color: #8a6208;
+}
+
+.jadwal-pr__tempo--dekat {
+    background-color: color-mix(in oklab, #d99a06 12%, white);
+    color: #8a6208;
+}
+
+.jadwal-pr__tempo--aman {
+    background-color: var(--color-brand-bg);
+    color: color-mix(in oklab, var(--color-dark) 50%, transparent);
 }

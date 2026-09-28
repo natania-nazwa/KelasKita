@@ -7,22 +7,33 @@
 
     Sumber datanya array polos dari App\Support\DaftarMateri, jadi komponen
     ini tidak terikat Eloquent. Bentuk array yang dipakai di sini:
-      judul, deskripsi, thumbnail, jumlah_bab, waktu_baca, aktif,
-      status_label, dibuat_pada, tautan, tautan_edit, tautan_hapus,
+      judul, deskripsi, thumbnail, jumlah_bab, waktu_baca, status,
+      warna_status, status_label, catatan_admin, sisa_pengajuan,
+      dibuat_pada, tautan, tautan_edit, tautan_hapus,
       kategori => [nama, ikon, warna, warna_gelap]
 
     Berbeda dengan kartu di halaman Materi, kartu ini bukan satu tautan utuh:
     hanya judul dan tombol "Lihat" yang membuka halaman detail, supaya tombol
     Edit dan Hapus tidak ikut terbuka.
 
+    Judul dan tombol "Lihat" hanya jadi tautan untuk materi yang sudah tayang.
+    Halaman detail menolak materi yang belum disetujui, jadi untuk draft,
+    menunggu, dan ditolak tautannya disembunyikan, bukan menuliskan URL yang
+    berakhir 404.
+
     Lencana status sengaja diletakkan di pojok kanan thumbnail, bukan di
     samping judul: di tiga kolom judulnya jadi jauh lebih lega dan tidak
     pernah tersempit oleh lencana.
+
+    Kalau materinya ditolak, alasan admin ikut ditampilkan. Tanpa itu pemilik
+    cuma melihat lencana "Ditolak" tanpa tahu harus memperbaiki apa, dan satu-
+    satu jalan yang tersisa untuk memperbaikinya adalah membuka form edit.
 --}}
 
 @php
     $kategori = $materi['kategori'];
-    $status = $materi['aktif'] ? 'aktif' : 'nonaktif';
+    $ditolak = $materi['status'] === \App\Models\Materi::STATUS_REJECTED;
+    $sudahTerbit = $materi['status'] === \App\Models\Materi::STATUS_PUBLISHED;
 @endphp
 
 <article style="--k: {{ $kategori['warna'] }}; --k-gelap: {{ $kategori['warna_gelap'] }};"
@@ -40,7 +51,7 @@
         <span class="kartu-materi__lencana">{{ $kategori['nama'] }}</span>
 
         {{-- Status di pojok kanan thumbnail. --}}
-        <span class="karya-status karya-status--{{ $status }} karya-pojok">
+        <span class="karya-status karya-status--{{ $materi['warna_status'] }} karya-pojok">
             <span class="karya-status__titik" aria-hidden="true"></span>
 
             {{ $materi['status_label'] }}
@@ -50,10 +61,29 @@
     {{-- B-E. Judul, deskripsi, informasi, dan baris aksi. --}}
     <div class="kartu-materi__badan">
         <h2 class="kartu-materi__judul karya-judul">
-            <a href="{{ $materi['tautan'] }}">{{ $materi['judul'] }}</a>
+            @if ($sudahTerbit)
+                <a href="{{ $materi['tautan'] }}">{{ $materi['judul'] }}</a>
+            @else
+                {{ $materi['judul'] }}
+            @endif
         </h2>
 
         <p class="kartu-materi__deskripsi">{{ $materi['deskripsi'] }}</p>
+
+        {{-- Alasan penolakan admin, supaya pemilik tahu harus memperbaiki apa.
+             Hanya untuk materi yang ditolak: status lain tidak punya catatan. --}}
+        @if ($ditolak && filled($materi['catatan_admin']))
+            <div class="mt-3 rounded-xl border border-[#f4c7cd] bg-[#fdecee] px-3.5 py-2.5">
+                <p class="text-xs font-bold text-[#a8323c]">Alasan ditolak admin</p>
+
+                <p class="mt-1 text-sm leading-relaxed text-[#a8323c]">{{ $materi['catatan_admin'] }}</p>
+            </div>
+        @elseif ($materi['sisa_pengajuan'] < \App\Models\Materi::BATAS_PENGAJUAN_ULANG)
+            <p class="mt-3 text-xs text-dark/55">
+                Sudah ditolak {{ \App\Models\Materi::BATAS_PENGAJUAN_ULANG - $materi['sisa_pengajuan'] }}x.
+                Sisa pengajuan: {{ $materi['sisa_pengajuan'] }}x.
+            </p>
+        @endif
 
         {{-- Jumlah bab, perkiraan waktu baca, dan tanggal dibuat. --}}
         <div class="karya-info mt-3.5">
@@ -85,14 +115,17 @@
         {{-- Baris aksi. Tombol hapus membuka dialog konfirmasi lebih dulu
              (dikerjakan initKonfirmasi() di resources/js/app.js). --}}
         <div class="karya-aksi">
-            <a href="{{ $materi['tautan'] }}" class="karya-aksi__tombol karya-aksi__tombol--lihat karya-aksi__tombol--utama"
-                title="Buka halaman materi ini">
-                Lihat
+            @if ($sudahTerbit)
+                <a href="{{ $materi['tautan'] }}"
+                    class="karya-aksi__tombol karya-aksi__tombol--lihat karya-aksi__tombol--utama"
+                    title="Buka halaman materi ini">
+                    Lihat
 
-                <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3" />
-                </svg>
-            </a>
+                    <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3" />
+                    </svg>
+                </a>
+            @endif
 
             <a href="{{ $materi['tautan_edit'] }}" class="karya-aksi__tombol" title="Ubah materi ini">
                 <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" stroke-width="1.9" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">

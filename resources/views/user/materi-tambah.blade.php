@@ -118,52 +118,131 @@
             ========================== --}}
             <div
                 class="sticky bottom-0 z-30 -mx-6 mt-5 border-t border-ungu-line bg-white/95 px-6 py-4 shadow-[0_-16px_32px_-30px_rgba(49,46,129,0.7)] backdrop-blur lg:-mx-10 lg:px-10">
-                <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-5">
+                @php
+                    /*
+                     * Status materi yang sedang diedit, dipakai untuk kalimat
+                     * penjelasan dan label tombol sekaligus supaya keduanya
+                     * tidak pernah berbeda pendapat.
+                     */
+                    $sedangDipublikasi = $modeEdit
+                        && $materi->status === \App\Models\Materi::STATUS_PUBLISHED;
+                    $bolehDiajukan = $modeEdit && $materi->bolehDiajukan();
+                    $labelAjukan = $sedangDipublikasi ? 'Kirim Ulang ke Review' : 'Ajukan Persetujuan';
+                @endphp
+
+                {{-- Blok kiri: status materi + penjelasannya.
+                     Penolakan dan catatan pengajuan diletakkan di bawah blok ini,
+                     bukan di dalam baris tombol, supaya isian yang panjang tidak
+                     ikut jadi anak flex row yang isinya cuma tombol. --}}
+                <div class="min-w-0">
                     @if ($modeEdit)
-                        {{-- Saat mengedit status tampilannya tidak diubah, jadi
-                             saklar publikasi disembunyikan: yang tersedia hanya
-                             tombol batal dan simpan. --}}
-                        <p class="text-sm leading-relaxed text-muted">
-                            Perubahan langsung tersimpan ke materi ini.
+                        <div class="flex flex-wrap items-center gap-2">
+                            <span class="karya-status karya-status--{{ $materi->warnaStatus() }}">
+                                <span class="karya-status__titik" aria-hidden="true"></span>
+                                {{ $materi->labelStatus() }}
+                            </span>
+                        </div>
+
+                        <p class="mt-1.5 text-sm leading-relaxed text-muted">
+                            @if ($materi->status === \App\Models\Materi::STATUS_PENDING)
+                                Materi ini sedang ditinjau admin. Perubahannya tetap bisa
+                                disimpan, tapi admin menilai versi yang sedang ditinjau.
+                            @elseif ($sedangDipublikasi)
+                                Materi ini sudah tayang. Perubahan baru tidak langsung
+                                tayang: tekan "Kirim Ulang ke Review" supaya admin
+                                menilai perubahannya dulu.
+                            @elseif (! $bolehDiajukan)
+                                Materi ini sudah ditolak {{ $materi->jumlah_ditolak }}x dan
+                                tidak bisa diajukan lagi. Perubahannya tetap bisa disimpan.
+                            @else
+                                Perubahanmu akan langsung tersimpan ke materi ini.
+                            @endif
                         </p>
                     @else
-                        {{-- Toggle publikasi --}}
                         <div class="flex min-w-0 items-start gap-3">
                             <button type="button" role="switch" aria-checked="true" data-publikasikan
-                                class="saklar mt-0.5" aria-label="Publikasikan materi"></button>
+                                class="saklar mt-0.5" aria-label="Ajukan persetujuan materi"></button>
 
                             <div class="min-w-0">
-                                <p class="text-sm font-bold text-dark">Publikasikan materi</p>
+                                <p class="text-sm font-bold text-dark">Ajukan persetujuan</p>
 
                                 <p class="text-xs leading-relaxed text-muted">
-                                    Materi akan langsung tersedia untuk siswa.
+                                    Materi tidak langsung tayang: admin meninjaunya dulu,
+                                    lalu kamu tahu hasilnya di Karya Saya.
                                 </p>
                             </div>
                         </div>
                     @endif
+                </div>
 
-                    {{-- Tombol aksi --}}
-                    <div class="flex shrink-0 flex-col gap-2.5 sm:flex-row sm:items-center">
-                        @if ($modeEdit)
-                            <a href="{{ route('user.karya-saya', ['tab' => 'materi']) }}" class="tombol-garis justify-center">
-                                Batal
-                            </a>
+                {{-- Alasan penolakan + catatan pengajuan.
+                     Hanya untuk materi yang masih boleh diajukan. --}}
+                @if ($bolehDiajukan)
+                    @if (filled($materi->catatan_admin))
+                        <div class="mt-3 rounded-xl border border-[#f4c7cd] bg-[#fdecee] px-4 py-3">
+                            <p class="text-xs font-bold text-[#a8323c]">
+                                Alasan ditolak admin
+                            </p>
 
-                            <button type="submit" class="tombol-utama justify-center">
-                                <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2.2"
-                                    viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-                                    <path stroke-linecap="round" stroke-linejoin="round"
-                                        d="M4.5 12.75 12 4.5l7.5 8.25M6 19.5h12a2.25 2.25 0 0 0 2.25-2.25V9.108a2.25 2.25 0 0 0-.659-1.591l-7.5-6.636a2.25 2.25 0 0 0-3.182 0l-7.5 6.636A2.25 2.25 0 0 0 4.5 9.108v8.142A2.25 2.25 0 0 0 6.75 19.5Z" />
-                                </svg>
+                            <p class="mt-1 text-sm leading-relaxed text-[#a8323c]">
+                                {{ $materi->catatan_admin }}
+                            </p>
 
-                                Simpan Perubahan
-                            </button>
-                        @else
-                            <button type="submit" name="publikasikan" value="0"
-                                class="tombol-garis justify-center">
-                                Simpan Draft
-                            </button>
+                            <p class="mt-1.5 text-xs text-[#a8323c]/80">
+                                Sisa pengajuan: {{ $materi->sisaPengajuan() }}x
+                            </p>
+                        </div>
+                    @endif
 
+                    {{-- Catatan pendukung hanya dimiliki materi yang ditolak.
+                         Ia disembunyikan dulu, lalu baru muncul setelah tombol
+                         "Ajukan Persetujuan" ditekan, supaya alasan penolakan
+                         yang dibaca lebih dulu tidak tenggelam di bawah isian
+                         yang belum tentu diisi. Atribut hidden dilepas oleh
+                         materi-tambah.js. --}}
+                    @if ($materi->perluCatatanPengajuan())
+                        @php
+                            // Gagal validasi atau nilai lama berarti isian ini
+                            // sudah pernah diisi pengguna, jadi tampilkan
+                            // kembali tanpa perlu menekan tombol sekali lagi.
+                            $tampilCatatan = $errors->has('catatan_pengajuan')
+                                || filled(old('catatan_pengajuan'));
+                        @endphp
+
+                        <div class="mt-3" data-catatan-wadah @unless ($tampilCatatan) hidden @endunless>
+                            <label for="catatan-pengajuan" class="block text-xs font-bold text-dark/60">
+                                Catatan pendukung
+                                <span class="text-[#c2414a]">(wajib)</span>
+                            </label>
+
+                            <textarea id="catatan-pengajuan" name="catatan_pengajuan" rows="2"
+                                data-catatan-isian
+                                @if ($tampilCatatan) required @endif
+                                maxlength="500"
+                                placeholder="Contoh: Bab 3 sudah saya tambahkan contoh kode dan latihan soal."
+                                class="mt-1.5 w-full rounded-xl border border-lavender bg-white px-3.5 py-2.5 text-sm text-dark placeholder:text-dark/35">{{ old('catatan_pengajuan', $materi->catatan_pengajuan) }}</textarea>
+                        </div>
+                    @endif
+                @endif
+
+                {{-- Baris tombol --}}
+                <div class="mt-4 flex shrink-0 flex-col gap-2.5 sm:flex-row sm:items-center">
+                    @if ($modeEdit)
+                        <a href="{{ route('user.karya-saya', ['tab' => 'materi']) }}" class="tombol-garis justify-center">
+                            Batal
+                        </a>
+
+                        <button type="submit" class="tombol-utama justify-center">
+                            <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2.2"
+                                viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                                <path stroke-linecap="round" stroke-linejoin="round"
+                                    d="M4.5 12.75 12 4.5l7.5 8.25M6 19.5h12a2.25 2.25 0 0 0 2.25-2.25V9.108a2.25 2.25 0 0 0-.659-1.591l-7.5-6.636a2.25 2.25 0 0 0-3.182 0l-7.5 6.636A2.25 2.25 0 0 0 4.5 9.108v8.142A2.25 2.25 0 0 0 6.75 19.5Z" />
+                            </svg>
+
+                            Simpan Perubahan
+                        </button>
+
+                        @if ($bolehDiajukan)
                             <button type="submit" name="publikasikan" value="1" data-tombol-publikasi
                                 class="tombol-utama justify-center">
                                 <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2.2"
@@ -172,10 +251,26 @@
                                         d="M6 12 3.269 3.125A59.769 59.769 0 0 1 21.485 12 59.768 59.768 0 0 1 3.27 20.875L5.999 12Zm0 0h7.5" />
                                 </svg>
 
-                                Publikasikan Materi
+                                {{ $labelAjukan }}
                             </button>
                         @endif
-                    </div>
+                    @else
+                        <button type="submit" name="publikasikan" value="0"
+                            class="tombol-garis justify-center">
+                            Simpan Draft
+                        </button>
+
+                        <button type="submit" name="publikasikan" value="1" data-tombol-publikasi
+                            class="tombol-utama justify-center">
+                            <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2.2"
+                                viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                                <path stroke-linecap="round" stroke-linejoin="round"
+                                    d="M6 12 3.269 3.125A59.769 59.769 0 0 1 21.485 12 59.768 59.768 0 0 1 3.27 20.875L5.999 12Zm0 0h7.5" />
+                            </svg>
+
+                            Ajukan Persetujuan
+                        </button>
+                    @endif
                 </div>
             </div>
         </form>

@@ -13,7 +13,7 @@ use Illuminate\Notifications\Notifiable;
  * User dan admin berada di tabel yang sama (tb_pengguna).
  * Pembeda keduanya hanya kolom "peran".
  */
-#[Fillable(['nama', 'email', 'kata_sandi', 'peran', 'aktif'])]
+#[Fillable(['nama', 'email', 'kata_sandi', 'peran', 'aktif', 'foto_profil'])]
 #[Hidden(['kata_sandi', 'remember_token'])]
 class User extends Authenticatable
 {
@@ -66,23 +66,51 @@ class User extends Authenticatable
     }
 
     /**
-     * Inisial untuk avatar. Maksimal dua huruf supaya bulatannya tetap
-     * proporsional: "Natania" jadi "N", "Siti Aminah" jadi "SA".
+     * Folder tempat foto profil disimpan di disk publik.
+     *
+     * Dipakai User::fotoProfilUrl() dan App\Support\BerkasProfil supaya
+     * nama foldernya hanya tertulis di satu tempat.
+     */
+    public const FOLDER_FOTO_PROFIL = 'foto-profil';
+
+    /**
+     * Inisial untuk avatar: satu huruf pertama nama depan.
+     *
+     * "Natania Nazwa Gisella" jadi "N", "Budi Santoso" jadi "B". Satu huruf
+     * dipakai supaya bulatannya proporsional di ukuran avatar mana pun,
+     * termasuk yang besar di header profil.
      */
     public function inisial(): string
     {
-        $kata = preg_split('/\s+/', trim((string) $this->nama)) ?: [];
-        $kata = array_values(array_filter($kata, 'strlen'));
+        $nama = trim((string) $this->nama);
 
-        if ($kata === []) {
+        if ($nama === '') {
             return '?';
         }
 
-        if (count($kata) === 1) {
-            return mb_strtoupper(mb_substr($kata[0], 0, 2));
+        // Satu huruf pertama dari kata pertama, bukan satu karakter pertama
+        // dari nama: "  Budi" dan "Budi" harus sama-sama jadi "B".
+        $kataPertama = preg_split('/\s+/', $nama)[0] ?? '';
+
+        return $kataPertama === ''
+            ? '?'
+            : mb_strtoupper(mb_substr($kataPertama, 0, 1));
+    }
+
+    /**
+     * URL foto profil, atau null kalau pengguna belum memasang foto.
+     *
+     * Null inilah sinyal untuk memakai avatar inisial. Jangan pernah
+     * mengembalikan gambar placeholder: kalau tidak ada foto, pemanggil
+     * harus menggambar inisial.
+     */
+    public function fotoProfilUrl(): ?string
+    {
+        if (blank($this->foto_profil)) {
+            return null;
         }
 
-        return mb_strtoupper(mb_substr($kata[0], 0, 1).mb_substr($kata[count($kata) - 1], 0, 1));
+        return asset('storage/'.$this->foto_profil);
     }
 
     /**

@@ -10,6 +10,9 @@ import "./quiz-tambah.js";
 // Halaman sesi quiz (polling lobby, salin kode, dialog konfirmasi, soal).
 import "./quiz-lobby.js";
 
+// Halaman Profil (dialog, lihat password, pilih foto, mode terang/gelap).
+import "./profil.js";
+
 const reducedMotion = window.matchMedia(
     "(prefers-reduced-motion: reduce)",
 ).matches;
@@ -194,61 +197,103 @@ function initCari() {
 /**
  * Bookmark.
  *
- * Belum ada tabel penyimpanan, jadi untuk sekarang status disimpan di
- * localStorage per browser dan dipisah per "ruang" (materi / quiz) lewat
- * atribut data-bookmark-ruang. Begitu tabelnya tersedia, cukup ganti isi
- * fungsi ini dengan fetch ke API tanpa menyentuh markup.
+ * Materi memakai tabel tb_simpanan_materi, jadi statusnya sama di
+ * perangkat mana pun. Daftarnya dibaca sekali lewat meta
+ * "simpanan-daftar", lalu tiap klik mengirim POST ke "simpanan-toggle"
+ * (URL-nya masih berisi "__slug__" yang diganti di sini).
+ *
+ * Quiz masih di localStorage dan dipisah lewat atribut
+ * data-bookmark-ruang="quiz" karena belum punya tabel penyimpanan.
  */
 function initBookmark() {
-    const tombol = document.querySelectorAll("[data-bookmark]");
+    const tombol = Array.from(document.querySelectorAll("[data-bookmark]"));
 
     if (!tombol.length) {
         return;
     }
 
-    const ruang = (el) => el.dataset.bookmarkRuang || "materi";
-    const kunci = (nama) => `kk-${nama}-disimpan`;
+    const meta = (nama) => document.querySelector(`meta[name="${nama}"]`)?.content || "";
+    const token = () => document.querySelector('meta[name="csrf-token"]')?.content || "";
+    const urlDaftar = meta("simpanan-daftar");
+    const urlToggle = meta("simpanan-toggle");
 
-    const baca = (nama) => {
+    const terapkan = (el, tersimpan) => {
+        el.setAttribute("aria-pressed", tersimpan ? "true" : "false");
+
+        // Tombol yang punya label (mis. "Simpan" di halaman detail) ikut
+        // mengganti teksnya. Label netral disimpan di data-bookmark-teks.
+        const label = el.querySelector("[data-bookmark-teks-nowel]");
+
+        if (label) {
+            label.textContent = tersimpan
+                ? "Tersimpan"
+                : el.dataset.bookmarkTeks || "Simpan";
+        }
+    };
+
+    const dariRuang = (ruang) =>
+        tombol.filter((el) => (el.dataset.bookmarkRuang || "materi") === ruang);
+
+    const tombolMateri = dariRuang("materi");
+    const tombolQuiz = dariRuang("quiz");
+
+    // Satu slug bisa punya lebih dari satu tombol (kartu daftar + kepala
+    // detail), jadi semuanya diperbarui bersama supaya tidak pernah beda.
+    const sinkronMateri = (slug, tersimpan) => {
+        tombolMateri
+            .filter((el) => el.dataset.bookmark === slug)
+            .forEach((el) => terapkan(el, tersimpan));
+    };
+
+    /* ---------- Ruang quiz: localStorage ---------- */
+
+    const kunciQuiz = "kk-quiz-disimpan";
+
+    const bacaQuiz = () => {
         try {
-            return JSON.parse(window.localStorage.getItem(kunci(nama)) || "[]");
+            return JSON.parse(window.localStorage.getItem(kunciQuiz) || "[]");
         } catch {
             return [];
         }
     };
 
-    const tulis = (nama, daftar) => {
+    const tulisQuiz = (daftar) => {
         try {
-            window.localStorage.setItem(kunci(nama), JSON.stringify(daftar));
+            window.localStorage.setItem(kunciQuiz, JSON.stringify(daftar));
         } catch {
             // Mode privat / storage penuh: bookmark tetap jalan di sesi ini.
         }
     };
 
-    const terapkan = (tombol, tersimpan) => {
-        tombol.setAttribute("aria-pressed", tersimpan ? "true" : "false");
+    const daftarQuiz = bacaQuiz();
 
-        // Tombol yang punya label (mis. "Simpan" di halaman detail) ikut
-        // mengganti teksnya. Label netral disimpan di data-bookmark-teks.
-        const label = tombol.querySelector("[data-bookmark-teks-nowel]");
+    tombolQuiz.forEach((el) => terapkan(el, daftarQuiz.includes(el.dataset.bookmark)));
 
-        if (label) {
-            label.textContent = tersimpan
-                ? "Tersimpan"
-                : tombol.dataset.bookmarkTeks || "Simpan";
-        }
-    };
+    /* ---------- Ruang materi: database ---------- */
 
-    // Pulihkan status tersimpan saat halaman dibuka, dikelompokkan per ruang
-    // supaya satu localStorage read cukup untuk semua kartu di halaman itu.
-    const tersimpanPerRuang = {};
+    /*
+     * Status awal dari server sudah benar untuk tombol di halaman detail,
+     * tapi kartu di daftar masih mengirim aria-pressed="false" bawaan.
+     * Satu fetch membetulkan semuanya sekaligus.
+     */
+    if (tombolMateri.length && urlDaftar) {
+        fetch(urlDaftar, {
+            headers: { Accept: "application/json" },
+            credentials: "same-origin",
+        })
+            .then((res) => (res.ok ? res.json() : null))
+            .then((data) => {
+                const tersimpan = Array.isArray(data?.slug) ? data.slug : [];
 
-    tombol.forEach((el) => {
-        const nama = ruang(el);
+                tombolMateri.forEach((el) => terapkan(el, tersimpan.includes(el.dataset.bookmark)));
+            })
+            .catch(() => {
+                // Gagal memuat daftar: status dari server (halaman detail)
+                // tetap dipertahankan, kartu lain dibiarkan sesuai markup.
+            });
+    }
 
-        tersimpanPerRuang[nama] ??= baca(nama);
-        terapkan(el, tersimpanPerRuang[nama].includes(el.dataset.bookmark));
-    });
+    /* ---------- Klik ---------- */
 
     tombol.forEach((el) => {
         el.addEventListener("click", (event) => {
@@ -257,17 +302,53 @@ function initBookmark() {
             event.preventDefault();
             event.stopPropagation();
 
-            const nama = ruang(el);
+            const ruang = el.dataset.bookmarkRuang || "materi";
             const id = el.dataset.bookmark;
-            const daftar = baca(nama);
-            const sudah = daftar.includes(id);
-            const baru = sudah
-                ? daftar.filter((item) => item !== id)
-                : [...daftar, id];
 
-            tulis(nama, baru);
-            tersimpanPerRuang[nama] = baru;
-            terapkan(el, !sudah);
+            if (ruang === "quiz") {
+                const daftar = bacaQuiz();
+                const sudah = daftar.includes(id);
+                const baru = sudah ? daftar.filter((x) => x !== id) : [...daftar, id];
+
+                tulisQuiz(baru);
+                tombolQuiz
+                    .filter((x) => x.dataset.bookmark === id)
+                    .forEach((x) => terapkan(x, !sudah));
+
+                return;
+            }
+
+            // Optimistik dulu supaya tombol terasa instan, lalu serahkan
+            // ke server sebagai pemilik keadaan sebenarnya.
+            const berikutnya = el.getAttribute("aria-pressed") !== "true";
+
+            sinkronMateri(id, berikutnya);
+
+            if (!urlToggle) {
+                return;
+            }
+
+            fetch(urlToggle.replace("__slug__", encodeURIComponent(id)), {
+                method: "POST",
+                headers: {
+                    Accept: "application/json",
+                    "Content-Type": "application/json",
+                    "X-CSRF-TOKEN": token(),
+                    "X-Requested-With": "XMLHttpRequest",
+                },
+                credentials: "same-origin",
+                body: "{}",
+            })
+                .then((res) => (res.ok ? res.json() : null))
+                .then((data) => {
+                    if (data && typeof data.tersimpan === "boolean") {
+                        sinkronMateri(id, data.tersimpan);
+                    }
+                })
+                .catch(() => {
+                    // Jaringan gagal: kembalikan tombol ke keadaan semula.
+                    sinkronMateri(id, !berikutnya);
+                });
         });
     });
 }

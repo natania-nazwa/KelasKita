@@ -8,6 +8,11 @@
     /*
      * Blok kode gelap dengan tombol salin.
      *
+     * Kepalanya sengaja dibuat minim (hanya tombol Copy) supaya isi kode
+     * yang jadi fokus halaman. Bahasa tidak ditampilkan lagi; informasi itu
+     * sudah tersimpan di data blok dan tetap bisa dibaca lewat atribut
+     * data-bahasa di bawah.
+     *
      * $sorot sudah dihitung di App\Support\SorotKode waktu isi materi
      * dipecah, sehingga halaman tidak menyorot kode berulang kali.
      *
@@ -16,15 +21,9 @@
      */
 @endphp
 
-<div class="kode-blok" data-blok-kode>
+<div class="kode-blok" data-blok-kode data-bahasa="{{ $bahasa }}">
 
     <div class="kode-blok__kepala">
-        <span class="kode-blok__titik" aria-hidden="true">
-            <i></i><i></i><i></i>
-        </span>
-
-        <span class="kode-blok__bahasa">{{ $bahasa }}</span>
-
         <button type="button" data-salin-kode
             class="tombol-salin"
             aria-label="Salin kode ke papan klip">

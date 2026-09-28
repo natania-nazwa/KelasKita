@@ -40,6 +40,31 @@ final class BerkasMateri
     }
 
     /**
+     * URL publik dari isi kolom thumbnail/audio.
+     *
+     * Kolom itu menyimpan dua bentuk nilai yang berbeda:
+     *   - path relatif di disk publik, mis. "thumbnails/abc.jpg", hasil
+     *     unggahan form. Path lengkapnya dipakai, jangan dipotong
+     *     basename() supaya nama foldernya tidak hilang;
+     *   - URL penuh, mis. gambar contoh pada data seeder, dipakai apa
+     *     adanya.
+     *
+     * Aman dipanggil dengan nilai kosong.
+     */
+    public static function url(?string $path): ?string
+    {
+        if (blank($path)) {
+            return null;
+        }
+
+        if (preg_match('#^https?://#i', $path) === 1) {
+            return $path;
+        }
+
+        return asset('storage/'.ltrim($path, '/'));
+    }
+
+    /**
      * Hapus berkas dari disk publik.
      *
      * Aman untuk path kosong (materi yang memang tidak punya lampiran) dan

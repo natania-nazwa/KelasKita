@@ -21,8 +21,8 @@ use Illuminate\View\View;
  * tetap menampilkan seluruh isi aplikasi tanpa filter kepemilikan.
  *
  * Berbeda dengan halaman Materi, materi milik sendiri tidak dibatasi
- * scopeAktif(): materi yang sedang disembunyikan tetap harus bisa
- * dikelola pemiliknya.
+ * scopeTerbit(): draft, materi yang ditolak, dan materi yang sedang menunggu
+ * admin tetap harus bisa dikelola pemiliknya.
  */
 class KaryaSayaController extends Controller
 {
@@ -91,14 +91,19 @@ class KaryaSayaController extends Controller
     }
 
     /**
-     * Quiz milik sendiri yang masih menunggu keputusan admin.
+     * Karya milik sendiri yang masih menunggu keputusan admin. Materi dan
+     * quiz dihitung bersama karena keduanya lewat alur persetujuan yang sama.
      */
     private function jumlahMenunggu(?int $idPembuat): int
     {
-        return Quiz::query()
+        return Materi::query()
             ->milik($idPembuat)
-            ->where('status', Quiz::STATUS_PENDING)
-            ->count();
+            ->menunggu()
+            ->count()
+            + Quiz::query()
+                ->milik($idPembuat)
+                ->where('status', Quiz::STATUS_PENDING)
+                ->count();
     }
 
     /**

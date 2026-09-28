@@ -17,15 +17,15 @@ use App\Models\Pelajaran;
 final class DaftarMateri
 {
     /**
-     * Daftar materi per kategori (jumlah materi aktif di tiap pelajaran).
-     * Dipakai untuk mengisi kunci jumlah_materi pada tiap kartu.
+     * Daftar materi per kategori (jumlah materi yang sudah terbit di tiap
+     * pelajaran). Dipakai untuk mengisi kunci jumlah_materi pada tiap kartu.
      *
      * @return array<int, int> id pelajaran => jumlah materi
      */
     public static function jumlahPerKategori(): array
     {
         return Materi::query()
-            ->aktif()
+            ->terbit()
             ->whereNotNull('pelajaran_id')
             ->selectRaw('pelajaran_id, COUNT(*) as jumlah')
             ->groupBy('pelajaran_id')
@@ -51,7 +51,8 @@ final class DaftarMateri
      *
      * Bentuk array per kartu:
      *   id, slug, judul, deskripsi, thumbnail, tingkat_kesulitan,
-     *   waktu_baca, jumlah_bab, aktif, status_label, dibuat_pada,
+     *   waktu_baca, jumlah_bab, status, warna_status, status_label,
+     *   catatan_admin, sisa_pengajuan, dibuat_pada,
      *   tautan, tautan_edit, tautan_hapus,
      *   kategori => [nama, slug, ikon, warna, warna_gelap],
      *   pembuat  => [nama, inisial, warna, warna_gelap],
@@ -84,12 +85,13 @@ final class DaftarMateri
                 'tingkat_kesulitan' => $item->tingkat_kesulitan,
                 'waktu_baca' => $item->waktuBaca(),
                 'jumlah_bab' => $item->jumlahBab(),
-                'aktif' => (bool) $item->aktif,
+                'status' => (string) $item->status,
+                'warna_status' => $item->warnaStatus(),
                 'status_label' => $item->labelStatus(),
+                'catatan_admin' => $item->catatan_admin,
+                'sisa_pengajuan' => $item->sisaPengajuan(),
                 'dibuat_pada' => $item->created_at,
-                'thumbnail' => filled($item->thumbnail)
-                    ? asset('storage/'.basename($item->thumbnail))
-                    : null,
+                'thumbnail' => BerkasMateri::url($item->thumbnail),
                 'kategori' => [
                     'nama' => $kategori['nama'],
                     'slug' => $kategori['slug'],

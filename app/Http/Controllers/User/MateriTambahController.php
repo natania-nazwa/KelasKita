@@ -28,26 +28,33 @@ class MateriTambahController extends Controller
 
     public function store(MateriIsianRequest $request): RedirectResponse
     {
-        $data = $request->validated();
+        $data = $request->isian();
+        $diajukan = $request->boolean('publikasikan');
 
         /*
          * Materi langsung dimiliki pengguna yang sedang login, bukan dari
          * field request, supaya isian "dibuat_oleh" palsu tidak bisa dipakai
          * untuk membuat konten atas nama orang lain.
+         *
+         * Tombol publikasi tidak berarti materi langsung tayang: statusnya
+         * "pending" supaya materi masuk daftar tunggu admin. Yang benar-benar
+         * tayang hanya materi yang sudah disetujui admin.
          */
         $materi = new Materi([
             ...$data,
             ...BerkasMateri::simpan($request),
             'dibuat_oleh' => $request->user()->getKey(),
             'slug' => $this->slugUnik($data['nama']),
-            'aktif' => true,
+            'status' => $diajukan ? Materi::STATUS_PENDING : Materi::STATUS_DRAFT,
         ]);
 
         $materi->save();
 
         return redirect()
             ->route('user.karya-saya', ['tab' => 'materi'])
-            ->with('sukses', 'Materi "'.$materi->nama.'" berhasil ditambahkan.');
+            ->with('sukses', $diajukan
+                ? 'Materi "'.$materi->nama.'" tersimpan dan menunggu persetujuan admin.'
+                : 'Materi "'.$materi->nama.'" disimpan sebagai draft.');
     }
 
     /**

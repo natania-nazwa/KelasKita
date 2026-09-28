@@ -22,7 +22,6 @@
      */
     $pengguna ??= auth()->user();
     $nama = $pengguna?->nama ?? 'Tamu';
-    $warna = $pengguna?->warnaAvatar() ?? ['warna' => '#a78bfa', 'warna_gelap' => '#6c4de6'];
 @endphp
 
 {{-- Latar memakai kelas .latar-atas yang sama persis dengan kanvas
@@ -88,9 +87,18 @@
             <details class="group relative">
                 <summary
                     class="flex cursor-pointer list-none items-center gap-2.5 rounded-full border border-lavender bg-white py-1 pl-1 pr-3 transition hover:border-primary sm:pr-4 [&::-webkit-details-marker]:hidden">
-                    <span class="avatar-user"
-                        style="--a: {{ $warna['warna'] }}; --a-gelap: {{ $warna['warna_gelap'] }};"
-                        aria-hidden="true">{{ $pengguna?->inisial() ?? '?' }}</span>
+
+                    {{--
+                        Avatar di top bar memakai komponen yang sama dengan
+                        halaman Profil, jadi nama dan foto yang baru
+                        disimpan langsung ikut terpakai di sini tanpa ada
+                        dua aturan avatar yang harus dijaga sinkron.
+
+                        Kalau foto profil dihapus, kolomnya jadi kosong dan
+                        komponen ini otomatis kembali ke inisial nama
+                        depan.
+                    --}}
+                    <x-profil.avatar :pengguna="$pengguna" ukuran="kecil" />
 
                     <span class="hidden min-w-0 flex-col leading-tight sm:flex">
                         <span class="truncate text-sm font-semibold text-dark">{{ $nama }}</span>

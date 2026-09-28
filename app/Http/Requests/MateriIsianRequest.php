@@ -2,12 +2,18 @@
 
 namespace App\Http\Requests;
 
+use App\Models\Materi;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
 /**
  * Isian form materi: dipakai oleh halaman tambah materi dan form edit materi
  * milik sendiri, jadi aturannya hanya ditulis satu kali di sini.
+ *
+ * Field "publikasikan" berarti "pemilik menekan tombol publikasi", bukan
+ * "materi ini harus tayang". Nilainya belum tentu menghasilkan materi yang
+ * tayang: controller menerjemahkannya jadi permintaan persetujuan, dan baru
+ * admin yang bisa menyetujuinya.
  *
  * Kelolaan (apakah materi ini boleh diubah pemiliknya) tidak dicek di sini:
  * materi dicari dari route, jadi pemeriksaannya dilakukan di controller yang
@@ -32,6 +38,21 @@ class MateriIsianRequest extends FormRequest
             'isi' => ['required', 'string', 'min:20'],
             'tingkat_kesulitan' => ['required', Rule::in(['Mudah', 'Sedang', 'Sulit'])],
 
+            // Tombol publikasi di form tambah dan form edit.
+            'publikasikan' => ['nullable', 'boolean'],
+
+            /*
+             * Catatan pendukung hanya diminta saat materi yang sudah pernah
+             * ditolak diajukan ulang, supaya admin punya alasan menilai
+             * apakah perbaikannya sudah cukup.
+             */
+            'catatan_pengajuan' => [
+                'nullable',
+                'string',
+                'max:500',
+                Rule::requiredIf(fn (): bool => $this->diajukanUlang()),
+            ],
+
             // Thumbnail & audio: maksimal 100MB per berkas, disimpan
             // ke disk publik sebagai path di kolom tb_materi.
             'thumbnail' => ['nullable', 'file', 'mimes:jpg,jpeg,png,webp', 'max:102400'],
@@ -51,6 +72,8 @@ class MateriIsianRequest extends FormRequest
             'isi.required' => 'Isi materi wajib diisi.',
             'isi.min' => 'Isi materi minimal 20 karakter.',
             'tingkat_kesulitan.in' => 'Tingkat kesulitan tidak dikenal.',
+            'catatan_pengajuan.required' => 'Tuliskan catatan pendukung supaya admin tahu apa yang sudah diperbaiki.',
+            'catatan_pengajuan.max' => 'Catatan pengajuan maksimal 500 karakter.',
             'thumbnail.file' => 'Thumbnail harus berupa file gambar.',
             'thumbnail.mimes' => 'Format thumbnail harus JPG, PNG, atau WEBP.',
             'thumbnail.max' => 'Ukuran thumbnail maksimal 100MB.',
@@ -58,5 +81,44 @@ class MateriIsianRequest extends FormRequest
             'audio.mimes' => 'Format audio harus MP3, WAV, M4A, atau OGG.',
             'audio.max' => 'Ukuran audio maksimal 100MB.',
         ];
+    }
+
+    /**
+     * Isian materi siap disimpan, tanpa field yang hanya controlling form.
+     *
+     * @return array<string, mixed>
+     */
+    public function isian(): array
+    {
+        $isian = $this->validated();
+
+        unset($isian['publikasikan']);
+
+        return $isian;
+    }
+
+    /**
+     * Materi yang sedang diedit, diambil dari route.
+     *
+     * Hanya dipakai untuk tahu apakah materi ini pernah ditolak, supaya
+     * catatan pengajuan jadi wajib atau tidak. Halaman tambah materi tidak
+     * punya materi, jadi selalu mengembalikan null di sana.
+     */
+    private function materi(): ?Materi
+    {
+        $slug = $this->route('materi');
+
+        return is_string($slug)
+            ? Materi::query()->where('slug', $slug)->first()
+            : null;
+    }
+
+    /**
+     * Permintaan ini adalah pengajuan ulang: materi yang sudah pernah
+     * ditolak, dan kali ini pemiliknya menekan tombol publikasi.
+     */
+    private function diajukanUlang(): bool
+    {
+        return $this->boolean('publikasikan') && (bool) $this->materi()?->perluCatatanPengajuan();
     }
 }

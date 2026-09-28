@@ -5,8 +5,60 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
+    {{-- Pintu API bookmark materi (lihat initBookmark() di resources/js/app.js).
+         "__slug__" diganti JS dengan slug materi yang sedang diklik. --}}
+    <meta name="simpanan-daftar" content="{{ route('user.simpanan.materi') }}">
+    <meta name="simpanan-toggle" content="{{ route('user.materi.simpan', ['materi' => '__slug__']) }}">
     <title>@yield('title', 'Dashboard | KelasKita')</title>
+
+    {{--
+        Mode gelap dipasang SEBELUM stylesheet dimuat, bukan sesudahnya.
+
+        Kalau atribut data-theme baru ditambahkan setelah CSS selesai
+        diunduh, layar pertama sudah terlanjur dicat terang lalu berubah
+        gelap beberapa saat kemudian (kilatan putih). Satu blok script
+        kecil yang hanya menulis atribut ke <html> menutup celah itu,
+        dan pencatatannya tetap di localStorage supaya pilihan pengguna
+        bertahan ketika aplikasi dibuka lagi.
+
+        Nilai "terang" dipakai kalau belum ada apa pun tersimpan, jadi
+        kunjungan pertama tetap mengikuti tampilan bawaan. Tanpa
+        JavaScript blok ini tidak jalan dan <html> tidak pernah memakai
+        data-theme, artinya aplikasi tetap tampil terang.
+    --}}
+    <script>
+        (function () {
+            var tema;
+
+            try {
+                tema = window.localStorage.getItem('kk-tema');
+            } catch (e) {
+                tema = null;
+            }
+
+            document.documentElement.dataset.theme = tema === 'gelap' ? 'gelap' : 'terang';
+        })();
+    </script>
+
     @vite(['resources/css/app.css', 'resources/js/app.js'])
+
+    {{--
+        Tanpa JavaScript halaman detail materi menampilkan seluruh bab
+        sekaligus (atribut hidden dilepas di sini) supaya isi materi tetap
+        terbaca penuh. Dengan JS, bab non-aktif memang sengaja disembunyikan.
+
+        Aturan kedua untuk form edit materi: catatan pendukung baru muncul
+        setelah tombol "Ajukan Persetujuan" ditekan. Tanpa JS tombol itu jadi
+        submit biasa, jadi isian harus sudah terlihat sejak awal.
+    --}}
+    <noscript>
+        <style>
+            .materi-seksi[hidden],
+            [data-catatan-wadah][hidden] {
+                display: block !important;
+            }
+        </style>
+    </noscript>
 </head>
 
 <body class="bg-brand-bg font-sans text-dark antialiased">
@@ -39,14 +91,22 @@
                      * tetap menampilkan seluruh isi aplikasi.
                      *
                      * "Hasil" menggabungkan seluruh pengerjaan quiz milik
-                     * pengguna yang sedang login, apa pun sesinya.
+                     * pengguna yang sedang login, apa pun sesinya. Ikonnya
+                     * papan klip berisi baris catatan, supaya tidak sama
+                     * dengan lingkaran centang milik menu Quiz.
+                     *
+                     * "Jadwal" adalah tujuan tombol "Lihat Semua" di panel
+                     * "Jadwal Hari Ini" milik dashboard, jadi ikut ada di
+                     * sidebar supaya halaman itu bisa dibuka langsung dari
+                     * menu tanpa harus lewat dashboard dulu.
                      */
                     $menu = [
                         ['route' => 'user.dashboard', 'label' => 'Dashboard', 'ikon' => 'm2.25 12 8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25'],
+                        ['route' => 'user.jadwal',    'label' => 'Jadwal',    'ikon' => \App\Support\Ikon::path('jam')],
                         ['route' => 'user.materi',    'label' => 'Materi',    'ikon' => 'M12 6.042A8.967 8.967 0 0 0 6 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 0 1 6 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 0 1 6-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0 0 18 18a8.967 8.967 0 0 0-6 2.292m0-14.25v14.25'],
                         ['route' => 'user.quiz',      'label' => 'Quiz',      'ikon' => 'M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z'],
                         ['route' => 'user.karya-saya','label' => 'Karya Saya','ikon' => \App\Support\Ikon::path('pena')],
-                        ['route' => 'user.hasil',     'label' => 'Hasil',     'ikon' => \App\Support\Ikon::path('clipboard')],
+                        ['route' => 'user.hasil',     'label' => 'Hasil',     'ikon' => \App\Support\Ikon::path('catatan')],
                         ['route' => 'user.profil',    'label' => 'Profil',    'ikon' => 'M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z'],
                     ];
                 @endphp
@@ -54,6 +114,7 @@
                 @foreach ($menu as $item)
                     <a href="{{ route($item['route']) }}"
                         class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium {{ request()->routeIs($item['route']) ? 'bg-primary text-white' : 'text-primary/80 hover:bg-lavender hover:text-primary-dark' }}">
+
                         <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                             <path stroke-linecap="round" stroke-linejoin="round" d="{{ $item['ikon'] }}" />
                         </svg>
@@ -106,24 +167,29 @@
 
             @php
                 /*
-                 * Halaman "Masukkan Kode" sengaja dibuat tanpa top bar:
-                 * di halaman itu yang ada hanya satu tugas, yaitu mengetik
-                 * kode. Pencarian global, notifikasi, dan chip akun tidak
-                 * ada gunanya di sana dan hanya mengalihkan perhatian ke
+                 * Halaman yang top bar-nya disembunyikan.
+                 *
+                 * "Masukkan Kode": di halaman itu yang ada hanya satu tugas,
+                 * yaitu mengetik kode. Pencarian global, notifikasi, dan chip
+                 * akun tidak ada gunanya dan hanya mengalihkan perhatian ke
                  * form yang harus diisi.
                  *
-                 * Karena isinya tiga hal itu semuanya, tidak ada sisa
+                 * "Jadwal": di halaman itu kolom cari global justru
+                 * kembar dari pencarian yang sudah ada di panel daftar, dan
+                 * notifikasi serta chip akun tidak menyumbang apa pun pada
+                 * halaman jadwal. Karena isinya cuma itu, tidak ada sisa
                  * yang layak dipertahankan, jadi header-nya dihilang
-                 * seluruhnya, bukan dikosongkan. Efeknya: header mobile
-                 * di bawah tidak lagi punya top bar untuk dilompati, maka
-                 * posisinya ikut naik dari top-16 ke top-0. Sidebar dan
-                 * navigasi mobile tetap ada.
+                 * seluruhnya, bukan dikosongkan.
+                 *
+                 * Efeknya: header mobile di bawah tidak lagi punya top bar
+                 * untuk dilompati, maka posisinya ikut naik dari top-16 ke
+                 * top-0. Sidebar dan navigasi mobile tetap ada.
                  *
                  * Halaman lain tidak tersentuh; daftar white-list ini
                  * satu-satunya tempat yang memutuskan top bar tampil
                  * atau tidak.
                  */
-                $sembunyiTopbar = request()->routeIs('user.sesi.gabung');
+                $sembunyiTopbar = request()->routeIs('user.sesi.gabung', 'user.jadwal');
             @endphp
 
             @php
@@ -137,6 +203,10 @@
                  *
                  * Di "Hasil" kolom ini ikut mencari nama quiz pada riwayat,
                  * karena di halaman itu satu-satunya yang dicari adalah quiz.
+                 *
+                 * Halaman "Jadwal" sengaja tidak punya cabang di sini:
+                 * top bar-nya disembunyikan (lihat $sembunyiTopbar di atas)
+                 * dan pencarian jadwalnya sudah ada di panel daftar.
                  */
                 $cariTopbar = match (true) {
                     request()->routeIs('user.hasil.daftar') => [

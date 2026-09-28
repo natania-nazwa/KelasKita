@@ -47,7 +47,9 @@ class MateriHalamanTest extends TestCase
             'deskripsi' => "Ringkasan $nama",
             'isi' => $isi,
             'tingkat_kesulitan' => 'Mudah',
-            'aktif' => true,
+            // Default-nya sudah disetujui supaya materinya tayang di
+            // halaman publik, sama seperti materi yang sudah lewat admin.
+            'status' => Materi::STATUS_PUBLISHED,
         ]);
     }
 
@@ -64,12 +66,12 @@ class MateriHalamanTest extends TestCase
             ->assertSee('Pemrograman');
     }
 
-    public function test_materi_tidak_aktif_tidak_muncul(): void
+    public function test_materi_yang_belum_disetujui_tidak_muncul(): void
     {
         $user = $this->buatPengguna();
         $pelajaran = $this->buatPelajaran('Pemrograman', 'pemrograman');
         $disembunyikan = $this->buatMateri($pelajaran, $user, 'Materi Rahasia');
-        $disembunyikan->update(['aktif' => false]);
+        $disembunyikan->update(['status' => Materi::STATUS_DRAFT]);
 
         $this->actingAs($user)
             ->get('/user/materi')
@@ -225,15 +227,20 @@ class MateriHalamanTest extends TestCase
             'slug' => 'materi-baru-saya',
             'dibuat_oleh' => $user->getKey(),
             'pelajaran_id' => $pelajaran->id,
-            'aktif' => true,
+            'status' => Materi::STATUS_DRAFT,
         ]);
 
-        // Materi milik sendiri tetap tampil di halaman Materi umum.
+        // Materi yang baru disimpan sebagai draft belum tayang di halaman
+        // Materi umum: kartu tidak muncul, yang tampil adalah state kosong.
+        // (Flash "disimpan sebagai draft" tetap menyebut judul, jadi yang
+        // diuji di sini bukan string judulnya, tapi keadaan halamannya.)
         $this->actingAs($user)
             ->get('/user/materi')
             ->assertOk()
-            ->assertSee('Materi Baru Saya');
+            ->assertSee('Materi belum ditemukan')
+            ->assertDontSee('kartu-materi__judul');
 
+        // Tapi tetap terlihat di Karya Saya, karena itu halaman pemiliknya.
         $this->actingAs($user)
             ->get('/user/karya-saya')
             ->assertOk()
@@ -314,12 +321,12 @@ class MateriHalamanTest extends TestCase
             ->assertSee('Materi Rekomendasi');
     }
 
-    public function test_detail_materi_tidak_aktif_menghasilkan_404(): void
+    public function test_detail_materi_yang_belum_terbit_menghasilkan_404(): void
     {
         $user = $this->buatPengguna();
         $pelajaran = $this->buatPelajaran('Pemrograman', 'pemrograman');
         $materi = $this->buatMateri($pelajaran, $user, 'Materi Disembunyikan');
-        $materi->update(['aktif' => false]);
+        $materi->update(['status' => Materi::STATUS_PENDING]);
 
         $this->actingAs($user)
             ->get(route('user.materi.detail', $materi->slug))

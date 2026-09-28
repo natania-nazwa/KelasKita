@@ -6,9 +6,11 @@
     /*
      * Sidebar "Daftar Isi".
      *
-     * Tiap seksi punya id sendiri (lihat IsiMateri), jadi tautan di sini
-     * bisa langsunghop ke seksi yang dipilih. Item aktif mengikuti posisi
-     * scroll lewat materi-detail.js, yang memberi kelas is-aktif.
+     * Tiap barisnya juga berperan sebagai pemilih bab: seluruh seksi ikut
+     * dirender di halaman, tapi hanya satu yang tampil pada satu waktu
+     * (lihat materi-detail.js). Karena itu tautannya memakai href="#slug"
+     * supaya tetap masuk akal tanpa JavaScript, sementara JS mengganti
+     * perilakunya menjadi pergantian bab.
      *
      * Di mobile daftar ini jadi strip horizontal yang bisa di-scroll; di
      * desktop berubah jadi kolom dan menempel (sticky) supaya tetap terlihat
@@ -18,17 +20,16 @@
      */
 @endphp
 
-<nav data-daftar-isi aria-label="Daftar isi materi" class="kartu-detail p-4 sm:p-5">
+<nav data-daftar-isi aria-label="Daftar isi materi" class="kartu-detail daftar-isi">
 
     <div class="flex items-center justify-between gap-3">
-        <h2 class="text-sm font-extrabold tracking-tight text-dark">
+        <h2 class="daftar-isi__judul">
             Daftar Isi
         </h2>
 
         {{-- Hanya muncul di bawah lg, tempat daftarnya collapsible. --}}
         <button type="button" data-daftar-isi-alih aria-expanded="true" aria-controls="daftar-isi-materi"
-            class="flex h-8 w-8 items-center justify-center rounded-lg border border-lavender bg-white text-dark/60 transition hover:border-primary hover:text-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 lg:hidden"
-            aria-label="Buka atau tutup daftar isi">
+            class="daftar-isi__alih" aria-label="Buka atau tutup daftar isi">
             <svg data-daftar-isi-alih-ikon class="h-4 w-4 transition-transform duration-200" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 6-6M4.5 6.75l6-6 6 6" />
             </svg>

@@ -37,7 +37,7 @@ class MateriController extends Controller
             'kategori' => $this->daftarKategori(),
             'kataKunci' => $kataKunci,
             'kategoriAktif' => $kategori,
-            'totalMateri' => Materi::query()->aktif()->count(),
+            'totalMateri' => Materi::query()->terbit()->count(),
             'totalPembuat' => $this->totalPembuat(),
         ]);
     }
@@ -49,20 +49,21 @@ class MateriController extends Controller
     private function totalPembuat(): int
     {
         return (int) Materi::query()
-            ->aktif()
+            ->terbit()
             ->whereNotNull('dibuat_oleh')
             ->distinct()
             ->count('dibuat_oleh');
     }
 
     /**
-     * Query dasar daftar materi: semua materi yang aktif, terbaru dulu.
-     * Pencarian dan filter kategori ditambahkan setelahnya di __invoke().
+     * Query dasar daftar materi: semua materi yang sudah disetujui admin,
+     * terbaru dulu. Pencarian dan filter kategori ditambahkan setelahnya
+     * di __invoke().
      */
     private function daftarMateri(): Builder
     {
         return Materi::query()
-            ->aktif()
+            ->terbit()
             ->with(['pelajaran', 'pembuat'])
             ->latest();
     }
@@ -75,7 +76,7 @@ class MateriController extends Controller
     private function daftarKategori(): Collection
     {
         $jumlahPerPelajaran = Materi::query()
-            ->aktif()
+            ->terbit()
             ->whereNotNull('pelajaran_id')
             ->selectRaw('pelajaran_id, COUNT(*) as jumlah')
             ->groupBy('pelajaran_id')

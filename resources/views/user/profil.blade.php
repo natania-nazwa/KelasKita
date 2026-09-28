@@ -1,66 +1,74 @@
-@extends('layouts.app')
+@extends ('layouts.app')
 
-@section('title', 'Profil | KelasKita')
+@section ('title', 'Profil | KelasKita')
 
-@section('content')
+@section ('content')
     <div data-reveal>
-        <h1 class="text-2xl sm:text-3xl font-extrabold text-dark">Profil</h1>
+        <h1 class="text-2xl font-extrabold text-dark sm:text-3xl">Profil</h1>
 
-        <p class="mt-1 text-dark/60">Kelola informasi akunmu.</p>
+        <p class="mt-1 text-dark/60">Kelola informasi akun dan preferensi kamu.</p>
     </div>
 
-    <div class="mt-8 grid gap-5 lg:grid-cols-3">
-
-        {{-- Kartu identitas --}}
-        <div data-reveal
-            class="rounded-2xl bg-white border border-lavender p-6 text-center lg:col-span-1">
+    {{-- Kabar berhasil. Semua aksi di halaman ini (simpan profil, hapus
+        foto, ubah password) berakhir dengan redirect ke halaman Profil,
+        jadi session ini juga jadi pemberitahuan hasil aksi tersebut. --}}
+    @if (session('sukses'))
+        <div
+            data-reveal
+            class="mt-6 flex items-start gap-3 rounded-2xl border border-lavender bg-white px-4 py-3 text-sm text-dark shadow-[0_14px_30px_-26px_rgba(33,26,58,0.5)]"
+        >
             <span
-                class="mx-auto flex h-20 w-20 items-center justify-center overflow-hidden rounded-2xl bg-brand-bg">
-                <img src="{{ asset('images/logo.png') }}" alt="Foto Profil"
-                    class="h-full w-full object-contain">
+                class="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary"
+                aria-hidden="true"
+            >
+                <svg
+                    class="h-3.5 w-3.5"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2.4"
+                    viewBox="0 0 24 24"
+                    xmlns="http://www.w3.org/2000/svg"
+                >
+                    <path stroke-linecap="round" stroke-linejoin="round" d="m4.5 12.75 6 6 9-13.5" />
+                </svg>
             </span>
 
-            <h2 class="mt-4 text-lg font-extrabold text-dark">{{ $pengguna->nama }}</h2>
-
-            <p class="mt-1 truncate text-sm text-dark/50">{{ $pengguna->email }}</p>
-
-            {{-- Peran ditampilkan sebagai badge, bukan untuk diedit --}}
-            <span
-                class="mt-4 inline-flex items-center gap-1.5 rounded-full bg-lavender px-3 py-1.5 font-mono text-[11px] font-semibold uppercase tracking-[0.14em] text-primary">
-                {{ $pengguna->isAdmin() ? 'Admin' : 'User' }}
-            </span>
-
-            <button type="button"
-                class="mt-6 w-full rounded-xl border-2 border-primary/20 px-4 py-2.5 text-sm font-semibold text-primary transition hover:bg-[#f1ecff]">
-                Ubah Foto
-            </button>
+            <p class="min-w-0 font-medium">{{ session('sukses') }}</p>
         </div>
+    @endif
 
-        {{-- Detail akun --}}
-        <div data-reveal style="--reveal-delay: 100ms"
-            class="rounded-2xl bg-white border border-lavender p-6 lg:col-span-2">
-            <h2 class="text-lg font-bold text-dark">Informasi Akun</h2>
+    @include ('user.partials.profil.kepala')
 
-            <dl class="mt-5 divide-y divide-lavender">
-                @foreach([
-                    ['label' => 'Nama Lengkap', 'nilai' => $pengguna->nama],
-                    ['label' => 'Email', 'nilai' => $pengguna->email],
-                    ['label' => 'Peran', 'nilai' => $pengguna->isAdmin() ? 'Admin' : 'User'],
-                    ['label' => 'Bergabung', 'nilai' => $pengguna->created_at?->translatedFormat('d F Y')],
-                ] as $baris)
-                    <div class="flex items-center justify-between gap-4 py-3.5">
-                        <dt class="text-sm text-dark/55">{{ $baris['label'] }}</dt>
+    <div class="mt-5 grid gap-5 lg:grid-cols-2">
+        @include ('user.partials.profil.akun')
 
-                        <dd class="truncate text-sm font-semibold text-dark">{{ $baris['nilai'] ?? '-' }}</dd>
-                    </div>
-                @endforeach
-            </dl>
-
-            <div class="mt-6 rounded-xl bg-brand-bg px-4 py-3.5">
-                <p class="text-xs leading-relaxed text-dark/55">
-                    Perubahan data akun belum tersedia. Halaman ini sudah siap dihubungkan ke form ubah profil.
-                </p>
-            </div>
-        </div>
+        @include ('user.partials.profil.keamanan')
     </div>
+
+    @include ('user.partials.profil.tampilan')
+
+    @include ('user.partials.profil.bahaya')
+
+    {{-- =========================
+         DIALOG
+    ==========================
+         Keempat dialog halaman ini dirender di sini, di luar kartu mana
+         pun, supaya posisinya tidak ikut bergeser mengikuti grid dan
+         tidak pernah terpotong overflow kartu. --}}
+    <x-profil.edit :pengguna="$pengguna" />
+
+    <x-profil.kata-sandi />
+
+    <x-profil.hapus-foto />
+
+    <x-profil.hapus-akun />
+
+    {{-- Toast ringan untuk aksi yang belum punya endpoint server. --}}
+    <div
+        data-toast
+        hidden
+        class="pointer-events-none fixed inset-x-4 bottom-5 z-[80] mx-auto w-fit max-w-[calc(100%-2rem)] rounded-2xl border border-lavender bg-white px-4 py-3 text-sm font-medium text-dark shadow-[0_24px_44px_-24px_rgba(33,26,58,0.55)] sm:inset-x-auto sm:right-6"
+        role="status"
+        aria-live="polite"
+    ></div>
 @endsection

@@ -28,6 +28,9 @@ final class DetailMateri
     ];
 
     /**
+     * @param  bool  $tersimpan  status "materi ini sudah disimpan" untuk
+     *                           pengguna yang sedang login, dipakai tombol
+     *                           Simpan di kepala materi.
      * @return array{
      *     judul: string,
      *     slug: string,
@@ -37,6 +40,9 @@ final class DetailMateri
      *     tingkat_kesulitan: ?string,
      *     waktu_baca: int,
      *     tanggal: ?string,
+     *     jumlah_dilihat: int,
+     *     dilihat: string,
+     *     tersimpan: bool,
      *     kategori: array{nama: string, ikon: string, warna: string, warna_gelap: string},
      *     pembuat: ?array{nama: string, inisial: string, warna: string, warna_gelap: string},
      *     seksi: array<int, array<string, mixed>>,
@@ -44,23 +50,27 @@ final class DetailMateri
      *     tautan_latihan: string
      * }
      */
-    public static function petikan(Materi $materi): array
+    public static function petikan(Materi $materi, bool $tersimpan = false): array
     {
         $pelajaran = $materi->pelajaran;
         $kategori = Pelajaran::warna($pelajaran?->slug ?? '', $pelajaran?->nama ?? 'Umum');
         $pembuat = $materi->pembuat;
+        $jumlahDilihat = (int) ($materi->jumlah_dilihat ?? 0);
 
         return [
             'judul' => $materi->nama,
             'slug' => $materi->slug,
             'deskripsi' => $materi->deskripsi,
-            // Thumbnail dan audio disimpan di disk "public" sebagai path
-            // relatif, jadi dipanggil ulang lewat asset() di sini.
-            'thumbnail' => filled($materi->thumbnail) ? asset('storage/'.basename($materi->thumbnail)) : null,
-            'audio' => filled($materi->audio) ? asset('storage/'.basename($materi->audio)) : null,
+            // Thumbnail dan audio dipanggil ulang lewat BerkasMateri::url,
+            // yang tahu bedanya antara path unggahan dan URL penuh.
+            'thumbnail' => BerkasMateri::url($materi->thumbnail),
+            'audio' => BerkasMateri::url($materi->audio),
             'tingkat_kesulitan' => $materi->tingkat_kesulitan,
             'waktu_baca' => $materi->waktuBaca(),
             'tanggal' => self::tanggal($materi->created_at),
+            'jumlah_dilihat' => $jumlahDilihat,
+            'dilihat' => Angka::ringkas($jumlahDilihat),
+            'tersimpan' => $tersimpan,
             'kategori' => [
                 'nama' => $kategori['nama'],
                 'ikon' => $kategori['ikon'],

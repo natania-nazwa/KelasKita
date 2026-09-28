@@ -58,7 +58,9 @@ class KaryaSayaTest extends TestCase
             'deskripsi' => "Ringkasan $nama",
             'isi' => "Bab 1: Pendahuluan\n\nIsi materi.\n\nBab 2: Lanjutan\n\nIsi bab kedua.",
             'tingkat_kesulitan' => 'Mudah',
-            'aktif' => true,
+            // Default-nya sudah disetujui supaya materinya tayang, sama
+            // seperti materi yang sudah lewat peninjauan admin.
+            'status' => Materi::STATUS_PUBLISHED,
         ]);
     }
 
@@ -152,18 +154,33 @@ class KaryaSayaTest extends TestCase
             ->assertDontSee('Quiz Siti');
     }
 
-    public function test_karya_saya_menampilkan_materi_nonaktif_pemiliknya(): void
+    public function test_karya_saya_menampilkan_materi_yang_belum_terbit_pemiliknya(): void
     {
         $user = $this->buatPengguna();
         $pelajaran = $this->buatPelajaran();
         $materi = $this->buatMateri($pelajaran, $user, 'Materi Disembunyikan');
-        $materi->update(['aktif' => false]);
+        $materi->update(['status' => Materi::STATUS_DRAFT]);
 
         $this->actingAs($user)
             ->get('/user/karya-saya')
             ->assertOk()
             ->assertSee('Materi Disembunyikan')
-            ->assertSee('Nonaktif');
+            ->assertSee('Draft');
+    }
+
+    public function test_karya_saya_menampilkan_alasan_penolakan_dan_sisa_pengajuan(): void
+    {
+        $user = $this->buatPengguna();
+        $pelajaran = $this->buatPelajaran();
+        $materi = $this->buatMateri($pelajaran, $user, 'Materi Ditolak');
+        $materi->tolak('Bab 3 belum ada contoh kode.');
+
+        $this->actingAs($user)
+            ->get('/user/karya-saya')
+            ->assertOk()
+            ->assertSee('Materi Ditolak')
+            ->assertSee('Ditolak')
+            ->assertSee('Bab 3 belum ada contoh kode.');
     }
 
     public function test_kartu_menampilkan_jumlah_bab_dan_tanggal_dibuat(): void
@@ -261,15 +278,20 @@ class KaryaSayaTest extends TestCase
         $this->buatQuiz($pelajaran, $user, 'Quiz Terbit');
         $this->buatQuiz($pelajaran, $orangLain, 'Quiz Siti', Quiz::STATUS_PENDING);
 
+        // Materi yang statusnya masih pending ikut dihitung sebagai "menunggu"
+        // supaya angkanya sama dengan hitungan di halaman admin.
+        $materiMenunggu = $this->buatMateri($pelajaran, $user, 'Materi Menunggu');
+        $materiMenunggu->update(['status' => Materi::STATUS_PENDING]);
+
         $halaman = $this->actingAs($user)->get('/user/karya-saya')->assertOk();
 
-        // Dua materi, dua quiz, dua soal, dan satu yang masih pending.
+        // Tiga materi, dua quiz, dua soal, dan dua yang masih pending.
         // Karya Siti tidak ikut dihitung di nomor mana pun.
         $this->assertSame([
-            'materi' => 2,
+            'materi' => 3,
             'quiz' => 2,
             'soal' => 2,
-            'menunggu' => 1,
+            'menunggu' => 2,
         ], $halaman->viewData('ringkasan'));
 
         $halaman->assertSee('Materi Saya')

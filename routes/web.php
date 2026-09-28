@@ -70,17 +70,65 @@ Route::middleware('auth')
     ->group(function () {
         Route::get('/dashboard', User\DashboardController::class)->name('dashboard');
 
+        /*
+         * =============================================================
+         * JADWAL
+         * =============================================================
+         * Tujuan tombol "Lihat Semua" di panel "Jadwal Hari Ini" milik
+         * dashboard. Daftar pelajaran per hari, lengkap dengan pemilih
+         * hari, filter pelajaran, pencarian, kalender mini, dan
+         * pengelolaan jadwal sendiri.
+         *
+         * Jadwal disimpan per pengguna (kolom dibuat_oleh), jadi halaman
+         * dan form hanya pernah membaca jadwal miliknya sendiri.
+         * Kepemilikan ditegakkan di query lewat Jadwal::scopeMilik, dan
+         * form edit/hapus menolak 403 kalau jadwalnya milik orang lain.
+         *
+         * "/jadwal/tambah" HARUS didaftarkan sebelum "/jadwal/{jadwal}",
+         * sama seperti "/materi/tambah" dan "/quiz/tambah" di atas.
+         * Kalau dibalik, route edit akan menelan kata "tambah" sebagai
+         * id jadwal dan form tambah tidak akan pernah terbuka.
+         */
+        Route::get('/jadwal', User\JadwalController::class)->name('jadwal');
+
+        Route::get('/jadwal/tambah', [User\JadwalController::class, 'create'])->name('jadwal.tambah');
+        Route::post('/jadwal/tambah', [User\JadwalController::class, 'store'])->name('jadwal.tambah.store');
+
+        Route::get('/jadwal/{jadwal}/edit', [User\JadwalKelolaController::class, 'edit'])->name('jadwal.edit');
+        Route::put('/jadwal/{jadwal}', [User\JadwalKelolaController::class, 'update'])->name('jadwal.update');
+        Route::delete('/jadwal/{jadwal}', [User\JadwalKelolaController::class, 'destroy'])->name('jadwal.destroy');
+
         Route::get('/materi', User\MateriController::class)->name('materi');
 
         /*
-         * HARUS didaftarkan sebelum "/materi/{materi}" di bawahnya.
-         * Kalau dibalik, route detail akan menelan kata "tambah" sebagai
-         * slug dan form tambah materi tidak akan pernah terbuka.
+         * Segmen literal didaftarkan lebih dulu mengikuti pola yang sudah
+         * dipakai "/materi/tambah" dan "/quiz/tambah": URL literal tidak
+         * pernah berisiko ditelan route berparameter.
          */
         Route::get('/materi/tambah', [User\MateriTambahController::class, 'create'])->name('materi.tambah');
         Route::post('/materi/tambah', [User\MateriTambahController::class, 'store'])->name('materi.tambah.store');
 
-        Route::get('/materi/{materi}', User\MateriDetailController::class)->name('materi.detail');
+        /*
+         * Halaman baca materi memakai segmen "materi-detail", bukan
+         * "materi". Kalau memakai "/materi/{slug}", URL baca harus berbagi
+         * prefix dengan segmen literal "/materi/tambah" dan dengan
+         * "/materi/{slug}/edit" di bawahnya, sehingga urutan pendaftaran
+         * route menjadi rapuh. Nama route tetap "user.materi.detail",
+         * jadi seluruh panggilan route() di view dan controller tidak
+         * berubah.
+         */
+        Route::get('/materi-detail/{materi}', User\MateriDetailController::class)->name('materi.detail');
+
+        /*
+         * Tombol "Simpan" di kepala Materi Detail dan status simpan di
+         * kartu materi. Toggle dipanggil fetch dari app.js, daftarnya
+         * dibaca sekali per halaman.
+         */
+        Route::post('/materi-detail/{materi}/simpan', [User\SimpananMateriController::class, 'toggle'])
+            ->name('materi.simpan');
+
+        Route::get('/simpanan/materi', [User\SimpananMateriController::class, 'data'])
+            ->name('simpanan.materi');
 
         /*
          * Kelola materi milik sendiri (edit, simpan, hapus). Dipakai dari
@@ -180,7 +228,29 @@ Route::middleware('auth')
 
         Route::get('/hasil/{pengerjaan}', User\HasilDetailController::class)->name('hasil.detail');
 
+        /*
+         * =============================================================
+         * PROFIL
+         * =============================================================
+         * Satu-satunya tempat mengelola data akun sendiri: nama, email,
+         * foto profil, dan password.
+         *
+         * Rute ini tidak punya parameter id sama sekali. Semua action
+         * bekerja pada $request->user(), jadi tidak ada URL yang bisa
+         * dipakai untuk mengedit akun orang lain.
+         *
+         * Foto profil dihapus lewat DELETE terpisah, bukan penanda di
+         * dalam form edit, supaya "hapus foto" tetap butuh konfirmasi
+         * sendiri dan tidak bisa ikut terkirim bersama simpan biasa.
+         *
+         * Hapus akun sengaja belum ada rutenya. UI konfirmasinya sudah
+         * ada di halaman, tapi belum ada endpoint, jadi tidak ada aksi
+         * yang bisa menghapus akun hanya karena satu klik.
+         */
         Route::get('/profil', User\ProfilController::class)->name('profil');
+        Route::put('/profil', [User\ProfilController::class, 'update'])->name('profil.update');
+        Route::delete('/profil/foto', [User\ProfilController::class, 'hapusFoto'])->name('profil.foto.destroy');
+        Route::put('/profil/kata-sandi', [User\ProfilController::class, 'ubahKataSandi'])->name('profil.kata-sandi');
     });
 
 /*
@@ -199,4 +269,19 @@ Route::middleware(['auth', 'admin'])
     ->name('admin.')
     ->group(function () {
         Route::get('/dashboard', Admin\DashboardController::class)->name('dashboard');
+
+        /*
+         * Tinjau Materi: materi yang dibuat pengguna tidak tayang sampai
+         * admin menyetujuinya, jadi halaman ini tempat admin memutuskan.
+         *
+         * Dua aksi di bawah memakai slug materi, sama seperti halaman detail
+         * materi, dan hanya berlaku untuk materi yang statusnya masih
+         * "menunggu": controller mengembalikan 404 untuk status lain.
+         *
+         * Field "status" ikut dikirim supaya setelah memutuskan, admin
+         * kembali ke tab yang tadi dibuka dan bukan selalu ke daftar tunggu.
+         */
+        Route::get('/materi', Admin\MateriController::class)->name('materi');
+        Route::post('/materi/{materi}/setujui', [Admin\MateriTinjauController::class, 'setujui'])->name('materi.setujui');
+        Route::post('/materi/{materi}/tolak', [Admin\MateriTinjauController::class, 'tolak'])->name('materi.tolak');
     });

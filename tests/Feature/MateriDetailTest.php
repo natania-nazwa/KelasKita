@@ -45,7 +45,7 @@ class MateriDetailTest extends TestCase
             'deskripsi' => 'Materi dasar HTML untuk membuat struktur halaman web.',
             'isi' => $isi,
             'tingkat_kesulitan' => 'Mudah',
-            'aktif' => true,
+            'status' => Materi::STATUS_PUBLISHED,
         ]);
     }
 
@@ -154,6 +154,55 @@ class MateriDetailTest extends TestCase
             ->assertOk()
             ->assertDontSee('<script>alert("x")</script>', false)
             ->assertSee('&lt;script&gt;', false);
+    }
+
+    public function test_jumlah_dilihat_bertambah_setiap_halaman_dibuka(): void
+    {
+        $materi = $this->buatMateri('Isi materi.');
+
+        $this->actingAs($materi->pembuat)
+            ->get(route('user.materi.detail', $materi->slug))
+            ->assertOk();
+
+        $this->assertSame(1, (int) $materi->fresh()->jumlah_dilihat);
+
+        $this->actingAs($materi->pembuat)
+            ->get(route('user.materi.detail', $materi->slug))
+            ->assertOk();
+
+        $this->assertSame(2, (int) $materi->fresh()->jumlah_dilihat);
+    }
+
+    public function test_bab_pertama_tampil_dan_bab_berikutnya_disembunyikan(): void
+    {
+        $materi = $this->buatMateri(<<<'ISI'
+        # Pengenalan HTML
+
+        Isi pengenalan.
+
+        # Membuat Link
+
+        Isi tautan.
+        ISI);
+
+        $html = $this->actingAs($materi->pembuat)
+            ->get(route('user.materi.detail', $materi->slug))
+            ->assertOk()
+            ->assertSee('data-bab-wadah', false)
+            ->assertSee('Sebelumnya')
+            ->assertSee('Berikutnya')
+            ->getContent();
+
+        // Bab pertama tampil apa adanya; bab kedua baru dibuka oleh JS.
+        $this->assertDoesNotMatchRegularExpression(
+            '/<section[^>]*id="pengenalan-html"[^>]*\bhidden\b[^>]*>/s',
+            $html
+        );
+
+        $this->assertMatchesRegularExpression(
+            '/<section[^>]*id="membuat-link"[^>]*\bhidden\b[^>]*>/s',
+            $html
+        );
     }
 
     public function test_halaman_detail_membutuhkan_login(): void

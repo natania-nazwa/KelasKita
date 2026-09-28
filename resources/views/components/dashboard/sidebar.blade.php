@@ -1,6 +1,7 @@
 @props([
     'aksesCepat' => [],
     'jadwal' => [],
+    'tautanJadwal' => null,
     'peringkat' => [],
     'kalender' => [],
 ])
@@ -26,7 +27,7 @@
 <aside class="grid min-w-0 items-start gap-4 sm:grid-cols-2 lg:gap-5 2xl:grid-cols-1">
     <x-dashboard.akses-cepat :daftar="$aksesCepat" />
 
-    <x-dashboard.jadwal :daftar="$jadwal" />
+    <x-dashboard.jadwal :daftar="$jadwal" :tautan="$tautanJadwal" />
 
     <x-dashboard.peringkat :daftar="$peringkat" />
 

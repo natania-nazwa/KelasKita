@@ -2,6 +2,7 @@
     'seksi',
     'judulMateri',
     'tautan',
+    'babAwal' => false,
 ])
 
 @php
@@ -25,7 +26,8 @@
         : implode(' ', array_column($paragraf, 'html'));
 @endphp
 
-<section id="{{ $seksi['slug'] }}" data-materi-seksi class="materi-seksi">
+<section id="{{ $seksi['slug'] }}" data-bab="{{ $seksi['slug'] }}"
+    @unless($babAwal) hidden @endunless class="materi-seksi">
     <div class="latihan-kartu overflow-hidden rounded-[1.75rem]">
 
         <div class="flex items-start gap-4 p-5 sm:p-7">

@@ -12,7 +12,14 @@ namespace App\Support;
  *
  * Dua gaya penanda yang dipakai aplikasi:
  *   "Bab 2: Mengenal Blade"  -> ditulis form Tambah Materi
- *   "# Judul" / "## Subjudul"-> penanda seksi untuk materi yang diketik manual
+ *   "# Judul"                -> penanda seksi, sama dengan yang dibaca IsiMateri
+ *
+ * Sengaja hanya "#" satu tanda yang memulai bab. "## Subjudul" tetap
+ * subjudul di dalam bab; kalau ikut dianggap bab, strukturnya rusak begitu
+ * materi disimpan ulang lewat form.
+ *
+ * Baris di dalam blok kode tidak pernah dibaca sebagai penanda, jadi
+ * komentar gaya "# catatan" di dalam contoh kode tidak memecah bab.
  *
  * Isi tanpa penanda apa pun dianggap satu bab, jadi hasilnya tidak pernah
  * kosong.
@@ -20,14 +27,20 @@ namespace App\Support;
 final class BabMateri
 {
     /**
-     * Penanda yang dibaca, dari yang paling spesifik.
+     * Penanda yang dibaca, dari yang paling spesifik. Pola di sini tidak
+     * pakai modifier "m", karena pencariannya dilakukan baris per baris.
      *
      * @var array<int, string>
      */
     private const PENANDA = [
-        '/^Bab\s+\d+\s*:\s*(.*)$/mu',
-        '/^\s*#{1,2}\s+(.+)$/mu',
+        '/^Bab\s+\d+\s*:\s*(.*)$/u',
+        '/^#\s+(.+)$/u',
     ];
+
+    /**
+     * Baris yang menandai awal atau akhir blok kode.
+     */
+    private const PAGAR_KODE = '/^```(\w*)\s*$/';
 
     /**
      * Daftar bab dari isi materi, siap dikirim ke JavaScript sebagai JSON.
@@ -42,27 +55,47 @@ final class BabMateri
             return [['id' => 'bab-1', 'title' => 'Pendahuluan', 'content' => '']];
         }
 
+        $baris = preg_split('/\R/u', str_replace("\t", '    ', $teks)) ?: [];
+
         foreach (self::PENANDA as $pola) {
-            $bagian = self::pecah($teks, $pola);
+            $bagian = self::pecah($baris, $pola);
 
             if ($bagian !== []) {
                 return $bagian;
             }
         }
 
-        return [['id' => 'bab-1', 'title' => 'Pendahuluan', 'content' => self::paragraf($teks)]];
+        return [[
+            'id' => 'bab-1',
+            'title' => 'Pendahuluan',
+            'content' => self::paragraf(implode("\n", $baris)),
+        ]];
     }
 
     /**
-     * Potong teks pada setiap baris yang cocok dengan penanda.
+     * Potong daftar baris pada setiap baris yang cocok dengan pola.
      *
+     * @param  array<int, string>  $baris
      * @return array<int, array{id: string, title: string, content: string}>
      */
-    private static function pecah(string $teks, string $pola): array
+    private static function pecah(array $baris, string $pola): array
     {
-        preg_match_all($pola, $teks, $muka, PREG_OFFSET_CAPTURE | PREG_SET_ORDER);
+        $penanda = [];
+        $diDalamKode = false;
 
-        if ($muka === []) {
+        foreach ($baris as $index => $barisNow) {
+            if (preg_match(self::PAGAR_KODE, rtrim($barisNow)) === 1) {
+                $diDalamKode = ! $diDalamKode;
+
+                continue;
+            }
+
+            if (! $diDalamKode && preg_match($pola, $barisNow, $muka) === 1) {
+                $penanda[$index] = trim((string) ($muka[1] ?? ''));
+            }
+        }
+
+        if ($penanda === []) {
             return [];
         }
 
@@ -70,22 +103,23 @@ final class BabMateri
 
         // Teks sebelum penanda pertama tetap jadi bab sendiri, supaya tidak
         // ada isi yang diam-diam hilang.
-        $awal = $muka[0][0][1];
+        $awal = array_key_first($penanda);
+        $pembuka = trim(implode("\n", array_slice($baris, 0, $awal)));
 
-        if (trim(substr($teks, 0, $awal)) !== '') {
+        if ($pembuka !== '') {
             $bagian[] = [
                 'id' => 'bab-1',
                 'title' => 'Pendahuluan',
-                'content' => self::paragraf(substr($teks, 0, $awal)),
+                'content' => self::paragraf($pembuka),
             ];
         }
 
-        foreach ($muka as $index => $baris) {
-            [$penanda, $mulai] = $baris[0];
-            $akhir = isset($muka[$index + 1]) ? $muka[$index + 1][0][1] : strlen($teks);
+        $urutan = array_keys($penanda);
 
-            $isiBab = trim(substr($teks, $mulai + strlen($penanda), max(0, $akhir - $mulai - strlen($penanda))));
-            $judul = trim((string) ($baris[1][0] ?? ''));
+        foreach ($urutan as $posisi => $index) {
+            $akhir = $urutan[$posisi + 1] ?? count($baris);
+            $isiBab = trim(implode("\n", array_slice($baris, $index + 1, $akhir - $index - 1)));
+            $judul = $penanda[$index];
 
             $bagian[] = [
                 'id' => 'bab-'.(count($bagian) + 1),

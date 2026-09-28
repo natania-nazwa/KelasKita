@@ -184,6 +184,7 @@
 
         {{-- Sidebar --}}
         <x-dashboard.sidebar :akses-cepat="$aksesCepat" :jadwal="$jadwal"
+            :tautan-jadwal="route('user.jadwal')"
             :peringkat="$peringkat" :kalender="$kalender" />
     </div>
 @endsection

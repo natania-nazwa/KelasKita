@@ -85,6 +85,8 @@ function initTambahMateri(akar) {
     };
 
     const saklar = $("[data-publikasikan]");
+    const wadahCatatan = $("[data-catatan-wadah]");
+    const isianCatatan = $("[data-catatan-isian]");
     const dialog = $("[data-dialog-hapus]");
     const dialogPesan = $("[data-dialog-pesan]");
     const dialogBatal = $("[data-dialog-batal]");
@@ -954,16 +956,37 @@ function initTambahMateri(akar) {
         p.dengarHint.classList.add("hidden");
     });
 
-    /* --- Saklar publikasi --- */
+    /* --- Saklar publikasi ---
+     * Saklar hanya ada di halaman tambah. Di form edit(status tidak berubah
+     * dari sekadar menyimpan) tidak ada saklar, dan di situ tombol "Ajukan
+     * Persetujuan" berdiri sendiri, jadi bagian ini dilewati saja. */
 
-    saklar.addEventListener("click", () => {
-        const nilai = saklar.getAttribute("aria-checked") !== "true";
-        saklar.setAttribute("aria-checked", String(nilai));
-    });
+    if (saklar) {
+        saklar.addEventListener("click", () => {
+            const nilai = saklar.getAttribute("aria-checked") !== "true";
+            saklar.setAttribute("aria-checked", String(nilai));
+        });
+    }
 
     $$('[name="publikasikan"]', form).forEach((tombol) => {
-        tombol.addEventListener("click", () => {
-            saklar.setAttribute("aria-checked", tombol.value === "1" ? "true" : "false");
+        tombol.addEventListener("click", (event) => {
+            saklar?.setAttribute("aria-checked", tombol.value === "1" ? "true" : "false");
+
+            /*
+             * Materi yang ditolak wajib menyertai catatan pendukung. Isiannya
+             * disembunyikan sampai tombol ajukan ditekan, jadi klik pertama
+             * hanya membukanya dan memindahkan kursor ke sana. Pengajuan baru
+             * benar-benar dikirim pada klik berikutnya.
+             */
+            if (tombol.value !== "1" || !wadahCatatan?.hasAttribute("hidden")) return;
+
+            event.preventDefault();
+            wadahCatatan.removeAttribute("hidden");
+
+            if (isianCatatan) {
+                isianCatatan.required = true;
+                isianCatatan.focus();
+            }
         });
     });
 

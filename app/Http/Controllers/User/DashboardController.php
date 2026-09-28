@@ -5,6 +5,7 @@ namespace App\Http\Controllers\User;
 use App\Http\Controllers\Controller;
 use App\Models\Pelajaran;
 use App\Models\User;
+use App\Support\DaftarJadwal;
 use App\Support\Ikon;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -25,7 +26,7 @@ use Illuminate\View\View;
  *   aksesCepat    => [judul, deskripsi, ikon, warna, warna_gelap, tautan]
  *   materiTerbaru => [slug, judul, deskripsi, jumlah_materi, kategori[], pembuat[]]
  *   quizTerbaru   => [slug, judul, jumlah_soal, durasi, kategori[], tautan]
- *   jadwal        => [mulai, selesai, judul, kelas, ikon, warna, warna_gelap, status]
+ *   jadwal        => hasil App\Support\DaftarJadwal::hariIni()
  *   peringkat     => [peringkat, skor, nama, inisial, warna, warna_gelap, ...]
  *   kalender      => [nama_bulan, nama_hari, sel[], sebelumnya, berikutnya]
  *
@@ -43,7 +44,7 @@ class DashboardController extends Controller
             'aksesCepat' => $this->aksesCepat(),
             'materiTerbaru' => $this->materiTerbaru(),
             'quizTerbaru' => $this->quizTerbaru(),
-            'jadwal' => $this->jadwal(),
+            'jadwal' => $this->jadwal($request),
             'peringkat' => $this->peringkat($request->user()),
             'kalender' => $this->kalender($request),
             'streak' => $this->streak(),
@@ -209,43 +210,15 @@ class DashboardController extends Controller
     /**
      * Jadwal pelajaran hari ini.
      *
-     * Warna diambil dari katalog Pelajaran supaya indikator warna di list
-     * konsisten dengan kartu materi. Statusnya dihitung dari jam sekarang,
-     * jadi baris yang sudah lewat otomatis tampil redup.
+     * Datanya sengaja dibaca dari App\Support\DaftarJadwal, bukan ditulis
+     * ulang di sini, supaya baris pada kartu dashboard dijamin sama dengan
+     * baris di halaman /user/jadwal untuk tanggal yang sama. Kartu di
+     * dashboard memakai sebagian kecil dari kunci yang dikembalikan kelas
+     * itu (jam, judul, kelas, ikon, warna, status); sisanya dipakai di sana.
      */
-    private function jadwal(): array
+    private function jadwal(Request $request): array
     {
-        $daftar = [
-            ['mulai' => '08:00', 'selesai' => '09:30', 'judul' => 'Pemrograman Web', 'kelas' => 'Kelas 11 RPL 2', 'kategori' => 'pemrograman', 'ikon' => Ikon::path('kode')],
-            ['mulai' => '10:00', 'selesai' => '11:30', 'judul' => 'Matematika', 'kelas' => 'Kelas 11 RPL 2', 'kategori' => 'matematika', 'ikon' => Ikon::path('kalkulator')],
-            ['mulai' => '13:00', 'selesai' => '14:30', 'judul' => 'Bahasa Indonesia', 'kelas' => 'Kelas 11 RPL 2', 'kategori' => 'bahasa-indonesia', 'ikon' => Ikon::path('pena')],
-        ];
-
-        $sekarang = now();
-
-        return array_map(function (array $baris) use ($sekarang) {
-            $warna = Pelajaran::warna($baris['kategori']);
-
-            // Jam pelajaran dibandingkan dengan waktu hari ini, bukan tanggal,
-            // jadi cukup digabung dengan tanggal hari ini.
-            $mulai = now()->startOfDay()->setTimeFromTimeString($baris['mulai']);
-            $selesai = now()->startOfDay()->setTimeFromTimeString($baris['selesai']);
-
-            return [
-                'mulai' => $baris['mulai'],
-                'selesai' => $baris['selesai'],
-                'judul' => $baris['judul'],
-                'kelas' => $baris['kelas'],
-                'ikon' => $baris['ikon'],
-                'warna' => $warna['warna'],
-                'warna_gelap' => $warna['warna_gelap'],
-                'status' => match (true) {
-                    $sekarang->greaterThanOrEqualTo($selesai) => 'Selesai',
-                    $sekarang->greaterThanOrEqualTo($mulai) => 'Berlangsung',
-                    default => 'Akan datang',
-                },
-            ];
-        }, $daftar);
+        return DaftarJadwal::hariIni($request->user()?->getKey());
     }
 
     /**
