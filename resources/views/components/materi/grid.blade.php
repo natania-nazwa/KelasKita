@@ -7,7 +7,12 @@
     Grid daftar materi.
     - Desktop: 4 kolom
     - Tablet : 2 kolom
-    - Mobile : 1 kolom
+    - Ponsel : 2 kolom (padat, supaya 20 kartu per halaman tidak
+                terasa seperti daftar yang tidak berujung)
+
+    Pembagiannya sengaja 2 dan 4: jumlah materi per halaman (lihat
+    DaftarMateri::perHalaman) = 20, jadi tidak pernah ada kartu yatim
+    di baris terakhir, baik di ponsel maupun desktop.
 
     min-w-0 pada tiap kartu membuat kolom menyusut mengikuti ruang yang
     tersedia di samping sidebar, jadi tidak pernah melebar atau membuat
@@ -16,7 +21,7 @@
 --}}
 
 <div data-reveal-stagger
-    class="grid grid-cols-1 gap-5 min-w-0 sm:grid-cols-2 lg:grid-cols-4">
+    class="grid grid-cols-2 gap-4 min-w-0 sm:gap-5 lg:grid-cols-4">
     @forelse ($daftar as $materi)
         <x-materi.kartu :materi="$materi" :kata-kunci="$kataKunci" />
     @empty

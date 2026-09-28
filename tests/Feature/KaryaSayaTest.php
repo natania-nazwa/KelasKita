@@ -247,6 +247,53 @@ class KaryaSayaTest extends TestCase
         $this->assertStringContainsString('Quiz ini akan dihapus dan tidak dapat dikembalikan.', $isi);
     }
 
+    public function test_kartu_ringkasan_menghitung_seluruh_karya_pengguna(): void
+    {
+        $user = $this->buatPengguna();
+        $orangLain = $this->buatPengguna(['nama' => 'Siti', 'email' => 'siti@example.com']);
+        $pelajaran = $this->buatPelajaran();
+
+        $this->buatMateri($pelajaran, $user, 'Materi Budi');
+        $this->buatMateri($pelajaran, $user, 'Materi Budi Dua');
+        $this->buatMateri($pelajaran, $orangLain, 'Materi Siti');
+
+        $this->buatQuiz($pelajaran, $user, 'Quiz Menunggu', Quiz::STATUS_PENDING);
+        $this->buatQuiz($pelajaran, $user, 'Quiz Terbit');
+        $this->buatQuiz($pelajaran, $orangLain, 'Quiz Siti', Quiz::STATUS_PENDING);
+
+        $halaman = $this->actingAs($user)->get('/user/karya-saya')->assertOk();
+
+        // Dua materi, dua quiz, dua soal, dan satu yang masih pending.
+        // Karya Siti tidak ikut dihitung di nomor mana pun.
+        $this->assertSame([
+            'materi' => 2,
+            'quiz' => 2,
+            'soal' => 2,
+            'menunggu' => 1,
+        ], $halaman->viewData('ringkasan'));
+
+        $halaman->assertSee('Materi Saya')
+            ->assertSee('Quiz Saya')
+            ->assertSee('Total Soal')
+            ->assertSee('Menunggu Persetujuan');
+    }
+
+    public function test_daftar_karya_membagi_sembilan_kartu_per_halaman(): void
+    {
+        $user = $this->buatPengguna();
+        $pelajaran = $this->buatPelajaran();
+
+        for ($i = 1; $i <= 10; $i++) {
+            $this->buatMateri($pelajaran, $user, 'Materi '.$i);
+        }
+
+        $halaman = $this->actingAs($user)->get('/user/karya-saya')->assertOk();
+
+        // Sembilan per halaman supaya grid tiga kolom jadi tiga baris penuh.
+        $this->assertSame(9, $halaman->viewData('paginasi')->perPage());
+        $this->assertCount(9, $halaman->viewData('daftar'));
+    }
+
     public function test_form_edit_materi_membuka_dengan_isi_lama(): void
     {
         $user = $this->buatPengguna();

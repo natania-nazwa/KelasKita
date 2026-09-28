@@ -117,6 +117,11 @@ class SesiKerjakanController extends Controller
 
         $pengerjaan->hitungUlang();
 
+        // Menyimpan jawaban berarti peserta sedang mengerjakan, apa pun jalan
+        // masuknya. Penandaan ini tidak harus bergantung pada halaman soal
+        // yang sempat dibuka lebih dulu.
+        $this->tandaiMengerjakan($sesi, $pengguna);
+
         /*
          * Menjawab soal terakhir berarti selesai. Form dikirim lewat POST,
          * sedangkan halaman hasil dibaca lewat GET, jadi di sini pengerjaan

@@ -153,6 +153,62 @@ class QuizHalamanTest extends TestCase
             ->assertSee('Reset Pencarian');
     }
 
+    public function test_filter_kategori_menampilkan_quiz_dari_kategori_itu_saja(): void
+    {
+        $user = $this->buatPengguna();
+        $kode = $this->buatPelajaran('Pemrograman', 'pemrograman');
+        $desain = $this->buatPelajaran('Desain Web', 'desain-web');
+        $this->buatQuiz($kode, $user, 'Belajar Blade');
+        $this->buatQuiz($desain, $user, 'Tipografi Modern');
+
+        $this->actingAs($user)
+            ->get('/user/quiz?kategori=desain-web')
+            ->assertOk()
+            ->assertSee('Tipografi Modern')
+            ->assertDontSee('Belajar Blade')
+            // Dropdown filter menawarkan kategori yang benar-benar punya quiz.
+            ->assertSee('Desain Web (1)', false)
+            ->assertSee('Semua (2)', false);
+    }
+
+    public function test_kepala_halaman_menampilkan_ringkasan_pustaka(): void
+    {
+        $user = $this->buatPengguna();
+        $pelajaran = $this->buatPelajaran('Pemrograman', 'pemrograman');
+        $quiz = $this->buatQuiz($pelajaran, $user, 'HTML & CSS Dasar');
+        $this->buatSoal($quiz, 1);
+        $this->buatSoal($quiz, 2);
+
+        $isi = $this->actingAs($user)->get('/user/quiz')->getContent();
+
+        // Angka di kepala halaman dihitung dari seluruh quiz yang tayang,
+        // bukan dari hasil pencarian atau filter aktif.
+        $this->assertStringContainsString('quiz-kepala', $isi);
+        $this->assertMatchesRegularExpression(
+            '/quiz-kepala__angka">1<\/span>\s*<span class="quiz-kepala__satuan">Quiz/',
+            $isi
+        );
+        $this->assertMatchesRegularExpression(
+            '/quiz-kepala__angka">2<\/span>\s*<span class="quiz-kepala__satuan">Soal/',
+            $isi
+        );
+    }
+
+    public function test_kategori_tanpa_quiz_menampilkan_empty_state_khusus(): void
+    {
+        $user = $this->buatPengguna();
+        $kode = $this->buatPelajaran('Pemrograman', 'pemrograman');
+        $this->buatPelajaran('Database', 'database');
+        $this->buatQuiz($kode, $user, 'Belajar Blade');
+
+        $this->actingAs($user)
+            ->get('/user/quiz?kategori=database')
+            ->assertOk()
+            ->assertDontSee('Belajar Blade')
+            ->assertSee('Kategori ini belum ada quiznya')
+            ->assertSee('Lihat Semua Quiz');
+    }
+
     public function test_halaman_quiz_juga_menampilkan_quiz_pengguna_lain(): void
     {
         $budi = $this->buatPengguna();

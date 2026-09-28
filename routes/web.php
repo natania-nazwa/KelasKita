@@ -156,6 +156,30 @@ Route::middleware('auth')
          */
         Route::get('/karya-saya', User\KaryaSayaController::class)->name('karya-saya');
 
+        /*
+         * =============================================================
+         * HASIL
+         * =============================================================
+         * Rekap seluruh pengerjaan quiz milik pengguna yang sedang
+         * login: statistik, riwayat, filter, pencarian, dan pengurutan.
+         *
+         * Prefix "user" sama seperti halaman lain yang butuh login, jadi
+         * URL-nya /user/hasil. Route detail memakai id pengerjaan
+         * (tb_pengerjaan_quiz) dan hanya bisa dibuka pemiliknya:
+         * controller membandingkan pengguna_id dengan user yang sedang
+         * login dan mengembalikan 403 kalau beda.
+         *
+         * Halaman ini terpisah dari /user/sesi/{sesi}/hasil, yang
+         * hanya menampilkan nilai dari satu sesi live.
+         */
+        Route::get('/hasil', User\HasilController::class)->name('hasil');
+
+        // Segmen literal didaftarkan lebih dulu, mengikuti pola "/quiz/tambah"
+        // di atas, supaya tidak pernah tertelan route berparameter.
+        Route::get('/hasil/quiz/{quiz}', User\HasilController::class)->name('hasil.daftar');
+
+        Route::get('/hasil/{pengerjaan}', User\HasilDetailController::class)->name('hasil.detail');
+
         Route::get('/profil', User\ProfilController::class)->name('profil');
     });
 

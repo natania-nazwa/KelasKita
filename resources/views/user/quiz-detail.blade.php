@@ -90,6 +90,41 @@
                         </span>
                     @endif
                 </div>
+
+                {{-- Aksi host, hanya untuk pemilik quiz. Quiz tanpa soal
+                     tidak punya tombol apa pun karena sesinya tidak bisa
+                     dijalankan. --}}
+                @if ($kartu['saya'] && $jumlahSoal > 0)
+                    <div class="mt-5 flex flex-wrap items-center gap-2.5">
+                        @if ($sesiAktif !== null)
+                            {{-- Sudah ada sesi yang belum ditutup: arahkan
+                                 balik ke lobby itu, jangan buat sesi kedua. --}}
+                            <a href="{{ route('user.sesi.lobby', $sesiAktif) }}" class="tombol-utama">
+                                <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="1.9" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="{{ \App\Support\Ikon::path('orang') }}" />
+                                </svg>
+
+                                Buka Lobby ({{ $sesiAktif->kode }})
+                            </a>
+                        @else
+                            <form method="POST" action="{{ route('user.sesi.buka', $quiz) }}">
+                                @csrf
+
+                                <button type="submit" class="tombol-utama">
+                                    <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="1.9" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="{{ \App\Support\Ikon::path('orang') }}" />
+                                    </svg>
+
+                                    Mulai Sesi Quiz
+                                </button>
+                            </form>
+                        @endif
+
+                        <a href="{{ route('user.sesi.gabung') }}" class="tombol-garis">
+                            Masukkan Kode
+                        </a>
+                    </div>
+                @endif
             </div>
         </section>
 

@@ -4,6 +4,7 @@ namespace App\Http\Controllers\User;
 
 use App\Http\Controllers\Controller;
 use App\Models\Quiz;
+use App\Models\SesiQuiz;
 use App\Models\Soal;
 use App\Support\DaftarQuiz;
 use Illuminate\Http\Request;
@@ -32,11 +33,22 @@ class QuizDetailController extends Controller
 
         $daftarSoal = $quiz->soal()->aktif()->terurut()->get();
 
+        // Sesi milik pengguna ini yang belum ditutup, kalau ada. Ditampilkan
+        // supaya pemilik quiz bisa langsung kembali ke lobby yang sedang
+        // berjalan, bukan membuat sesi kedua untuk quiz yang sama.
+        $sesiAktif = SesiQuiz::query()
+            ->where('quiz_id', $quiz->getKey())
+            ->milik($pengguna?->getKey())
+            ->belumSelesai()
+            ->latest('id')
+            ->first();
+
         return view('user.quiz-detail', [
             'quiz' => $quiz,
             'kartu' => DaftarQuiz::petakan([$quiz], $pengguna?->getKey())[0],
             'soal' => $daftarSoal,
             'jumlahSoal' => $daftarSoal->count(),
+            'sesiAktif' => $sesiAktif,
             'rekomendasi' => $this->rekomendasi($quiz, $pengguna?->getKey()),
         ]);
     }

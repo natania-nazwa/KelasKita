@@ -137,6 +137,26 @@ class Quiz extends Model
     }
 
     /**
+     * Filter kategori berdasarkan slug mata pelajaran.
+     *
+     * Bentuknya sama dengan App\Models\Materi::scopeKategori() supaya
+     * halaman Materi dan halaman Quiz menyaring kategori dengan cara yang sama.
+     */
+    public function scopeKategori(Builder $query, ?string $slug): Builder
+    {
+        $slug = trim((string) $slug);
+
+        if ($slug === '') {
+            return $query;
+        }
+
+        return $query->whereHas(
+            'pelajaran',
+            fn (Builder $pelajaran) => $pelajaran->where('slug', $slug)
+        );
+    }
+
+    /**
      * Jumlah soal aktif milik quiz ini.
      *
      * Dipakai untuk badge "10 Soal" pada kartu. Nilai hasil withCount()

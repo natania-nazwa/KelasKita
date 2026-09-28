@@ -122,6 +122,63 @@ class MateriHalamanTest extends TestCase
             ->assertSee('Materi Siti');
     }
 
+    public function test_halaman_materi_menampilkan_20_kartu_lalu_paginasi(): void
+    {
+        $user = $this->buatPengguna();
+        $pelajaran = $this->buatPelajaran('Pemrograman', 'pemrograman');
+
+        for ($i = 1; $i <= 21; $i++) {
+            $this->buatMateri($pelajaran, $user, "Materi Nomor $i");
+        }
+
+        $halaman1 = $this->actingAs($user)->get('/user/materi');
+
+        $halaman1->assertOk()
+            ->assertSee('Menampilkan 1&ndash;20', false)
+            ->assertSee('dari 21 materi', false)
+            ->assertSee('page=2');
+
+        // Dua puluh per halaman pas dengan grid padat (empat kolom di
+        // desktop = lima baris penuh, tanpa kartu yatim).
+        $this->assertSame(20, $halaman1->viewData('materi')->perPage());
+        $this->assertCount(20, $halaman1->viewData('daftar'));
+
+        $halaman2 = $this->actingAs($user)->get('/user/materi?page=2');
+
+        $halaman2->assertOk()
+            ->assertSee('Menampilkan 21&ndash;21', false)
+            ->assertDontSee('Menampilkan 1&ndash;20', false);
+        $this->assertCount(1, $halaman2->viewData('daftar'));
+    }
+
+    public function test_kepala_halaman_materi_menampilkan_ringkasan_pustaka(): void
+    {
+        $budi = $this->buatPengguna();
+        $siti = $this->buatPengguna(['nama' => 'Siti', 'email' => 'siti@example.com']);
+        $kode = $this->buatPelajaran('Pemrograman', 'pemrograman');
+        $desain = $this->buatPelajaran('Desain Web', 'desain-web');
+        $this->buatMateri($kode, $budi, 'Belajar Blade');
+        $this->buatMateri($desain, $siti, 'Tipografi Modern');
+
+        $isi = $this->actingAs($budi)->get('/user/materi')->getContent();
+
+        // Angka di kepala halaman dihitung dari seluruh materi yang tayang,
+        // bukan dari hasil pencarian atau filter yang sedang aktif.
+        $this->assertStringContainsString('materi-kepala', $isi);
+        $this->assertMatchesRegularExpression(
+            '/materi-kepala__angka">2<\/span>\s*<span class="materi-kepala__satuan">Materi/',
+            $isi
+        );
+        $this->assertMatchesRegularExpression(
+            '/materi-kepala__angka">2<\/span>\s*<span class="materi-kepala__satuan">Kategori/',
+            $isi
+        );
+        $this->assertMatchesRegularExpression(
+            '/materi-kepala__angka">2<\/span>\s*<span class="materi-kepala__satuan">Pembuat/',
+            $isi
+        );
+    }
+
     public function test_halaman_materi_tidak_perlunya_tombol_tambah(): void
     {
         $user = $this->buatPengguna();

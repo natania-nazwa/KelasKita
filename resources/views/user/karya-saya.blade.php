@@ -35,6 +35,16 @@
         <x-karya.kepala />
 
         {{-- =========================
+             RINGKASAN KARYA
+        ==========================
+             Empat angka besar di atas halaman: berapa materi, berapa quiz,
+             berapa soal, dan berapa yang masih menunggu persetujuan admin.
+             Angkanya mencakup seluruh karya, jadi tetap sama walau berpindah
+             tab atau memuat halaman berikutnya. --}}
+        <x-karya.ringkasan :materi="$ringkasan['materi']" :quiz="$ringkasan['quiz']"
+            :soal="$ringkasan['soal']" :menunggu="$ringkasan['menunggu']" />
+
+        {{-- =========================
              TAB + PENCARIAN + TOMBOL TAMBAH
         ==========================
              Sengaja tanpa kartu pembungkus: tab, kolom cari, dan tombol
@@ -47,12 +57,16 @@
 
         {{-- =========================
              DAFTAR KARYA
-        ========================== --}}
+        ==========================
+             Tiga kolom di layar besar: kartu di halaman ini lebih banyak
+             isinya (lencana status, tiga baris informasi, tiga tombol),
+             jadi tiga kolom membuatnya lega. Dua kolom di tablet, satu di
+             ponsel. --}}
         @if ($daftar === [])
             <x-karya.kosong :alasan="$alasanKosong" :tab="$tab" />
         @else
             <div data-reveal-stagger
-                class="mt-5 grid grid-cols-1 gap-5 min-w-0 sm:grid-cols-2 lg:grid-cols-4">
+                class="mt-5 grid grid-cols-1 gap-5 min-w-0 sm:grid-cols-2 xl:grid-cols-3">
                 @foreach ($daftar as $kartu)
                     @if ($tab === 'quiz')
                         <x-karya.kartu-quiz :quiz="$kartu" />

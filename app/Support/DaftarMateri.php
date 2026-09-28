@@ -18,7 +18,7 @@ final class DaftarMateri
 {
     /**
      * Daftar materi per kategori (jumlah materi aktif di tiap pelajaran).
-     * Dipakai untuk badge "10 Materi" pada kartu.
+     * Dipakai untuk mengisi kunci jumlah_materi pada tiap kartu.
      *
      * @return array<int, int> id pelajaran => jumlah materi
      */
@@ -37,13 +37,13 @@ final class DaftarMateri
     /**
      * Jumlah materi per halaman.
      *
-     * Delapan, bukan sembilan, supaya pas dengan grid empat kolom:
-     * 8 = 2 baris penuh, sedangkan 9 menyisakan satu kartu yatim
-     * di baris terakhir.
+     * Dua puluh, supaya pas dengan grid padat empat kolom: 20 = 5 baris
+     * penuh di desktop, 10 baris di tablet, dan 10 baris di ponsel (dua
+     * kolom), jadi tidak ada kartu yatim di baris terakhir.
      */
     public static function perHalaman(): int
     {
-        return 8;
+        return 20;
     }
 
     /**

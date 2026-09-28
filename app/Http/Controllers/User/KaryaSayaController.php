@@ -5,6 +5,7 @@ namespace App\Http\Controllers\User;
 use App\Http\Controllers\Controller;
 use App\Models\Materi;
 use App\Models\Quiz;
+use App\Models\Soal;
 use App\Support\DaftarMateri;
 use App\Support\DaftarQuiz;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
@@ -51,11 +52,53 @@ class KaryaSayaController extends Controller
             'daftar' => $daftar['kartu'],
             'paginasi' => $daftar['hal'],
             'jumlahPerTab' => $jumlahPerTab,
+            'ringkasan' => [
+                'materi' => $jumlahPerTab[self::TAB_MATERI],
+                'quiz' => $jumlahPerTab[self::TAB_QUIZ],
+                'soal' => $this->jumlahSoal($idPembuat),
+                'menunggu' => $this->jumlahMenunggu($idPembuat),
+            ],
             'kataKunci' => $kataKunci,
             // Alasan kosong dipakai empty state: masih punya karya atau
             // sedang mencari yang tidak ada bedanya.
             'alasanKosong' => $kataKunci !== '' ? 'cari' : 'saya',
         ]);
+    }
+
+    /**
+     * Jumlah karya per halaman.
+     *
+     * Sembilan, bukan delapan, supaya pas dengan tiga kolom: 9 = tiga baris
+     * penuh, sedangkan 8 menyisakan satu kartu yatim di baris terakhir.
+     */
+    private function perHalaman(): int
+    {
+        return 9;
+    }
+
+    /**
+     * Total soal aktif di seluruh quiz milik pengguna yang sedang login.
+     *
+     * Id quiz diambil lewat subselect, jadi jumlah ini tetap satu query dan
+     * tidak menarik isi soal ke memori.
+     */
+    private function jumlahSoal(?int $idPembuat): int
+    {
+        return Soal::query()
+            ->aktif()
+            ->whereIn('quiz_id', Quiz::query()->milik($idPembuat)->select('id'))
+            ->count();
+    }
+
+    /**
+     * Quiz milik sendiri yang masih menunggu keputusan admin.
+     */
+    private function jumlahMenunggu(?int $idPembuat): int
+    {
+        return Quiz::query()
+            ->milik($idPembuat)
+            ->where('status', Quiz::STATUS_PENDING)
+            ->count();
     }
 
     /**
@@ -70,7 +113,7 @@ class KaryaSayaController extends Controller
             ->with(['pelajaran', 'pembuat'])
             ->cari($kataKunci)
             ->latest()
-            ->paginate(DaftarMateri::perHalaman())
+            ->paginate($this->perHalaman())
             ->withQueryString();
 
         return [
@@ -94,7 +137,7 @@ class KaryaSayaController extends Controller
             ->withCount(['soal' => fn ($soal) => $soal->where('aktif', true)])
             ->cari($kataKunci)
             ->latest()
-            ->paginate(DaftarQuiz::perHalaman())
+            ->paginate($this->perHalaman())
             ->withQueryString();
 
         return [

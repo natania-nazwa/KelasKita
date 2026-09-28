@@ -122,7 +122,7 @@
                                     data-lobi-konfirmasi-judul="Akhiri quiz?"
                                     data-lobi-konfirmasi-pesan="Peserta yang belum selesai akan langsung melihat halaman hasil. Nilai yang sudah masuk tetap tersimpan."
                                     data-lobi-konfirmasi-tombol="Akhiri Quiz"
-                                    data-lobi-konfirmasi-danger>
+                                    data-lobi-konfirmasi-tone="henti">
                                     @csrf
 
                                     <button type="submit" class="tombol-garis tombol-garis--henti w-full">
@@ -137,7 +137,20 @@
         </div>
     </div>
 
-    <x-sesi.konfirmasi judul="Mulai quiz sekarang?"
-        pesan="Semua peserta yang sudah bergabung akan langsung masuk ke soal pertama."
-        tombol="Mulai Quiz" />
+    {{-- Dialog konfirmasi hanya ada untuk host: peserta tidak pernah punya
+         tombol yang perlu dikonfirmasi, jadi dialognya tidak dikirim ke
+         browser mereka.
+
+         Dua dialog karena ada dua aksi dengan tones berbeda: "Mulai Quiz"
+         ungu dan "Akhiri Quiz" merah. --}}
+    @if ($adalahHost)
+        <x-sesi.konfirmasi judul="Mulai quiz sekarang?"
+            pesan="Semua peserta yang sudah bergabung akan langsung masuk ke soal pertama."
+            tombol="Mulai Quiz" />
+
+        <x-sesi.konfirmasi judul="Akhiri quiz?"
+            pesan="Peserta yang belum selesai akan langsung melihat halaman hasil. Nilai yang sudah masuk tetap tersimpan."
+            tombol="Akhiri Quiz"
+            tone="henti" />
+    @endif
 @endsection

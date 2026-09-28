@@ -23,40 +23,17 @@
         @endif
 
         {{-- =========================
-             JUDUL HALAMAN
-        ========================== --}}
-        <section data-reveal="fade">
-            <span
-                class="inline-flex items-center gap-2 rounded-full bg-lavender px-3.5 py-1.5 font-mono text-[11px] font-semibold uppercase tracking-[0.14em] text-primary">
-                <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-                </svg>
-
-                Pustaka Belajar
-            </span>
-
-            <h1 class="mt-3 text-2xl font-extrabold tracking-tight text-dark sm:text-3xl">
-                Materi Pembelajaran
-            </h1>
-
-            <p class="mt-1.5 max-w-xl text-sm leading-relaxed text-dark/60">
-                Temukan dan pelajari berbagai materi yang dibuat oleh guru maupun teman-temanmu.
-            </p>
-        </section>
-
-        {{-- =========================
-             PENCARIAN + FILTER KATEGORI
+             KEPALA + PENCARIAN
         ==========================
-             Sengaja tanpa kartu pembungkus: kolom cari dan dropdown
-             kategori sudah punya bentuknya sendiri, jadi tidak perlu
-             dilingkari panel putih lagi.
+             Kepala, angka ringkas, kolom cari, dan filter kategori
+             semuanya tinggal di satu papan ungu muda (x-materi.kepala),
+             jadi tidak ada area putih kosong di antara bagian atas
+             halaman dan daftar materi.
 
              Tidak ada tombol tambah di sini: materi dibuat dan dikelola
              lewat menu "Karya Saya". --}}
-        <section data-reveal class="mt-6">
-            <x-materi.cari :kategori="$kategori" :kategori-aktif="$kategoriAktif"
-                :kata-kunci="$kataKunci" :total-materi="$totalMateri" class="max-w-3xl" />
-        </section>
+        <x-materi.kepala :total-materi="$totalMateri" :total-pembuat="$totalPembuat"
+            :kategori="$kategori" :kategori-aktif="$kategoriAktif" :kata-kunci="$kataKunci" />
 
         {{-- =========================
              DAFTAR MATERI
@@ -92,7 +69,20 @@
                 </a>
             </div>
         @else
-            <div class="mt-5">
+            {{-- Baris pengantar di atas grid: membuat jarak antar blok
+                 terasa disengaja, bukan sekadar jarak dari kartu. --}}
+            <div data-reveal class="mt-7 flex flex-wrap items-center justify-between gap-2">
+                <h2 class="text-base font-bold tracking-tight text-dark">
+                    Daftar Materi
+                </h2>
+
+                <p class="text-xs text-dark/45">
+                    Menampilkan {{ $materi->firstItem() }}&ndash;{{ $materi->lastItem() }}
+                    dari {{ $materi->total() }} materi
+                </p>
+            </div>
+
+            <div class="mt-4">
                 <x-materi.grid :daftar="$daftar" :kata-kunci="$kataKunci" />
             </div>
 

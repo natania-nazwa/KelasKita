@@ -23,6 +23,7 @@
     $kategori = $quiz['kategori'];
     $pembuat = $quiz['pembuat'];
     $jumlahSoal = (int) $quiz['jumlah_soal'];
+    $durasi = (int) ($quiz['durasi'] ?? 0);
 
     /*
      * Menyalin teks aman (sudah di-escape) lalu menebalkan kata yang sedang
@@ -59,7 +60,18 @@
             <span class="kartu-quiz__gambar-ikon" aria-hidden="true">{{ $kategori['ikon'] }}</span>
         @endif
 
-        {{-- Bookmark: tombol, bukan tautan, supaya tidak membuka quiz. --}}
+        {{-- B. Durasi, melayang di pojok kiri atas thumbnail. --}}
+        @if ($durasi > 0)
+            <span class="kartu-quiz__durasi">
+                <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+                </svg>
+
+                {{ $durasi }} Menit
+            </span>
+        @endif
+
+        {{-- C. Bookmark: tombol, bukan tautan, supaya tidak membuka quiz. --}}
         <button type="button" data-bookmark="{{ $quiz['id'] }}" data-bookmark-ruang="quiz" aria-pressed="false"
             class="kartu-quiz__simpan"
             aria-label="Simpan quiz {{ $quiz['judul'] }} untuk dikerjakan nanti">
@@ -68,13 +80,33 @@
             </svg>
         </button>
 
-        {{-- B. Badge kategori, melayang di pojok kiri bawah thumbnail. --}}
+        {{-- D. Badge kategori, melayang di pojok kiri bawah thumbnail. --}}
         <span class="kartu-quiz__lencana">{{ $kategori['nama'] }}</span>
+
+        {{-- E. Petunjuk aksi, muncul saat kursor di atas kartu. --}}
+        <span class="kartu-quiz__aksi" aria-hidden="true">
+            Lihat
+
+            <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3" />
+            </svg>
+        </span>
     </div>
 
-    {{-- C-E. Judul, deskripsi, dan informasi pembuat. --}}
+    {{-- F-I. Judul, deskripsi, dan informasi pembuat. --}}
     <div class="kartu-quiz__badan">
-        <h2 class="kartu-quiz__judul">{!! $tebalkan($quiz['judul']) !!}</h2>
+        {{-- Garis aksen warna kategori, pemisah dari banner. --}}
+        <span class="kartu-quiz__aksen -mx-4 -mt-3.5 mb-3 block" aria-hidden="true"></span>
+
+        <div class="flex items-start gap-2">
+            <h2 class="kartu-quiz__judul min-w-0">{!! $tebalkan($quiz['judul']) !!}</h2>
+
+            {{-- Quiz milik pengguna yang sedang login ditandai, supaya
+                 karyanya mudah dikenali di antara quiz yang lain. --}}
+            @if ($quiz['saya'] ?? false)
+                <span class="kartu-quiz__milik">Quiz Saya</span>
+            @endif
+        </div>
 
         <p class="kartu-quiz__deskripsi">{!! $tebalkan($quiz['deskripsi']) !!}</p>
 
@@ -89,13 +121,26 @@
                 <span class="kartu-quiz__pembuat-nama">{{ $pembuat['nama'] }}</span>
             </span>
 
-            {{-- F. Jumlah soal pada quiz ini. --}}
-            <span class="kartu-quiz__jumlah">
-                <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" stroke-width="1.9" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z" />
-                </svg>
+            {{-- ml-auto: kalau baris info harus melipat di kartu sempit,
+                 chip tetap menempel di pinggir kanan. --}}
+            <span class="ml-auto flex shrink-0 items-center gap-1.5">
+                @if ($durasi > 0)
+                    <span class="kartu-quiz__durasi-teks">
+                        <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+                        </svg>
 
-                {{ $jumlahSoal }} Soal
+                        {{ $durasi }} mnt
+                    </span>
+                @endif
+
+                <span class="kartu-quiz__jumlah">
+                    <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" stroke-width="1.9" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z" />
+                    </svg>
+
+                    {{ $jumlahSoal }} Soal
+                </span>
             </span>
         </div>
     </div>

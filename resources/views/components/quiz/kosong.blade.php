@@ -1,12 +1,14 @@
 @props([
     // Alasan kosongnya halaman: 'kosong' (pustaka quiz memang belum
-    // terisi) atau 'cari' (tidak ada yang cocok dengan kata kunci).
+    // terisi), 'cari' (tidak ada yang cocok dengan kata kunci), atau
+    // 'filter' (kategori yang dipilih belum punya quiz yang tayang).
     'alasan' => 'kosong',
 ])
 
 {{--
-    Dua kondisi kosong punya pesan dan tombol yang berbeda:
+    Tiga kondisi kosong punya pesan dan tombol yang berbeda:
       cari   -> ada kata kunci, tawarkan untuk menghapusnya
+      filter -> kategori yang dipilih kosong, tawarkan lihat semua
       kosong -> pustaka quiz belum terisi, arahkan ke menu Karya Saya
 
     Halaman ini menampilkan seluruh quiz, jadi tidak ada lagi kondisi
@@ -17,6 +19,11 @@
         'cari' => [
             'judul' => 'Quiz tidak ditemukan',
             'deskripsi' => 'Coba gunakan kata kunci lain.',
+            'ikon' => 'M9.879 7.519c1.171-1.025 3.071-1.025 4.242 0 1.172 1.025 1.172 2.687 0 3.712-.203.179-.43.326-.67.442-.745.361-1.45.999-1.45 1.827v.75c0 .414.336.75.75.75h4.5a.75.75 0 0 0 .75-.75v-.75c0-.828.705-1.466 1.45-1.827a2.25 2.25 0 0 0 .67-.442c1.171-1.025 1.171-2.687 0-3.712M12.75 6h.008v.008H12.75V6Z',
+        ],
+        'filter' => [
+            'judul' => 'Kategori ini belum ada quiznya',
+            'deskripsi' => 'Coba pilih kategori lain, atau lihat seluruh quiz yang tersedia.',
             'ikon' => 'M9.879 7.519c1.171-1.025 3.071-1.025 4.242 0 1.172 1.025 1.172 2.687 0 3.712-.203.179-.43.326-.67.442-.745.361-1.45.999-1.45 1.827v.75c0 .414.336.75.75.75h4.5a.75.75 0 0 0 .75-.75v-.75c0-.828.705-1.466 1.45-1.827a2.25 2.25 0 0 0 .67-.442c1.171-1.025 1.171-2.687 0-3.712M12.75 6h.008v.008H12.75V6Z',
         ],
         default => [
@@ -48,6 +55,11 @@
         <a href="{{ route('user.quiz') }}"
             class="mt-6 inline-flex items-center gap-2 rounded-full bg-primary px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-primary-dark">
             Reset Pencarian
+        </a>
+    @elseif ($alasan === 'filter')
+        <a href="{{ route('user.quiz') }}"
+            class="mt-6 inline-flex items-center gap-2 rounded-full bg-primary px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-primary-dark">
+            Lihat Semua Quiz
         </a>
     @else
         {{-- Membuat quiz hanya lewat menu Karya Saya. --}}

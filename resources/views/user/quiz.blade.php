@@ -23,22 +23,15 @@
         @endif
 
         {{-- =========================
-             JUDUL HALAMAN
-        ========================== --}}
-        <x-quiz.kepala />
-
-        {{-- =========================
-             PENCARIAN
+             KEPALA + PENCARIAN
         ==========================
-             Sengaja tanpa kartu pembungkus: kolom cari sudah punya
-             bentuknya sendiri, jadi tidak perlu dilingkari panel putih
-             lagi.
-
-             Tidak ada tombol buat di sini: quiz dibuat dan dikelola lewat
-             menu "Karya Saya". --}}
-        <section data-reveal class="mt-6">
-            <x-quiz.cari :kata-kunci="$kataKunci" class="max-w-xl" />
-        </section>
+             Kepala, angka ringkas, kolom cari, dan filter kategori
+             semuanya tinggal di satu papan ungu (x-quiz.kepala), jadi
+             tidak ada areas putih kosong di antara bagian atas halaman
+             dan daftar quiz. --}}
+        <x-quiz.kepala :total-quiz="$totalQuiz" :total-soal="$totalSoal"
+            :jumlah-kategori="count($kategori)" :kategori="$kategori"
+            :kategori-aktif="$kategoriAktif" :kata-kunci="$kataKunci" />
 
         {{-- =========================
              DAFTAR QUIZ
@@ -51,7 +44,20 @@
         @if ($daftar === [])
             <x-quiz.kosong :alasan="$alasanKosong" />
         @else
-            <div class="mt-5">
+            {{-- Baris pengantar di atas grid: membuat jarak antar blok
+                 terasa disengaja, bukan sekadar jarak dari kartu. --}}
+            <div data-reveal class="mt-7 flex flex-wrap items-center justify-between gap-2">
+                <h2 class="text-base font-bold tracking-tight text-dark">
+                    Daftar Quiz
+                </h2>
+
+                <p class="text-xs text-dark/45">
+                    Menampilkan {{ $quiz->firstItem() }}&ndash;{{ $quiz->lastItem() }}
+                    dari {{ $quiz->total() }} quiz
+                </p>
+            </div>
+
+            <div class="mt-4">
                 <x-quiz.grid :daftar="$daftar" :kata-kunci="$kataKunci" />
             </div>
 

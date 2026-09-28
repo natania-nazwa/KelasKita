@@ -40,7 +40,7 @@
              seluruh ruang kosong di kiri, jadi kolomnya berhenti tepat di
              sebelah ikon notifikasi. Di layar sempit min-w-0 yang membuatnya
              ikut menyusut, bukan memaksa halaman melebar. --}}
-        <form action="{{ route($aksi) }}" method="GET" class="min-w-0 flex-1">
+        <form action="{{ route($aksi, $param) }}" method="GET" class="min-w-0 flex-1">
             <label for="cari-topbar" class="sr-only">{{ $placeholder }}</label>
 
             {{-- Parameter halaman (mis. tab aktif) ikut dibawa supaya hasil

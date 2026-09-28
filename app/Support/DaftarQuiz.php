@@ -18,7 +18,7 @@ use App\Models\Quiz;
  * Bentuk array per kartu:
  *   id, slug, judul, deskripsi, thumbnail, durasi, jumlah_soal,
  *   status, status_label, visibilitas, saya, dibuat_pada,
- *   tautan, tautan_edit, tautan_hapus,
+ *   tautan, tautan_edit, tautan_hapus, tautan_mulai_sesi,
  *   kategori => [nama, slug, ikon, warna, warna_gelap],
  *   pembuat => [nama, inisial, warna, warna_gelap]
  *
@@ -30,13 +30,14 @@ final class DaftarQuiz
     /**
      * Jumlah quiz per halaman.
      *
-     * Delapan, bukan sembilan, supaya pas dengan grid empat kolom:
-     * 8 = 2 baris penuh, sedangkan 9 menyisakan satu kartu yatim
-     * di baris terakhir.
+     * Dua belas, bukan delapan: grid halaman Quiz memakai 2, 3, dan 4
+     * kolom (lihat components/quiz/grid), dan 12 adalah kelipatan
+     * terkecil ketiganya. Delapan menyisakan satu sel kosong di baris
+     * terakhir pada grid tiga kolom.
      */
     public static function perHalaman(): int
     {
-        return 8;
+        return 12;
     }
 
     /**
@@ -88,6 +89,7 @@ final class DaftarQuiz
                 'tautan' => route('user.quiz.detail', $item->getKey()),
                 'tautan_edit' => route('user.quiz.edit', $item->getKey()),
                 'tautan_hapus' => route('user.quiz.destroy', $item->getKey()),
+                'tautan_mulai_sesi' => route('user.sesi.buka', $item->getKey()),
             ];
         }
 

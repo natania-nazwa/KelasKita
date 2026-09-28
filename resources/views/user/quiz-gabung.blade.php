@@ -3,7 +3,10 @@
 @section('title', 'Masukkan Kode | KelasKita')
 
 @section('content')
-    <div class="kanvas-halaman -m-6 min-h-[calc(100dvh-4rem)] p-6 lg:-m-10 lg:p-10">
+    {{-- min-h-[100dvh], bukan 100dvh dikurangi 4rem seperti halaman lain:
+         halaman ini tidak memakai top bar, jadi tinggi yang tersedia
+         memang satu layar penuh. --}}
+    <div class="kanvas-halaman -m-6 min-h-[100dvh] p-6 lg:-m-10 lg:p-10">
 
         <a href="{{ route('user.dashboard') }}"
             class="inline-flex items-center gap-2 text-sm font-semibold text-primary transition hover:text-primary-dark">
@@ -36,20 +39,30 @@
 
                 <div class="lobi-kartu__badan">
                     <p class="text-sm leading-relaxed text-dark/60">
-                        Masukkan kode quiz untuk bergabung ke dalam quiz. Kamu akan menunggu di ruang
-                        sampai pembuat quiz memulai.
+                        Masukkan kode yang ditampilkan pembuat quiz. Kamu akan masuk ke
+                        ruang tunggu dulu, dan soal baru terbuka setelah dia menekan
+                        Mulai Quiz.
                     </p>
 
-                    <form method="POST" action="{{ route('user.sesi.gabung.store') }}" class="mt-5">
+                    <form method="POST" action="{{ route('user.sesi.gabung.store') }}" class="mt-5"
+                        data-masuk>
                         @csrf
 
-                        <label for="kode" class="label-form">Kode Quiz</label>
+                        {{-- Kotak kode. Border-nya ada di kotak luarnya, jadi
+                             input-nya sendiri dibuat transparan; galatnya
+                             ditangani lewat kelas --galat supaya errornya
+                             tidak cuma reddenya teks. --}}
+                        <div class="lobi-masuk {{ $errors->has('kode') ? 'lobi-masuk--galat' : '' }}">
+                            <label for="kode" class="lobi-kode__label block">Kode Quiz</label>
 
-                        <input type="text" id="kode" name="kode" value="{{ old('kode', $kode) }}"
-                            placeholder="Masukkan kode quiz" autocomplete="off" autocapitalize="characters"
-                            spellcheck="false" inputmode="text" maxlength="10" required
-                            class="kolom-form mt-1.5 font-mono tracking-[0.2em] uppercase"
-                            @error('kode') aria-invalid="true" aria-describedby="kode-galat" @enderror>
+                            <input type="text" id="kode" name="kode" value="{{ old('kode', $kode) }}"
+                                placeholder="ABC123" autocomplete="off" autocapitalize="characters"
+                                spellcheck="false" inputmode="text" maxlength="6" required
+                                class="lobi-masuk__input"
+                                @error('kode') aria-invalid="true" aria-describedby="kode-galat" @enderror>
+
+                            <p class="lobi-kode__petunjuk">Tiga huruf lalu tiga angka.</p>
+                        </div>
 
                         @error('kode')
                             <p id="kode-galat" role="alert" class="mt-2 flex items-start gap-1.5 text-xs font-medium text-[#a8323c]">
@@ -73,7 +86,7 @@
                     {{-- Penjelasan singkat cara kerjanya, supaya peserta tahu
                          harus menunggu di lobby dan tidak boleh langsung
                          membuka soal. --}}
-                    <div class="kartu-tips mt-5">
+                    <div class="mt-5">
                         <p class="flex items-center gap-2 text-xs font-bold text-ungu-dark">
                             <svg class="h-3.5 w-3.5 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M11.25 11.25l.041-.02a.75.75 0 0 1 1.063.852l-.708 2.836a.75.75 0 0 0 1.063.853l.041-.021M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9-3.75h.008v.008H12V8.25Z" />
@@ -82,18 +95,23 @@
                             Cara kerjanya
                         </p>
 
-                        <ol class="mt-2 space-y-1.5 text-xs leading-relaxed text-dark/60">
-                            <li class="flex gap-2">
-                                <span class="font-mono font-bold text-ungu">1.</span>
-                                Masukkan kode yang diberikan pembuat quiz.
+                        <ol class="lobi-langkah mt-3">
+                            <li class="lobi-langkah__item">
+                                <span class="lobi-langkah__angka">1</span>
+
+                                <p class="lobi-langkah__teks">Masukkan kode dari pembuat quiz.</p>
                             </li>
-                            <li class="flex gap-2">
-                                <span class="font-mono font-bold text-ungu">2.</span>
-                                Kamu masuk ke lobby dan melihat siapa saja yang sudah bergabung.
+
+                            <li class="lobi-langkah__item">
+                                <span class="lobi-langkah__angka">2</span>
+
+                                <p class="lobi-langkah__teks">Kamu masuk lobby dan melihat siapa yang sudah bergabung.</p>
                             </li>
-                            <li class="flex gap-2">
-                                <span class="font-mono font-bold text-ungu">3.</span>
-                                Soal baru bisa dibuka setelah pembuat menekan Mulai Quiz.
+
+                            <li class="lobi-langkah__item">
+                                <span class="lobi-langkah__angka">3</span>
+
+                                <p class="lobi-langkah__teks">Soal terbuka setelah pembuat menekan Mulai Quiz.</p>
                             </li>
                         </ol>
                     </div>

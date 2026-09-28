@@ -1,9 +1,101 @@
-// Halaman sesi quiz: polling lobby, salin kode, dialog konfirmasi, dan
-// tombol lanjut di halaman soal.
+// Halaman sesi quiz: form gabung kode, polling lobby, salin kode, dialog
+// konfirmasi, dan tombol lanjut di halaman soal.
 // Semua bagian berhenti sendiri kalau elemennya tidak ada di halaman ini,
 // jadi modul ini aman di-import dari app.js untuk semua halaman.
 const INTERVAL_POLL = 3000;
+const PANJANG_KODE = 6;
+const JEDA_KIRIM = 400;
 const KELAS_BARU = "lobi-daftar__item--baru";
+
+/**
+ * Form "Masukkan Kode".
+ *
+ * Kode sesi selalu enam karakter: tiga huruf lalu tiga angka. Sisi server
+ * sudah membersihkan sendiri (App\Models\SesiQuiz::normalisasiKode), tapi
+ * biar peserta melihat apa yang dia ketik persis seperti yang tampil di
+ * lobby host, pembersihan yang sama diulang di sini:
+ *
+ *   - huruf jadi huruf besar;
+ *   - spasi, tanda hubung, dan karakter lain dibuang;
+ *   - panjangnya dipotong ke enam karakter;
+ *   - begitu sampai enam karakter, form langsung dikirim supaya peserta
+ *     tidak perlu menekan tombol lagi.
+ *
+ * Semua itu sifatnya tambahan: formnya tetap POST biasa dan tetap punya
+ * tombol Gabung, jadi halaman ini tetap berfungsi tanpa JavaScript.
+ */
+function initMasukKode() {
+    const form = document.querySelector("[data-masuk]");
+
+    if (!form) {
+        return;
+    }
+
+    const kolom = form.querySelector("input[name='kode']");
+
+    if (!kolom) {
+        return;
+    }
+
+    // Dua flag terpisah karena dua hal berbeda: "otomatis" menahan
+    // pengirim otomatis supaya tidak menumpuk, "terkirim" menahan
+    // submit kedua yang datang dari tombol atau tombol Enter.
+    let terkirimOtomatis = false;
+    let terkirim = false;
+
+    const rapikan = () => {
+        const bersih = kolom.value
+            .toUpperCase()
+            .replace(/[^A-Z0-9]/g, "")
+            .slice(0, PANJANG_KODE);
+
+        if (bersih !== kolom.value) {
+            kolom.value = bersih;
+        }
+
+        return bersih;
+    };
+
+    kolom.addEventListener("input", () => {
+        rapikan();
+
+        // Pesan galat dari percobaan sebelumnya harus hilang begitu peserta
+        // mengetik lagi, supaya halaman tidak menyimpan error yang basi.
+        form.querySelector("[role='alert']")?.remove();
+        form
+            .querySelector(".lobi-masuk")
+            ?.classList.remove("lobi-masuk--galat");
+
+        if (terkirimOtomatis || terkirim || kolom.value.length < PANJANG_KODE) {
+            return;
+        }
+
+        // Beri jeda sebentar supaya huruf terakhir sempat tampil sebelum
+        // halaman berpindah. Mengirim form seketika membuat peserta sempat
+        // melihat kotak yang masih kosong.
+        terkirimOtomatis = true;
+        window.setTimeout(() => form.requestSubmit(), JEDA_KIRIM);
+    });
+
+    form.addEventListener("submit", (event) => {
+        rapikan();
+
+        if (terkirim) {
+            event.preventDefault();
+
+            return;
+        }
+
+        terkirim = true;
+    });
+
+    // Fokus otomatis hanya di perangkat yang memang memakai tetikus atau
+    // keyboard. Di layar sentuh, membuka keyboard sebelum peserta siap
+    // justru menutupi kartu dan membuat halaman melompat ke bawah.
+    if (window.matchMedia("(pointer: fine)").matches) {
+        kolom.focus();
+    }
+}
 
 /**
  * Polling lobby.
@@ -322,24 +414,33 @@ function initSalinKode() {
  * Form yang perlu konfirmasi menandai diri dengan
  * data-lobi-konfirmasi-judul. Tanpa JavaScript form tetap dikirim
  * langsung, karena mengonfirmasi adalah kenyamanan, bukan syarat.
+ *
+ * Satu halaman bisa punya dua dialog dengan warna berbeda (mis. "Mulai"
+ * ungu dan "Akhiri" merah), jadi dialog yang dibuka dicari dari
+ * data-lobi-konfirmasi-tone pada form pemanggil.
  */
 function initDialog() {
-    const dialog = document.querySelector("[data-lobi-dialog]");
+    const semua = Array.prototype.slice.call(
+        document.querySelectorAll("[data-lobi-dialog]"),
+    );
 
-    if (!dialog) {
+    if (!semua.length) {
         return;
     }
 
-    const judul = dialog.querySelector("[data-lobi-dialog-judul]");
-    const pesan = dialog.querySelector("[data-lobi-dialog-pesan]");
-    const labelTombol = dialog.querySelector("[data-lobi-dialog-tombol]");
-    const tombolBatal = dialog.querySelector("[data-lobi-dialog-batal]");
-    const tombolYa = dialog.querySelector("[data-lobi-dialog-ya]");
-
     let form = null;
+    let dialog = null;
+
+    const cari = (tone) =>
+        semua.find(
+            (item) =>
+                (item.dataset.lobiDialogTone || "primary") ===
+                (tone || "primary"),
+        ) || semua[0];
 
     const tutup = () => {
-        dialog.classList.remove("is-buka");
+        dialog?.classList.remove("is-buka");
+        dialog = null;
         form = null;
     };
 
@@ -348,7 +449,13 @@ function initDialog() {
         .forEach((penanda) => {
             penanda.addEventListener("submit", (event) => {
                 event.preventDefault();
+
+                dialog = cari(penanda.dataset.lobiKonfirmasiTone);
                 form = penanda;
+
+                const judul = dialog.querySelector("[data-lobi-dialog-judul]");
+                const pesan = dialog.querySelector("[data-lobi-dialog-pesan]");
+                const label = dialog.querySelector("[data-lobi-dialog-tombol]");
 
                 if (judul) {
                     judul.textContent = penanda.dataset.lobiKonfirmasiJudul || "";
@@ -358,34 +465,40 @@ function initDialog() {
                     pesan.textContent = penanda.dataset.lobiKonfirmasiPesan || "";
                 }
 
-                if (labelTombol) {
-                    labelTombol.textContent =
+                if (label) {
+                    label.textContent =
                         penanda.dataset.lobiKonfirmasiTombol || "Ya, Lanjutkan";
                 }
 
                 dialog.classList.add("is-buka");
-                tombolBatal?.focus();
+                dialog.querySelector("[data-lobi-dialog-batal]")?.focus();
             });
         });
 
-    tombolBatal?.addEventListener("click", tutup);
+    // Tombol dan area gelap dipasang sekali per dialog yang ada, karena
+    // listener dipasang pada elemennya, bukan pada dokumen.
+    semua.forEach((item) => {
+        item
+            .querySelector("[data-lobi-dialog-batal]")
+            ?.addEventListener("click", tutup);
 
-    dialog.addEventListener("click", (event) => {
-        if (event.target === dialog) {
-            tutup();
-        }
+        item.addEventListener("click", (event) => {
+            if (event.target === item) {
+                tutup();
+            }
+        });
+
+        item.querySelector("[data-lobi-dialog-ya]")?.addEventListener("click", () => {
+            // submit() (bukan requestSubmit) supaya event submit tidak masuk
+            // ke penanganan di atas lagi.
+            form?.submit();
+        });
     });
 
     document.addEventListener("keydown", (event) => {
-        if (event.key === "Escape" && dialog.classList.contains("is-buka")) {
+        if (event.key === "Escape" && dialog?.classList.contains("is-buka")) {
             tutup();
         }
-    });
-
-    tombolYa?.addEventListener("click", () => {
-        // submit() (bukan requestSubmit) supaya event submit tidak masuk
-        // ke penanganan di atas lagi.
-        form?.submit();
     });
 }
 
@@ -421,6 +534,7 @@ function initPilihJawaban() {
     perbarui();
 }
 
+initMasukKode();
 initPolling();
 initSalinKode();
 initDialog();

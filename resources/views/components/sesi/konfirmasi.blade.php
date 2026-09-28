@@ -14,6 +14,11 @@
      * sekaligus bisa berarti "lanjutkan" maupun "batalkan", jadi warna
      * tombol dan ikonnya ikut berubah lewat $tone.
      *
+     * Satu halaman bisa punya lebih dari satu dialog kalau ada dua aksi
+     * dengan tones berbeda (mis. "Mulai" ungu dan "Akhiri" merah).
+     * resources/js/quiz-lobby.js memilih dialog yang cocok dari atribut
+     * data-lobi-konfirmasi-tone pada form pemanggilnya.
+     *
      * Styling memakai .dialog-bab yang sama dengan dialog hapus bab dan
      * dialog hapus karya, jadi tidak ada gaya dialog baru di app.css.
      *
@@ -24,7 +29,8 @@
     $merah = $tone === 'henti';
 @endphp
 
-<div class="dialog-bab" data-lobi-dialog role="dialog" aria-modal="true"
+<div class="dialog-bab" data-lobi-dialog data-lobi-dialog-tone="{{ $merah ? 'henti' : 'primary' }}"
+    role="dialog" aria-modal="true"
     aria-labelledby="judul-dialog-lobi" aria-describedby="pesan-dialog-lobi">
     <div class="w-full max-w-sm rounded-2xl border border-ungu-line bg-white p-5 shadow-[0_30px_60px_-30px_rgba(49,46,129,0.8)]">
         <span class="flex h-10 w-10 items-center justify-center rounded-xl {{ $merah ? 'bg-[#fdecee] text-[#c2414a]' : 'bg-ungu-bg text-primary' }}"
@@ -40,11 +46,11 @@
             @endif
         </span>
 
-        <h2 id="judul-dialog-lobi" class="mt-4 text-base font-extrabold text-dark" data-lobi-dialog-judul>
+        <h2 id="judul-dialog-lobi-{{ $merah ? 'henti' : 'primary' }}" class="mt-4 text-base font-extrabold text-dark" data-lobi-dialog-judul>
             {{ $judul }}
         </h2>
 
-        <p id="pesan-dialog-lobi" class="mt-1.5 text-sm leading-relaxed text-muted" data-lobi-dialog-pesan>
+        <p id="pesan-dialog-lobi-{{ $merah ? 'henti' : 'primary' }}" class="mt-1.5 text-sm leading-relaxed text-muted" data-lobi-dialog-pesan>
             {{ $pesan ?? 'Pastikan kamu sudah siap.' }}
         </p>
 

@@ -38,7 +38,21 @@ class MateriController extends Controller
             'kataKunci' => $kataKunci,
             'kategoriAktif' => $kategori,
             'totalMateri' => Materi::query()->aktif()->count(),
+            'totalPembuat' => $this->totalPembuat(),
         ]);
+    }
+
+    /**
+     * Jumlah pembuat materi yang berbeda (guru maupun teman), untuk
+     * angka ringkas di kepala halaman.
+     */
+    private function totalPembuat(): int
+    {
+        return (int) Materi::query()
+            ->aktif()
+            ->whereNotNull('dibuat_oleh')
+            ->distinct()
+            ->count('dibuat_oleh');
     }
 
     /**

@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Caveat:wght@600;700&family=JetBrains+Mono:wght@400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500;1,600;1,700&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap');
+﻿@import url('https://fonts.googleapis.com/css2?family=Caveat:wght@600;700&family=JetBrains+Mono:wght@400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500;1,600;1,700&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap');
 @import 'tailwindcss';
 
 @source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
@@ -604,11 +604,17 @@ html {
     overflow: hidden;
 }
 
-/* Baris bawah: pembuat di kiri, jumlah materi di kanan.
+/* Baris bawah: pembuat di kiri, chip waktu/bab di kanan.
    margin-top:auto mendorongnya ke dasar card, jadi semua kartu dalam
-   satu baris tetap sejajar. */
+   satu baris tetap sejajar.
+
+   flex-wrap: di ponsel dua kolom baris info tidak muat dalam satu garis;
+   chip melipat ke baris kedua alih-alih terpotong di pinggir kartu.
+   ml-auto pada kelompok chip (lihat kartu.blade.php) menjaga chip tetap
+   rata kanan saat sudah melipat. */
 .kartu-materi__meta {
     display: flex;
+    flex-wrap: wrap;
     align-items: center;
     justify-content: space-between;
     gap: 0.5rem;
@@ -651,6 +657,86 @@ html {
 
 .kartu-materi__jumlah svg {
     color: var(--color-primary);
+}
+
+/* Garis aksen warna kategori di sisi atas badan kartu. -mx-4 -mt-3.5
+   di markup menetralkan padding badan, jadi garisnya menyambung ke
+   thumbnail tanpa celah (lihat kartu.blade.php). */
+.kartu-materi__aksen {
+    height: 0.25rem;
+    background-image: linear-gradient(
+        90deg,
+        var(--k, var(--color-primary)),
+        color-mix(in oklab, var(--k, var(--color-primary)) 35%, white)
+    );
+}
+
+/* Lencana tingkat kesulitan, melayang di pojok kiri atas thumbnail.
+   Warna pill datang dari kelas Tailwind di markup, sama seperti badge
+   kesulitan di halaman detail materi. */
+.kartu-materi__kesulitan {
+    position: absolute;
+    left: 0.625rem;
+    top: 0.625rem;
+    z-index: 2;
+    display: inline-flex;
+    align-items: center;
+    max-width: calc(100% - 3.5rem);
+    border-radius: 9999px;
+    padding: 0.2rem 0.55rem;
+    font-size: 0.6875rem;
+    font-weight: 700;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    box-shadow: 0 6px 14px -10px rgba(33, 26, 58, 0.7);
+}
+
+/* Penanda aksi "Baca", muncul saat kartu di-hover. Sama seperti chip
+   aksi di kartu quiz: memberi tahu bahwa seluruh kartu adalah tautan. */
+.kartu-materi__aksi {
+    position: absolute;
+    right: 0.625rem;
+    bottom: 0.625rem;
+    z-index: 2;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    border-radius: 9999px;
+    background-color: rgba(255, 255, 255, 0.94);
+    padding: 0.25rem 0.6rem;
+    font-size: 0.6875rem;
+    font-weight: 700;
+    color: var(--k-gelap, var(--color-primary-dark));
+    white-space: nowrap;
+    opacity: 0;
+    transform: translateY(0.4rem);
+    transition:
+        opacity 0.28s ease,
+        transform 0.28s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.kartu-materi:hover .kartu-materi__aksi,
+.kartu-materi:focus-within .kartu-materi__aksi {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.kartu-materi__aksi svg {
+    transition: transform 0.25s ease;
+}
+
+.kartu-materi:hover .kartu-materi__aksi svg {
+    transform: translateX(2px);
+}
+
+/* Chip "N Bab" disembunyikan di layar sempit: di ponsel dua kolom baris
+   meta cuma muat satu chip, dan waktu baca lebih berguna daripada jumlah
+   bab waktu sedang membaca. */
+@media (max-width: 640px) {
+    .kartu-materi__jumlah--bab {
+        display: none;
+    }
 }
 
 /* ============================================================
@@ -1152,6 +1238,7 @@ html {
     position: absolute;
     left: 0.625rem;
     bottom: 0.625rem;
+    z-index: 2;
     display: inline-flex;
     align-items: center;
     max-width: calc(100% - 1.25rem);
@@ -1173,6 +1260,7 @@ html {
     position: absolute;
     right: 0.625rem;
     top: 0.625rem;
+    z-index: 2;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -1239,9 +1327,15 @@ html {
 
 /* Baris bawah: pembuat di kiri, jumlah soal di kanan.
    margin-top:auto mendorongnya ke dasar card, jadi semua kartu dalam
-   satu baris tetap sejajar. */
+   satu baris tetap sejajar.
+
+   flex-wrap: di kartu sempit (ponsel, tiga kolom) baris info tidak muat
+   dalam satu garis; chip melipat ke baris kedua alih-alih terpotong di
+   pinggir kartu. ml-auto pada kelompok chip (lihat kartu.blade.php)
+   menjaga chip tetap rata kanan saat sudah melipat. */
 .kartu-quiz__meta {
     display: flex;
+    flex-wrap: wrap;
     align-items: center;
     justify-content: space-between;
     gap: 0.5rem;
@@ -1302,6 +1396,403 @@ html {
     color: var(--color-primary);
 }
 
+/* ---------- Kepala quiz (hero) ----------
+   Papan ungu penuh yang mengisi bagian atas halaman. Tujuannya dua:
+   memberi titik fokus warna di halaman yang isinya kartu putih, dan
+   membuat kolom cari + filter terasa bagian dari halaman, bukan
+   elemen yang melayang sendiri. */
+.quiz-kepala {
+    position: relative;
+    overflow: hidden;
+    border-radius: 1.75rem;
+    background-image:
+        radial-gradient(38rem 20rem at 88% -10%, rgba(255, 255, 255, 0.22), transparent 62%),
+        linear-gradient(135deg, #7c4dff 0%, #6c4de6 45%, #4a2fb8 100%);
+    box-shadow: 0 28px 55px -32px rgba(74, 47, 184, 0.85);
+}
+
+/* Pola titik tipis supaya bidang ungu tidak terasa polos. */
+.quiz-kepala::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image: radial-gradient(rgba(255, 255, 255, 0.28) 1px, transparent 1px);
+    background-size: 18px 18px;
+    opacity: 0.35;
+    pointer-events: none;
+}
+
+/* Lingkaran besar di pojok kanan bawah: pemanis visual halaman ini. */
+.quiz-kepala::after {
+    content: '';
+    position: absolute;
+    right: -6rem;
+    bottom: -8rem;
+    width: 22rem;
+    height: 22rem;
+    border-radius: 9999px;
+    background: radial-gradient(circle, rgba(255, 255, 255, 0.18), transparent 68%);
+    pointer-events: none;
+}
+
+/* Isi hero naik satu tingkat supaya tidak tertutup ::before / ::after. */
+.quiz-kepala__isi {
+    position: relative;
+    z-index: 1;
+}
+
+.quiz-kepala__lencana {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    border-radius: 9999px;
+    background-color: rgba(255, 255, 255, 0.18);
+    padding: 0.35rem 0.8rem;
+    font-family: var(--font-mono);
+    font-size: 0.6875rem;
+    font-weight: 600;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: #fff;
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.28);
+}
+
+.quiz-kepala__judul {
+    margin-top: 0.85rem;
+    font-size: clamp(1.5rem, 3.4vw, 2.125rem);
+    font-weight: 800;
+    line-height: 1.15;
+    letter-spacing: -0.02em;
+    color: #fff;
+    text-shadow: 0 10px 24px rgba(43, 24, 110, 0.35);
+}
+
+.quiz-kepala__deskripsi {
+    margin-top: 0.5rem;
+    max-width: 34rem;
+    font-size: 0.875rem;
+    line-height: 1.65;
+    color: rgba(255, 255, 255, 0.82);
+}
+
+/* Tiga angka besar: isi ruang kosong hero sekaligus memberi gambaran
+   skala isi halaman tanpa perlu menggulir. */
+.quiz-kepala__statistik {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-top: 1.1rem;
+}
+
+.quiz-kepala__statistik > div {
+    display: flex;
+    align-items: baseline;
+    gap: 0.4rem;
+    border-radius: 0.9rem;
+    background-color: rgba(255, 255, 255, 0.14);
+    padding: 0.45rem 0.75rem;
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.2);
+}
+
+.quiz-kepala__angka {
+    font-family: var(--font-mono);
+    font-size: 1.0625rem;
+    font-weight: 700;
+    line-height: 1;
+    color: #fff;
+    font-variant-numeric: tabular-nums;
+}
+
+.quiz-kepala__satuan {
+    font-size: 0.6875rem;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.75);
+}
+
+/* ---------- Kolom cari + filter di dalam hero ---------- */
+.quiz-kepala .kolom-cari,
+.quiz-kepala .pilih-kategori {
+    border-color: transparent;
+    background-color: #fff;
+    box-shadow: 0 14px 28px -20px rgba(43, 24, 110, 0.9);
+}
+
+.quiz-kepala .kolom-cari:focus,
+.quiz-kepala .pilih-kategori:focus {
+    box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.35);
+}
+
+/* Ikon di dalam kolom cari ikut gelap karena latar putih. */
+.quiz-kepala .kepala-cari__ikon {
+    color: color-mix(in oklab, var(--color-dark) 42%, transparent);
+}
+
+/* ---------- Kepala materi (hero) ----------
+   Papan ungu pastel (soft) yang mengisi bagian atas halaman Materi.
+   Susunannya sengaja sama dengan kepala Quiz (lencana, angka, judul,
+   deskripsi, kolom cari) supaya berpindah menu terasa mulus; Quiz ungu
+   pekat dengan teks putih, Materi ungu muda dengan teks ungu tua, jadi
+   keduanya tetap mudah dibedakan sekilas.
+
+   Karena latarnya terang, seluruh teks di dalam papan ini memakai ungu
+   tua (bukan putih) supaya kontrasnya tetap nyaman dibaca. */
+.materi-kepala {
+    position: relative;
+    overflow: hidden;
+    border-radius: 1.75rem;
+    background-image:
+        radial-gradient(38rem 20rem at 88% -10%, rgba(255, 255, 255, 0.75), transparent 62%),
+        linear-gradient(135deg, #f2edff 0%, #e5dcff 48%, #d4c8fa 100%);
+    box-shadow:
+        0 28px 55px -34px rgba(107, 85, 220, 0.55),
+        inset 0 0 0 1px rgba(124, 96, 235, 0.16);
+}
+
+/* Pola titik tipis supaya bidang ungu muda tidak terasa polos. */
+.materi-kepala::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image: radial-gradient(rgba(107, 85, 220, 0.25) 1px, transparent 1px);
+    background-size: 18px 18px;
+    opacity: 0.5;
+    pointer-events: none;
+}
+
+/* Lingkaran besar di pojok kanan bawah: pemanis visual halaman ini. */
+.materi-kepala::after {
+    content: '';
+    position: absolute;
+    right: -6rem;
+    bottom: -8rem;
+    width: 22rem;
+    height: 22rem;
+    border-radius: 9999px;
+    background: radial-gradient(circle, rgba(255, 255, 255, 0.7), transparent 68%);
+    pointer-events: none;
+}
+
+/* Isi hero naik satu tingkat supaya tidak tertutup ::before / ::after. */
+.materi-kepala__isi {
+    position: relative;
+    z-index: 1;
+}
+
+.materi-kepala__lencana {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    border-radius: 9999px;
+    background-color: rgba(255, 255, 255, 0.72);
+    padding: 0.35rem 0.8rem;
+    font-family: var(--font-mono);
+    font-size: 0.6875rem;
+    font-weight: 600;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: #5a48c8;
+    box-shadow: inset 0 0 0 1px rgba(90, 72, 200, 0.22);
+}
+
+.materi-kepala__judul {
+    margin-top: 0.85rem;
+    font-size: clamp(1.5rem, 3.4vw, 2.125rem);
+    font-weight: 800;
+    line-height: 1.15;
+    letter-spacing: -0.02em;
+    color: #3a2f8f;
+}
+
+.materi-kepala__deskripsi {
+    margin-top: 0.5rem;
+    max-width: 34rem;
+    font-size: 0.875rem;
+    line-height: 1.65;
+    color: rgba(58, 47, 143, 0.72);
+}
+
+/* Tiga angka besar: isi ruang kosong hero sekaligus memberi gambaran
+   skala isi halaman tanpa perlu menggulir. */
+.materi-kepala__statistik {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-top: 1.1rem;
+}
+
+.materi-kepala__statistik > div {
+    display: flex;
+    align-items: baseline;
+    gap: 0.4rem;
+    border-radius: 0.9rem;
+    background-color: rgba(255, 255, 255, 0.66);
+    padding: 0.45rem 0.75rem;
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.95);
+}
+
+.materi-kepala__angka {
+    font-family: var(--font-mono);
+    font-size: 1.0625rem;
+    font-weight: 700;
+    line-height: 1;
+    color: #4a3ab8;
+    font-variant-numeric: tabular-nums;
+}
+
+.materi-kepala__satuan {
+    font-size: 0.6875rem;
+    font-weight: 600;
+    color: rgba(74, 58, 184, 0.65);
+}
+
+/* ---------- Kolom cari + filter di dalam hero materi ---------- */
+.materi-kepala .kolom-cari,
+.materi-kepala .pilih-kategori {
+    border-color: transparent;
+    background-color: #fff;
+    box-shadow: 0 14px 28px -20px rgba(74, 58, 184, 0.55);
+}
+
+.materi-kepala .kolom-cari:focus,
+.materi-kepala .pilih-kategori:focus {
+    box-shadow: 0 0 0 4px rgba(90, 72, 200, 0.3);
+}
+
+/* Ikon di dalam kolom cari ikut gelap karena latar putih. */
+.materi-kepala .kepala-cari__ikon {
+    color: color-mix(in oklab, var(--color-dark) 42%, transparent);
+}
+
+/* ---------- Kartu quiz: lapisan warna di banner ----------
+   Banner kategori diberi kabut gelap di bagian bawah supaya lencana dan
+   tombol "Mulai" yang melayang di sana tetap terbaca baik dengan foto
+   maupun tanpa foto.
+
+   ::after selalu digambar sebagai anak terakhir, jadi lencana, durasi,
+   dan bookmark di bawah diberi z-index supaya tetap di atas kabut ini. */
+.kartu-quiz__gambar::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    background: linear-gradient(
+        to top,
+        rgba(28, 18, 66, 0.55) 0%,
+        rgba(28, 18, 66, 0.12) 42%,
+        transparent 70%
+    );
+    pointer-events: none;
+}
+
+/* Badge durasi, duduk di pojok kiri atas thumbnail. */
+.kartu-quiz__durasi {
+    position: absolute;
+    left: 0.625rem;
+    top: 0.625rem;
+    z-index: 2;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    border-radius: 9999px;
+    background-color: rgba(255, 255, 255, 0.92);
+    padding: 0.2rem 0.55rem;
+    font-size: 0.6875rem;
+    font-weight: 700;
+    color: var(--k-gelap, var(--color-primary-dark));
+    white-space: nowrap;
+    box-shadow: 0 6px 14px -10px rgba(33, 26, 58, 0.6);
+}
+
+/* Pil "Lihat" yang muncul saat kursor di atas kartu. Tipis dan semi
+   transparan supaya tidak menutupi banner. */
+.kartu-quiz__aksi {
+    position: absolute;
+    right: 0.625rem;
+    bottom: 0.625rem;
+    z-index: 2;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    border-radius: 9999px;
+    background-color: rgba(255, 255, 255, 0.94);
+    padding: 0.25rem 0.6rem;
+    font-size: 0.6875rem;
+    font-weight: 700;
+    color: var(--k-gelap, var(--color-primary-dark));
+    white-space: nowrap;
+    opacity: 0;
+    transform: translateY(0.4rem);
+    transition:
+        opacity 0.28s ease,
+        transform 0.28s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.kartu-quiz:hover .kartu-quiz__aksi,
+.kartu-quiz:focus-within .kartu-quiz__aksi {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.kartu-quiz__aksi svg {
+    transition: transform 0.25s ease;
+}
+
+.kartu-quiz:hover .kartu-quiz__aksi svg {
+    transform: translateX(2px);
+}
+
+/* Garis aksen warna kategori di sisi atas badan kartu. */
+.kartu-quiz__aksen {
+    height: 0.25rem;
+    background-image: linear-gradient(
+        90deg,
+        var(--k, var(--color-primary)),
+        color-mix(in oklab, var(--k, var(--color-primary)) 35%, white)
+    );
+}
+
+/* Badge "Quiz Saya" di pojok kanan atas badan kartu. */
+.kartu-quiz__milik {
+    display: inline-flex;
+    align-items: center;
+    align-self: flex-start;
+    border-radius: 9999px;
+    background-color: color-mix(in oklab, var(--color-primary) 12%, white);
+    padding: 0.15rem 0.5rem;
+    font-size: 0.625rem;
+    font-weight: 700;
+    color: var(--color-primary-dark);
+}
+
+/* Chip jumlah soal dan durasi di baris meta, menggantikan badge yang
+   sebelumnya hanya soal supaya informasinya lebih lengkap. */
+.kartu-quiz__durasi-teks {
+    display: inline-flex;
+    flex-shrink: 0;
+    align-items: center;
+    gap: 0.3rem;
+    border-radius: 9999px;
+    background-color: color-mix(in oklab, var(--k, var(--color-primary)) 10%, white);
+    padding: 0.2rem 0.5rem;
+    font-size: 0.6875rem;
+    font-weight: 700;
+    color: var(--k-gelap, var(--color-primary-dark));
+    white-space: nowrap;
+}
+
+.kartu-quiz__durasi-teks svg {
+    color: var(--k, var(--color-primary));
+}
+
+/* Di ponsel chip durasi di baris meta disembunyikan: lebar kartu tidak
+   muat untuk dua chip sekaligus, dan durasi sudah tampil sebagai badge
+   putih di pojok kiri atas thumbnail (lihat .kartu-quiz__durasi). */
+@media (max-width: 640px) {
+    .kartu-quiz__durasi-teks {
+        display: none;
+    }
+}
+
 /* ============================================================
    QUIZ: KERANGKA (SKELETON)
    Tampil hanya selagi halaman berikutnya dimuat, lihat initQuizMuat()
@@ -1313,10 +1804,10 @@ html {
     background-color: color-mix(in oklab, var(--color-lavender) 55%, transparent);
 }
 
-/* Placeholder lencana di kartu kerangka: bentuknya pil, bukan persegi. */
-.kartu-quiz__rangka-lencana {
-    width: 5.5rem;
-    height: 1.125rem;
+/* Placeholder pil kecil di atas kartu kerangka (mis. penanda "Quiz Saya"). */
+.kartu-quiz__rangka-pil {
+    width: 4rem;
+    height: 1rem;
     border-radius: 9999px;
 }
 
@@ -3081,14 +3572,48 @@ html {
         background-color: rgba(255, 255, 255, 0.22);
     }
 
+    /* ---------- Kartu ringkasan (jumlah karya) ---------- */
+    .karya-angka {
+        gap: 0.1rem;
+        padding: 1rem 1.1rem 1.05rem;
+    }
+
+    .karya-angka .dash-ikon-kotak {
+        width: 2.5rem;
+        height: 2.5rem;
+        margin-bottom: 0.65rem;
+    }
+
+    /* tabular-nums supaya angka tidak bergeser saat nilainya berubah. */
+    .karya-angka__nilai {
+        font-size: 1.75rem;
+        font-weight: 800;
+        line-height: 1.1;
+        letter-spacing: -0.02em;
+        color: var(--color-dark);
+        font-variant-numeric: tabular-nums;
+    }
+
+    .karya-angka__label {
+        font-size: 0.8125rem;
+        font-weight: 700;
+        color: color-mix(in oklab, var(--color-dark) 78%, transparent);
+    }
+
+    .karya-angka__catatan {
+        font-size: 0.6875rem;
+        line-height: 1.5;
+        color: color-mix(in oklab, var(--color-dark) 45%, transparent);
+    }
+
     /* ---------- Lencana status ---------- */
     .karya-status {
         display: inline-flex;
         flex-shrink: 0;
         align-items: center;
-        gap: 0.25rem;
+        gap: 0.3rem;
         border-radius: 9999px;
-        padding: 0.2rem 0.55rem;
+        padding: 0.25rem 0.6rem;
         font-size: 0.6875rem;
         font-weight: 700;
         white-space: nowrap;
@@ -3114,6 +3639,27 @@ html {
         background-color: #fdecee;
         color: #a8323c;
         box-shadow: none;
+    }
+
+    /* Titik warna di depan teks status, warna-nya mengikuti teks lencana
+       sehingga maknanya terbaca tanpa perlu melihat katanya. */
+    .karya-status__titik {
+        width: 0.4rem;
+        height: 0.4rem;
+        flex-shrink: 0;
+        border-radius: 9999px;
+        background-color: currentColor;
+    }
+
+    /* Di pojok thumbnail, lencana memakai latar putih transparan + blur:
+       warna statusnya tetap terbaca di atas foto maupun di atas gradasi. */
+    .karya-status.karya-pojok {
+        position: absolute;
+        top: 0.625rem;
+        right: 0.625rem;
+        background-color: rgba(255, 255, 255, 0.9);
+        box-shadow: 0 6px 14px -10px rgba(33, 26, 58, 0.6);
+        backdrop-filter: blur(4px);
     }
 
     /* ---------- Baris informasi (jumlah bab, tanggal) ---------- */
@@ -3142,15 +3688,31 @@ html {
         color: var(--color-primary);
     }
 
-    /* ---------- Baris aksi (lihat / edit / hapus) ---------- */
+    /* Tanggal dibuat bukan informasi utama, jadi warnanya dibuat lebih redup
+       supaya tidak bersaing dengan jumlah bab dan durasi. */
+    .karya-info__butir--sepuh {
+        background-color: transparent;
+        padding-inline: 0.15rem;
+        color: color-mix(in oklab, var(--color-dark) 45%, transparent);
+        font-weight: 600;
+    }
+
+    .karya-info__butir--sepuh svg {
+        color: color-mix(in oklab, var(--color-dark) 35%, transparent);
+    }
+
+    /* ---------- Baris aksi (lihat / edit / hapus) ----------
+       margin-top:auto + garis pemisah, sama seperti .kartu-materi__meta:
+       baris ini menempel di dasar kartu sehingga semua kartu dalam satu
+       baris tetap sejajar, berapa pun tinggi isinya. */
     .karya-aksi {
         display: flex;
         flex-wrap: wrap;
         align-items: center;
-        gap: 0.4rem;
+        gap: 0.45rem;
         min-width: 0;
-        margin-top: 0.75rem;
-        padding-top: 0.75rem;
+        margin-top: auto;
+        padding-top: 0.85rem;
         border-top: 1px dashed color-mix(in oklab, var(--color-lavender) 80%, transparent);
     }
 
@@ -3158,23 +3720,35 @@ html {
         display: inline-flex;
         align-items: center;
         justify-content: center;
-        gap: 0.3rem;
+        gap: 0.35rem;
         border-radius: 9999px;
         border: 1px solid var(--color-ungu-line);
         background-color: #fff;
-        padding: 0.4rem 0.8rem;
+        padding: 0.45rem 0.85rem;
         font-size: 0.75rem;
         font-weight: 700;
         color: var(--color-ungu-dark);
         transition:
             border-color 0.2s ease,
             background-color 0.2s ease,
-            color 0.2s ease;
+            color 0.2s ease,
+            transform 0.2s ease;
     }
 
     .karya-aksi__tombol:hover {
         border-color: var(--color-ungu);
         background-color: var(--color-ungu-bg);
+        transform: translateY(-1px);
+    }
+
+    .karya-aksi__tombol:active {
+        transform: translateY(0);
+    }
+
+    /* Tombol utama mengisi ruang sisa baris, jadi tiga tombol selalu
+       terbagi rata dan tidak ada sisa ruang mati di kanan. */
+    .karya-aksi__tombol--utama {
+        flex: 1 1 auto;
     }
 
     .karya-aksi__tombol--lihat {
@@ -3311,6 +3885,162 @@ html {
         background-color: var(--color-primary);
         color: #fff;
     }
+
+    /* ---------- Form gabung ----------
+       Kotak kode sengaja dibuat besar dan monospace, bentuknya sama
+       dengan blok kode di lobby host. Peserta jadi bisa mengenali
+       bentuk kode yang ditunggu guru sebelum mulai mengetik, dan guru
+       yang membacakan kode dari ujung kelas tidak perlu menunggu
+       peserta selesai mengetik huruf kecil.
+
+       Input-nya sendiri dibuat tanpa border karena kotak luarnya yang
+       berperan sebagai border field. */
+    .lobi-masuk {
+        display: block;
+        border-radius: 1.25rem;
+        border: 1.5px solid color-mix(in oklab, var(--color-primary) 26%, var(--color-lavender));
+        background: linear-gradient(135deg, #f7f5ff, #ede9fe);
+        padding: 1rem 0.9rem 0.9rem;
+        text-align: center;
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9);
+        transition:
+            border-color 0.2s ease,
+            box-shadow 0.2s ease;
+    }
+
+    .lobi-masuk:focus-within {
+        border-color: var(--color-primary);
+        box-shadow:
+            inset 0 1px 0 rgba(255, 255, 255, 0.9),
+            0 0 0 4px color-mix(in oklab, var(--color-primary) 14%, transparent);
+    }
+
+    .lobi-masuk__input {
+        display: block;
+        width: 100%;
+        margin: 0.3rem 0 0.1rem;
+        border: 0;
+        background-color: transparent;
+        padding: 0;
+        font-family: var(--font-mono);
+        font-size: clamp(1.9rem, 11vw, 2.75rem);
+        font-weight: 700;
+        line-height: 1.2;
+        letter-spacing: 0.2em;
+        text-align: center;
+        /* letter-spacing menambah ruang di sisi kanan tiap huruf, jadi
+           text-indent dikembalikan sebanyak itu supaya teks tetap
+           terlihat benar-benar di tengah kotak. */
+        text-indent: 0.2em;
+        text-transform: uppercase;
+        color: var(--color-primary-dark);
+        caret-color: var(--color-primary);
+    }
+
+    .lobi-masuk__input:focus {
+        outline: none;
+    }
+
+    .lobi-masuk__input::placeholder {
+        color: color-mix(in oklab, var(--color-primary) 32%, #b9b3d8);
+        letter-spacing: 0.2em;
+    }
+
+    .lobi-masuk--galat {
+        border-color: #d98a92;
+        background: linear-gradient(135deg, #fff5f5, #fdecec);
+    }
+
+    .lobi-masuk--galat:focus-within {
+        border-color: #a8323c;
+        box-shadow:
+            inset 0 1px 0 rgba(255, 255, 255, 0.9),
+            0 0 0 4px rgba(168, 50, 60, 0.12);
+    }
+
+    .lobi-masuk--galat .lobi-masuk__input {
+        color: #a8323c;
+    }
+
+    /* ---------- Tiga langkah ----------
+       Daripada daftar bernomor di dalam kotak tips, langkahnya jadi
+       tiga kolom yang sejajar supaya halaman tidak jadi tinggi dan
+       urutannya terbaca sekilas, dari kiri ke kanan. */
+    .lobi-langkah {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 0.5rem;
+    }
+
+    .lobi-langkah__item {
+        position: relative;
+        min-width: 0;
+        text-align: center;
+    }
+
+    /* Garis penghubung antar lingkaran, disembunyikan di item terakhir
+       supaya tidak menggantung di tepi kanan. */
+    .lobi-langkah__item:not(:last-child)::after {
+        content: '';
+        position: absolute;
+        top: 1.05rem;
+        left: calc(50% + 1.35rem);
+        width: calc(100% - 2.7rem);
+        border-top: 1.5px dashed color-mix(in oklab, var(--color-primary) 30%, var(--color-lavender));
+    }
+
+    .lobi-langkah__angka {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 2.1rem;
+        height: 2.1rem;
+        margin: 0 auto;
+        border-radius: 9999px;
+        background-color: #fff;
+        box-shadow: inset 0 0 0 1.5px color-mix(in oklab, var(--color-primary) 30%, var(--color-lavender));
+        font-family: var(--font-mono);
+        font-size: 0.8125rem;
+        font-weight: 700;
+        color: var(--color-primary-dark);
+    }
+
+    .lobi-langkah__teks {
+        margin: 0.5rem 0 0;
+        font-size: 0.6875rem;
+        line-height: 1.45;
+        color: color-mix(in oklab, var(--color-dark) 58%, transparent);
+    }
+
+    /* Di layar sempit tiga kolom mulai sempit, jadi dikembalikan ke
+       satu kolom dan garis penghubung disembunyikan. */
+    @media (max-width: 30rem) {
+        .lobi-langkah {
+            grid-template-columns: minmax(0, 1fr);
+            gap: 0.85rem;
+        }
+
+        .lobi-langkah__item {
+            display: grid;
+            grid-template-columns: 2.1rem minmax(0, 1fr);
+            align-items: center;
+            gap: 0.7rem;
+            text-align: left;
+        }
+
+        .lobi-langkah__angka {
+            margin: 0;
+        }
+
+        .lobi-langkah__teks {
+            margin: 0;
+        }
+
+        .lobi-langkah__item::after {
+            content: none;
+        }
+    }
+
 
     /* ---------- Status sesi ---------- */
     .lobi-status {
@@ -3677,3 +4407,1118 @@ html {
     }
 }
 
+
+/* ================================================================
+   HALAMAN HASIL
+   ================================================================
+   Dashboard hasil quiz untuk /user/hasil: banner, empat kartu
+   statistik, daftar riwayat, dan sidebar (donat rata-rata, quiz
+   terpopuler, kartu motivasi).
+
+   Warna diambil dari token @theme yang sudah ada (--color-primary,
+   --color-primary-dark, --color-lavender, --color-brand-bg,
+   --color-dark) supaya halaman ini tidak memperkenalkan palet baru.
+   Warna status memakai nilai yang sama seperti halaman hasil sesi:
+   hijau #0f9d76, merah #d0505e, dan kuning-oranye #d99a06 untuk yang
+   masih dikerjakan.
+   ================================================================ */
+
+/* ---------- Banner ----------
+   Strip tinggi yang rata: gradien ungu tua -> ungu -> lavender dari
+   kiri ke kanan, ikon di kotak transparan di paling kiri, teks di
+   sebelahnya, dekorasi di lapisan background kanan.
+
+   isolation + overflow-hidden menjaga cincin cahaya dan dekorasi tidak
+   keluar dari kartu. */
+.hasil-banner {
+    position: relative;
+    isolation: isolate;
+    overflow: hidden;
+    min-width: 0;
+    border-radius: 1rem;
+    padding: 1.15rem 1.25rem;
+    background: linear-gradient(100deg, #5a3fd4 0%, #6c4de6 42%, #a78bfa 100%);
+    box-shadow: 0 10px 26px -18px rgba(90, 63, 212, 0.85);
+}
+
+.hasil-banner__ikon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    width: 2.875rem;
+    height: 2.875rem;
+    border-radius: 0.9rem;
+    color: #fff;
+    background-color: rgba(255, 255, 255, 0.18);
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.32);
+}
+
+.hasil-banner__label {
+    font-family: var(--font-mono);
+    font-size: 0.625rem;
+    font-weight: 600;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.72);
+}
+
+.hasil-banner__judul {
+    font-size: clamp(1.25rem, 3.5vw, 1.625rem);
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    line-height: 1.2;
+    color: #fff;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.hasil-banner__deskripsi {
+    margin-top: 0.2rem;
+    font-size: 0.8125rem;
+    line-height: 1.6;
+    color: rgba(255, 255, 255, 0.78);
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+    -webkit-box-orient: vertical;
+}
+
+/* Empat ikon dekorasi. Semuanya di lapisan background (z-index -1)
+   supaya tidak pernah menutupi teks, dan opacity-nya dijaga rendah
+   supaya banner tetap terbaca, tidak terlihat ramai. */
+.hasil-banner__dekor {
+    position: absolute;
+    z-index: -1;
+    color: #fff;
+    opacity: 0.22;
+    pointer-events: none;
+}
+
+.hasil-banner__dekor--piala {
+    top: 50%;
+    right: 1.5rem;
+    width: 2.75rem;
+    height: 2.75rem;
+    transform: translateY(-50%) rotate(8deg);
+}
+
+.hasil-banner__dekor--grafik {
+    top: 50%;
+    right: 4.75rem;
+    width: 1.75rem;
+    height: 1.75rem;
+    transform: translateY(-50%);
+}
+
+.hasil-banner__dekor--check {
+    top: 50%;
+    right: 7rem;
+    width: 1.5rem;
+    height: 1.5rem;
+    transform: translateY(-50%) rotate(-8deg);
+}
+
+.hasil-banner__dekor--bintang {
+    top: 50%;
+    right: 9.25rem;
+    width: 2rem;
+    height: 2rem;
+    transform: translateY(-50%) rotate(14deg);
+}
+
+/* Di layar sempit dekorasi diardown ke dua saja, supaya ruang untuk
+   ikon dan teks tetap lega. */
+@media (max-width: 767px) {
+    .hasil-banner {
+        padding: 1rem;
+    }
+
+    .hasil-banner__dekor--grafik,
+    .hasil-banner__dekor--bintang {
+        display: none;
+    }
+
+    .hasil-banner__dekor--piala {
+        right: 1rem;
+        width: 2.25rem;
+        height: 2.25rem;
+    }
+
+    .hasil-banner__dekor--check {
+        right: 3.75rem;
+    }
+}
+
+/* ---------- Kartu statistik ----------
+   Garis aksen tipis di atas kartu, warna diambil per kartu lewat --h
+   supaya tiap kartu punya identitas tanpa menambah palet baru. */
+.hasil-kartu {
+    position: relative;
+    overflow: hidden;
+    min-width: 0;
+    height: 100%;
+    border-radius: 0.875rem;
+    border: 1px solid color-mix(in oklab, var(--color-lavender) 85%, transparent);
+    background-color: #fff;
+    padding: 1rem 1.05rem 0.95rem;
+    box-shadow: 0 1px 2px rgba(33, 26, 58, 0.04), 0 10px 22px -18px rgba(33, 26, 58, 0.5);
+    transition: transform 0.35s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.35s;
+}
+
+.hasil-kartu::before {
+    content: "";
+    position: absolute;
+    inset: 0 0 auto;
+    height: 3px;
+    background: linear-gradient(90deg, var(--h) 0%, color-mix(in oklab, var(--h) 20%, transparent) 100%);
+}
+
+.hasil-kartu:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 1px 2px rgba(33, 26, 58, 0.04), 0 20px 34px -26px color-mix(in oklab, var(--h) 65%, transparent);
+}
+
+.hasil-kartu__kepala {
+    display: flex;
+    align-items: center;
+    gap: 0.55rem;
+    min-width: 0;
+}
+
+.hasil-kartu__ikon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    width: 1.875rem;
+    height: 1.875rem;
+    border-radius: 0.6rem;
+    color: var(--h);
+    background-color: color-mix(in oklab, var(--h) 12%, white);
+    box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--h) 20%, transparent);
+}
+
+.hasil-kartu__label {
+    min-width: 0;
+    font-size: 0.75rem;
+    font-weight: 700;
+    line-height: 1.35;
+    color: color-mix(in oklab, var(--color-dark) 60%, transparent);
+}
+
+.hasil-kartu__nilai {
+    margin-top: 0.7rem;
+    display: flex;
+    align-items: baseline;
+    gap: 0.2rem;
+    min-width: 0;
+    font-size: clamp(1.6rem, 3.5vw, 1.875rem);
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
+    color: var(--h);
+}
+
+.hasil-kartu__satuan {
+    font-size: 0.875rem;
+    font-weight: 700;
+}
+
+.hasil-kartu__catatan {
+    margin-top: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+    min-width: 0;
+    font-size: 0.6875rem;
+    font-weight: 600;
+    color: color-mix(in oklab, var(--color-dark) 50%, transparent);
+}
+
+.hasil-kartu__catatan--naik {
+    color: #0f9d76;
+}
+
+.hasil-kartu__catatan--turun {
+    color: #d0505e;
+}
+
+/* ---------- Panel (kartu judul + badan) ---------- */
+.hasil-panel {
+    overflow: hidden;
+    min-width: 0;
+    border-radius: 0.875rem;
+    border: 1px solid color-mix(in oklab, var(--color-lavender) 85%, transparent);
+    background-color: #fff;
+    box-shadow: 0 1px 2px rgba(33, 26, 58, 0.04), 0 12px 26px -22px rgba(33, 26, 58, 0.45);
+}
+
+.hasil-panel__kepala {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem 1rem;
+    flex-wrap: wrap;
+    min-width: 0;
+    padding: 0.9rem 1.15rem;
+    border-bottom: 1px solid color-mix(in oklab, var(--color-lavender) 70%, transparent);
+}
+
+.hasil-panel__kepala-judul {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    min-width: 0;
+}
+
+.hasil-panel__ikon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    width: 1.875rem;
+    height: 1.875rem;
+    border-radius: 0.6rem;
+    color: var(--color-primary);
+    background-color: color-mix(in oklab, var(--color-lavender) 60%, white);
+}
+
+.hasil-panel__judul {
+    min-width: 0;
+    font-size: 0.9375rem;
+    font-weight: 800;
+    letter-spacing: -0.01em;
+    color: var(--color-dark);
+}
+
+.hasil-panel__lencana {
+    flex-shrink: 0;
+    border-radius: 9999px;
+    background-color: var(--color-brand-bg);
+    padding: 0.2rem 0.6rem;
+    font-size: 0.625rem;
+    font-weight: 700;
+    color: var(--color-primary-dark);
+    box-shadow: inset 0 0 0 1px var(--color-lavender);
+}
+
+.hasil-panel__aksi {
+    flex-shrink: 0;
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: var(--color-primary);
+    transition: color 0.25s;
+}
+
+.hasil-panel__aksi:hover {
+    color: var(--color-primary-dark);
+}
+
+.hasil-panel__badan {
+    min-width: 0;
+    padding: 1.1rem 1.15rem 1.15rem;
+}
+
+.hasil-panel__catatan {
+    margin-top: 0.9rem;
+    border-top: 1px dashed color-mix(in oklab, var(--color-lavender) 80%, transparent);
+    padding-top: 0.8rem;
+    font-size: 0.6875rem;
+    line-height: 1.6;
+    color: color-mix(in oklab, var(--color-dark) 50%, transparent);
+}
+
+.hasil-panel__kosong {
+    border-radius: 0.75rem;
+    background-color: var(--color-brand-bg);
+    padding: 1.4rem 1.1rem;
+    text-align: center;
+    font-size: 0.8125rem;
+    line-height: 1.7;
+    color: color-mix(in oklab, var(--color-dark) 50%, transparent);
+}
+
+/* ---------- Donat rata-rata di sidebar ----------
+   Donat di kiri, legend di kanannya. flex-wrap dipakai supaya di card
+   yang lebih sempit (mis. sidebar dua kolom di tablet) legend turun ke
+   bawah donat dengan sendirian, bukandonat yang tergencet. */
+.hasil-donat {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 0.875rem;
+    min-width: 0;
+}
+
+.hasil-donat__lingkaran {
+    position: relative;
+    flex-shrink: 0;
+    width: 6.5rem;
+    height: 6.5rem;
+}
+
+.hasil-donat__svg {
+    display: block;
+    height: 100%;
+    width: 100%;
+    transform: rotate(-90deg);
+}
+
+.hasil-donat__tengah {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.15rem;
+    pointer-events: none;
+}
+
+.hasil-donat__angka {
+    display: flex;
+    align-items: baseline;
+    font-size: 1.5rem;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
+    color: var(--color-primary-dark);
+}
+
+.hasil-donat__angka i {
+    font-size: 0.7rem;
+    font-weight: 700;
+}
+
+.hasil-donat__label {
+    max-width: 4.75rem;
+    text-align: center;
+    font-size: 0.5625rem;
+    font-weight: 700;
+    line-height: 1.35;
+    color: color-mix(in oklab, var(--color-dark) 50%, transparent);
+}
+
+.hasil-donat__keterangan {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 0.35rem;
+    flex: 1 1 8rem;
+    width: 100%;
+    min-width: 0;
+}
+
+.hasil-donat__baris {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    min-width: 0;
+    border-radius: 0.6rem;
+    background-color: var(--color-brand-bg);
+    padding: 0.4rem 0.6rem;
+}
+
+.hasil-donat__baris dt {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    min-width: 0;
+    font-size: 0.6875rem;
+    font-weight: 600;
+    color: color-mix(in oklab, var(--color-dark) 60%, transparent);
+}
+
+.hasil-donat__baris dd {
+    flex-shrink: 0;
+    font-size: 0.8125rem;
+    font-weight: 800;
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
+    color: var(--color-dark);
+}
+
+.hasil-donat__titik {
+    flex-shrink: 0;
+    width: 0.45rem;
+    height: 0.45rem;
+    border-radius: 9999px;
+}
+
+.hasil-donat__titik--benar {
+    background-color: #0f9d76;
+}
+
+.hasil-donat__titik--salah {
+    background-color: #d0505e;
+}
+
+.hasil-donat__titik--soal {
+    background-color: #a78bfa;
+}
+
+/* ---------- Baris riwayat ----------
+   Susunan: thumbnail 60x60, teks, hitungan, lingkaran nilai, tombol.
+
+   minmax(0, 1fr) di kolom teks menjaga judul panjang tidak mendorong
+   kolom lain melebar. Di bawah 640px baris berubah jadi dua baris:
+   thumbnail + teks di atas, nilai dan tombol di bawah. */
+.hasil-item {
+    display: grid;
+    align-items: center;
+    gap: 0.85rem 1rem;
+    min-width: 0;
+    border-radius: 0.875rem;
+    border: 1px solid color-mix(in oklab, var(--color-lavender) 80%, transparent);
+    background-color: #fff;
+    padding: 0.85rem 1rem;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    transition: transform 0.35s cubic-bezier(0.22, 1, 0.36, 1), border-color 0.35s, box-shadow 0.35s;
+}
+
+.hasil-item:hover {
+    transform: translateY(-2px);
+    border-color: color-mix(in oklab, var(--color-primary) 28%, var(--color-lavender));
+    box-shadow: 0 1px 2px rgba(33, 26, 58, 0.04), 0 18px 32px -28px rgba(108, 77, 230, 0.5);
+}
+
+.hasil-item__thumb {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    width: 3.75rem;
+    height: 3.75rem;
+    overflow: hidden;
+    border-radius: 0.75rem;
+    color: var(--k);
+    background: linear-gradient(140deg, color-mix(in oklab, var(--k) 16%, white) 0%, color-mix(in oklab, var(--k-gelap) 24%, white) 100%);
+    box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--k) 22%, transparent);
+}
+
+.hasil-item__foto {
+    height: 100%;
+    width: 100%;
+    object-fit: cover;
+}
+
+.hasil-item__thumb-ikon {
+    height: 1.5rem;
+    width: 1.5rem;
+}
+
+.hasil-item__teks {
+    min-width: 0;
+}
+
+.hasil-item__judul {
+    font-size: 0.875rem;
+    font-weight: 800;
+    letter-spacing: -0.01em;
+    color: var(--color-dark);
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-line-clamp: 1;
+    line-clamp: 1;
+    -webkit-box-orient: vertical;
+}
+
+.hasil-item__kategori {
+    display: inline-block;
+    margin-top: 0.25rem;
+    border-radius: 9999px;
+    background-color: var(--color-brand-bg);
+    padding: 0.1rem 0.5rem;
+    font-size: 0.625rem;
+    font-weight: 700;
+    color: var(--color-primary-dark);
+    box-shadow: inset 0 0 0 1px var(--color-lavender);
+}
+
+.hasil-item__meta {
+    margin-top: 0.4rem;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.35rem;
+    font-size: 0.6875rem;
+    color: color-mix(in oklab, var(--color-dark) 55%, transparent);
+}
+
+.hasil-item__tanggal {
+    margin-top: 0.25rem;
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+    min-width: 0;
+    font-size: 0.6875rem;
+    font-variant-numeric: tabular-nums;
+    color: color-mix(in oklab, var(--color-dark) 45%, transparent);
+}
+
+.hasil-item__hitungan {
+    display: none;
+    gap: 1rem;
+    flex-shrink: 0;
+}
+
+.hasil-item__hitungan-item {
+    display: flex;
+    flex-direction: column;
+    gap: 0.1rem;
+}
+
+.hasil-item__hitungan-item dt {
+    font-size: 0.625rem;
+    font-weight: 600;
+    color: color-mix(in oklab, var(--color-dark) 45%, transparent);
+}
+
+.hasil-item__hitungan-nilai {
+    font-size: 0.9375rem;
+    font-weight: 800;
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
+    color: var(--color-dark);
+}
+
+.hasil-item__hitungan-nilai--benar {
+    color: #0f9d76;
+}
+
+.hasil-item__hitungan-nilai--salah {
+    color: #d0505e;
+}
+
+.hasil-item__nilai {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    flex-shrink: 0;
+}
+
+.hasil-item__tombol {
+    grid-column: 1 / -1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.35rem;
+    flex-shrink: 0;
+    border-radius: 0.6rem;
+    border: 1px solid var(--color-lavender);
+    background-color: #fff;
+    padding: 0.5rem 0.9rem;
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: var(--color-primary-dark);
+    transition: background-color 0.25s, border-color 0.25s, color 0.25s;
+}
+
+.hasil-item__tombol:hover {
+    border-color: var(--color-primary);
+    background-color: var(--color-primary);
+    color: #fff;
+}
+
+/* Tablet: hitungan benar/salah sudah muat, tombol pindah ke kanan. */
+@media (min-width: 640px) {
+    .hasil-item {
+        grid-template-columns: auto minmax(0, 1fr) auto auto auto;
+    }
+
+    .hasil-item__hitungan {
+        display: flex;
+    }
+
+    .hasil-item__tombol {
+        grid-column: auto;
+    }
+}
+
+/* ---------- Progress indicator kecil ---------- */
+.hasil-lingkaran__teks {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.8125rem;
+    font-weight: 800;
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
+    color: var(--color-dark);
+}
+
+.hasil-lingkaran__teks i {
+    font-size: 0.5rem;
+    font-weight: 700;
+}
+
+/* ---------- Badge status ---------- */
+.hasil-status {
+    display: inline-flex;
+    align-items: center;
+    border-radius: 9999px;
+    padding: 0.2rem 0.6rem;
+    font-size: 0.625rem;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.hasil-status--selesai {
+    background-color: color-mix(in oklab, #0f9d76 12%, white);
+    color: #0f7a5b;
+}
+
+.hasil-status--gagal {
+    background-color: color-mix(in oklab, #d0505e 12%, white);
+    color: #a8323c;
+}
+
+.hasil-status--proses {
+    background-color: color-mix(in oklab, #d99a06 16%, white);
+    color: #8a6208;
+}
+
+/* ---------- Quiz terpopuler ----------
+   Separator tipis antar item lewat border-bottom, bukan margin, supaya
+   jarak antar baris tetap rapat tanpa terlihat longgar. */
+.hasil-top {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    min-width: 0;
+    margin-inline: -0.4rem;
+    border-radius: 0.6rem;
+    padding: 0.6rem 0.4rem;
+    transition: background-color 0.25s;
+}
+
+.hasil-top[data-belum-terakhir="true"] {
+    border-bottom: 1px solid color-mix(in oklab, var(--color-lavender) 70%, transparent);
+}
+
+.hasil-top:hover {
+    background-color: var(--color-brand-bg);
+}
+
+.hasil-top__peringkat {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    width: 1.375rem;
+    height: 1.375rem;
+    border-radius: 0.5rem;
+    background-color: var(--color-brand-bg);
+    font-size: 0.6875rem;
+    font-weight: 800;
+    color: var(--color-muted);
+    box-shadow: inset 0 0 0 1px var(--color-lavender);
+}
+
+/* Medali sama persis dengan gaya peringkat di halaman hasil sesi. */
+.hasil-top__peringkat[data-medali="1"] {
+    background-color: color-mix(in oklab, #f6cd6b 32%, white);
+    color: #8a6208;
+    box-shadow: none;
+}
+
+.hasil-top__peringkat[data-medali="2"] {
+    background-color: color-mix(in oklab, #cfd5e6 45%, white);
+    color: #4b5578;
+    box-shadow: none;
+}
+
+.hasil-top__peringkat[data-medali="3"] {
+    background-color: color-mix(in oklab, #e0a578 32%, white);
+    color: #8a4a1c;
+    box-shadow: none;
+}
+
+.hasil-top__ikon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    width: 2rem;
+    height: 2rem;
+    border-radius: 0.6rem;
+    color: var(--k);
+    background: linear-gradient(140deg, color-mix(in oklab, var(--k) 16%, white) 0%, color-mix(in oklab, var(--k-gelap) 20%, white) 100%);
+    box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--k) 22%, transparent);
+}
+
+.hasil-top__judul {
+    display: block;
+    font-size: 0.8125rem;
+    font-weight: 800;
+    color: var(--color-dark);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.hasil-top__kategori {
+    display: block;
+    margin-top: 0.05rem;
+    font-size: 0.625rem;
+    font-weight: 600;
+    color: var(--color-primary);
+}
+
+.hasil-top__meta {
+    display: block;
+    margin-top: 0.15rem;
+    font-size: 0.625rem;
+    color: color-mix(in oklab, var(--color-dark) 50%, transparent);
+}
+
+.hasil-top__nilai {
+    flex-shrink: 0;
+    font-size: 0.8125rem;
+    font-weight: 800;
+    font-variant-numeric: tabular-nums;
+    color: var(--color-primary-dark);
+}
+
+.hasil-top__panah {
+    flex-shrink: 0;
+    width: 0.875rem;
+    height: 0.875rem;
+    color: color-mix(in oklab, var(--color-dark) 30%, transparent);
+    transition: transform 0.3s cubic-bezier(0.22, 1, 0.36, 1), color 0.3s;
+}
+
+.hasil-top:hover .hasil-top__panah {
+    transform: translateX(3px);
+    color: var(--color-primary);
+}
+
+/* ---------- Kartu motivasi ---------- */
+.hasil-motivasi {
+    position: relative;
+    isolation: isolate;
+    overflow: hidden;
+    min-width: 0;
+    border-radius: 0.875rem;
+    border: 1px solid color-mix(in oklab, var(--color-primary) 16%, var(--color-lavender));
+    padding: 1.25rem 1.15rem;
+    text-align: center;
+    background: linear-gradient(150deg, #f3f0ff 0%, #e9e3fd 100%);
+    box-shadow: 0 1px 2px rgba(33, 26, 58, 0.04), 0 14px 30px -26px rgba(108, 77, 230, 0.5);
+}
+
+.hasil-motivasi__pita {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.75rem;
+    height: 2.75rem;
+    margin-inline: auto;
+    border-radius: 0.9rem;
+    color: var(--color-primary);
+    background-color: rgba(255, 255, 255, 0.72);
+    box-shadow: 0 8px 18px -14px rgba(108, 77, 230, 0.9);
+}
+
+.hasil-motivasi__bintang {
+    position: absolute;
+    top: 0.85rem;
+    right: 0.9rem;
+    z-index: -1;
+    width: 1.375rem;
+    height: 1.375rem;
+    color: var(--color-primary);
+    opacity: 0.28;
+    transform: rotate(14deg);
+}
+
+.hasil-motivasi__teks {
+    margin-top: 0.7rem;
+    font-size: 0.8125rem;
+    font-weight: 700;
+    line-height: 1.65;
+    color: var(--color-primary-dark);
+}
+
+/* ---------- Empty state di dalam panel riwayat ---------- */
+.hasil-kosong__ikon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 3rem;
+    height: 3rem;
+    border-radius: 1rem;
+    color: var(--color-primary);
+    background-color: color-mix(in oklab, var(--color-lavender) 70%, white);
+}
+
+/* ---------- Halaman detail ---------- */
+.hasil-kembali {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    min-width: 0;
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: var(--color-primary);
+    transition: color 0.25s;
+}
+
+.hasil-kembali:hover {
+    color: var(--color-primary-dark);
+}
+
+.hasil-detail__kategori {
+    font-size: 0.6875rem;
+    font-weight: 700;
+    color: var(--color-primary);
+}
+
+.hasil-detail__judul {
+    margin-top: 0.3rem;
+    font-size: clamp(1.25rem, 4vw, 1.625rem);
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    line-height: 1.2;
+    color: var(--color-dark);
+}
+
+.hasil-detail__nilai-box {
+    margin-top: 1.5rem;
+    text-align: center;
+}
+
+.hasil-detail__nilai {
+    display: flex;
+    align-items: baseline;
+    justify-content: center;
+    gap: 0.25rem;
+    font-size: clamp(2.5rem, 12vw, 4rem);
+    font-weight: 800;
+    line-height: 1;
+    letter-spacing: -0.02em;
+    color: var(--color-primary-dark);
+}
+
+.hasil-detail__nilai span {
+    font-size: 0.25em;
+    font-weight: 700;
+}
+
+.hasil-detail__nilai-label {
+    margin-top: 0.4rem;
+    font-size: 0.75rem;
+    color: color-mix(in oklab, var(--color-dark) 50%, transparent);
+}
+
+.hasil-detail__kotak {
+    min-width: 0;
+    border-radius: 0.75rem;
+    background-color: var(--color-brand-bg);
+    padding: 0.7rem 0.5rem;
+}
+
+.hasil-detail__kotak-nilai {
+    font-size: 1.125rem;
+    font-weight: 800;
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
+    color: var(--color-primary-dark);
+}
+
+.hasil-detail__kotak-nilai--benar {
+    color: #0f7a5b;
+}
+
+.hasil-detail__kotak-nilai--salah {
+    color: #a8323c;
+}
+
+.hasil-detail__kotak-label {
+    margin-top: 0.3rem;
+    font-size: 0.625rem;
+    font-weight: 600;
+    color: color-mix(in oklab, var(--color-dark) 55%, transparent);
+}
+
+.hasil-detail__meta {
+    margin-top: 1.25rem;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.6rem;
+}
+
+.hasil-detail__meta-item {
+    min-width: 0;
+    border-radius: 0.7rem;
+    border: 1px solid color-mix(in oklab, var(--color-lavender) 75%, transparent);
+    padding: 0.6rem 0.75rem;
+}
+
+.hasil-detail__meta-item dt {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    min-width: 0;
+    font-size: 0.625rem;
+    font-weight: 600;
+    color: color-mix(in oklab, var(--color-dark) 50%, transparent);
+}
+
+.hasil-detail__meta-item dd {
+    margin-top: 0.25rem;
+    font-size: 0.8125rem;
+    font-weight: 800;
+    font-variant-numeric: tabular-nums;
+    color: var(--color-dark);
+}
+
+/* ---------- Soal + jawaban ---------- */
+.hasil-soal {
+    min-width: 0;
+    border-radius: 0.875rem;
+    border: 1px solid color-mix(in oklab, var(--color-lavender) 80%, transparent);
+    padding: 0.9rem 1rem;
+}
+
+.hasil-soal + .hasil-soal {
+    margin-top: 0.7rem;
+}
+
+.hasil-soal__kepala {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.6rem;
+    min-width: 0;
+}
+
+.hasil-soal__nomor {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    width: 1.6rem;
+    height: 1.6rem;
+    border-radius: 0.5rem;
+    background-color: var(--color-lavender);
+    font-family: var(--font-mono);
+    font-size: 0.6875rem;
+    font-weight: 800;
+    color: var(--color-primary-dark);
+}
+
+.hasil-soal__pertanyaan {
+    min-width: 0;
+    flex: 1;
+    font-size: 0.8125rem;
+    font-weight: 700;
+    line-height: 1.65;
+    color: var(--color-dark);
+}
+
+.hasil-soal__pilihan {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    min-width: 0;
+    margin-top: 0.8rem;
+    border-radius: 0.7rem;
+    border: 1px solid transparent;
+    background-color: var(--color-brand-bg);
+    padding: 0.55rem 0.75rem;
+    font-size: 0.75rem;
+    line-height: 1.6;
+    color: color-mix(in oklab, var(--color-dark) 72%, transparent);
+}
+
+.hasil-soal__pilihan + .hasil-soal__pilihan {
+    margin-top: 0.35rem;
+}
+
+.hasil-soal__pilihan--kunci {
+    background-color: #eafaf3;
+    color: #0f7a5b;
+}
+
+.hasil-soal__pilihan--salah {
+    background-color: #fdecee;
+    color: #a8323c;
+}
+
+/* Varian --benar menang atas --salah kalau jawaban peserta sekaligus
+   benar, supaya tidak ada dua warna bersaing di baris yang sama. */
+.hasil-soal__pilihan--kunci.hasil-soal__pilihan--benar,
+.hasil-soal__pilihan--benar {
+    background-color: #eafaf3;
+    color: #0f7a5b;
+    border-color: color-mix(in oklab, #0f9d76 30%, transparent);
+}
+
+.hasil-soal__huruf {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    width: 1.35rem;
+    height: 1.35rem;
+    border-radius: 0.45rem;
+    background-color: #fff;
+    font-family: var(--font-mono);
+    font-size: 0.625rem;
+    font-weight: 800;
+    color: currentColor;
+    box-shadow: inset 0 0 0 1px color-mix(in oklab, currentColor 22%, transparent);
+}
+
+.hasil-soal__tag {
+    flex-shrink: 0;
+    border-radius: 9999px;
+    background-color: rgba(255, 255, 255, 0.85);
+    padding: 0.15rem 0.5rem;
+    font-size: 0.5625rem;
+    font-weight: 800;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+
+.hasil-soal__tag--terpilih {
+    color: inherit;
+    box-shadow: inset 0 0 0 1px color-mix(in oklab, currentColor 30%, transparent);
+}
+
+.hasil-soal__tag--kunci {
+    color: #0f7a5b;
+    box-shadow: inset 0 0 0 1px color-mix(in oklab, #0f9d76 30%, transparent);
+}
+
+.hasil-soal__pembahasan {
+    margin-top: 0.7rem;
+    border-radius: 0.7rem;
+    background-color: var(--color-brand-bg);
+    padding: 0.65rem 0.8rem;
+    font-size: 0.75rem;
+    line-height: 1.7;
+    color: color-mix(in oklab, var(--color-dark) 68%, transparent);
+}
+
+.hasil-soal__pembahasan-label {
+    display: block;
+    margin-bottom: 0.25rem;
+    font-family: var(--font-mono);
+    font-size: 0.625rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--color-primary);
+}
