@@ -7,8 +7,10 @@
 
     Sumber datanya array polos dari App\Support\DaftarQuiz, jadi komponen
     ini tidak terikat Eloquent. Bentuk array yang dipakai di sini:
-      judul, deskripsi, thumbnail, jumlah_soal, durasi, status, status_label,
-      visibilitas, dibuat_pada, tautan, tautan_edit, tautan_hapus,
+      judul, deskripsi, thumbnail, jumlah_soal, durasi, status, warna_status,
+      status_label, visibilitas, pakai_kode, kode_akses, boleh_rujukan,
+      catatan_admin, sisa_pengajuan, dibuat_pada, tautan, tautan_edit,
+      tautan_hapus, tautan_mulai_sesi,
       kategori => [nama, ikon, warna, warna_gelap]
 
     Berbeda dengan kartu di halaman Quiz, kartu ini bukan satu tautan utuh:
@@ -20,17 +22,17 @@
     $kategori = $quiz['kategori'];
 
     /*
-     * Warna lencana status mengikuti arti statusnya: sudah tayang pakai
-     * warna ungu (terang di atas thumbnail), menunggu persetujuan kuning,
-     * ditolak merah. Draft sengaja dibiarkan netral karena itu kondisi
-     * biasa, bukan masalah.
+     * Quiz mode kode dan quiz mode publik butuh dua pintu masuk yang
+     * berbeda, jadi keduanya punya tombol sendiri:
+     *   - "Buka Sesi" hanya untuk mode kode, lewat lobby tempat peserta
+     *     yang mengetik kodenya ikut menunggu.
+     *   - "Lihat" membuka halaman detail, tempat tombol "Mulai Quiz"
+     *     ada untuk quiz yang boleh dikerjakan sendiri.
      */
-    $warnaStatus = match ($quiz['status']) {
-        'published' => 'terbit',
-        'pending' => 'menunggu',
-        'rejected' => 'ditolak',
-        default => 'draft',
-    };
+    $warnaStatus = $quiz['warna_status'] ?? 'draft';
+    $bolehDibuka = $quiz['boleh_rujukan'] ?? true;
+    $ditolak = $quiz['status'] === \App\Models\Quiz::STATUS_REJECTED;
+    $batas = \App\Models\Quiz::BATAS_PENGAJUAN_ULANG;
 @endphp
 
 <article style="--k: {{ $kategori['warna'] }}; --k-gelap: {{ $kategori['warna_gelap'] }};"
@@ -58,7 +60,11 @@
     {{-- B-E. Judul, deskripsi, informasi, dan baris aksi. --}}
     <div class="kartu-materi__badan">
         <h2 class="kartu-materi__judul karya-judul">
-            <a href="{{ $quiz['tautan'] }}">{{ $quiz['judul'] }}</a>
+            @if ($bolehDibuka)
+                <a href="{{ $quiz['tautan'] }}">{{ $quiz['judul'] }}</a>
+            @else
+                {{ $quiz['judul'] }}
+            @endif
         </h2>
 
         <p class="kartu-materi__deskripsi">{{ $quiz['deskripsi'] }}</p>
@@ -83,15 +89,16 @@
                 </span>
             @endif
 
-            {{-- Quiz privat hanya bisa dibuka lewat kode, jadi itu penting
-                 untuk diingat pemilik saat sedang mengelola karyanya. --}}
-            @if ($quiz['visibilitas'] === 'private')
+            {{-- Quiz mode kode tidak tayang di halaman Quiz, jadi kode yang
+                 harus dibagikan ke peserta ditampilkan di sini supaya
+                 pemiliknya tidak perlu membuka halaman lain untuk membacanya. --}}
+            @if ($quiz['pakai_kode'])
                 <span class="karya-info__butir">
                     <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" stroke-width="1.9" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 1 0-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 0 0 2.25-2.25v-6.75a2.25 2.25 0 0 0-2.25-2.25H6.75a2.25 2.25 0 0 0-2.25 2.25v6.75a2.25 2.25 0 0 0 2.25 2.25Z" />
                     </svg>
 
-                    Privat
+                    Kode {{ $quiz['kode_akses'] }}
                 </span>
             @endif
 
@@ -104,17 +111,49 @@
             </span>
         </div>
 
+        {{-- Alasan penolakan admin, supaya pemilik tahu harus memperbaiki apa.
+             Hanya untuk quiz yang ditolak: status lain tidak punya catatan. --}}
+        @if ($ditolak && filled($quiz['catatan_admin'] ?? null))
+            <div class="mt-3 rounded-xl border border-[#f4c7cd] bg-[#fdecee] px-3.5 py-2.5">
+                <p class="text-xs font-bold text-[#a8323c]">Alasan ditolak admin</p>
+
+                <p class="mt-1 text-sm leading-relaxed text-[#a8323c]">{{ $quiz['catatan_admin'] }}</p>
+            </div>
+        @elseif (($quiz['sisa_pengajuan'] ?? $batas) < $batas)
+            <p class="mt-3 text-xs text-dark/55">
+                Sudah ditolak {{ $batas - $quiz['sisa_pengajuan'] }}x.
+                Sisa pengajuan: {{ $quiz['sisa_pengajuan'] }}x.
+            </p>
+        @endif
+
         {{-- Baris aksi. Tombol hapus membuka dialog konfirmasi lebih dulu
              (dikerjakan initKonfirmasi() di resources/js/app.js). --}}
         <div class="karya-aksi">
-            <a href="{{ $quiz['tautan'] }}" class="karya-aksi__tombol karya-aksi__tombol--lihat karya-aksi__tombol--utama"
-                title="Buka halaman quiz ini">
-                Lihat
+            @if ($bolehDibuka)
+                <a href="{{ $quiz['tautan'] }}"
+                    class="karya-aksi__tombol @unless ($quiz['pakai_kode']) karya-aksi__tombol--lihat karya-aksi__tombol--utama @endunless"
+                    title="Buka halaman quiz ini">
+                    Lihat
 
-                <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3" />
-                </svg>
-            </a>
+                    <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3" />
+                    </svg>
+                </a>
+            @endif
+
+            {{-- Quiz mode kode: satu-satunya cara menjalankan quiz ini
+                 bersama-sama. Kode yang diketik peserta sudah tetap sama
+                 dengan kode di form, jadi tidak perlu menyalin kode lagi. --}}
+            @if ($quiz['pakai_kode'] && filled($quiz['kode_akses'] ?? null))
+                <form method="POST" action="{{ $quiz['tautan_mulai_sesi'] }}" class="inline">
+                    @csrf
+
+                    <button type="submit" class="karya-aksi__tombol karya-aksi__tombol--lihat karya-aksi__tombol--utama"
+                        title="Buka lobby {{ $quiz['kode_akses'] }} dan tunggu peserta bergabung">
+                        Buka Sesi
+                    </button>
+                </form>
+            @endif
 
             <a href="{{ $quiz['tautan_edit'] }}" class="karya-aksi__tombol" title="Ubah quiz ini">
                 <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" stroke-width="1.9" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">

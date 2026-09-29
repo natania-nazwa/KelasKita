@@ -31,9 +31,12 @@ use Carbon\Carbon;
  *
  * Bentuk array per baris (yang dipakai komponen):
  *   id, hari, nama_hari, mulai, selesai, durasi_menit, durasi_label, judul,
- *   kelas, ruang, ikon, warna, warna_gelap,
- *   kategori => [nama, slug, ikon, warna, warna_gelap], punya_pr, pr,
- *   pr_dikumpulkan, pr_keterangan, bisa_diubah, tautan_edit, tautan_hapus
+ *   kelas, ruang, ikon, warna, warna_gelap, punya_pr, pr, pr_dikumpulkan,
+ *   pr_keterangan, meta, bisa_diubah, tautan_edit, tautan_hapus
+ *
+ * "meta" sudah berupa pasangan label => nilai untuk baris detail di bawah
+ * judul, dan hanya berisi yang terisi. "kategori" => [nama, slug, ikon,
+ * warna, warna_gelap] ikut ditambahkan di baris yang sama.
  *
  * Ditambah status, status_label, lewat, dan sedang oleh hari().
  *
@@ -681,9 +684,9 @@ final class DaftarJadwal
 
     /**
      * Bagian atas yang sama untuk semua sumber data: warna, ikon, durasi,
-     * PR, dan tautan edit/hapus.
+     * PR, meta, dan tautan edit/hapus.
      *
-     * @param  array{id: int, hari: int, mulai: string, selesai: string, judul: string, kelas: string, ruang: string, slug: string, pr: string|null, pr_dikumpulkan: string|null, tautan_edit: string|null, tautan_hapus: string|null}  $baris
+     * @param  array{id: int, hari: int, mulai: string, selesai: string, judul: string, kelas: string|null, ruang: string|null, slug: string, pr: string|null, pr_dikumpulkan: string|null, tautan_edit: string|null, tautan_hapus: string|null}  $baris
      * @return array<string, mixed>
      */
     private static function bentuk(array $baris): array
@@ -717,10 +720,39 @@ final class DaftarJadwal
             'pr' => $baris['pr'],
             'pr_dikumpulkan' => $baris['pr_dikumpulkan'],
             'pr_keterangan' => self::keteranganTenggat($baris['pr_dikumpulkan']),
+            'meta' => self::metaBaris($baris['kelas'], $baris['ruang'], $menit),
             'bisa_diubah' => $baris['tautan_edit'] !== null,
             'tautan_edit' => $baris['tautan_edit'],
             'tautan_hapus' => $baris['tautan_hapus'],
         ];
+    }
+
+    /**
+     * Pasangan label => nilai untuk baris detail di bawah judul pelajaran.
+     *
+     * Hanya berisi yang benar-benar diisi. Kelas dan ruang boleh dikosongkan,
+     * jadi tidak boleh muncul sebagai baris kosong: lebih baik tidak
+     * ditampilkan daripada menampilkan label dengan nilai yang tidak berarti.
+     *
+     * Durasi selalu ikut karena dihitung dari jam, bukan dari isian pengguna.
+     *
+     * @return array<string, string>
+     */
+    private static function metaBaris(?string $kelas, ?string $ruang, int $menit): array
+    {
+        $meta = [];
+
+        if (filled($kelas)) {
+            $meta['Kelas'] = $kelas;
+        }
+
+        if (filled($ruang)) {
+            $meta['Ruang'] = $ruang;
+        }
+
+        $meta['Durasi'] = self::durasiLabel($menit);
+
+        return $meta;
     }
 
     /**
@@ -864,8 +896,8 @@ final class DaftarJadwal
 
         $kandidat = [
             $baris['judul'],
-            $baris['kelas'],
-            $baris['ruang'],
+            $baris['kelas'] ?? '',
+            $baris['ruang'] ?? '',
             $baris['kategori']['nama'],
             $baris['pr'] ?? '',
         ];

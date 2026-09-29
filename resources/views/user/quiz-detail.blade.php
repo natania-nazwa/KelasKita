@@ -4,188 +4,96 @@
 
 @section('content')
     @php
+        /*
+         * Padding negatif menetralkan padding <main> (p-6 / lg:p-10) supaya
+         * latar bertekstur menutup seluruh viewport, lalu padding kecil
+         * dikembalikan sebagai jarak halaman. Nilainya harus selalu pasangan:
+         * -m-6 dengan p-4, dan lg:-m-10 dengan lg:p-6.
+         *
+         * Lebar isinya dikunci max-w-6xl (1152px, mendekati 1200px yang
+         * diminta rancangan) supaya di layar besar kartu utama dan kartu
+         * informasi tidak merekah ke tepi.
+         */
         $kategori = $kartu['kategori'];
-        $pembuat = $kartu['pembuat'];
+
+        /*
+         * "Lihat semua" pada Daftar Soal mengarah ke daftar quiz di kategori
+         * yang sama, karena tidak ada halaman khusus daftar soal. Kategori
+         * kosong tidak pernah diberi tautan, supaya tidak muncul
+         * "kategori=" kosong di URL.
+         */
+        $tautanKategori = filled($kategori['slug'])
+            ? route('user.quiz', ['kategori' => $kategori['slug']])
+            : route('user.quiz');
+
+        $tautanBagikan = route('user.quiz.detail', $quiz);
     @endphp
 
-    <div class="kanvas-halaman -m-6 min-h-[calc(100dvh-4rem)] p-6 lg:-m-10 lg:p-10">
+    <div class="kanvas-halaman -m-6 min-h-[calc(100dvh-4rem)] p-4 lg:-m-10 lg:p-6">
+        <div class="mx-auto w-full max-w-6xl">
 
-        {{-- Kembali ke daftar, mengikuti tab yang tadi dipakai. --}}
-        <a href="{{ route('user.quiz') }}"
-            class="inline-flex items-center gap-2 text-sm font-semibold text-primary transition hover:text-primary-dark">
-            <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 19.5 3 12m0 0 7.5-7.5M3 12h18" />
-            </svg>
+            {{-- 1. Kembali ke daftar quiz. --}}
+            <a href="{{ route('user.quiz') }}" class="tombol-kembali">
+                <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"
+                    xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="{{ \App\Support\Ikon::path('panah-kiri') }}" />
+                </svg>
 
-            Kembali ke daftar quiz
-        </a>
+                Kembali
+            </a>
 
-        {{-- =========================
-             KEPALA QUIZ
-        ========================== --}}
-        <section data-reveal="fade"
-            style="--k: {{ $kategori['warna'] }}; --k-gelap: {{ $kategori['warna_gelap'] }};"
-            class="mt-4 overflow-hidden rounded-[1.75rem] border border-lavender bg-white shadow-[0_20px_45px_-34px_rgba(33,26,58,0.4)]">
-
-            <div class="kartu-quiz__gambar !aspect-[21/8]">
-                @if (filled($kartu['thumbnail']))
-                    <img src="{{ $kartu['thumbnail'] }}" alt="" class="kartu-quiz__foto">
-                @else
-                    <span class="kartu-quiz__gambar-ikon !text-5xl" aria-hidden="true">{{ $kategori['ikon'] }}</span>
-                @endif
-
-                <span class="kartu-quiz__lencana">{{ $kategori['nama'] }}</span>
-            </div>
-
-            <div class="p-5 sm:p-6">
-                <div class="flex flex-wrap items-center gap-2">
-                    {{-- Quiz yang belum tayang hanya boleh dilihat pemiliknya,
-                         jadi statusnya perlu disebut di sini. --}}
-                    @if ($quiz->status !== \App\Models\Quiz::STATUS_PUBLISHED)
-                        <span class="lencana bg-lavender text-primary-dark">{{ $kartu['status_label'] }}</span>
-                    @endif
-
-                    @if ($kartu['visibilitas'] === \App\Models\Quiz::VISIBILITAS_PRIVAT)
-                        <span class="lencana bg-brand-bg text-dark/55">Privat</span>
-                    @endif
-                </div>
-
-                <h1 class="mt-3 text-2xl font-extrabold tracking-tight text-dark sm:text-3xl">
-                    {{ $kartu['judul'] }}
-                </h1>
-
-                @if (filled($kartu['deskripsi']))
-                    <p class="mt-2 max-w-2xl text-sm leading-relaxed text-dark/60">
-                        {{ $kartu['deskripsi'] }}
-                    </p>
-                @endif
-
-                <div class="mt-5 flex flex-wrap items-center gap-3">
-                    <span class="flex items-center gap-2.5">
-                        <span class="kartu-quiz__avatar !h-9 !w-9 !text-xs"
-                            style="--a: {{ $pembuat['warna'] }}; --a-gelap: {{ $pembuat['warna_gelap'] }};"
-                            aria-hidden="true">{{ $pembuat['inisial'] }}</span>
-
-                        <span class="flex flex-col leading-tight">
-                            <span class="text-xs text-dark/45">Dibuat oleh</span>
-                            <span class="text-sm font-semibold text-dark">{{ $pembuat['nama'] }}</span>
-                        </span>
-                    </span>
-
-                    <span class="kartu-quiz__jumlah !px-3 !py-1.5 !text-xs">
-                        <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="1.9" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z" />
+            {{--
+                Kabar gagal memulai quiz atau membuka sesinya, mis. quiznya
+                belum punya soal atau belum punya kode gabung. Keduanya datang
+                dari dua form yang ada di halaman ini, jadi pesannya ditulis
+                di bawah satu blok.
+            --}}
+            @if ($errors->has('quiz') || $errors->has('sesi'))
+                <div class="mt-4 flex items-start gap-3 rounded-2xl border border-lavender bg-white px-4 py-3 text-sm text-dark shadow-[0_14px_30px_-26px_rgba(33,26,58,0.5)]"
+                    role="alert">
+                    <span class="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary"
+                        aria-hidden="true">
+                        <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"
+                            xmlns="http://www.w3.org/2000/svg">
+                            <path stroke-linecap="round" stroke-linejoin="round"
+                                d="M12 9v3.75m9-.75a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9 3.75h.008v.008H12v-.008Z" />
                         </svg>
-
-                        {{ $jumlahSoal }} Soal
                     </span>
 
-                    @if ($kartu['durasi'] > 0)
-                        <span class="kartu-quiz__jumlah !px-3 !py-1.5 !text-xs">
-                            <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="1.9" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
-                            </svg>
-
-                            {{ $kartu['durasi'] }} Menit
-                        </span>
-                    @endif
+                    <p class="min-w-0 font-medium">{{ $errors->first('sesi') ?: $errors->first('quiz') }}</p>
                 </div>
-
-                {{-- Aksi host, hanya untuk pemilik quiz. Quiz tanpa soal
-                     tidak punya tombol apa pun karena sesinya tidak bisa
-                     dijalankan. --}}
-                @if ($kartu['saya'] && $jumlahSoal > 0)
-                    <div class="mt-5 flex flex-wrap items-center gap-2.5">
-                        @if ($sesiAktif !== null)
-                            {{-- Sudah ada sesi yang belum ditutup: arahkan
-                                 balik ke lobby itu, jangan buat sesi kedua. --}}
-                            <a href="{{ route('user.sesi.lobby', $sesiAktif) }}" class="tombol-utama">
-                                <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="1.9" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="{{ \App\Support\Ikon::path('orang') }}" />
-                                </svg>
-
-                                Buka Lobby ({{ $sesiAktif->kode }})
-                            </a>
-                        @else
-                            <form method="POST" action="{{ route('user.sesi.buka', $quiz) }}">
-                                @csrf
-
-                                <button type="submit" class="tombol-utama">
-                                    <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="1.9" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-                                        <path stroke-linecap="round" stroke-linejoin="round" d="{{ \App\Support\Ikon::path('orang') }}" />
-                                    </svg>
-
-                                    Mulai Sesi Quiz
-                                </button>
-                            </form>
-                        @endif
-
-                        <a href="{{ route('user.sesi.gabung') }}" class="tombol-garis">
-                            Masukkan Kode
-                        </a>
-                    </div>
-                @endif
-            </div>
-        </section>
-
-        {{-- =========================
-             DAFTAR SOAL
-        ========================== --}}
-        <section class="mt-6" aria-label="Soal quiz">
-            <h2 class="text-base font-bold text-dark">Soal-soal</h2>
-
-            @if ($soal->isEmpty())
-                <div class="mt-3 flex flex-col items-center rounded-[1.5rem] border border-dashed border-lavender bg-white px-6 py-12 text-center">
-                    <h3 class="text-base font-bold text-dark">Soalnya belum diisi</h3>
-
-                    <p class="mt-1.5 max-w-sm text-sm text-dark/50">
-                        Quiz ini sudah dibuat tapi belum punya soal. Pembuatnya bisa menambahkannya lewat form
-                        tambah quiz.
-                    </p>
-                </div>
-            @else
-                <ol class="mt-3 space-y-4">
-                    @foreach ($soal as $nomor => $item)
-                        <li data-reveal
-                            class="rounded-2xl border border-lavender bg-white p-5 shadow-[0_1px_2px_rgba(33,26,58,0.04)]">
-                            <p class="flex gap-3 text-sm font-semibold leading-relaxed text-dark">
-                                <span class="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg bg-lavender text-xs font-bold text-primary-dark">
-                                    {{ $nomor + 1 }}
-                                </span>
-
-                                {{ $item->pertanyaan }}
-                            </p>
-
-                            <ul class="mt-3 grid gap-2 sm:grid-cols-2">
-                                @foreach ($item->pilihan() as $huruf => $isi)
-                                    <li class="flex items-start gap-2.5 rounded-xl border border-lavender bg-brand-bg px-3 py-2.5 text-sm text-dark/75">
-                                        <span class="mt-px flex h-5 w-5 shrink-0 items-center justify-center rounded-md bg-white text-[11px] font-bold text-primary">
-                                            {{ $huruf }}
-                                        </span>
-
-                                        {{ $isi }}
-                                    </li>
-                                @endforeach
-                            </ul>
-                        </li>
-                    @endforeach
-                </ol>
             @endif
-        </section>
 
-        {{-- =========================
-             QUIZ LAINNYA
-        ========================== --}}
-        @if ($rekomendasi !== [])
-            <section class="mt-8" aria-label="Quiz lain di kategori ini">
-                <h2 class="text-base font-bold text-dark">Quiz lain di {{ $kategori['nama'] }}</h2>
+            {{--
+                2. Kepala halaman: kartu quiz di kiri (sekitar 2/3 lebar) dan
+                kartu informasi di kanan (sekitar 1/3). Keduanya diregangkan
+                sama tinggi, dan di bawah 1024px berubah jadi satu kolom dengan
+                kartu informasi turun ke bawah.
+            --}}
+            <div
+                class="mt-4 grid min-w-0 items-stretch gap-4 sm:mt-5 sm:gap-5 lg:grid-cols-[minmax(0,68fr)_minmax(0,32fr)]">
+                <x-quiz.detail-kartu :kartu="$kartu" :jumlah-soal="$jumlahSoal" :sesi-host="$sesiHost" />
 
-                <div class="mt-3 grid grid-cols-1 gap-5 min-w-0 sm:grid-cols-2 lg:grid-cols-3">
-                    @foreach ($rekomendasi as $item)
-                        <x-quiz.kartu :quiz="$item" />
-                    @endforeach
-                </div>
-            </section>
-        @endif
+                <x-quiz.detail-informasi :kartu="$kartu" :jumlah-soal="$jumlahSoal" />
+            </div>
+
+            {{-- 3. Daftar soal, melebar penuh di bawah kedua kartu. --}}            <x-quiz.detail-daftar-soal :soal="$soal" :tautan="$tautanKategori" />
+
+            {{-- 4. Quiz lain di kategori yang sama, kalau ada. --}}
+            @if ($rekomendasi !== [])
+                <section class="mt-8" aria-label="Quiz lain di kategori ini">
+                    <h2 class="text-base font-bold text-dark">Quiz lain di {{ $kategori['nama'] }}</h2>
+
+                    <div class="mt-3 grid grid-cols-1 gap-5 min-w-0 sm:grid-cols-2 lg:grid-cols-3">
+                        @foreach ($rekomendasi as $item)
+                            <x-quiz.kartu :quiz="$item" />
+                        @endforeach
+                    </div>
+                </section>
+            @endif
+        </div>
+
+        {{-- 5. Dialog Bagikan, selalu ikut di-render tapi tersembunyi. --}}
+        <x-quiz.detail-bagikan data-tautan="{{ $tautanBagikan }}" />
     </div>
 @endsection

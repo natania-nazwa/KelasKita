@@ -141,10 +141,37 @@ Route::middleware('auth')
         Route::delete('/materi/{materi}', [User\MateriKelolaController::class, 'destroy'])->name('materi.destroy');
 
         /*
-         * Sama seperti materi: "/quiz/tambah" harus didaftarkan sebelum
-         * "/quiz/{quiz}" di bawahnya, kalau dibalik route detail akan
-         * menelan kata "tambah" sebagai id dan form tambah quiz tidak
-         * akan pernah terbuka.
+         * =============================================================
+         * QUIZ
+         * =============================================================
+         * Satu quiz punya DUA cara dipakai, dan keduanya punya URL sendiri:
+         *
+         *   1. Mode kode. Quiz privat yang dibuka lewat kode yang diketik
+         *      peserta:
+         *        /user/quiz/gabung        form masuk dengan kode
+         *        /user/sesi/{sesi}         lobby bersama-sama
+         *        /user/quiz/detail-quiz/{quiz}   halaman detail pemilik,
+         *                              tempat ia memshare kode dan memulai
+         *      Gagal kode cocok quiz yang owner-nya lewat "Kode Akses".
+         *
+         *   2. Mode publik. Quiz yang sudah disetujui admin dan tayang di
+         *      /user/quiz:
+         *        /user/quiz/detail-quiz/{quiz}   halaman detail semua orang
+         *        /user/quiz/detail-quiz/{quiz}/mulai  langsung mulai mengerjakan
+         *
+         * Halaman baca memakai segmen literal "detail-quiz", bukan "/quiz/{quiz}"
+         * seperti semula. Alasannya sama seperti "/materi-detail/{materi}":
+         * "/quiz/{quiz}" hanya punya satu segmen setelah "/quiz", dan
+         * "/quiz/tambah" maupun "/quiz/gabung" harus terdaftar lebih dulu
+         * supaya kata "tambah" dan "gabung" tidak ditelan sebagai id quiz.
+         * Dengan segmen "detail-quiz" di tengah, "/quiz/{quiz}" tidak lagi
+         * bisa menabrak URL literal mana pun, tapi tetap didaftarkan
+         * setelahnya supaya urutannya tidak bergantung pada mana yang lebih
+         * spesifik.
+         *
+         * Nama route TIDAK ikut berubah: user.quiz.detail, user.quiz.mulai,
+         * dan seterusnya tetap sama, jadi tidak ada panggilan route() di
+         * view atau controller yang harus diperbarui.
          */
         Route::get('/quiz/tambah', [User\QuizTambahController::class, 'create'])->name('quiz.tambah');
         Route::post('/quiz/tambah', [User\QuizTambahController::class, 'store'])->name('quiz.tambah.store');
@@ -158,17 +185,36 @@ Route::middleware('auth')
         Route::post('/quiz/gabung', [User\SesiGabungController::class, 'store'])->name('sesi.gabung.store');
 
         Route::get('/quiz', User\QuizController::class)->name('quiz');
-        Route::get('/quiz/{quiz}', User\QuizDetailController::class)->name('quiz.detail');
+
+        /*
+         * Halaman detail: judul, informasi, dan daftar soal. Quiz yang belum
+         * terbit hanya boleh dibuka pembuatnya, selain itu 404.
+         */
+        Route::get('/quiz/detail-quiz/{quiz}', User\QuizDetailController::class)->name('quiz.detail');
+
+        /*
+         * Tombol "Mulai Quiz" di halaman detail quiz.
+         *
+         * Bukan membuat halaman mengerjakan quiz yang baru: ia memakai sesi
+         * yang sudah ada. Sesi dibuat untuk pengguna yang sedang login lalu
+         * langsung berstatus "started", jadi yang stumbled ke soal pertama
+         * tanpa lewat lobby. KalauQuiz punya sesi lobby yang masih menunggu,
+         * pengguna dikembalikan ke lobby itu, bukan membuat sesi kedua.
+         *
+         * Aturan siapa boleh membuka quiz sama persis dengan halaman detail.
+         */
+        Route::get('/quiz/detail-quiz/{quiz}/mulai', User\QuizMulaiController::class)->name('quiz.mulai');
+
+        /*
+         * Host membuka sesi lobby dari halaman detail quiz mode kodenya.
+         * Sesi memakai kode yang sama dengan kode akses quiz, jadi angka di
+         * lobby persis sama dengan yang diketik peserta.
+         */
+        Route::post('/quiz/{quiz}/sesi', [User\SesiHostController::class, 'buka'])->name('sesi.buka');
 
         Route::get('/quiz/{quiz}/edit', [User\QuizKelolaController::class, 'edit'])->name('quiz.edit');
         Route::put('/quiz/{quiz}', [User\QuizKelolaController::class, 'update'])->name('quiz.update');
         Route::delete('/quiz/{quiz}', [User\QuizKelolaController::class, 'destroy'])->name('quiz.destroy');
-
-        /*
-         * Host membuka sesi baru dari halaman detail quiz miliknya. Sesi
-         * yang dibuat langsung berstatus "waiting" dan punya kode join.
-         */
-        Route::post('/quiz/{quiz}/sesi', [User\SesiHostController::class, 'buka'])->name('sesi.buka');
 
         /*
          * =============================================================
@@ -181,9 +227,11 @@ Route::middleware('auth')
          *   /user/sesi/{sesi}/status     data untuk polling JavaScript
          *   /user/sesi/{sesi}/mulai      host saja: waiting -> started
          *   /user/sesi/{sesi}/akhiri     host saja: menutup quiz
-         *   /user/sesi/{sesi}/soal/{n}   mengerjakan soal
          *   /user/sesi/{sesi}/selesai    menutup pengerjaan sendiri
          *   /user/sesi/{sesi}/hasil      halaman nilai
+         *
+         * Prefix "sesi" dipakai supaya URL sesi tidak bertabrakan dengan
+         * URL quiz di atas (/user/quiz/detail-quiz/{quiz}).
          *
          * Aturan "soal tidak boleh dibuka sebelum host memulai" ditegakkan
          * di SesiKerjakanController, bukan hanya lewat query string atau
@@ -193,10 +241,64 @@ Route::middleware('auth')
         Route::get('/sesi/{sesi}/status', [User\SesiLobbyController::class, 'data'])->name('sesi.data');
         Route::post('/sesi/{sesi}/mulai', [User\SesiHostController::class, 'mulai'])->name('sesi.mulai');
         Route::post('/sesi/{sesi}/akhiri', [User\SesiHostController::class, 'akhiri'])->name('sesi.akhiri');
-        Route::get('/sesi/{sesi}/soal/{nomor}', [User\SesiKerjakanController::class, 'show'])->name('sesi.soal');
-        Route::post('/sesi/{sesi}/soal/{nomor}', [User\SesiKerjakanController::class, 'simpan'])->name('sesi.jawab');
         Route::post('/sesi/{sesi}/selesai', [User\SesiKerjakanController::class, 'selesai'])->name('sesi.selesai');
         Route::get('/sesi/{sesi}/hasil', [User\SesiHasilController::class, '__invoke'])->name('sesi.hasil');
+        /*
+         * =============================================================
+         * MENGERJAKAN QUIZ
+         * =============================================================
+         * Segmen di URL adalah slug judul quiz yang sedang dikerjakan, lalu
+         * nomor soalnya:
+         *
+         *   /user/{slug}/soal/{nomor}
+         *
+         * Begitu misalnya /user/seputar-teknologi/soal/1 untuk quiz
+         * "Seputar Teknologi". Platzholder "judulsoal" yang sebelumnya ada
+         * di sini justru tidak memberi informasi apa pun tentang quiz yang
+         * sedang dikerjakan, padahal soal nomor 1 bisa milik quiz mana saja.
+         *
+         * Hanya halaman menjawab soal yang memakai judul. Halaman detail,
+         * edit, dan hasil tetap memakai angka id seperti sebelumnya, jadi
+         * tidak ada tautan lama yang ikut berubah.
+         *
+         * Id sesi tetap TIDAK ikut di URL. Sesi mana yang sedang dikerjakan
+         * dibaca dari session milik pengguna (App\Support\SesiAktif), dan
+         * setiap tautan serta form di halaman itu tetap membawa id sesi
+         * sebagai field "sesi" supaya dua tab yang membuka quiz berbeda tidak
+         * saling menimpa.
+         *
+         * Quiz di URL tidak menggantikan pemeriksaan akses.
+         * SesiKerjakanController tetap memanggil PenjagaSesi, dan juga menolak
+         * sesi yang quiz-nya berbeda dari quiz di URL, jadi menebak kombinasi
+         * keduanya tidak mendapat jalan masuk.
+         *
+         * Tanpa sesi yang bisa ditemukan, pengguna diarahkan ke daftar quiz.
+         *
+         * Catatan urutan: pola "/{slug}/soal/{nomor}" mau menerima segmen
+         * pertama apa saja, jadi route dengan segmen literal yang juga tiga
+         * bagian (mis. "/hasil/quiz/{quiz}") harus terdaftar lebih dulu — dan
+         * memang begitu di atas. Pola ini tidak akan tertangkap dengan route
+         * itu karena menuntut segmen kedua persis "soal" dan segmen ketiga
+         * berupa nomor. Satu-satunya yang perlu disisakan adalah "judulsoal"
+         * di bawah, supaya route URL lama tidak ikut tertangkap.
+         */
+        Route::get('/{quiz:slug}/soal/{nomor}', [User\SesiKerjakanController::class, 'show'])
+            ->where('quiz', '^(?!judulsoal)[a-z0-9-]+$')
+            ->name('judulsoal.soal');
+        Route::post('/{quiz:slug}/soal/{nomor}', [User\SesiKerjakanController::class, 'simpan'])
+            ->where('quiz', '^(?!judulsoal)[a-z0-9-]+$')
+            ->name('judulsoal.jawab');
+
+        /*
+         * URL lama halaman menjawab soal: /user/judulsoal/soal/{nomor}.
+         *
+         * Tetap dipertahankan karena tautan seperti ini sudah pernah
+         * dibagikan dan disimpan, dan polanya berbeda dari yang di atas
+         * sehingga tidak bentrok. Bedanya di sini slug tidak ada di URL,
+         * jadi quiz-nya diambil dari sesi yang sedang dikerjakan.
+         */
+        Route::get('/judulsoal/soal/{nomor}', [User\SesiKerjakanController::class, 'show'])->name('judulsoal.soal.lama');
+        Route::post('/judulsoal/soal/{nomor}', [User\SesiKerjakanController::class, 'simpan'])->name('judulsoal.jawab.lama');
 
         /*
          * Pusat pengelolaan konten pribadi: materi dan quiz buatan
@@ -227,6 +329,24 @@ Route::middleware('auth')
         Route::get('/hasil/quiz/{quiz}', User\HasilController::class)->name('hasil.daftar');
 
         Route::get('/hasil/{pengerjaan}', User\HasilDetailController::class)->name('hasil.detail');
+
+        /*
+         * =============================================================
+         * HASIL QUIZ (KARTU BESAR)
+         * =============================================================
+         * Satu halaman hasil yang menaruh nilai, rincian jawaban, waktu
+         * pengerjaan, dan detail quiz dalam satu kartu besar. Berdiri
+         * sendiri: /user/hasil, /user/hasil/{pengerjaan}, dan
+         * /user/sesi/{sesi}/hasil tetap seperti sebelumnya.
+         *
+         * Prefix "uiux-design" sengaja dipakai supaya halaman ini punya
+         * URL sendiri dan tidak pernah menabrak route hasil yang sudah ada.
+         * Pengerjaan yang ditampilkan ditentukan lewat "?pengerjaan=<id>";
+         * tanpa parameter itu yang dibuka adalah pengerjaan terbaru milik
+         * pengguna yang sedang login, jadi halaman ini tidak pernah
+         * menampilkan nilai orang lain.
+         */
+        Route::get('/uiux-design/hasil', User\UiuxHasilController::class)->name('uiux.hasil');
 
         /*
          * =============================================================
@@ -284,4 +404,17 @@ Route::middleware(['auth', 'admin'])
         Route::get('/materi', Admin\MateriController::class)->name('materi');
         Route::post('/materi/{materi}/setujui', [Admin\MateriTinjauController::class, 'setujui'])->name('materi.setujui');
         Route::post('/materi/{materi}/tolak', [Admin\MateriTinjauController::class, 'tolak'])->name('materi.tolak');
+
+        /*
+         * Tinjau Quiz: sama seperti Tinjau Materi, tapi untuk quiz mode
+         * publik. Quiz mode kode tidak pernah masuk daftar ini: yang berbasis
+         * kode tidak tayang untuk semua pengguna, jadi tidak ada yang perlu
+         * disetujui admin.
+         *
+         * Dua aksi memakai id quiz, sama dengan halaman detail quiz, dan
+         * hanya berlaku untuk quiz yang statusnya masih "menunggu".
+         */
+        Route::get('/quiz', Admin\QuizController::class)->name('quiz');
+        Route::post('/quiz/{quiz}/setujui', [Admin\QuizTinjauController::class, 'setujui'])->name('quiz.setujui');
+        Route::post('/quiz/{quiz}/tolak', [Admin\QuizTinjauController::class, 'tolak'])->name('quiz.tolak');
     });

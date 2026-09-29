@@ -102,7 +102,7 @@ class KaryaSayaController extends Controller
             ->count()
             + Quiz::query()
                 ->milik($idPembuat)
-                ->where('status', Quiz::STATUS_PENDING)
+                ->menunggu()
                 ->count();
     }
 

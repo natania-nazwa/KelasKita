@@ -6,6 +6,7 @@ use App\Models\JawabanQuiz;
 use App\Models\Pelajaran;
 use App\Models\PengerjaanQuiz;
 use App\Models\Quiz;
+use App\Models\SesiQuiz;
 use App\Models\Soal;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -164,6 +165,106 @@ class HasilHalamanTest extends TestCase
 
         $respons->assertSee('Statistik Belajar');
         $respons->assertSee('Quiz Terpopuler');
+    }
+
+    /**
+     * Alur lengkap: dari menekan "Mulai Quiz" sampai catatannya masuk ke
+     * menu Hasil. Test lain di file ini membuat tb_pengerjaan_quiz langsung,
+     * jadi tidak membuktikan apa pun kalau pengerjaan yang dihasilkan
+     * SesiKerjakanController ternyata tidak ikut terbaca di sini.
+     */
+    public function test_pengerjaan_dari_alur_quiz_benar_benar_masuk_ke_menu_hasil(): void
+    {
+        $user = $this->buatPengguna();
+        $quiz = $this->buatQuiz('Alur Lengkap');
+        $this->buatSoal($quiz);
+        $this->buatSoal($quiz, 2);
+
+        // Mulai Quiz -> soal pertama -> soal kedua (otomatis selesai).
+        $this->actingAs($user)->get(route('user.quiz.mulai', $quiz));
+
+        $sesi = SesiQuiz::query()->firstOrFail();
+
+        $this->actingAs($user)
+            ->post(route('user.judulsoal.jawab', [$quiz->slug, 1]), ['jawaban' => 'A', 'sesi' => $sesi->getKey()])
+            ->assertRedirect(route('user.judulsoal.soal', [$quiz->slug, 2]));
+
+        // Baris pengerjaan dibuat begitu soal pertama dibuka.
+        $pengerjaan = PengerjaanQuiz::query()->sole();
+
+        // Menjawab soal terakhir mengarahkan ke kartu hasil, bukan ke
+        // /user/sesi/{sesi}/hasil, dan id pengerjaannya ikut supaya kartu itu
+        // menampilkan nilai sesi yang baru saja ditutup.
+        $this->actingAs($user)
+            ->post(route('user.judulsoal.jawab', [$quiz->slug, 2]), ['jawaban' => 'A', 'sesi' => $sesi->getKey()])
+            ->assertRedirect(route('user.uiux.hasil', ['pengerjaan' => $pengerjaan->getKey()]));
+
+        // Di-refresh supaya yang dibaca adalah baris setelah ditutup, bukan
+        // snapshot yang diambil sebelum soal kedua dijawab.
+        $pengerjaan->refresh();
+
+        $this->assertSame($user->getKey(), $pengerjaan->pengguna_id);
+        $this->assertNotNull($pengerjaan->selesai_pada, 'Pengerjaan harus ditutup, kalau tidak tidak masuk tab Selesai.');
+        $this->assertSame(100, (int) $pengerjaan->nilai);
+
+        $this->actingAs($user)
+            ->get('/user/hasil')
+            ->assertOk()
+            ->assertSee('Alur Lengkap')
+            ->assertSee('1')
+            ->assertSee(route('user.hasil.detail', $pengerjaan->getKey()), false)
+            // Tab default adalah "semua", tapi tab Selesai harus ikut
+            // menghitungnya karena pengerjaannya sudah ditutup.
+            ->assertSee('Selesai');
+    }
+
+    /**
+     * Pengerjaan yang belum ditutup (user masih di tengah mengerjakan)
+     * tetap harus muncul di menu Hasil, di tab "Proses". Kalau ini hilang,
+     * pengguna yang menutup tab di tengah akan kehilangan riwayatnya.
+     */
+    public function test_pengerjaan_yang_masih_proses_masuk_ke_menu_hasil(): void
+    {
+        $user = $this->buatPengguna();
+        $quiz = $this->buatQuiz('Masih Dikerjakan');
+        $this->buatSoal($quiz);
+        $this->buatSoal($quiz, 2);
+
+        $this->actingAs($user)->get(route('user.quiz.mulai', $quiz));
+        $sesi = SesiQuiz::query()->firstOrFail();
+
+        $this->actingAs($user)
+            ->post(route('user.judulsoal.jawab', [$quiz->slug, 1]), ['jawaban' => 'A', 'sesi' => $sesi->getKey()]);
+
+        $pengerjaan = PengerjaanQuiz::query()->sole();
+
+        $this->assertNull($pengerjaan->selesai_pada);
+
+        $this->actingAs($user)
+            ->get('/user/hasil')
+            ->assertOk()
+            ->assertSee('Masih Dikerjakan')
+            ->assertSee(route('user.hasil.detail', $pengerjaan->getKey()), false);
+    }
+
+    /**
+     * Thumbnail quiz yang diunggah disimpan sebagai path relatif di disk
+     * publik, termasuk nama foldernya. Memotongnya dengan basename()
+     * membuat URL menunjuk berkas yang tidak ada, jadi gambarnya rusak
+     * persis di halaman yang baru kita pastikan datanya masuk.
+     */
+    public function test_thumbnail_quiz_pakai_path_lengkap_bukan_basename(): void
+    {
+        $user = $this->buatPengguna();
+        $quiz = $this->buatQuiz('Quiz Bergambar');
+        $quiz->update(['thumbnail' => 'thumbnails-quiz/contoh.jpg']);
+        $this->buatPengerjaan($user, $quiz, nilai: 90, benar: 5, salah: 0, soal: 5, menit: 10);
+
+        $this->actingAs($user)
+            ->get('/user/hasil')
+            ->assertOk()
+            ->assertSee('thumbnails-quiz/contoh.jpg', false)
+            ->assertDontSee('storage/contoh.jpg', false);
     }
 
     public function test_berita_menampilkan_kategori_soal_dan_tombol_detail(): void
@@ -463,7 +564,7 @@ class HasilHalamanTest extends TestCase
         $milikCss = $this->buatPengerjaan($user, $css);
 
         $this->actingAs($user)
-            ->get('/user/hasil/quiz/'.$html->getKey())
+            ->get(route('user.hasil.daftar', $html))
             ->assertOk()
             ->assertSee('HTML Dasar')
             ->assertSee(route('user.hasil.detail', $milikHtml->getKey()), false)

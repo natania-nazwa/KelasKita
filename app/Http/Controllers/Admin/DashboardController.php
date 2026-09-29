@@ -20,9 +20,7 @@ class DashboardController extends Controller
             'jumlahMateri' => Materi::query()->count(),
             'jumlahQuiz' => Quiz::query()->count(),
             'jumlahMateriMenunggu' => Materi::query()->menunggu()->count(),
-            'jumlahQuizMenunggu' => Quiz::query()
-                ->where('status', Quiz::STATUS_PENDING)
-                ->count(),
+            'jumlahQuizMenunggu' => Quiz::query()->menunggu()->count(),
             'aktivitas' => $this->aktivitasTerbaru(),
         ]);
     }

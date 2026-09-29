@@ -96,11 +96,23 @@ class HasilDetailController extends Controller
                 'pertanyaan' => $item->pertanyaan,
                 'tingkat' => $item->tingkat_kesulitan,
                 'pembahasan' => (string) $item->pembahasan,
+                'tipe' => $item->tipe(),
                 'pilihan' => $pilihan,
                 'terpilih' => $jawab?->jawaban_dipilih,
+                // Pilihan yang dicentang peserta, sudah unik dan terurut.
+                // Tipe multiple_select bisa lebih dari satu, jadi satu
+                // string tidak cukup untuk menandai kartunya.
+                'terpilih_huruf' => $jawab?->hurufDipilih() ?? [],
+                // Jawaban teks peserta untuk short_answer dan paragraph.
+                'jawaban_teks' => $jawab?->jawaban_teks,
                 'benar' => $jawab?->jawaban_benar ?? $item->jawaban_benar,
                 'status' => match (true) {
                     $jawab === null => 'kosong',
+                    // Soal paragraf belum dinilai orang, jadi jawaban
+                    // peserta yang ada belum bisa disebut benar maupun
+                    // salah. Menampilkannya sebagai "Salah" menjatuhkan
+                    // nilai yang memang belum dihitung.
+                    $item->perluNilaiManual() => 'menunggu',
                     (bool) $jawab->benar => 'benar',
                     default => 'salah',
                 },

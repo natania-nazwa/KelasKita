@@ -494,4 +494,102 @@ class JadwalKelolaTest extends TestCase
         $this->assertNull($jadwal->refresh()->pr);
         $this->assertNull($jadwal->pr_dikumpulkan);
     }
+
+    public function test_field_opsional_yang_kosong_disimpan_sebagai_null(): void
+    {
+        $user = $this->buatPengguna();
+
+        $this->actingAs($user)
+            ->post('/user/jadwal/tambah', [
+                'hari' => 1,
+                'mulai' => '08:00',
+                'selesai' => '09:30',
+                'pelajaran' => 'ppkn',
+                'judul' => 'PPKN',
+                // Kelas, ruang, dan PR sengaja tidak dikirim sama sekali.
+            ])
+            ->assertSessionHasNoErrors();
+
+        $this->assertDatabaseHas('tb_jadwal', [
+            'judul' => 'PPKN',
+            'kelas' => null,
+            'ruang' => null,
+            'pr' => null,
+            'pr_dikumpulkan' => null,
+        ]);
+    }
+
+    public function test_field_kosong_tidak_muncul_di_halaman(): void
+    {
+        $user = $this->buatPengguna();
+
+        $this->buatJadwal($user, [
+            'judul' => 'PPKN Saja',
+            'pelajaran' => 'ppkn',
+            'kelas' => null,
+            'ruang' => null,
+            'pr' => null,
+        ]);
+
+        $respons = $this->actingAs($user)
+            ->get('/user/jadwal?tanggal='.$this->tanggalSenin())
+            ->assertOk()
+            ->assertSee('PPKN Saja');
+
+        // Yang kosong tidak boleh muncul sebagai baris kosong: tidak ada
+        // label "Kelas" maupun "Ruang" yang tidak followed nilai.
+        $html = $respons->getContent();
+
+        $this->assertStringNotContainsString('data-jadwal-meta="Kelas"', $html);
+        $this->assertStringNotContainsString('data-jadwal-meta="Ruang"', $html);
+
+        // Durasi tetap ada, karena dihitung dari jam dan bukan dari isian.
+        $this->assertStringContainsString('data-jadwal-meta="Durasi"', $html);
+    }
+
+    public function test_field_yang_diisi_muncul_di_halaman(): void
+    {
+        $user = $this->buatPengguna();
+
+        $this->buatJadwal($user, [
+            'judul' => 'Bahasa Indonesia',
+            'pelajaran' => 'bahasa-indonesia',
+            'kelas' => 'Kelas 12 RPL 1',
+            'ruang' => 'Ruang Baca',
+        ]);
+
+        $this->actingAs($user)
+            ->get('/user/jadwal?tanggal='.$this->tanggalSenin())
+            ->assertOk()
+            ->assertSee('data-jadwal-meta="Kelas"', false)
+            ->assertSee('Kelas 12 RPL 1')
+            ->assertSee('data-jadwal-meta="Ruang"', false)
+            ->assertSee('Ruang Baca');
+    }
+
+    public function test_isian_yang_cuma_spesi_dianggap_kosong(): void
+    {
+        $this->actingAs($this->buatPengguna())
+            ->post('/user/jadwal/tambah', $this->isian([
+                'kelas' => '   ',
+                'ruang' => '  ',
+                'pr' => '  ',
+                'pr_dikumpulkan' => '',
+            ]))
+            ->assertSessionHasNoErrors();
+
+        $this->assertDatabaseHas('tb_jadwal', ['kelas' => null, 'ruang' => null, 'pr' => null]);
+    }
+
+    public function test_pr_kosong_tapi_tenggat_terisi_ditolak(): void
+    {
+        $this->actingAs($this->buatPengguna())
+            ->post('/user/jadwal/tambah', $this->isian([
+                'pr' => '   ',
+                'pr_dikumpulkan' => now()->addDay()->toDateString(),
+            ]))
+            ->assertSessionHasErrors('pr');
+
+        $this->assertDatabaseCount('tb_jadwal', 0);
+    }
 }

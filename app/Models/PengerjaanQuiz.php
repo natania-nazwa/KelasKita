@@ -256,20 +256,50 @@ class PengerjaanQuiz extends Model
     }
 
     /**
+     * Soal yang jawabannya sudah dijawab peserta tetapi belum dinilai.
+     *
+     * Hanya soal paragraf yang masuk sini: isinya bebas dan tidak bisa
+     * dibandingkan dengan kunci, jadi harus dibaca orang. Sifatnya
+     * dihitung dari soal-soal yang ada, bukan disimpan, supaya jawaban
+     * lama yang belum pernah dinilai pun ikut terhitung begitu halaman
+     * hasil dibuka.
+     */
+    public function jumlahMenungguNilai(): int
+    {
+        return $this->jawaban()
+            ->with('soal')
+            ->get()
+            ->filter(fn (JawabanQuiz $jawaban) => $jawaban->soal?->perluNilaiManual() === true)
+            ->count();
+    }
+
+    /**
      * Nilai dalam persen 0-100, dihitung ulang dari jawaban yang tersimpan.
      *
      * Dihitung ulang (bukan ditambahkan) supaya jawaban yang diubah peserta
      * tidak membuat angka dobel.
+     *
+     * Jawaban yang belum dinilai (soal paragraf) ikut dihitung sebagai
+     * "sudah dijawab" supaya peserta tidak melihat soal yang sudah
+     * dikerjakannya seolah belum disentuh, tapi tidak ikut masuk benar
+     * maupun salah.
+     * Pembagi tetap jumlah_soal supaya skalanya tidak berubah-ubah: nilai
+     * yang belum lengkap terlihat sebagai nilai yang belum maksimal, bukan
+     * sebagai 100 persen.
      */
     public function hitungUlang(): void
     {
-        $jawaban = $this->jawaban()->get();
+        $jawaban = $this->jawaban()->with('soal')->get();
 
-        $benar = $jawaban->where('benar', true)->count();
+        $dinilai = $jawaban->reject(
+            fn (JawabanQuiz $item) => $item->soal?->perluNilaiManual() === true
+        );
+
+        $benar = $dinilai->where('benar', true)->count();
 
         $this->jumlah_dijawab = $jawaban->count();
         $this->jumlah_benar = $benar;
-        $this->jumlah_salah = $this->jumlah_dijawab - $benar;
+        $this->jumlah_salah = $dinilai->count() - $benar;
         $this->nilai = $this->jumlah_soal > 0
             ? (int) round($benar / $this->jumlah_soal * 100)
             : 0;

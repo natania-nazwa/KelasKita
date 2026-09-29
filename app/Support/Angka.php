@@ -103,4 +103,19 @@ final class Angka
 
         return self::teks($menit, 0).' menit';
     }
+
+    /**
+     * Hitung mundur dalam bentuk MM:SS.
+     *
+     * Dipakai timer di halaman mengerjakan quiz, jadi jam selalu dua digit
+     * dan menit tidak pernah melebihi 59: 75 detik ditulis "01:15", bukan
+     * "75" dan bukan "60:15". Nilai negatif dijepit ke "00:00" supaya
+     * waktu yang sudah lewat tidak pernah tampil sebagai angka ganjil.
+     */
+    public static function waktu(int $detik): string
+    {
+        $detik = max(0, $detik);
+
+        return sprintf('%02d:%02d', intdiv($detik, 60), $detik % 60);
+    }
 }

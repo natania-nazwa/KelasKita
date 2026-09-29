@@ -7,7 +7,7 @@
         class="kanvas-halaman -m-6 min-h-[calc(100dvh-4rem)] p-6 lg:-m-10 lg:p-10"
         data-lobi
         data-tautan-status="{{ route('user.sesi.data', $sesi) }}"
-        data-tautan-soal="{{ route('user.sesi.soal', [$sesi, 1]) }}"
+        data-tautan-soal="{{ route('user.judulsoal.soal', [$quiz->slug, 1]) }}?sesi={{ $sesi->getKey() }}"
         data-tautan-hasil="{{ route('user.sesi.hasil', $sesi) }}"
     >
         <div class="mx-auto w-full max-w-3xl">
@@ -114,17 +114,43 @@
                             </form>
                         @else
                             <div class="flex flex-col gap-2 sm:flex-row">
-                                <a href="{{ route('user.sesi.soal', [$sesi, 1]) }}" class="tombol-utama flex-1">
-                                    Buka Soal
-                                </a>
+                                {{--
+                                    Host mode kode memandu, bukan ikut
+                                    menjawab, jadi tidak ada tombol "Buka
+                                    Soal": pesertanya yang mengerjakan lewat
+                                    URL soal mereka sendiri. Server juga
+                                    menolak (lihat
+                                    SesiKerjakanController::larangan()),
+                                    jadi tautan ini tidak sekadar
+                                    disembunyikan.
 
-                                <form method="POST" action="{{ route('user.sesi.akhiri', $sesi) }}" class="flex-1"
+                                    Host sesi solo tetap dapat tombol ini:
+                                    di sana tidak ada peserta lain, dan ia
+                                    satu-satunya yang menjawab.
+                                --}}
+                                @unless ($quiz->pakaiKode())
+                                    <a href="{{ route('user.judulsoal.soal', [$quiz->slug, 1]) }}?sesi={{ $sesi->getKey() }}"
+                                        class="tombol-utama flex-1">
+                                        Buka Soal
+                                    </a>
+                                @endunless
+
+                                <form method="POST" action="{{ route('user.sesi.akhiri', $sesi) }}"
+                                    class="{{ $quiz->pakaiKode() ? 'w-full' : 'flex-1' }}"
                                     data-lobi-konfirmasi-judul="Akhiri quiz?"
                                     data-lobi-konfirmasi-pesan="Peserta yang belum selesai akan langsung melihat halaman hasil. Nilai yang sudah masuk tetap tersimpan."
                                     data-lobi-konfirmasi-tombol="Akhiri Quiz"
                                     data-lobi-konfirmasi-tone="henti">
                                     @csrf
 
+                                    {{--
+                                        Host mode kode belum bisa melihat
+                                        peringkat sambil quiz berjalan: yang
+                                        tampil di halaman hasil hanya rekap
+                                        kalau sesi sudah ditutup. Jadi
+                                        tombolnya tetap "Akhiri Quiz" supaya
+                                        nilainya tidak menggantung.
+                                    --}}
                                     <button type="submit" class="tombol-garis tombol-garis--henti w-full">
                                         Akhiri Quiz
                                     </button>

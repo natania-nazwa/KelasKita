@@ -17,8 +17,10 @@ use App\Models\Quiz;
  *
  * Bentuk array per kartu:
  *   id, slug, judul, deskripsi, thumbnail, durasi, jumlah_soal,
- *   status, status_label, visibilitas, saya, dibuat_pada,
- *   tautan, tautan_edit, tautan_hapus, tautan_mulai_sesi,
+ *   tingkat_kesulitan, status, warna_status, status_label, visibilitas,
+ *   pakai_kode, kode_akses, saya, boleh_rujukan, catatan_admin,
+ *   sisa_pengajuan, dibuat_pada,
+ *   tautan, tautan_edit, tautan_hapus, tautan_mulai, tautan_mulai_sesi,
  *   kategori => [nama, slug, ikon, warna, warna_gelap],
  *   pembuat => [nama, inisial, warna, warna_gelap]
  *
@@ -63,15 +65,27 @@ final class DaftarQuiz
                 'slug' => $item->slug,
                 'judul' => $item->judul,
                 'deskripsi' => (string) $item->deskripsi,
-                'thumbnail' => filled($item->thumbnail)
-                    ? asset('storage/'.basename($item->thumbnail))
-                    : null,
+                'thumbnail' => BerkasQuiz::url($item->thumbnail),
                 'durasi' => (int) ($item->durasi ?? 0),
                 'jumlah_soal' => $item->jumlahSoal(),
+                'tingkat_kesulitan' => (string) ($item->tingkat_kesulitan ?? ''),
                 'status' => (string) $item->status,
+                'warna_status' => $item->warnaStatus(),
                 'status_label' => $item->labelStatus(),
                 'visibilitas' => (string) $item->visibilitas,
+                'pakai_kode' => $item->pakaiKode(),
+                'kode_akses' => $item->kodeGabung(),
                 'saya' => $item->dimilikiOleh($idPengguna),
+                /*
+                 * Halaman detail quiz menolak quiz yang belum terbit kecuali
+                 * untuk pemiliknya, jadi hanya pemilik yang boleh diberi tautan.
+                 * Kartu di "Karya Saya" memakai ini untuk menyembunyikan tombol
+                 * "Lihat" pada quiz yang belum tayang.
+                 */
+                'boleh_rujukan' => $item->status === Quiz::STATUS_PUBLISHED
+                    || $item->dimilikiOleh($idPengguna),
+                'catatan_admin' => $item->catatan_admin,
+                'sisa_pengajuan' => $item->sisaPengajuan(),
                 'dibuat_pada' => $item->created_at,
                 'kategori' => [
                     'nama' => $kategori['nama'],
@@ -86,10 +100,19 @@ final class DaftarQuiz
                     'warna' => $avatar['warna'],
                     'warna_gelap' => $avatar['warna_gelap'],
                 ],
-                'tautan' => route('user.quiz.detail', $item->getKey()),
-                'tautan_edit' => route('user.quiz.edit', $item->getKey()),
-                'tautan_hapus' => route('user.quiz.destroy', $item->getKey()),
-                'tautan_mulai_sesi' => route('user.sesi.buka', $item->getKey()),
+                /*
+                 * Tautan dibentuk dari modelnya, bukan dari getKey(): route
+                 * model binding memakai kunci utama quiz, jadi
+                 * route('user.quiz.detail', $item) menghasilkan URL yang
+                 * memuat id quiz, bukan slug judul.
+                 */
+                'tautan' => route('user.quiz.detail', $item),
+                'tautan_edit' => route('user.quiz.edit', $item),
+                'tautan_hapus' => route('user.quiz.destroy', $item),
+                // Tombol "Mulai Quiz" di halaman detail: pengguna yang boleh
+                // membuka quiz ini bisa langsung mulai mengerjakannya sendiri.
+                'tautan_mulai' => route('user.quiz.mulai', $item),
+                'tautan_mulai_sesi' => route('user.sesi.buka', $item),
             ];
         }
 

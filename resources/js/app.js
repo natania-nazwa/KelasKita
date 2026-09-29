@@ -4,10 +4,29 @@ import "./materi-tambah.js";
 // Halaman "Detail Materi" (salin kode + daftar isi).
 import "./materi-detail.js";
 
-// Halaman "Buat Quiz" (tambah / hapus baris soal).
+// Halaman "Buat Quiz" (tiga langkah wizard, thumbnail, kode, saklar).
 import "./quiz-tambah.js";
 
-// Halaman sesi quiz (polling lobby, salin kode, dialog konfirmasi, soal).
+// Builder soal pada langkah "Buat Soal" (lima tipe soal, pilihan dinamis).
+// Diimpor setelah quiz-tambah.js karena builder soal menyediakan validasi
+// yang dipakai wizard sebelum lanjut ke langkah berikutnya.
+import "./quiz-builder.js";
+
+// Halaman detail quiz (daftar soal yang dilipat, tombol bagikan).
+import "./quiz-detail.js";
+
+/*
+ * Halaman mengerjakan soal (timer, navigator mini, pemeriksaan isian).
+ *
+ * WAJIB di-import sebelum quiz-lobby.js. Form jawaban di soal terakhir juga
+ * memakai dialog konfirmasi milik quiz-lobby.js, dan kedua modul sama-sama
+ * memasang listener submit pada form yang sama. Yang memasang lebih dulu
+ *说了算: kalau dialog konfirmasi lebih dulu, isian yang masih kosong akan
+ * tetap membuka dialog "Selesaikan Quiz?" walau jawabannya belum ada.
+ */
+import "./quiz-kerjakan.js";
+
+// Halaman sesi quiz (polling lobby, salin kode, dialog konfirmasi).
 import "./quiz-lobby.js";
 
 // Halaman Profil (dialog, lihat password, pilih foto, mode terang/gelap).
@@ -529,6 +548,58 @@ function initKonfirmasi() {
     });
 }
 
+/*
+ * Halaman "Hasil Quiz" (kartu besar): angka nilai menghitung naik dari 0.
+ *
+ * Angka akhirnya sudah tertulis di HTML, jadi animasi ini murni kosmetik dan
+ * halamannya tetap benar tanpa JavaScript. Kalau pengguna meminta reduced
+ * motion, angkanya dibiarkan langsung tampil.
+ */
+function initUiuxNilai() {
+    const angka = document.querySelector("[data-nilai-akhir]");
+    const memuat = document.documentElement.hasAttribute("data-uiux-muat");
+
+    if (!angka) {
+        return;
+    }
+
+    const tujuan = Number(angka.textContent);
+    const jalankan = () => {
+        if (!Number.isFinite(tujuan) || reducedMotion) {
+            return;
+        }
+
+        const mulai = performance.now();
+        const lama = 700;
+
+        const hitung = (waktu) => {
+            // easeOutCubic: cepat di awal lalu melambat mendekati angka
+            // akhir, jadi tidak terlihat seperti penghitung linear.
+            const rasio = Math.min(1, (waktu - mulai) / lama);
+            const eased = 1 - Math.pow(1 - rasio, 3);
+
+            angka.textContent = String(Math.round(tujuan * eased));
+
+            if (rasio < 1) {
+                requestAnimationFrame(hitung);
+            }
+        };
+
+        requestAnimationFrame(hitung);
+    };
+
+    // Angka besar tidak akan terlihat selama kerangka loading masih
+    // menutup halaman, jadi hitungannya baru jalan setelah halaman selesai
+    // dimuat. Tanpa kerangka (halaman lain) animasi langsung jalan.
+    if (memuat) {
+        window.addEventListener("load", () => requestAnimationFrame(jalankan), {
+            once: true,
+        });
+    } else {
+        jalankan();
+    }
+}
+
 initReveal();
 initScrollProgress();
 initNavSpy();
@@ -536,3 +607,4 @@ initCari();
 initBookmark();
 initQuizMuat();
 initKonfirmasi();
+initUiuxNilai();

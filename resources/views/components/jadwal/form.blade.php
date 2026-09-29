@@ -18,7 +18,9 @@
     tetap dicek ulang di server.
 
     PR boleh dikosongkan, tapi kalau diisi tanggal dikumpulkan wajib ikut,
-    karena PR tanpa tenggat tidak bisa dikejar.
+    karena PR tanpa tenggat tidak bisa dikejar. Kelas dan ruang juga boleh
+    kosong, dan yang kosong tidak disimpan sama sekali supaya tidak pernah
+    muncul sebagai baris kosong di halaman jadwal.
 --}}
 
 @php
@@ -144,13 +146,16 @@
             @enderror
         </div>
 
-        {{-- Kelas dan ruang --}}
+        {{-- Kelas dan ruang. Keduanya boleh dikosongkan; kalau kosong, tidak
+             disimpan sama sekali dan tidak muncul di baris jadwal. --}}
         <div class="grid min-w-0 gap-4 sm:grid-cols-2">
             <div>
-                <label for="kelas" class="label-form">Kelas</label>
+                <label for="kelas" class="label-form">
+                    Kelas <span class="text-muted">(opsional)</span>
+                </label>
 
                 <input type="text" id="kelas" name="kelas" value="{{ old('kelas', $jadwal?->kelas) }}"
-                    maxlength="60" placeholder="Kelas 11 RPL 2" class="kolom-form mt-1.5">
+                    maxlength="60" placeholder="Kosongkan kalau tidak perlu" class="kolom-form mt-1.5">
 
                 @error('kelas')
                     <p class="mt-1.5 text-xs font-medium text-[#c2414a]" role="alert">{{ $message }}</p>
@@ -158,10 +163,12 @@
             </div>
 
             <div>
-                <label for="ruang" class="label-form">Ruang</label>
+                <label for="ruang" class="label-form">
+                    Ruang <span class="text-muted">(opsional)</span>
+                </label>
 
                 <input type="text" id="ruang" name="ruang" value="{{ old('ruang', $jadwal?->ruang) }}"
-                    maxlength="60" placeholder="Lab Komputer 1" class="kolom-form mt-1.5">
+                    maxlength="60" placeholder="Kosongkan kalau tidak perlu" class="kolom-form mt-1.5">
 
                 @error('ruang')
                     <p class="mt-1.5 text-xs font-medium text-[#c2414a]" role="alert">{{ $message }}</p>
@@ -214,11 +221,13 @@
                 </span>
 
                 <div class="min-w-0">
-                    <h3 class="text-sm font-bold text-dark">Satu jam, satu pelajaran</h3>
+                    <h3 class="text-sm font-bold text-dark">Hanya yang perlu diisi</h3>
 
                     <p class="mt-1 text-xs leading-relaxed text-muted">
-                        Jam yang bertumpuk dengan pelajaran lain di hari yang sama akan ditolak, jadi jadwalmu
-                        tidak pernah punya dua pelajaran sekaligus. Kelas dan ruang boleh dikosongkan.
+                        Wajib diisi: hari, jam mulai dan selesai, mata pelajaran, serta nama pelajaran.
+                        Kelas, ruang, dan PR boleh dikosongkan, dan yang dikosongkan tidak akan tampil di
+                        jadwalmu. Jam yang bertumpuk dengan pelajaran lain di hari yang sama akan ditolak,
+                        jadi jadwalmu tidak pernah punya dua pelajaran sekaligus.
                     </p>                </div>
             </div>
         </div>

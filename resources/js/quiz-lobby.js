@@ -3,6 +3,14 @@
 // Semua bagian berhenti sendiri kalau elemennya tidak ada di halaman ini,
 // jadi modul ini aman di-import dari app.js untuk semua halaman.
 const INTERVAL_POLL = 3000;
+
+/*
+ * Panjang kode yang memicu pengiriman otomatis. Peserta mengetik kode yang
+ * sama persis dengan kode di form pembuat quiz, jadi panjang standarnya
+ * selalu sama: App\Support\KodeQuiz::PANJANG. Nilai ini hanya untuk
+ * kenyamanan, kode yang diketik manual dan lebih panjang tetap bisa dikirim
+ * dengan tombol Gabung.
+ */
 const PANJANG_KODE = 6;
 const JEDA_KIRIM = 400;
 const KELAS_BARU = "lobi-daftar__item--baru";
@@ -10,16 +18,18 @@ const KELAS_BARU = "lobi-daftar__item--baru";
 /**
  * Form "Masukkan Kode".
  *
- * Kode sesi selalu enam karakter: tiga huruf lalu tiga angka. Sisi server
- * sudah membersihkan sendiri (App\Models\SesiQuiz::normalisasiKode), tapi
- * biar peserta melihat apa yang dia ketik persis seperti yang tampil di
- * lobby host, pembersihan yang sama diulang di sini:
+ * Kode yang diketik peserta adalah KODE AKSES QUIZ, bukan kode sesi: satu
+ * quiz mode kode punya satu kode, dan semua yang mengetiknya masuk ke sesi
+ * yang sama. Sisi server sudah membersihkan sendiri
+ * (App\Support\KodeQuiz::normalisasi), tapi biar peserta melihat apa yang dia
+ * ketik persis seperti yang tampil di lobby host, pembersihan yang sama
+ * diulang di sini:
  *
  *   - huruf jadi huruf besar;
  *   - spasi, tanda hubung, dan karakter lain dibuang;
- *   - panjangnya dipotong ke enam karakter;
- *   - begitu sampai enam karakter, form langsung dikirim supaya peserta
- *     tidak perlu menekan tombol lagi.
+ *   - panjangnya dipotong ke batas kotak isinya;
+ *   - begitu panjang standarnya terpenuhi, form langsung dikirim supaya
+ *     peserta tidak perlu menekan tombol lagi.
  *
  * Semua itu sifatnya tambahan: formnya tetap POST biasa dan tetap punya
  * tombol Gabung, jadi halaman ini tetap berfungsi tanpa JavaScript.
@@ -37,6 +47,13 @@ function initMasukKode() {
         return;
     }
 
+    // Batas panjang yang diketik di kotak isinya, dan panjang yang memicu
+    // pengiriman otomatis. Keduanya sengaja dibedakan: kode yang dibuat
+    // otomatis selalu خلال KodeQuiz::PANJANG, tapi kode yang diketik manual
+    // boleh lebih panjang dan tetap bisa dikirim lewat tombol.
+    const maks = Number(kolom.getAttribute("maxlength")) || PANJANG_KODE;
+    const otomatis = Number(form.dataset.panjang) || PANJANG_KODE;
+
     // Dua flag terpisah karena dua hal berbeda: "otomatis" menahan
     // pengirim otomatis supaya tidak menumpuk, "terkirim" menahan
     // submit kedua yang datang dari tombol atau tombol Enter.
@@ -47,7 +64,7 @@ function initMasukKode() {
         const bersih = kolom.value
             .toUpperCase()
             .replace(/[^A-Z0-9]/g, "")
-            .slice(0, PANJANG_KODE);
+            .slice(0, maks);
 
         if (bersih !== kolom.value) {
             kolom.value = bersih;
@@ -62,11 +79,11 @@ function initMasukKode() {
         // Pesan galat dari percobaan sebelumnya harus hilang begitu peserta
         // mengetik lagi, supaya halaman tidak menyimpan error yang basi.
         form.querySelector("[role='alert']")?.remove();
-        form
-            .querySelector(".lobi-masuk")
-            ?.classList.remove("lobi-masuk--galat");
+        form.querySelector(".lobi-masuk")?.classList.remove(
+            "lobi-masuk--galat",
+        );
 
-        if (terkirimOtomatis || terkirim || kolom.value.length < PANJANG_KODE) {
+        if (terkirimOtomatis || terkirim || kolom.value.length < otomatis) {
             return;
         }
 
@@ -458,11 +475,13 @@ function initDialog() {
                 const label = dialog.querySelector("[data-lobi-dialog-tombol]");
 
                 if (judul) {
-                    judul.textContent = penanda.dataset.lobiKonfirmasiJudul || "";
+                    judul.textContent =
+                        penanda.dataset.lobiKonfirmasiJudul || "";
                 }
 
                 if (pesan) {
-                    pesan.textContent = penanda.dataset.lobiKonfirmasiPesan || "";
+                    pesan.textContent =
+                        penanda.dataset.lobiKonfirmasiPesan || "";
                 }
 
                 if (label) {
@@ -478,9 +497,10 @@ function initDialog() {
     // Tombol dan area gelap dipasang sekali per dialog yang ada, karena
     // listener dipasang pada elemennya, bukan pada dokumen.
     semua.forEach((item) => {
-        item
-            .querySelector("[data-lobi-dialog-batal]")
-            ?.addEventListener("click", tutup);
+        item.querySelector("[data-lobi-dialog-batal]")?.addEventListener(
+            "click",
+            tutup,
+        );
 
         item.addEventListener("click", (event) => {
             if (event.target === item) {
@@ -488,11 +508,14 @@ function initDialog() {
             }
         });
 
-        item.querySelector("[data-lobi-dialog-ya]")?.addEventListener("click", () => {
-            // submit() (bukan requestSubmit) supaya event submit tidak masuk
-            // ke penanganan di atas lagi.
-            form?.submit();
-        });
+        item.querySelector("[data-lobi-dialog-ya]")?.addEventListener(
+            "click",
+            () => {
+                // submit() (bukan requestSubmit) supaya event submit tidak masuk
+                // ke penanganan di atas lagi.
+                form?.submit();
+            },
+        );
     });
 
     document.addEventListener("keydown", (event) => {
@@ -503,39 +526,14 @@ function initDialog() {
 }
 
 /**
- * Tombol "Simpan & Lanjut" di halaman soal.
+ * Tombol "Simpan & Lanjut" di halaman soal TIDAK ditangani di sini.
  *
- * Tombolnya sengaja tidak punya atribut disabled di markup, supaya tetap
- * berguna tanpa JavaScript. Setelah halaman siap, tombol dinonaktifkan
- * sampai ada pilihan yang dicentang; kalau tidak ada jawaban, server
- * yang mengembalikan pesan kesalahannya.
+ * Semula ikut di modul ini, sekarang pindah ke quiz-kerjakan.js supaya
+ * halaman soal punya satu berkas sendiri: timer, navigator mini, dan
+ * pemeriksaan jawaban dituliskan dalam satu tempat.
  */
-function initPilihJawaban() {
-    const halaman = document.querySelector("[data-soal]");
-
-    if (!halaman) {
-        return;
-    }
-
-    const tombol = halaman.querySelector("[data-soal-lanjut]");
-    const pilihan = halaman.querySelectorAll('input[type="radio"][name="jawaban"]');
-
-    if (!tombol || !pilihan.length) {
-        return;
-    }
-
-    const perbarui = () => {
-        tombol.disabled = !halaman.querySelector(
-            'input[type="radio"][name="jawaban"]:checked',
-        );
-    };
-
-    pilihan.forEach((radio) => radio.addEventListener("change", perbarui));
-    perbarui();
-}
 
 initMasukKode();
 initPolling();
 initSalinKode();
 initDialog();
-initPilihJawaban();

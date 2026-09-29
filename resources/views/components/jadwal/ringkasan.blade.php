@@ -40,7 +40,9 @@
 
             <p class="jadwal-sekarang__waktu">
                 {{ $ringkasan['sedang']['mulai'] }} &ndash; {{ $ringkasan['sedang']['selesai'] }}
-                &bull; {{ $ringkasan['sedang']['ruang'] }}
+                @if (filled($ringkasan['sedang']['ruang']))
+                    &bull; {{ $ringkasan['sedang']['ruang'] }}
+                @endif
             </p>
         </div>
     @endif
@@ -65,7 +67,7 @@
     @if ($ringkasan['berikut'] !== null)
         <p class="jadwal-kartu__catatan">
             Berikutnya: <strong>{{ $ringkasan['berikut']['judul'] }}</strong> pukul
-            {{ $ringkasan['berikut']['mulai'] }} di {{ $ringkasan['berikut']['ruang'] }}.
+            {{ $ringkasan['berikut']['mulai'] }}@if (filled($ringkasan['berikut']['ruang'])) di {{ $ringkasan['berikut']['ruang'] }}@endif.
         </p>
     @endif
 </section>

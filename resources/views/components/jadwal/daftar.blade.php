@@ -85,21 +85,17 @@
                     </p>
                 @endif
 
+                {{-- Rincian di bawah judul: kelas, ruang, durasi. Isinya
+                     sudah disiapkan di DaftarJadwal dan hanya memuat yang
+                     benar-benar diisi, jadi field yang dikosongkan di form
+                     tidak muncul sama sekali di sini. --}}
                 <dl class="jadwal-item__meta">
-                    <div>
-                        <dt>Kelas</dt>
-                        <dd>{{ $item['kelas'] }}</dd>
-                    </div>
-
-                    <div>
-                        <dt>Ruang</dt>
-                        <dd>{{ $item['ruang'] }}</dd>
-                    </div>
-
-                    <div>
-                        <dt>Durasi</dt>
-                        <dd>{{ $item['durasi_label'] }}</dd>
-                    </div>
+                    @foreach ($item['meta'] as $label => $nilai)
+                        <div data-jadwal-meta="{{ $label }}">
+                            <dt>{{ $label }}</dt>
+                            <dd>{{ $nilai }}</dd>
+                        </div>
+                    @endforeach
                 </dl>
             </div>
 

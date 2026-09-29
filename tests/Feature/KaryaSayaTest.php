@@ -256,9 +256,9 @@ class KaryaSayaTest extends TestCase
 
         $isi = $this->actingAs($user)->get('/user/karya-saya?tab=quiz')->getContent();
 
-        $this->assertStringContainsString(route('user.quiz.detail', $quiz->getKey()), $isi);
-        $this->assertStringContainsString(route('user.quiz.edit', $quiz->getKey()), $isi);
-        $this->assertStringContainsString(route('user.quiz.destroy', $quiz->getKey()), $isi);
+        $this->assertStringContainsString(route('user.quiz.detail', $quiz), $isi);
+        $this->assertStringContainsString(route('user.quiz.edit', $quiz), $isi);
+        $this->assertStringContainsString(route('user.quiz.destroy', $quiz), $isi);
 
         $this->assertStringContainsString('Hapus Quiz?', $isi);
         $this->assertStringContainsString('Quiz ini akan dihapus dan tidak dapat dikembalikan.', $isi);
@@ -502,7 +502,7 @@ class KaryaSayaTest extends TestCase
         $quiz = $this->buatQuiz($pelajaran, $user, 'Quiz Pemrograman');
 
         $this->actingAs($user)
-            ->get(route('user.quiz.edit', $quiz->getKey()))
+            ->get(route('user.quiz.edit', $quiz))
             ->assertOk()
             ->assertSee('Edit Quiz')
             ->assertSee('value="Quiz Pemrograman"', false)
@@ -516,10 +516,11 @@ class KaryaSayaTest extends TestCase
         $quiz = $this->buatQuiz($pelajaran, $user, 'Quiz Pemrograman', Quiz::STATUS_PENDING);
 
         $this->actingAs($user)
-            ->put(route('user.quiz.update', $quiz->getKey()), [
+            ->put(route('user.quiz.update', $quiz), [
                 'pelajaran_id' => $pelajaran->id,
                 'judul' => 'Quiz Pemrograman Dasar',
                 'deskripsi' => 'Deskripsi baru.',
+                'tingkat_kesulitan' => Quiz::TINGKAT_SEDANG,
                 'durasi' => 20,
                 'visibilitas' => Quiz::VISIBILITAS_PUBLIK,
                 'soal' => [
@@ -533,6 +534,7 @@ class KaryaSayaTest extends TestCase
         $this->assertDatabaseHas('tb_quiz', [
             'id' => $quiz->getKey(),
             'judul' => 'Quiz Pemrograman Dasar',
+            'tingkat_kesulitan' => Quiz::TINGKAT_SEDANG,
             'durasi' => 20,
             // Status tidak ikut diubah oleh pemilik.
             'status' => Quiz::STATUS_PENDING,
@@ -544,27 +546,55 @@ class KaryaSayaTest extends TestCase
         $this->assertDatabaseHas('tb_soal', ['pertanyaan' => 'Pertanyaan kedua', 'urutan' => 2]);
     }
 
+    /**
+     * Kode akses hanya boleh huruf dan angka. Tanda hubung dan garis bawah
+     * ditolak karena App\Support\KodeQuiz::normalisasi() membuangnya sebelum
+     * kode dibandingkan, jadi kode yang memakainya tidak akan pernah bisa
+     * diketik peserta untuk masuk.
+     */
+    public function test_kode_akses_dengan_tanda_hubung_ditolak(): void
+    {
+        $user = $this->buatPengguna();
+        $pelajaran = $this->buatPelajaran();
+        $quiz = $this->buatQuiz($pelajaran, $user, 'Quiz Privat');
+        $quiz->update(['visibilitas' => Quiz::VISIBILITAS_PRIVAT, 'kode_akses' => 'LAMA123']);
+
+        $this->actingAs($user)
+            ->put(route('user.quiz.update', $quiz), [
+                'pelajaran_id' => $pelajaran->id,
+                'judul' => 'Quiz Privat',
+                'deskripsi' => 'Deskripsi quiz privat.',
+                'tingkat_kesulitan' => Quiz::TINGKAT_MUDAH,
+                'visibilitas' => Quiz::VISIBILITAS_PRIVAT,
+                'kode_akses' => 'LAMA-123',
+                'soal' => [$this->dataSoal()],
+            ])
+            ->assertSessionHasErrors(['kode_akses' => 'Kode akses hanya boleh memakai huruf dan angka.']);
+    }
+
     public function test_quiz_privat_menyimpan_kode_aksesnya_saat_diubah(): void
     {
         $user = $this->buatPengguna();
         $pelajaran = $this->buatPelajaran();
         $quiz = $this->buatQuiz($pelajaran, $user, 'Quiz Privat');
-        $quiz->update(['visibilitas' => Quiz::VISIBILITAS_PRIVAT, 'kode_akses' => 'LAMA-123']);
+        $quiz->update(['visibilitas' => Quiz::VISIBILITAS_PRIVAT, 'kode_akses' => 'LAMA123']);
 
         $this->actingAs($user)
-            ->put(route('user.quiz.update', $quiz->getKey()), [
+            ->put(route('user.quiz.update', $quiz), [
                 'pelajaran_id' => $pelajaran->id,
                 'judul' => 'Quiz Privat',
+                'deskripsi' => 'Deskripsi quiz privat.',
+                'tingkat_kesulitan' => Quiz::TINGKAT_MUDAH,
                 'visibilitas' => Quiz::VISIBILITAS_PRIVAT,
                 // Kode yang sama masih boleh dipakai saat mengedit quiz ini.
-                'kode_akses' => 'LAMA-123',
+                'kode_akses' => 'LAMA123',
                 'soal' => [$this->dataSoal()],
             ])
             ->assertSessionHasNoErrors();
 
         $this->assertDatabaseHas('tb_quiz', [
             'id' => $quiz->getKey(),
-            'kode_akses' => 'LAMA-123',
+            'kode_akses' => 'LAMA123',
         ]);
     }
 
@@ -576,20 +606,22 @@ class KaryaSayaTest extends TestCase
         $quiz = $this->buatQuiz($pelajaran, $siti, 'Quiz Siti');
 
         $this->actingAs($budi)
-            ->get(route('user.quiz.edit', $quiz->getKey()))
+            ->get(route('user.quiz.edit', $quiz))
             ->assertForbidden();
 
         $this->actingAs($budi)
-            ->put(route('user.quiz.update', $quiz->getKey()), [
+            ->put(route('user.quiz.update', $quiz), [
                 'pelajaran_id' => $pelajaran->id,
                 'judul' => 'Quiz Sitinya Dibajak',
+                'deskripsi' => 'Deskripsi.',
+                'tingkat_kesulitan' => Quiz::TINGKAT_MUDAH,
                 'visibilitas' => Quiz::VISIBILITAS_PUBLIK,
                 'soal' => [$this->dataSoal()],
             ])
             ->assertForbidden();
 
         $this->actingAs($budi)
-            ->delete(route('user.quiz.destroy', $quiz->getKey()))
+            ->delete(route('user.quiz.destroy', $quiz))
             ->assertForbidden();
 
         $this->assertDatabaseHas('tb_quiz', ['id' => $quiz->getKey(), 'judul' => 'Quiz Siti']);
@@ -602,7 +634,7 @@ class KaryaSayaTest extends TestCase
         $quiz = $this->buatQuiz($pelajaran, $user, 'Quiz Pemrograman');
 
         $this->actingAs($user)
-            ->delete(route('user.quiz.destroy', $quiz->getKey()))
+            ->delete(route('user.quiz.destroy', $quiz))
             ->assertRedirect(route('user.karya-saya', ['tab' => 'quiz']))
             ->assertSessionHas('sukses');
 

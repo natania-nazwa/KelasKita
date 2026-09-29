@@ -13,10 +13,10 @@ use Illuminate\Validation\Validator;
  * Isian form jadwal: dipakai oleh halaman tambah jadwal dan form edit jadwal
  * milik sendiri, jadi aturannya hanya ditulis satu kali di sini.
  *
- * Yang paling penting dari isian ini bukan bentuknya, tapi dua hal: jadwalnya
- * tidak boleh saling tumpang tindih, dan PR yang ada harus selalu punya
- * tenggat. Satu orang tidak bisa punya dua pelajaran di jam yang sama, dan PR
- * tanpa tanggal dikumpulkan tidak bisa dikejar.
+ * Yang paling penting dari isian ini bukan bentuknya, tapi tiga hal: jadwalnya
+ * tidak boleh saling tumpang tindih, PR yang ada harus selalu punya tenggat,
+ * dan semua field selain hari, jam, pelajaran, dan nama pelajaran boleh
+ * dikosongkan tanpa akibat apa pun.
  *
  * Kelolaan (apakah jadwal ini boleh diubah pemiliknya) tidak dicek di sini:
  * jadwal dicari dari route, jadi pemeriksaannya dilakukan di controller yang
@@ -50,16 +50,18 @@ class JadwalIsianRequest extends FormRequest
             'ruang' => ['nullable', 'string', 'max:60'],
 
             /*
-             * PR menempel pada jam pelajaran, jadi kalau ada isinya
-             * tenggatnya wajib ikut diisi. Sebaliknya tenggat tanpa isi PR
-             * ditolak, karena tanggal yang tidak bergantung pada apa pun
-             * hanya membingungkan.
+             * PR menempel pada jam pelajaran. Kalau salah satu diisi, yang
+             * lain wajib ikut: PR tanpa tenggat tidak bisa dikejar, dan
+             * tenggat tanpa PR tidak mungkin dimejaikan.
+             *
+             * Pengecekannya lewat teks() supaya isian yang cuma berisi spasi
+             * tetap dianggap kosong, sama seperti saat disimpan.
              */
-            'pr' => ['nullable', 'string', 'max:500', 'required_with:pr_dikumpulkan'],
+            'pr' => ['nullable', 'string', 'max:500', Rule::requiredIf($this->filled('pr_dikumpulkan'))],
             'pr_dikumpulkan' => [
                 'nullable',
                 'date',
-                Rule::requiredIf(fn (): bool => $this->filled('pr')),
+                Rule::requiredIf(fn (): bool => $this->teks('pr') !== null),
             ],
         ];
     }
@@ -84,7 +86,7 @@ class JadwalIsianRequest extends FormRequest
             'kelas.max' => 'Nama kelas maksimal 60 karakter.',
             'ruang.max' => 'Nama ruang maksimal 60 karakter.',
             'pr.max' => 'Isi PR maksimal 500 karakter.',
-            'pr.required_with' => 'Tulis dulu isi PRnya, baru tentukan tanggal dikumpulkan.',
+            'pr.required' => 'Tulis dulu isi PRnya, baru tentukan tanggal dikumpulkan.',
             'pr_dikumpulkan.required' => 'Tentukan kapan PR itu harus dikumpulkan.',
             'pr_dikumpulkan.date' => 'Tanggal dikumpulkan tidak valid.',
         ];
@@ -128,13 +130,15 @@ class JadwalIsianRequest extends FormRequest
     /**
      * Isian jadwal siap disimpan.
      *
-     * Jam dinormalkan ke "HH:MM:SS" supaya bentuknya sama persis dengan yang
-     * dibaca kembali, apa pun driver databasenya. Kolom kelas dan ruang tidak
-     * nullable, jadi isian kosong diisi dengan nilai yang sama seperti default
-     * kolomnya.
+     * Yang wajib diisi cuma hari, jam, pelajaran, dan nama pelajaran. Semua
+     * field lain opsional dan disimpan sebagai null kalau dikosongkan, supaya
+     * halaman bisa membedakan "sudah diisi" dari "tidak diisi" dan hanya
+     * menampilkan yang memang ada isinya. Karena itu kelas dan ruang tidak
+     * lagi diberi nilai default di sini: defaultnya dihapus dari database,
+     * bukan dipindah ke sini.
      *
-     * PR disimpan sebagai null kalau tidak diisi, bukan string kosong, supaya
-     * "punya PR" tidak pernah ambigu antara kosong dan tidak diisi.
+     * Jam dinormalkan ke "HH:MM:SS" supaya bentuknya sama persis dengan yang
+     * dibaca kembali, apa pun driver databasenya.
      *
      * @return array<string, mixed>
      */
@@ -146,11 +150,23 @@ class JadwalIsianRequest extends FormRequest
             'selesai' => $this->jamLengkap('selesai'),
             'pelajaran' => $this->validated('pelajaran'),
             'judul' => $this->validated('judul'),
-            'kelas' => $this->filled('kelas') ? $this->validated('kelas') : 'Kelas 11 RPL 2',
-            'ruang' => $this->filled('ruang') ? $this->validated('ruang') : 'Ruang Kelas 3B',
-            'pr' => $this->filled('pr') ? $this->validated('pr') : null,
+            'kelas' => $this->teks('kelas'),
+            'ruang' => $this->teks('ruang'),
+            'pr' => $this->teks('pr'),
             'pr_dikumpulkan' => $this->filled('pr_dikumpulkan') ? $this->validated('pr_dikumpulkan') : null,
         ];
+    }
+
+    /**
+     * Isian teks opsional, atau null kalau tidak diisi.
+     *
+     * Spasi di tepi ikut dibuang, jadi " " tetap dihitung sebagai tidak diisi.
+     */
+    private function teks(string $field): ?string
+    {
+        $nilai = trim($this->string($field)->toString());
+
+        return $nilai === '' ? null : $nilai;
     }
 
     /**

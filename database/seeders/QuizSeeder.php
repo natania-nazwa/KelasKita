@@ -16,8 +16,17 @@ use Illuminate\Database\Seeder;
  * berasal dari satu pengguna saja. Quiz dicocokkan lewat "judul" dan soal
  * lewat (quiz_id, urutan), jadi aman dijalankan berulang.
  *
- * Bentuk tiap soal di dalam QUIZ:
- *   [pertanyaan, pilihan a, b, c, d, huruf jawaban, pembahasan]
+ * Kolom thumbnail diisi URL foto Unsplash, bukan berkas di disk publik.
+ * App\Support\BerkasQuiz::url() mengenali bentuk nilai itu dan memakainya
+ * apa adanya, jadi tidak ada berkas yang perlu disiapkan lebih dulu untuk
+ * melihat banner di halaman detail.
+ *
+ * Bentuk tiap quiz di dalam QUIZ:
+ *   kunci     => kategori, pembuat, judul, deskripsi, durasi,
+ *                tingkat_kesulitan, thumbnail
+ *   'soal'    => daftar soal, masing-masing satu baris:
+ *                [pertanyaan, pilihan a, b, c, d, huruf jawaban, pembahasan,
+ *                 tingkat kesulitan (opsional, default "Mudah")]
  */
 class QuizSeeder extends Seeder
 {
@@ -36,6 +45,12 @@ class QuizSeeder extends Seeder
     ];
 
     /**
+     * Query ukuran yang dipakai untuk banner:.lebar 1200px supaya foto tetap
+     * tajam di kartu besar, dan dipotong otomatis supaya tidak angered.
+     */
+    private const UKURAN_BANNER = 'w=1200&q=80&auto=format&fit=crop';
+
+    /**
      * @var array<int, array<string, mixed>>
      */
     private const QUIZ = [
@@ -45,6 +60,8 @@ class QuizSeeder extends Seeder
             'judul' => 'HTML & CSS Dasar',
             'deskripsi' => 'Kuis untuk menguji pemahaman dasar HTML dan CSS.',
             'durasi' => 15,
+            'tingkat_kesulitan' => Quiz::TINGKAT_MUDAH,
+            'thumbnail' => 'https://images.unsplash.com/photo-1461749280684-dccba630e2f6',
             'soal' => [
                 ['HTML singkatan dari apa?', 'Hyperlink Text Mode Language', 'High Text Markup Language', 'HyperText Markup Language', 'Home Tool Markup Language', 'C', 'HTML adalah kerangka halaman web yang dibaca browser lalu diubah menjadi elemen.'],
                 ['Tag apa yang dipakai untuk menulis satu paragraf?', '<p>', '<br>', '<span>', '<div>', 'A', 'Tag <p> menandai satu paragraf.'],
@@ -64,11 +81,13 @@ class QuizSeeder extends Seeder
             'judul' => 'JavaScript Dasar',
             'deskripsi' => 'Kuis tentang konsep dasar JavaScript.',
             'durasi' => 20,
+            'tingkat_kesulitan' => Quiz::TINGKAT_SEDANG,
+            'thumbnail' => 'https://images.unsplash.com/photo-1516116216624-53e697fedbea',
             'soal' => [
                 ['Kata kunci apa untuk variabel yang nilainya tidak berubah?', 'var', 'let', 'const', 'static', 'C', 'const untuk nilai final, let kalau nanti berubah.'],
                 ['Kata kunci apa untuk variabel yang nanti berubah?', 'const', 'var', 'let', 'change', 'B', 'let masih dipakai, tapi const lebih disarankan kalau nilai sudah final.'],
                 ['Operator mana yang dipakai untuk sisa pembagian?', '%', '/', '//', 'mod', 'A', 'Tanda persen dipakai untuk sisa pembagian di banyak bahasa.'],
-                ['Bagaimana menulis perbandingan strict di JavaScript?', '=', '==', '===', 'equals', 'C', '=== membandingkan nilai sekaligus tipe datanya.'],
+                ['Bagaimana menulis perbandingan strict di JavaScript?', '=', '==', '===', 'equals', 'C', '=== membandingkan nilai sekaligus tipe datanya.', Quiz::TINGKAT_SEDANG],
                 ['Struktur mana yang mengulang kode selama kondisi terpenuhi?', 'for', 'if', 'switch', 'function', 'A', 'for dan while melakukan pengulangan, if dan switch melakukan percabangan.'],
                 ['Struktur mana yang memilih satu dari beberapa nilai?', 'if', 'switch', 'loop', 'goto', 'B', 'switch cocok untuk satu nilai yang punya banyak kemungkinan.'],
                 ['Bagaimana menulis fungsi yang mengembalikan nilai?', 'function kali() { return a * b; }', 'function kali() { echo a * b; }', 'var kali = a * b;', 'function kali(a, b);', 'A', 'return mengembalikan nilai ke pemanggil fungsi.'],
@@ -85,6 +104,8 @@ class QuizSeeder extends Seeder
             'judul' => 'UI/UX Design',
             'deskripsi' => 'Kuis tentang prinsip desain antarmuka pengguna.',
             'durasi' => 12,
+            'tingkat_kesulitan' => Quiz::TINGKAT_MUDAH,
+            'thumbnail' => 'https://images.unsplash.com/photo-1504384308090-c894fdcc538d',
             'soal' => [
                 ['UI dan UX sama-sama menjelaskan apa?', 'Kode program', 'Tampilan dan pengalaman memakai aplikasi', 'Kecepatan server', 'Struktur database', 'B', 'UI soal antarmuka yang dilihat, UX soal pengalaman memakai aplikasinya.'],
                 ['Prinsip desain yang mengelompokkan elemen berdekatan disebut apa?', 'Kontras', 'Kedekatan', 'Pengulangan', 'Keselarasan', 'B', 'Kedekatan membuat mata otomatis mengelompokkan elemen yang berkaitan.'],
@@ -102,6 +123,8 @@ class QuizSeeder extends Seeder
             'judul' => 'Basis Data',
             'deskripsi' => 'Kuis tentang database dan SQL dasar.',
             'durasi' => 18,
+            'tingkat_kesulitan' => Quiz::TINGKAT_SEDANG,
+            'thumbnail' => 'https://images.unsplash.com/photo-1451187580459-43490279c0fa',
             'soal' => [
                 ['Perintah SQL untuk membaca data adalah?', 'INSERT', 'SELECT', 'UPDATE', 'DELETE', 'B', 'SELECT membaca baris dari tabel.'],
                 ['Perintah SQL untuk menambah baris baru adalah?', 'INSERT', 'SELECT', 'ALTER', 'JOIN', 'A', 'INSERT menambah baris baru ke dalam tabel.'],
@@ -121,6 +144,8 @@ class QuizSeeder extends Seeder
             'judul' => 'Pengembangan Web',
             'deskripsi' => 'Kuis dari desain hingga deployment.',
             'durasi' => 22,
+            'tingkat_kesulitan' => Quiz::TINGKAT_SULIT,
+            'thumbnail' => 'https://images.unsplash.com/photo-1531297484001-80022131f5a1',
             'soal' => [
                 ['Apa kepanjangan dari API?', 'Applied Program Interface', 'Application Programming Interface', 'Automated Process Integration', 'Advanced Page Index', 'B', 'API adalah antarmuka untuk mengomunikasikan dua program.'],
                 ['Metode HTTP untuk mengambil data adalah?', 'POST', 'GET', 'PUT', 'DELETE', 'B', 'GET dipakai untuk membaca data dari server.'],
@@ -131,7 +156,7 @@ class QuizSeeder extends Seeder
                 ['Docker adalah?', 'Bahasa pemrograman', 'Alat menjalankan aplikasi di dalam kontainer', 'Basis data', 'Framework CSS', 'B', 'Docker membungkus aplikasi beserta dependensinya agar jalan sama di mana saja.'],
                 ['Environment variable dipakai untuk apa?', 'Menyimpan data pengguna', 'Menyimpan konfigurasi di luar kode', 'Mengganti database', 'Menulis dokumentasi', 'B', 'Konfigurasi dipisah dari kode supaya aman di tiap lingkungan.'],
                 ['Apa yang dilakukan proses continuous integration?', 'Menjalankan pengujian otomatis setiap ada perubahan', 'Membersihkan berkas', 'Mengganti nama domain', 'Mencetak laporan', 'A', 'Continuous integration menjaga kode tetap bisa dijalankan.'],
-                ['Tahap paling awal dalam membangun aplikasi web adalah?', 'Deployment', 'Menggali kebutuhan pengguna', 'Pengujian', 'Perawatan', 'B', 'Semua tahap lain bergantung pada kebutuhan yang sudah digali dengan jelas.'],
+                ['Tahap paling awal dalam membangun aplikasi web adalah?', 'Deployment', 'Menggali kebutuhan pengguna', 'Pengujian', 'Perawatan', 'B', 'Semua tahap lain bergantung pada kebutuhan yang sudah digali dengan jelas.', Quiz::TINGKAT_SEDANG],
                 ['Apa kepanjangan dari HTML?', 'Hyperlink Text Mode Language', 'High Text Markup Language', 'HyperText Markup Language', 'Home Tool Markup Language', 'C', 'HTML singkatan dari HyperText Markup Language.'],
                 ['Metode HTTP untuk mengubah data yang sudah ada adalah?', 'POST', 'PUT', 'PATCH', 'GET', 'B', 'PUT mengganti keseluruhan sumber daya, sedangkan PATCH hanya sebagian.'],
                 ['Apa gunanya HTTPS dibanding HTTP?', 'Halamannya lebih ringan', 'Data terenkripsi selama perjalanan', 'Server lebih ringan', 'Gambarnya lebih ringan', 'B', 'HTTPS membungkus lalu lintas data dengan enkripsi TLS.'],
@@ -145,6 +170,8 @@ class QuizSeeder extends Seeder
             'judul' => 'Seputar Teknologi',
             'deskripsi' => 'Kuis umum tentang dunia teknologi.',
             'durasi' => 15,
+            'tingkat_kesulitan' => Quiz::TINGKAT_MUDAH,
+            'thumbnail' => 'https://images.unsplash.com/photo-1522202176988-66273c2fd55f',
             'soal' => [
                 ['Perangkat keras adalah?', 'Bagian fisik komputer', 'Perangkat lunak', 'Jaringan internet', 'Sistem operasi', 'A', 'Hardware adalah bagian yang bisa disentuh, seperti monitor dan keyboard.'],
                 ['Perangkat lunak adalah?', 'Bagian fisik komputer', 'Program yang berjalan di perangkat', 'Kabel jaringan', 'Baterai laptop', 'B', 'Software adalah program, termasuk sistem operasi dan aplikasi.'],
@@ -166,7 +193,7 @@ class QuizSeeder extends Seeder
 
         foreach (self::QUIZ as $baris) {
             $quiz = $this->simpanQuiz($baris, $idPengguna);
-            $this->simpanSoal($quiz, $baris['soal']);
+            $this->simpanSoal($quiz, $baris['soal'], $baris['tingkat_kesulitan']);
         }
     }
 
@@ -217,6 +244,8 @@ class QuizSeeder extends Seeder
                 'slug' => str($baris['judul'])->slug()->toString(),
                 'deskripsi' => $baris['deskripsi'],
                 'durasi' => $baris['durasi'],
+                'tingkat_kesulitan' => $baris['tingkat_kesulitan'],
+                'thumbnail' => $baris['thumbnail'].'?'.self::UKURAN_BANNER,
                 'visibilitas' => Quiz::VISIBILITAS_PUBLIK,
                 'status' => Quiz::STATUS_PUBLISHED,
                 'dipublish_pada' => now(),
@@ -238,12 +267,16 @@ class QuizSeeder extends Seeder
     }
 
     /**
-     * Simpan soal-soalan sebuah quiz. Baris yang kosong dilewati, dan nomor
-     * urut dihitung ulang supaya selalu berurutan dari satu.
+     * Simpan soal-soalan sebuah quiz. Nomor urut dihitung ulang supaya
+     * selalu berurutan dari satu.
+     *
+     * Tingkat kesulitan soal boleh ditulis sendiri di baris yang kedelapan;
+     * yang tidak menulisnya ikut tingkat kesulitan quiz, supaya setiap soal
+     * selalu punya nilai yang tampil di halaman detail.
      *
      * @param  array<int, array<int, string>>  $soal
      */
-    private function simpanSoal(Quiz $quiz, array $soal): void
+    private function simpanSoal(Quiz $quiz, array $soal, string $tingkatQuiz): void
     {
         $urutan = 0;
 
@@ -260,7 +293,7 @@ class QuizSeeder extends Seeder
                 'jawaban_benar' => $benar,
                 'pembahasan' => $pembahasan,
                 'urutan' => ++$urutan,
-                'tingkat_kesulitan' => 'Mudah',
+                'tingkat_kesulitan' => $item[7] ?? $tingkatQuiz,
                 'aktif' => true,
             ]);
         }

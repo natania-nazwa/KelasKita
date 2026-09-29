@@ -146,48 +146,76 @@
 
                                 <span class="hasil-soal__pertanyaan">{{ $soal['pertanyaan'] }}</span>
 
-                                <span class="hasil-status hasil-status--{{ $soal['status'] === 'benar' ? 'selesai' : ($soal['status'] === 'salah' ? 'gagal' : 'proses') }}">
-                                    @if ($soal['status'] === 'benar')
-                                        Benar
-                                    @elseif ($soal['status'] === 'salah')
-                                        Salah
-                                    @else
-                                        Tidak Dijawab
-                                    @endif
+                                <span class="hasil-status hasil-status--{{ match ($soal['status']) {
+                                    'benar' => 'selesai',
+                                    'salah' => 'gagal',
+                                    'menunggu' => 'proses',
+                                    default => 'proses',
+                                } }}">
+                                    @switch($soal['status'])
+                                        @case('benar')
+                                            Benar
+                                            @break
+
+                                        @case('salah')
+                                            Salah
+                                            @break
+
+                                        @case('menunggu')
+                                            Belum Dinilai
+                                            @break
+
+                                        @default
+                                            Tidak Dijawab
+                                    @endswitch
                                 </span>
                             </header>
 
-                            {{-- Semua pilihan ditampilkan, jawaban peserta dan
-                                 kunci ditandai supaya mudah dibandingkan. --}}
-                            <ul class="hasil-soal__pilihan">
-                                @foreach ($soal['pilihan'] as $huruf => $teks)
-                                    @php
-                                        $terpilih = $soal['terpilih'] === $huruf;
-                                        $kunci = $soal['benar'] === $huruf;
+                            @if (in_array($soal['tipe'], [\App\Models\Soal::TIPE_JAWABAN_SINGKAT, \App\Models\Soal::TIPE_PARAGRAF], true))
+                                {{--
+                                    Soal bertipe teks tidak punya pilihan
+                                    jawaban, jadi yang ditampilkan adalah
+                                    jawaban peserta sendiri. Kunci acuan
+                                    hanya ditampilkan kalau quiz-nya
+                                    mengizinkan jawaban dibuka.
+                                --}}
+                                <p class="hasil-soal__teks">
+                                    <span class="hasil-soal__teks-label">Jawabanmu</span>
+                                    {{ filled($soal['jawaban_teks']) ? $soal['jawaban_teks'] : 'Tidak dijawab.' }}
+                                </p>
+                            @else
+                                {{-- Semua pilihan ditampilkan, jawaban peserta dan
+                                     kunci ditandai supaya mudah dibandingkan. --}}
+                                <ul class="hasil-soal__pilihan">
+                                    @foreach ($soal['pilihan'] as $huruf => $teks)
+                                        @php
+                                            $terpilih = in_array($huruf, $soal['terpilih_huruf'], true);
+                                            $kunci = $soal['benar'] === $huruf;
 
-                                        $kelas = match (true) {
-                                            $terpilih && $kunci => 'hasil-soal__pilihan--benar',
-                                            $terpilih => 'hasil-soal__pilihan--salah',
-                                            $kunci => 'hasil-soal__pilihan--kunci',
-                                            default => '',
-                                        };
-                                    @endphp
+                                            $kelas = match (true) {
+                                                $terpilih && $kunci => 'hasil-soal__pilihan--benar',
+                                                $terpilih => 'hasil-soal__pilihan--salah',
+                                                $kunci => 'hasil-soal__pilihan--kunci',
+                                                default => '',
+                                            };
+                                        @endphp
 
-                                    <li @class(['hasil-soal__pilihan', $kelas])>
-                                        <span class="hasil-soal__huruf">{{ $huruf }}</span>
+                                        <li @class(['hasil-soal__pilihan', $kelas])>
+                                            <span class="hasil-soal__huruf">{{ $huruf }}</span>
 
-                                        <span class="min-w-0 flex-1">{{ $teks }}</span>
+                                            <span class="min-w-0 flex-1">{{ $teks }}</span>
 
-                                        @if ($terpilih)
-                                            <span class="hasil-soal__tag hasil-soal__tag--terpilih">Jawabanmu</span>
-                                        @endif
+                                            @if ($terpilih)
+                                                <span class="hasil-soal__tag hasil-soal__tag--terpilih">Jawabanmu</span>
+                                            @endif
 
-                                        @if ($kunci)
-                                            <span class="hasil-soal__tag hasil-soal__tag--kunci">Kunci</span>
-                                        @endif
-                                    </li>
-                                @endforeach
-                            </ul>
+                                            @if ($kunci)
+                                                <span class="hasil-soal__tag hasil-soal__tag--kunci">Kunci</span>
+                                            @endif
+                                        </li>
+                                    @endforeach
+                                </ul>
+                            @endif
 
                             @if (filled($soal['pembahasan']))
                                 <p class="hasil-soal__pembahasan">
@@ -208,7 +236,7 @@
                 <a href="{{ route('user.hasil') }}" class="tombol-garis">Kembali ke Hasil</a>
 
                 @if ($quiz !== null)
-                    <a href="{{ route('user.quiz.detail', $quiz->getKey()) }}" class="tombol-garis">Lihat Halaman Quiz</a>
+                    <a href="{{ route('user.quiz.detail', $quiz) }}" class="tombol-garis">Lihat Halaman Quiz</a>
                 @endif
             </div>
         </div>

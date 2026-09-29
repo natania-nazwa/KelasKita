@@ -89,8 +89,8 @@
                 </div>
             @endif
 
-            <form action="{{ $modeEdit ? route('user.jadwal.update', $jadwal->getKey()) : route('user.jadwal.tambah.store') }}"
-                method="POST" class="mt-5">
+            <form id="form-jadwal" method="POST" class="mt-5"
+                action="{{ $modeEdit ? route('user.jadwal.update', $jadwal->getKey()) : route('user.jadwal.tambah.store') }}">
                 @csrf
 
                 @if ($modeEdit)
@@ -98,39 +98,43 @@
                 @endif
 
                 <x-jadwal.form :jadwal="$jadwal" :hari-aktif="$hariAktif ?? null" />
+            </form>
 
-                {{-- =========================
-                     ACTION BAR
-                ========================== --}}
-                <div
-                    class="sticky bottom-0 z-30 -mx-5 mt-4 border-t border-ungu-line bg-white/95 px-5 py-4 shadow-[0_-16px_32px_-30px_rgba(49,46,129,0.7)] backdrop-blur sm:-mx-6 sm:px-6 lg:-mx-6">
-                    <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-5">
-                        <p class="min-w-0 text-xs leading-relaxed text-muted">
-                            @if ($modeEdit)
-                                Perubahanmu akan langsung tersimpan ke jadwal ini.
-                            @else
-                                Jadwal langsung tersimpan dan muncul di halaman Jadwal.
-                            @endif
-                        </p>
+            {{-- =========================
+                 KARTU AKSI
 
-                        <div class="flex shrink-0 flex-col gap-2.5 sm:flex-row sm:items-center">
-                            <a href="{{ route('user.jadwal') }}" class="tombol-garis justify-center">
-                                Batal
-                            </a>
+                 Terpisah dari kartu form, tapi tetap menunjuk ke form yang
+                 sama lewat atribut form="form-jadwal", jadi tidak ada form
+                 kedua yang harus mengirim datanya sendiri. Bentuknya
+                 disamakan dengan kartu form di atasnya supaya keduanya
+                 terbaca sebagai satu blok, bukan sebagai baris lengket di
+                 tepi layar.
+            ========================== --}}
+            <section class="kartu-form mt-4">
+                <div class="kartu-form__badan">
+                    <p class="text-xs leading-relaxed text-muted">
+                        {{ $modeEdit
+                            ? 'Perubahanmu langsung tersimpan ke jadwal ini dan muncul di halaman Jadwal.'
+                            : 'Jadwal langsung tersimpan dan muncul di halaman Jadwal.' }}
+                    </p>
 
-                            <button type="submit" class="tombol-utama justify-center">
-                                <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2.2"
-                                    viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-                                    <path stroke-linecap="round" stroke-linejoin="round"
-                                        d="M4.5 12.75 12 4.5l7.5 8.25M6 19.5h12a2.25 2.25 0 0 0 2.25-2.25V9.108a2.25 2.25 0 0 0-.659-1.591l-7.5-6.636a2.25 2.25 0 0 0-3.182 0l-7.5 6.636A2.25 2.25 0 0 0 4.5 9.108v8.142A2.25 2.25 0 0 0 6.75 19.5Z" />
-                                </svg>
+                    <div class="mt-4 flex flex-col gap-2.5 sm:flex-row sm:items-center sm:justify-end">
+                        <a href="{{ route('user.jadwal') }}" class="tombol-garis justify-center">
+                            Batal
+                        </a>
 
-                                {{ $modeEdit ? 'Simpan Perubahan' : 'Simpan Jadwal' }}
-                            </button>
-                        </div>
+                        <button type="submit" form="form-jadwal" class="tombol-utama justify-center">
+                            <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2.2"
+                                viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                                <path stroke-linecap="round" stroke-linejoin="round"
+                                    d="M4.5 12.75 12 4.5l7.5 8.25M6 19.5h12a2.25 2.25 0 0 0 2.25-2.25V9.108a2.25 2.25 0 0 0-.659-1.591l-7.5-6.636a2.25 2.25 0 0 0-3.182 0l-7.5 6.636A2.25 2.25 0 0 0 4.5 9.108v8.142A2.25 2.25 0 0 0 6.75 19.5Z" />
+                            </svg>
+
+                            {{ $modeEdit ? 'Simpan Perubahan' : 'Simpan Jadwal' }}
+                        </button>
                     </div>
                 </div>
-            </form>
+            </section>
         </div>
     </div>
 @endsection

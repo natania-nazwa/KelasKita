@@ -14,7 +14,11 @@
                         <h1 class="truncate text-lg font-extrabold tracking-tight text-dark">{{ $quiz->judul }}</h1>
 
                         <p class="text-xs text-dark/50">
-                            {{ $adalahHost ? 'Rekap nilai peserta' : 'Hasil jawabanmu' }}
+                            {{ match (true) {
+                                $tampilRekap => 'Rekap nilai peserta',
+                                $tampilNilai => 'Hasil jawabanmu',
+                                default => 'Hasil quiz',
+                            } }}
                             &middot; {{ $sesi->labelStatus() }}
                         </p>
                     </div>
@@ -23,15 +27,81 @@
                 </div>
 
                 <div class="lobi-kartu__badan">
-                    @if ($adalahHost)
-                        {{-- ============================ HOST ============================ --}}
-                        <div class="flex flex-wrap items-center gap-3">
+                    {{-- ============================ NILAI SENDIRI ============================
+                         Ditampilkan kalau pengguna punya pengerjaan di sesi
+                         ini, apa pun perannya. Orang yang mengerjakan quiznya
+                         sendiri sebagai host sesi solo pun sampai ke sini;
+                         sebelumnya blok ini tidak pernah dirender untuknya,
+                         sehingga angkanya sendiri hilang dari halaman yang
+                         seharusnya menampilkannya. --}}
+                    @if ($tampilNilai)
+                        {{-- Nilai besar di tengah: satu angka yang paling
+                             mudah dibaca sekilas. --}}
+                        <div class="text-center">
+                            <p class="lobi-hasil__nilai">
+                                {{ $pengerjaan->nilai }}<span>/100</span>
+                            </p>
+
+                            <p class="mt-1 text-xs text-dark/50">Nilai kamu</p>
+                        </div>
+
+                        {{-- Rincian: berapa benar, salah, dan dijawab. --}}
+                        <div class="mt-5 grid grid-cols-3 gap-2.5 text-center">
+                            <div class="rounded-xl bg-[#eafaf3] px-2 py-3">
+                                <p class="text-lg font-extrabold leading-none text-[#0f7a5b]">{{ $pengerjaan->jumlah_benar }}</p>
+
+                                <p class="mt-1 text-[0.6875rem] font-semibold text-[#0f7a5b]/70">Benar</p>
+                            </div>
+
+                            <div class="rounded-xl bg-[#fdecee] px-2 py-3">
+                                <p class="text-lg font-extrabold leading-none text-[#a8323c]">{{ $pengerjaan->jumlah_salah }}</p>
+
+                                <p class="mt-1 text-[0.6875rem] font-semibold text-[#a8323c]/70">Salah</p>
+                            </div>
+
+                            <div class="rounded-xl bg-lavender px-2 py-3">
+                                <p class="text-lg font-extrabold leading-none text-primary-dark">{{ $pengerjaan->jumlah_dijawab }}</p>
+
+                                <p class="mt-1 text-[0.6875rem] font-semibold text-primary-dark/70">Dijawab</p>
+                            </div>
+                        </div>
+
+                        @if (! $pengerjaan->sudahSelesai() && ! $sesi->sudahSelesai())
+                            <p class="mt-4 text-center text-xs text-dark/45">
+                                Kamu masih bisa kembali menjawab selama quiz belum ditutup host.
+                            </p>
+
+                            <a href="{{ route('user.judulsoal.soal', [$quiz->slug, 1]) }}?sesi={{ $sesi->getKey() }}"
+                                class="tombol-garis mt-3 w-full">
+                                Kembali Mengerjakan
+                            </a>
+                        @endif
+                    @elseif (! $tampilRekap)
+                        {{-- Tidak ada pengerjaan dan bukan host mode kode: orang
+                             yang masuk tapi belum mengerjakan apa pun. --}}
+                        <div class="lobi-tunggu">
+                            <span class="lobi-titik" aria-hidden="true"><i></i><i></i><i></i></span>
+
+                            <p class="text-sm font-bold text-dark">Kamu belum mengerjakan soal</p>
+
+                            <p class="max-w-sm text-xs leading-relaxed text-dark/55">
+                                Nilai akan muncul di sini setelah kamu menjawab soalnya.
+                            </p>
+                        </div>
+                    @endif
+
+                    {{-- ============================ REKAP PESERTA ============================
+                         Hanya host sesi mode kode. Host sesi solo tidak masuk
+                         sini: sesinya tidak punya peserta, jadi tabelnya akan
+                         selalu kosong dan hanya mengecoh. --}}
+                    @if ($tampilRekap)
+                        <div class="mt-5 flex flex-wrap items-center gap-3 {{ $tampilNilai ? 'border-t border-dark/5 pt-5' : '' }}">
                             <span class="lobi-hitung">
                                 <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
                                     <path stroke-linecap="round" stroke-linejoin="round" d="{{ \App\Support\Ikon::path('orang') }}" />
                                 </svg>
 
-                                {{ $jumlahPeserta }} {{ $jumlahPeserta === 1 ? 'peserta' : 'peserta' }}
+                                {{ $jumlahPeserta }} peserta
                             </span>
 
                             @unless ($sesi->sudahSelesai())
@@ -77,60 +147,6 @@
                                 </p>
                             @endforelse
                         </div>
-                    @else
-                        {{-- =========================== PESERTA =========================== --}}
-                        @if ($pengerjaan === null)
-                            <div class="lobi-tunggu">
-                                <span class="lobi-titik" aria-hidden="true"><i></i><i></i><i></i></span>
-
-                                <p class="text-sm font-bold text-dark">Kamu belum mengerjakan soal</p>
-
-                                <p class="max-w-sm text-xs leading-relaxed text-dark/55">
-                                    Nilai akan muncul di sini setelah kamu menjawab soalnya.
-                                </p>
-                            </div>
-                        @else
-                            {{-- Nilai besar di tengah: satu angka yang paling
-                                 mudah dibaca sekilas. --}}
-                            <div class="text-center">
-                                <p class="lobi-hasil__nilai">
-                                    {{ $pengerjaan->nilai }}<span>/100</span>
-                                </p>
-
-                                <p class="mt-1 text-xs text-dark/50">Nilai kamu</p>
-                            </div>
-
-                            {{-- Rincian: berapa benar, salah, dan dijawab. --}}
-                            <div class="mt-5 grid grid-cols-3 gap-2.5 text-center">
-                                <div class="rounded-xl bg-[#eafaf3] px-2 py-3">
-                                    <p class="text-lg font-extrabold leading-none text-[#0f7a5b]">{{ $pengerjaan->jumlah_benar }}</p>
-
-                                    <p class="mt-1 text-[0.6875rem] font-semibold text-[#0f7a5b]/70">Benar</p>
-                                </div>
-
-                                <div class="rounded-xl bg-[#fdecee] px-2 py-3">
-                                    <p class="text-lg font-extrabold leading-none text-[#a8323c]">{{ $pengerjaan->jumlah_salah }}</p>
-
-                                    <p class="mt-1 text-[0.6875rem] font-semibold text-[#a8323c]/70">Salah</p>
-                                </div>
-
-                                <div class="rounded-xl bg-lavender px-2 py-3">
-                                    <p class="text-lg font-extrabold leading-none text-primary-dark">{{ $pengerjaan->jumlah_dijawab }}</p>
-
-                                    <p class="mt-1 text-[0.6875rem] font-semibold text-primary-dark/70">Dijawab</p>
-                                </div>
-                            </div>
-
-                            @if (! $pengerjaan->sudahSelesai() && ! $sesi->sudahSelesai())
-                                <p class="mt-4 text-center text-xs text-dark/45">
-                                    Kamu masih bisa kembali menjawab selama quiz belum ditutup host.
-                                </p>
-
-                                <a href="{{ route('user.sesi.soal', [$sesi, 1]) }}" class="tombol-garis mt-3 w-full">
-                                    Kembali Mengerjakan
-                                </a>
-                            @endif
-                        @endif
                     @endif
                 </div>
             </section>

@@ -111,9 +111,18 @@ final class DaftarHasil
                     ?->translatedFormat('d M Y · H:i'),
                 'judul' => $quiz?->judul ?? 'Quiz sudah dihapus',
                 'slug' => $quiz?->slug,
-                'thumbnail' => filled($quiz?->thumbnail)
-                    ? asset('storage/'.basename($quiz->thumbnail))
-                    : null,
+                /*
+                 * Baca thumbnail lewat BerkasQuiz::url() supaya hasilnya sama
+                 * persis dengan kartu di halaman Quiz: path relatif di disk
+                 * publik (termasuk nama foldernya) jadi URL storage, dan URL
+                 * penuh dari seeder dipakai apa adanya.
+                 *
+                 * basename() dulu dipakai di sini, dan itu salah: kolomnya
+                 * berisi "thumbnails-quiz/contoh.jpg", jadi memotongnya
+                 * menghasilkan "storage/contoh.jpg" yang menunjuk berkas yang
+                 * tidak ada. Thumbnail dengan path relatif ikut rusak.
+                 */
+                'thumbnail' => BerkasQuiz::url($quiz?->thumbnail),
                 'kategori' => [
                     'nama' => $kategori['nama'],
                     'slug' => $kategori['slug'],
@@ -199,7 +208,7 @@ final class DaftarHasil
     /**
      * Ubah detik menjadi label yang enak dibaca.
      *
-     * Memakai App\Support\Angka::durasi() supaya "1,3 jam" atau "45
+     * Pemakaian App\Support\Angka::durasi() supaya "1,3 jam" atau "45
      * menit" ditulis dengan aturan yang sama di baris riwayat, di kartu
      * waktu belajar, dan di pembanding mingguannya.
      *
@@ -212,6 +221,76 @@ final class DaftarHasil
         return [
             'menit' => $menit,
             'label' => Angka::durasi((float) $menit),
+        ];
+    }
+
+    /**
+     * Satu pengerjaan menjadi array polos untuk kartu hasil yang besar.
+     *
+     * Bentuk dan alasan kelas ini sama seperti petakan() di atas: view
+     * tidak tahu-menahu soal Eloquent, hanya menerima array. Semua angka
+     * di sini diambil apa adanya dari tb_pengerjaan_quiz lewat atributnya,
+     * tidak ada satu pun yang dihitung ulang di sini, jadi halaman ini
+     * tidak mungkin menampilkan nilai yang berbeda dari yang disimpan
+     * PengerjaanQuiz::hitungUlang().
+     *
+     * "batas_menit" diambil dari kolom durasi milik quiz. Nol berarti quiz
+     * itu tidak dibatasi waktunya, jadi view tidak boleh menulis
+     * "maksimal ..." kalau angka ini nol.
+     *
+     * @return array<string, mixed>
+     */
+    public static function ringkasanPengerjaan(PengerjaanQuiz $pengerjaan): array
+    {
+        $pengerjaan->loadMissing(['quiz.pelajaran']);
+
+        $quiz = $pengerjaan->quiz;
+        $pelajaran = $quiz?->pelajaran;
+        $kategori = Pelajaran::warna($pelajaran?->slug ?? '', $pelajaran?->nama ?? 'Umum');
+        $durasi = self::durasiLabel($pengerjaan->durasiDetik());
+        $status = $pengerjaan->status();
+        $benar = (int) $pengerjaan->jumlah_benar;
+        $jumlahSoal = (int) $pengerjaan->jumlah_soal;
+
+        return [
+            'nilai' => (int) $pengerjaan->nilai,
+            'jumlah_soal' => $jumlahSoal,
+            'jumlah_benar' => $benar,
+            'jumlah_salah' => (int) $pengerjaan->jumlah_salah,
+            'jumlah_dijawab' => (int) $pengerjaan->jumlah_dijawab,
+            'belum_dijawab' => $pengerjaan->belumDijawab(),
+
+            // Status, bukan predikat baru. PengerjaanQuiz sudah punya
+            // ambang lulus sendiri, jadi halaman ini tidak perlu
+            // menentukan "Baik" atau "Sangat Bagus" dari nilai.
+            'status' => $status,
+            'status_label' => $pengerjaan->labelStatus(),
+            'sudah_selesai' => $pengerjaan->sudahSelesai(),
+
+            'durasi_menit' => $durasi['menit'],
+            'durasi_label' => $durasi['label'],
+            'batas_menit' => (int) ($quiz?->durasi ?? 0),
+
+            'judul' => $quiz?->judul ?? 'Quiz sudah dihapus',
+            'tingkat_kesulitan' => $quiz?->tingkat_kesulitan,
+            'kategori' => [
+                'nama' => $kategori['nama'],
+                'slug' => $kategori['slug'],
+                'ikon' => $kategori['ikon'],
+                'warna' => $kategori['warna'],
+                'warna_gelap' => $kategori['warna_gelap'],
+            ],
+            'tanggal' => $pengerjaan->selesai_pada ?? $pengerjaan->dimulai_pada ?? $pengerjaan->created_at,
+            'tanggal_label' => ($pengerjaan->selesai_pada ?? $pengerjaan->dimulai_pada ?? $pengerjaan->created_at)
+                ?->translatedFormat('d M Y · H:i'),
+
+            // Contoh rumus, ditulis dari angka yang benar-benar tampil
+            // di halaman: 16 benar dari 20 soal = nilai 80.
+            'contoh_rumus' => $jumlahSoal > 0
+                ? sprintf('%d jawaban benar dari %d soal = nilai %d.', $benar, $jumlahSoal, (int) $pengerjaan->nilai)
+                : null,
+
+            'tautan_detail' => route('user.hasil.detail', $pengerjaan->getKey()),
         ];
     }
 }

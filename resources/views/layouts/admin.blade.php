@@ -52,7 +52,11 @@
                     </svg>
                     Materi
                 </a>
-                <a href="#" class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium text-primary/80 hover:bg-lavender hover:text-primary-dark">
+                <a href="{{ route('admin.quiz') }}" @class([
+                    'flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium',
+                    'bg-primary text-white' => request()->routeIs('admin.quiz'),
+                    'text-primary/80 hover:bg-lavender hover:text-primary-dark' => ! request()->routeIs('admin.quiz'),
+                ])>
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"/>
                     </svg>
@@ -95,8 +99,8 @@
                     <a href="{{ url('/admin/dashboard') }}" class="shrink-0 px-3 py-1.5 rounded-lg text-xs font-semibold bg-primary text-white">Dashboard</a>
                     <a href="#" class="shrink-0 px-3 py-1.5 rounded-lg text-xs font-medium text-primary/80">Pengguna</a>
                     <a href="#" class="shrink-0 px-3 py-1.5 rounded-lg text-xs font-medium text-primary/80">Pelajaran</a>
-                    <a href="#" class="shrink-0 px-3 py-1.5 rounded-lg text-xs font-medium text-primary/80">Materi</a>
-                    <a href="#" class="shrink-0 px-3 py-1.5 rounded-lg text-xs font-medium text-primary/80">Quiz</a>
+                    <a href="{{ route('admin.materi') }}" class="shrink-0 px-3 py-1.5 rounded-lg text-xs font-medium text-primary/80">Materi</a>
+                    <a href="{{ route('admin.quiz') }}" class="shrink-0 px-3 py-1.5 rounded-lg text-xs font-medium text-primary/80">Quiz</a>
                     <a href="#" class="shrink-0 px-3 py-1.5 rounded-lg text-xs font-medium text-primary/80">Pengaturan</a>
                 </nav>
             </header>

@@ -90,7 +90,7 @@ class QuizHalamanTest extends TestCase
             ->assertSee('Natania')
             ->assertSee('1 Soal')
             // Kartu harus menuju halaman detail quiz.
-            ->assertSee(route('user.quiz.detail', $quiz->getKey()), false);
+            ->assertSee(route('user.quiz.detail', $quiz), false);
     }
 
     public function test_kartu_menampilkan_lencana_kategori_dan_jumlah_soal(): void
@@ -314,6 +314,11 @@ class QuizHalamanTest extends TestCase
         $this->assertStringContainsString('placeholder="Cari kuis..."', $isi);
     }
 
+    /**
+     * Quiz publik yang owner's-nya menyalakan saklar "Ajukan Persetujuan"
+     * langsung masuk daftar tunggu admin, bukan langsung tayang. Saklarnya
+     * berarti "minta ditinjau", bukan "tayang sekarang".
+     */
     public function test_quiz_baru_tersimpan_dengan_soalnya_dan_muncul_di_karya_saya(): void
     {
         $user = $this->buatPengguna();
@@ -324,8 +329,10 @@ class QuizHalamanTest extends TestCase
                 'pelajaran_id' => $pelajaran->id,
                 'judul' => 'Quiz Baru Saya',
                 'deskripsi' => 'Deskripsi singkat.',
+                'tingkat_kesulitan' => Quiz::TINGKAT_SEDANG,
                 'durasi' => 15,
                 'visibilitas' => Quiz::VISIBILITAS_PUBLIK,
+                'publikasikan' => '1',
                 'soal' => [
                     ['pertanyaan' => 'Apa itu HTML?', 'pilihan_a' => 'Markup', 'pilihan_b' => 'Program', 'pilihan_c' => 'C', 'pilihan_d' => 'D', 'jawaban_benar' => 'A', 'tingkat_kesulitan' => 'Mudah'],
                 ],
@@ -338,6 +345,7 @@ class QuizHalamanTest extends TestCase
             'slug' => 'quiz-baru-saya',
             'dibuat_oleh' => $user->getKey(),
             'pelajaran_id' => $pelajaran->id,
+            'tingkat_kesulitan' => Quiz::TINGKAT_SEDANG,
             'status' => Quiz::STATUS_PENDING,
         ]);
 
@@ -351,6 +359,69 @@ class QuizHalamanTest extends TestCase
             ->get('/user/karya-saya?tab=quiz')
             ->assertOk()
             ->assertSee('Quiz Baru Saya');
+    }
+
+    /**
+     * Tanpa saklar pengajuan, quiz publik disimpan sebagai draft dan tidak
+     * ikut masuk daftar tunggu admin.
+     */
+    public function test_quiz_publik_tanpa_pengajuan_tersimpan_sebagai_draft(): void
+    {
+        $user = $this->buatPengguna();
+        $pelajaran = $this->buatPelajaran('Pemrograman', 'pemrograman');
+
+        $this->actingAs($user)
+            ->post('/user/quiz/tambah', [
+                'pelajaran_id' => $pelajaran->id,
+                'judul' => 'Quiz Draft',
+                'deskripsi' => 'Deskripsi singkat.',
+                'tingkat_kesulitan' => Quiz::TINGKAT_MUDAH,
+                'visibilitas' => Quiz::VISIBILITAS_PUBLIK,
+                'soal' => [
+                    ['pertanyaan' => 'Apa itu CSS?', 'pilihan_a' => 'Gaya', 'pilihan_b' => 'Logika', 'jawaban_benar' => 'A', 'tingkat_kesulitan' => 'Mudah'],
+                ],
+            ])
+            ->assertSessionHasNoErrors();
+
+        $this->assertDatabaseHas('tb_quiz', [
+            'judul' => 'Quiz Draft',
+            'status' => Quiz::STATUS_DRAFT,
+        ]);
+
+        $this->assertSame(0, Quiz::query()->menunggu()->count());
+    }
+
+    /**
+     * Quiz mode kode tidak pernah ikut persetujuan admin: yang berbasis
+     * kode tidak tayang untuk semua pengguna, jadi statusnya tetap draft dan
+     * tidak ada yang masuk daftar tunggu.
+     */
+    public function test_quiz_mode_kode_tidak_perlu_izin_admin_meski_saklar_pengajuan_nyala(): void
+    {
+        $user = $this->buatPengguna();
+        $pelajaran = $this->buatPelajaran('Pemrograman', 'pemrograman');
+
+        $this->actingAs($user)
+            ->post('/user/quiz/tambah', [
+                'pelajaran_id' => $pelajaran->id,
+                'judul' => 'Quiz Kode',
+                'deskripsi' => 'Deskripsi singkat.',
+                'tingkat_kesulitan' => Quiz::TINGKAT_MUDAH,
+                'visibilitas' => Quiz::VISIBILITAS_PRIVAT,
+                'kode_akses' => 'K7F3P9',
+                'publikasikan' => '1',
+                'soal' => [
+                    ['pertanyaan' => 'Apa itu PHP?', 'pilihan_a' => 'Bahasa', 'pilihan_b' => 'Markup', 'jawaban_benar' => 'A', 'tingkat_kesulitan' => 'Mudah'],
+                ],
+            ])
+            ->assertSessionHasNoErrors();
+
+        $this->assertDatabaseHas('tb_quiz', [
+            'judul' => 'Quiz Kode',
+            'visibilitas' => Quiz::VISIBILITAS_PRIVAT,
+            'kode_akses' => 'K7F3P9',
+            'status' => Quiz::STATUS_DRAFT,
+        ]);
     }
 
     public function test_form_buat_menolak_quiz_tanpa_soal(): void
@@ -381,7 +452,15 @@ class QuizHalamanTest extends TestCase
                 'judul' => '',
                 'visibilitas' => 'terbuka',
                 'soal' => [
-                    ['pertanyaan' => '', 'pilihan_a' => '', 'pilihan_b' => '', 'pilihan_c' => '', 'pilihan_d' => '', 'jawaban_benar' => 'Z', 'tingkat_kesulitan' => 'Tidak Dikenal'],
+                    [
+                        'pertanyaan' => '',
+                        'tipe' => 'multiple_choice',
+                        // Pilihan sengaja dibiarkan kosong: soal pilihan ganda
+                        // wajib punya minimal dua pilihan terisi.
+                        'pilihan' => ['A' => '', 'B' => '', 'C' => '', 'D' => ''],
+                        'benar' => [],
+                        'tingkat_kesulitan' => 'Tidak Dikenal',
+                    ],
                 ],
             ])
             ->assertSessionHasErrors([
@@ -389,8 +468,7 @@ class QuizHalamanTest extends TestCase
                 'judul',
                 'visibilitas',
                 'soal.0.pertanyaan',
-                'soal.0.pilihan_a',
-                'soal.0.jawaban_benar',
+                'soal.0.pilihan',
                 'soal.0.tingkat_kesulitan',
             ]);
 
@@ -406,6 +484,8 @@ class QuizHalamanTest extends TestCase
         $this->actingAs($user)->post('/user/quiz/tambah', [
             'pelajaran_id' => $pelajaran->id,
             'judul' => 'Quiz Curang',
+            'deskripsi' => 'Deskripsi singkat.',
+            'tingkat_kesulitan' => Quiz::TINGKAT_MUDAH,
             'visibilitas' => Quiz::VISIBILITAS_PUBLIK,
             'dibuat_oleh' => $orangLain->getKey(),
             'soal' => [
@@ -428,6 +508,8 @@ class QuizHalamanTest extends TestCase
         $this->actingAs($user)->post('/user/quiz/tambah', [
             'pelajaran_id' => $pelajaran->id,
             'judul' => 'Judul Kembar',
+            'deskripsi' => 'Deskripsi singkat.',
+            'tingkat_kesulitan' => Quiz::TINGKAT_MUDAH,
             'visibilitas' => Quiz::VISIBILITAS_PUBLIK,
             'soal' => [
                 ['pertanyaan' => 'Apa itu CSS?', 'pilihan_a' => 'A', 'pilihan_b' => 'B', 'pilihan_c' => 'C', 'pilihan_d' => 'D', 'jawaban_benar' => 'A', 'tingkat_kesulitan' => 'Mudah'],
@@ -445,7 +527,7 @@ class QuizHalamanTest extends TestCase
         $this->buatSoal($quiz);
 
         $this->actingAs($user)
-            ->get(route('user.quiz.detail', $quiz->getKey()))
+            ->get(route('user.quiz.detail', $quiz))
             ->assertOk()
             ->assertSee('HTML & CSS Dasar')
             ->assertSee('Pertanyaan nomor 1')
@@ -460,7 +542,7 @@ class QuizHalamanTest extends TestCase
         $quiz = $this->buatQuiz($pelajaran, $orangLain, 'Quiz Draft Siti', 'Deskripsi.', Quiz::STATUS_DRAFT);
 
         $this->actingAs($user)
-            ->get(route('user.quiz.detail', $quiz->getKey()))
+            ->get(route('user.quiz.detail', $quiz))
             ->assertNotFound();
     }
 
@@ -471,7 +553,7 @@ class QuizHalamanTest extends TestCase
         $quiz = $this->buatQuiz($pelajaran, $user, 'Quiz Draft Saya', 'Deskripsi.', Quiz::STATUS_DRAFT);
 
         $this->actingAs($user)
-            ->get(route('user.quiz.detail', $quiz->getKey()))
+            ->get(route('user.quiz.detail', $quiz))
             ->assertOk()
             ->assertSee('Quiz Draft Saya')
             ->assertSee('Draft');

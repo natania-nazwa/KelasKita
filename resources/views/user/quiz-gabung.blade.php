@@ -39,13 +39,13 @@
 
                 <div class="lobi-kartu__badan">
                     <p class="text-sm leading-relaxed text-dark/60">
-                        Masukkan kode yang ditampilkan pembuat quiz. Kamu akan masuk ke
+                        Masukkan kode yang diberikan pembuat quiz. Kamu akan masuk ke
                         ruang tunggu dulu, dan soal baru terbuka setelah dia menekan
                         Mulai Quiz.
                     </p>
 
                     <form method="POST" action="{{ route('user.sesi.gabung.store') }}" class="mt-5"
-                        data-masuk>
+                        data-masuk data-panjang="{{ \App\Support\KodeQuiz::PANJANG }}">
                         @csrf
 
                         {{-- Kotak kode. Border-nya ada di kotak luarnya, jadi
@@ -56,12 +56,12 @@
                             <label for="kode" class="lobi-kode__label block">Kode Quiz</label>
 
                             <input type="text" id="kode" name="kode" value="{{ old('kode', $kode) }}"
-                                placeholder="ABC123" autocomplete="off" autocapitalize="characters"
-                                spellcheck="false" inputmode="text" maxlength="6" required
+                                placeholder="K7F3P9" autocomplete="off" autocapitalize="characters"
+                                spellcheck="false" inputmode="text" maxlength="{{ \App\Http\Requests\GabungSesiRequest::PANJANG_KODE }}" required
                                 class="lobi-masuk__input"
                                 @error('kode') aria-invalid="true" aria-describedby="kode-galat" @enderror>
 
-                            <p class="lobi-kode__petunjuk">Tiga huruf lalu tiga angka.</p>
+                            <p class="lobi-kode__petunjuk">Huruf dan angka, seperti yang tertera di Karya Saya.</p>
                         </div>
 
                         @error('kode')
@@ -105,7 +105,7 @@
                             <li class="lobi-langkah__item">
                                 <span class="lobi-langkah__angka">2</span>
 
-                                <p class="lobi-langkah__teks">Kamu masuk lobby dan melihat siapa yang sudah bergabung.</p>
+                                <p class="lobi-langkah__teks">Kamu masuk lobby dan melihat siapa saja yang sudah bergabung.</p>
                             </li>
 
                             <li class="lobi-langkah__item">

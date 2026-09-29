@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Support\KodeQuiz;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
@@ -14,9 +15,17 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  *
  * Kenapa perlu tabel sendiri dan bukan memakai quiz_id langsung:
  * satu quiz bisa dijalankan berkali-kali (latihan minggu lalu, ulangan
- * minggu ini), dan tiap kali dijalankan punya kode join, daftar peserta,
- * serta statusnya sendiri. Kode yang diketik peserta mencari SESI yang sedang
- * dibuka, bukan quiz-nya.
+ * minggu ini), dan tiap kali dijalankan punya daftar peserta serta statusnya
+ * sendiri.
+ *
+ * HOST NYA SELALU PEMILIK QUIZ-nya, bukan orang yang pertama membuka sesi
+ * (lihat App\Support\SesiKode). Untuk quiz mode kode, sesi bisa dibuat lebih
+ * dulu oleh peserta yang mengetik kodenya; itu tidak membuat peserta itu jadi
+ * host, cuma menyiapkan lobby tempat pemilik nanti membuka halaman ini.
+ *
+ * Kolom "kode" bukan lagi kunci pencarian. Kode yang diketik peserta adalah
+ * kode akses quiz, dan sesi cukup memakai kode yang sama supaya angka yang
+ * tampil di lobby sama dengan yang diketik peserta.
  *
  * Alur status:
  *   waiting  = masih di lobby. Peserta boleh masuk, belum boleh mengerjakan
@@ -97,24 +106,14 @@ class SesiQuiz extends Model
     }
 
     /**
-     * Cari sesi berdasarkan kode yang diketik peserta.
-     *
-     * Kode dibersihkan lebih dulu supaya "abc 123" dan "ABC123" tetap
-     * menemukan sesi yang sama. Pencocokan di Postgres tetap case
-     * sensitive, jadi kode disimpan selalu huruf besar dan di sini juga
-     * diseragamkan sebelum dibandingkan.
-     */
-    public function scopeKode(Builder $query, ?string $kode): Builder
-    {
-        return $query->where('kode', static::normalisasiKode($kode));
-    }
-
-    /**
      * Bentuk baku kode sesi: huruf besar, tanpa spasi dan tanda hubung.
+     *
+     * Aturannya dipegang App\Support\KodeQuiz supaya kode sesi dan kode
+     * akses quiz tidak bisa punya bentuk yang berbeda.
      */
     public static function normalisasiKode(?string $kode): string
     {
-        return strtoupper(preg_replace('/[^A-Za-z0-9]/', '', (string) $kode) ?? '');
+        return KodeQuiz::normalisasi($kode);
     }
 
     public function adalahHost(?User $pengguna): bool
