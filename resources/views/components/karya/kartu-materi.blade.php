@@ -37,7 +37,7 @@
 @endphp
 
 <article style="--k: {{ $kategori['warna'] }}; --k-gelap: {{ $kategori['warna_gelap'] }};"
-    class="kartu-materi group min-w-0">
+    class="kartu-materi karya-kartu group min-w-0">
 
     {{-- A. Thumbnail: tinggi seragam (16:9), sama seperti kartu di halaman Materi. --}}
     <div class="kartu-materi__gambar">
@@ -58,8 +58,11 @@
         </span>
     </div>
 
-    {{-- B-E. Judul, deskripsi, informasi, dan baris aksi. --}}
+    {{-- B-E. Aksen, judul, deskripsi, informasi, dan baris aksi. --}}
     <div class="kartu-materi__badan">
+        {{-- Garis warna kategori, menyambung ke thumbnail tanpa celah. --}}
+        <span class="kartu-materi__aksen -mx-4 -mt-3.5 mb-3 block" aria-hidden="true"></span>
+
         <h2 class="kartu-materi__judul karya-judul">
             @if ($sudahTerbit)
                 <a href="{{ $materi['tautan'] }}">{{ $materi['judul'] }}</a>
@@ -69,21 +72,6 @@
         </h2>
 
         <p class="kartu-materi__deskripsi">{{ $materi['deskripsi'] }}</p>
-
-        {{-- Alasan penolakan admin, supaya pemilik tahu harus memperbaiki apa.
-             Hanya untuk materi yang ditolak: status lain tidak punya catatan. --}}
-        @if ($ditolak && filled($materi['catatan_admin']))
-            <div class="mt-3 rounded-xl border border-[#f4c7cd] bg-[#fdecee] px-3.5 py-2.5">
-                <p class="text-xs font-bold text-[#a8323c]">Alasan ditolak admin</p>
-
-                <p class="mt-1 text-sm leading-relaxed text-[#a8323c]">{{ $materi['catatan_admin'] }}</p>
-            </div>
-        @elseif ($materi['sisa_pengajuan'] < \App\Models\Materi::BATAS_PENGAJUAN_ULANG)
-            <p class="mt-3 text-xs text-dark/55">
-                Sudah ditolak {{ \App\Models\Materi::BATAS_PENGAJUAN_ULANG - $materi['sisa_pengajuan'] }}x.
-                Sisa pengajuan: {{ $materi['sisa_pengajuan'] }}x.
-            </p>
-        @endif
 
         {{-- Jumlah bab, perkiraan waktu baca, dan tanggal dibuat. --}}
         <div class="karya-info mt-3.5">
@@ -111,6 +99,21 @@
                 {{ $materi['dibuat_pada']?->translatedFormat('d M Y') }}
             </span>
         </div>
+
+        {{-- Alasan penolakan admin, supaya pemilik tahu harus memperbaiki apa.
+             Hanya untuk materi yang ditolak: status lain tidak punya catatan. --}}
+        @if ($ditolak && filled($materi['catatan_admin']))
+            <div class="mt-3.5 rounded-xl border border-[#f4c7cd] bg-[#fdecee] px-3.5 py-2.5">
+                <p class="text-xs font-bold text-[#a8323c]">Alasan ditolak admin</p>
+
+                <p class="mt-1 text-sm leading-relaxed text-[#a8323c]">{{ $materi['catatan_admin'] }}</p>
+            </div>
+        @elseif ($materi['sisa_pengajuan'] < \App\Models\Materi::BATAS_PENGAJUAN_ULANG)
+            <p class="mt-3.5 text-xs text-dark/55">
+                Sudah ditolak {{ \App\Models\Materi::BATAS_PENGAJUAN_ULANG - $materi['sisa_pengajuan'] }}x.
+                Sisa pengajuan: {{ $materi['sisa_pengajuan'] }}x.
+            </p>
+        @endif
 
         {{-- Baris aksi. Tombol hapus membuka dialog konfirmasi lebih dulu
              (dikerjakan initKonfirmasi() di resources/js/app.js). --}}

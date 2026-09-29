@@ -150,6 +150,46 @@ class PengerjaanQuiz extends Model
     }
 
     /**
+     * Sisa waktu pengerjaan ini dalam detik, atau null kalau quiz-nya tidak
+     * punya batas waktu.
+     *
+     * Dihitung dari kolom dimulai_pada, bukan dari sekarang, jadi membuka
+     * ulang halaman atau berpindah soal tidak mengulang waktu dari awal.
+     * Durasi diambil dari kolom quiz.durasi (menit); durasi nol atau kosong
+     * berarti quiz tanpa batas waktu.
+     *
+     * Hitungannya ada di sini, bukan di controller, karena dua tempat
+     * butuh jawaban yang sama persis: halaman soal yang menampilkan timer,
+     * dan tombol "Mulai Quiz" yang harus tahu percobaan lalu sudah kehabisan
+     * waktu lalu tidak boleh dipakai ulang.
+     */
+    public function sisaDetik(Quiz $quiz): ?int
+    {
+        $durasi = (int) $quiz->durasi * 60;
+
+        if ($durasi <= 0) {
+            return null;
+        }
+
+        $mulai = $this->dimulai_pada?->getTimestamp() ?? now()->getTimestamp();
+
+        return max(0, $durasi - (time() - $mulai));
+    }
+
+    /**
+     * Apakah batas waktu pengerjaan ini sudah lewat.
+     *
+     * Quiz tanpa batas waktu selalu mengembalikan false: tidak ada yang
+     * perlu{dimatkan}, jadi tidak boleh ikut dihitung sudah habis.
+     */
+    public function waktuSudahHabis(Quiz $quiz): bool
+    {
+        $sisa = $this->sisaDetik($quiz);
+
+        return $sisa !== null && $sisa <= 0;
+    }
+
+    /**
      * scopeMilik: batasi ke satu pengguna.
      *
      * Dipakai halaman "Hasil" supaya data milik orang lain tidak pernah

@@ -9,6 +9,11 @@
     Sama seperti "Materi Terbaru": satu kartu putih membungkus kepala seksi
     dan grid kartu quiz, jadi dua lapis (panel luar + kartu yang bisa diklik).
 
+    Kartu quiz memakai x-quiz.kartu, sama persis dengan kartu di halaman
+    Quiz, supaya tampilan di dashboard dan di menu Quiz benar-benar satu
+    desain. Bentuk datanya sudah sama karena keduanya ditulis oleh
+    App\Support\DaftarQuiz::petkan.
+
     Grid di dalam panel:
     - Desktop (xl / 1280px+): 4 kolom, satu baris
     - Tablet               : 2 kolom
@@ -24,7 +29,7 @@
     <div data-reveal-stagger
         class="mt-4 grid min-w-0 gap-4 sm:grid-cols-2 xl:grid-cols-4">
         @forelse ($daftar as $quiz)
-            <x-dashboard.quiz-kartu :quiz="$quiz" />
+            <x-quiz.kartu :quiz="$quiz" />
         @empty
             <p
                 class="rounded-2xl border border-dashed border-lavender bg-brand-bg/60 p-6 text-center text-sm text-dark/50 sm:col-span-2 xl:col-span-4">

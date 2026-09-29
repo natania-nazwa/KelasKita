@@ -9,8 +9,9 @@
      * Bentuk array yang diharapkan:
      *   judul, deskripsi, ikon, warna, warna_gelap, tautan, sorot
      *
-     * Kartu pertama ditandai "sorot" supaya tampil dengan gradasi ungu dan
-     * jadi titik masuk yang paling menonjol.
+     * Kartu pertama ditandai "sorot" supaya tint warnanya sedikit lebih
+     * pekat dan jadi titik masuk utama. Warnanya tetap lembut: hanya
+     * latar kartu yang diberi warna, ikon dan teks tetap gelap.
      */
     $sorot = (bool) ($aksi['sorot'] ?? false);
 @endphp

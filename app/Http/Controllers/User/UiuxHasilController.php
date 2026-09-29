@@ -20,6 +20,12 @@ use Illuminate\View\View;
  * Pengerjaan yang ditampilkan selalu milik pengguna yang sedang login
  * (PengerjaanQuiz::scopeMilik ditegakkan di query), jadi mengarang id lewat
  * query string hanya menghasilkan halaman kosong, bukan nilai orang lain.
+ *
+ * Dua tautan keluar yang bisa muncul mengikuti peran pengerjaan itu:
+ *   - $tautanSesi, ke rekap milik host sesi mode kode;
+ *   - $tautanPeringkat, ke daftar peringkat semua yang masuk lewat kode.
+ * Keduanya hanya diisi kalau memang ada isinya, jadi view tidak perlu
+ * membedakan kasus "tanpa sesi" dari "dengan sesi tapi tidak boleh".
  */
 class UiuxHasilController extends Controller
 {
@@ -67,10 +73,29 @@ class UiuxHasilController extends Controller
             && $sesi->adalahHost($pengguna)
             && $sesi->quiz?->pakaiKode();
 
+        /*
+         * Tombol "Lihat Peringkat" untuk sesi mode kode. Berbeda dari tautan
+         * di atas, ini bukan untuk host saja: justru peserta yang butuh, karena
+         * di sana ada nama-nama orang lain yang masuk lewat kode.
+         *
+         * Hanya sesi mode kode yang diberi tombol ini. Sesi solo dikerjakan
+         * sendirian tanpa peserta lain, jadi peringkat yang terbuka hanya
+         * berisi satu nama — pagination, podium, dan daftar tiga besarnya jadi
+         * hiasan untuk angka yang sudah ada di kartu ini.
+         *
+         * Sesi soal masih bisa dibuka, jadi tidak ada syarat "sudah
+         * selesai": peserta yang menekan "Selesai" di tengah jalan pun harus
+         * bisa langsung melihat siapa yang mendahului.
+         */
+        $tautanPeringkat = $sesi !== null && $sesi->quiz?->pakaiKode()
+            ? route('user.sesi.peringkat', $sesi)
+            : null;
+
         return view('user.uiux-hasil', [
             'hasil' => $ringkasan,
             'adaHasil' => $ringkasan !== null,
             'tautanSesi' => $tampilRekap ? route('user.sesi.hasil', $sesi) : null,
+            'tautanPeringkat' => $tautanPeringkat,
         ]);
     }
 }

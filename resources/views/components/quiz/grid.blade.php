@@ -19,7 +19,7 @@
 --}}
 
 <div data-reveal-stagger data-quiz-daftar
-    class="grid grid-cols-2 gap-4 min-w-0 sm:gap-5 lg:grid-cols-3 xl:grid-cols-4">
+    {{ $attributes->class(['grid grid-cols-2 gap-4 min-w-0 sm:gap-5 lg:grid-cols-3 xl:grid-cols-4']) }}>
     @forelse ($daftar as $quiz)
         <x-quiz.kartu :quiz="$quiz" :kata-kunci="$kataKunci" />
     @empty

@@ -3,8 +3,8 @@
     'kategori' => [],
     /*
      * Materi yang sedang diedit. Ada = mode edit: isian diisi dari materi
-     * ini dan thumbnail/audio yang sudah terlampir ditampilkan. Null =
-     * mode tambah, isian kosong.
+     * ini dan thumbnail yang sudah terlampir ditampilkan. Null = mode
+     * tambah, isian kosong.
      */
     'materi' => null,
 ])
@@ -54,7 +54,18 @@
                         <option value="">Pilih kategori</option>
 
                         @foreach ($kategori as $item)
-                            <option value="{{ $item->id }}" @selected((int) old('pelajaran_id', $materi?->pelajaran_id) === $item->id)>
+                            {{--
+                                Ikon kategori ikut dibawa ke dalam <option>
+                                supaya tab Preview bisa meniru lencana
+                                kategori di halaman detail tanpa meminta
+                                data ke server lagi.
+                            --}}
+                            @php
+                                $ikonKategori = \App\Models\Pelajaran::warna($item->slug, $item->nama)['ikon'];
+                            @endphp
+
+                            <option value="{{ $item->id }}" data-ikon="{{ $ikonKategori }}"
+                                @selected((int) old('pelajaran_id', $materi?->pelajaran_id) === $item->id)>
                                 {{ $item->nama }}
                             </option>
                         @endforeach
@@ -74,8 +85,8 @@
                 </label>
 
                 <div class="relative mt-1.5">
-                    <select id="tingkat_kesulitan" name="tingkat_kesulitan" required
-                        class="kolom-form pilih-form">
+                <select id="tingkat_kesulitan" name="tingkat_kesulitan" required
+                    data-kesulitan class="kolom-form pilih-form">
                             @foreach (['Mudah', 'Sedang', 'Sulit'] as $tingkat)
                                 <option value="{{ $tingkat }}" @selected(old('tingkat_kesulitan', $materi?->tingkat_kesulitan ?? 'Mudah') === $tingkat)>
                                 {{ $tingkat }}
@@ -167,13 +178,25 @@
                     </p>
                 </div>
 
-                <p class="mt-1.5 hidden text-xs font-medium text-[#c2414a]" data-thumbnail-error role="alert"></p>
+                <p class="mt-1.5 text-xs font-medium text-[#c2414a] {{ $errors->has('thumbnail') ? '' : 'hidden' }}"
+                    data-thumbnail-error role="alert">{{ $errors->first('thumbnail') }}</p>
+
+                {{--
+                    Penanda "hapus gambar lama". Diisi JavaScript saat tombol
+                    Hapus ditekan, supaya berkasnya ikut dibuang dari disk
+                    dan kolom thumbnail jadi kosong (lihat
+                    User\MateriKelolaController::update). Tanpa bendera ini
+                    tombol Hapus hanya berhenti di pratinjau browser.
+                --}}
+                <input type="hidden" name="thumbnail_hapus" value="{{ old('thumbnail_hapus', 0) }}"
+                    data-thumbnail-hapus-flag>
 
                 {{-- Mode edit: tampilkan thumbnail yang sekarang dipakai, supaya
                      pemilik tahu berkas mana yang akan diganti kalau ia
-                     mengunggah yang baru. --}}
+                     mengunggah yang baru, atau dihapus kalau ia menekan Hapus. --}}
                 @if ($materi && filled($materi->thumbnail))
-                    <div class="mt-2 flex items-center gap-3 rounded-xl border border-ungu-line bg-white p-2">
+                    <div class="mt-2 flex items-center gap-3 rounded-xl border border-ungu-line bg-white p-2"
+                        data-thumbnail-kini>
                         <img src="{{ \App\Support\BerkasMateri::url($materi->thumbnail) }}" alt="Thumbnail materi ini"
                             class="h-14 w-24 shrink-0 rounded-lg object-cover">
 
@@ -183,41 +206,6 @@
                     </div>
                 @endif
             </div>
-        </div>
-
-        {{-- Audio pembelajaran --}}
-        <div>
-            <span class="label-form">Dengarkan Materi (Opsional)</span>
-
-            <p class="mt-1 text-xs leading-relaxed text-muted">
-                Tambahkan audio pembelajaran jika diperlukan.
-            </p>
-
-            <div class="mt-2 flex flex-wrap items-center gap-2">
-                <label class="tombol-garis text-xs" for="audio" data-audio-tombol>
-                    <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="1.9" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 18.75a6 6 0 0 0 6-6v-1.5m-6 7.5a6 6 0 0 1-6-6v-1.5m6 7.5v3.75m-3.75 0h7.5M12 15.75a3 3 0 0 1-3-3V4.5a3 3 0 1 1 6 0v8.25a3 3 0 0 1-3 3Z" />
-                    </svg>
-
-                    Upload Audio
-                </label>
-
-                <input type="file" id="audio" name="audio" accept="audio/*" class="sr-only" data-audio-input>
-
-                <span class="hidden max-w-full truncate rounded-full bg-ungu-bg px-3 py-1.5 text-xs font-semibold text-ungu-dark"
-                    data-audio-nama></span>
-            </div>
-
-            <p class="mt-1.5 text-[11px] leading-relaxed text-muted">MP3, WAV, M4A, OGG (maks. 100MB).</p>
-
-            {{-- Mode edit: sebutkan audio yang sekarang terlampir. --}}
-            @if ($materi && filled($materi->audio))
-                <p class="mt-1.5 text-[11px] leading-relaxed text-muted">
-                    Audio saat ini: {{ basename($materi->audio) }}. Pilih berkas baru untuk menggantinya.
-                </p>
-            @endif
-
-            <p class="mt-1.5 hidden text-xs font-medium text-[#c2414a]" data-audio-error role="alert"></p>
         </div>
 
         {{-- Tips / catatan --}}

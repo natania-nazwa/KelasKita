@@ -6,7 +6,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 
 /**
- * Berkas lampiran materi (thumbnail dan audio) pada disk publik.
+ * Berkas lampiran materi (thumbnail) pada disk publik.
  *
  * Dipakai form tambah materi, form edit materi, dan saat materi dihapus,
  * supaya aturan nama folder dan penghapusan berkas lama hanya ada di satu
@@ -19,8 +19,7 @@ final class BerkasMateri
      * kolom materi.
      *
      * Field yang tidak diunggah sengaja tidak ikut dikembalikan, sehingga
-     * thumbnail atau audio lama tetap utuh saat form disimpan tanpa berkas
-     * baru.
+     * thumbnail lama tetap utuh saat form disimpan tanpa berkas baru.
      *
      * @return array<string, string>
      */
@@ -32,15 +31,11 @@ final class BerkasMateri
             $tersimpan['thumbnail'] = $request->file('thumbnail')->store('thumbnails', 'public');
         }
 
-        if ($request->hasFile('audio')) {
-            $tersimpan['audio'] = $request->file('audio')->store('audio', 'public');
-        }
-
         return $tersimpan;
     }
 
     /**
-     * URL publik dari isi kolom thumbnail/audio.
+     * URL publik dari isi kolom thumbnail.
      *
      * Kolom itu menyimpan dua bentuk nilai yang berbeda:
      *   - path relatif di disk publik, mis. "thumbnails/abc.jpg", hasil
@@ -68,14 +63,17 @@ final class BerkasMateri
      * Hapus berkas dari disk publik.
      *
      * Aman untuk path kosong (materi yang memang tidak punya lampiran) dan
-     * untuk berkas yang sudah tidak ada.
+     * untuk berkas yang sudah tidak ada. Path di kolom bisa berupa URL
+     * penuh (gambar contoh dari seeder), jadi berkas seperti itu dilewati.
      */
     public static function hapus(?string ...$path): void
     {
         foreach ($path as $berkas) {
-            if (filled($berkas)) {
-                Storage::disk('public')->delete($berkas);
+            if (blank($berkas) || preg_match('#^https?://#i', $berkas) === 1) {
+                continue;
             }
+
+            Storage::disk('public')->delete($berkas);
         }
     }
 }

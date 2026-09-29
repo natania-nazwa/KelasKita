@@ -5,7 +5,7 @@ namespace App\Http\Controllers\User;
 use App\Http\Controllers\Controller;
 use App\Models\PengerjaanQuiz;
 use App\Models\SesiQuiz;
-use App\Support\DaftarPeserta;
+use App\Support\DaftarPeringkat;
 use App\Support\PenjagaSesi;
 use App\Support\SesiAktif;
 use App\Support\TujuanHasil;
@@ -44,6 +44,11 @@ use Illuminate\View\View;
  * dipakai redirect setelah menjawab, jadi keduanya tidak bisa berbeda.
  * Yang tetap dirender di sini hanya kasus yang benar-benar tidak punya
  * kartu: rekap peserta milik host, dan "kamu belum mengerjakan soal".
+ *
+ * Daftar nilainya sendiri tidak dihitung di controller ini, tapi di
+ * App\Support\DaftarPeringkat, kelas yang sama dengan halaman peringkat
+ * /user/sesi/{sesi}/peringkat. Dua halaman itu menampilkan urutan yang sama,
+ * jadi tidak mungkin host melihat urutan berbeda dari yang dilihat peserta.
  */
 class SesiHasilController extends Controller
 {
@@ -93,59 +98,7 @@ class SesiHasilController extends Controller
             'tampilRekap' => $tampilRekap,
             'pengerjaan' => $pengerjaanSaya,
             'jumlahPeserta' => $sesi->peserta()->count(),
-            'daftarNilai' => $tampilRekap ? $this->daftarNilai($sesi) : [],
+            'daftarNilai' => $tampilRekap ? DaftarPeringkat::untukSesi($sesi) : [],
         ]);
-    }
-
-    /**
-     * Rekap nilai seluruh peserta sesi ini, dari yang tertinggi.
-     *
-     * Peserta yang belum menjawab sama sekali tetap ikut tampil dengan nilai
-     * nol, supaya host tidak mengira mereka hilang.
-     *
-     * @return array<int, array<string, mixed>>
-     */
-    private function daftarNilai(SesiQuiz $sesi): array
-    {
-        $pengerjaan = PengerjaanQuiz::query()
-            ->where('sesi_id', $sesi->getKey())
-            ->get()
-            ->keyBy('pengguna_id');
-
-        $hasil = [];
-
-        foreach ($sesi->peserta()->with('pengguna')->orderBy('bergabung_pada')->orderBy('id')->get() as $baris) {
-            $daftarPeserta = DaftarPeserta::petakan([$baris])[0];
-            $nilai = $pengerjaan[$baris->pengguna_id] ?? null;
-
-            $hasil[] = [
-                ...$daftarPeserta,
-                'peringkat' => 0,
-                'nilai' => (int) ($nilai?->nilai ?? 0),
-                'benar' => (int) ($nilai?->jumlah_benar ?? 0),
-                'salah' => (int) ($nilai?->jumlah_salah ?? 0),
-                'dijawab' => (int) ($nilai?->jumlah_dijawab ?? 0),
-                'jumlah_soal' => (int) ($nilai?->jumlah_soal ?? $sesi->quiz->soal()->aktif()->count()),
-                'sudah_selesai' => $nilai?->sudahSelesai() ?? false,
-            ];
-        }
-
-        // Peringkat diberikan setelah semua nilai terkumpul, jadi dua orang
-        // dengan nilai sama sama-sama mendapat peringkat yang sama.
-        usort($hasil, fn (array $a, array $b) => [$b['nilai'], $a['nama']] <=> [$a['nilai'], $b['nama']]);
-
-        $peringkat = 0;
-        $sebelumnya = null;
-
-        foreach ($hasil as $index => $baris) {
-            if ($baris['nilai'] !== $sebelumnya) {
-                $peringkat = $index + 1;
-                $sebelumnya = $baris['nilai'];
-            }
-
-            $hasil[$index]['peringkat'] = $peringkat;
-        }
-
-        return $hasil;
     }
 }

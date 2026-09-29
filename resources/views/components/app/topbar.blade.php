@@ -44,8 +44,8 @@
 
             {{-- Parameter halaman (mis. tab aktif) ikut dibawa supaya hasil
                  pencarian tidak memantul ke tab default. --}}
-            @foreach ($param as $nama => $nilai)
-                <input type="hidden" name="{{ $nama }}" value="{{ $nilai }}">
+            @foreach ($param as $kunci => $nilai)
+                <input type="hidden" name="{{ $kunci }}" value="{{ $nilai }}">
             @endforeach
 
             <div class="relative">
@@ -102,16 +102,7 @@
 
                     <span class="hidden min-w-0 flex-col leading-tight sm:flex">
                         <span class="truncate text-sm font-semibold text-dark">{{ $nama }}</span>
-                        <span class="truncate text-[11px] font-medium text-dark/45">
-                            {{ $pengguna?->isAdmin() ? 'Admin' : 'Siswa' }}
-                        </span>
                     </span>
-
-                    <svg class="h-4 w-4 shrink-0 text-dark/45 transition-transform group-open:rotate-180" fill="none"
-                        stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"
-                        aria-hidden="true">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
-                    </svg>
                 </summary>
 
                 {{-- absolute + right-0: menu turun dari chip, bukan dari

@@ -526,10 +526,10 @@ function initDialog() {
 }
 
 /**
- * Tombol "Simpan & Lanjut" di halaman soal TIDAK ditangani di sini.
+ * Tombol "Selanjutnya" di halaman soal TIDAK ditangani di sini.
  *
  * Semula ikut di modul ini, sekarang pindah ke quiz-kerjakan.js supaya
- * halaman soal punya satu berkas sendiri: timer, navigator mini, dan
+ * halaman soal punya satu berkas sendiri: timer, dialog daftar soal, dan
  * pemeriksaan jawaban dituliskan dalam satu tempat.
  */
 

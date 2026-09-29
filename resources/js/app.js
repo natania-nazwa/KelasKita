@@ -216,13 +216,18 @@ function initCari() {
 /**
  * Bookmark.
  *
- * Materi memakai tabel tb_simpanan_materi, jadi statusnya sama di
- * perangkat mana pun. Daftarnya dibaca sekali lewat meta
- * "simpanan-daftar", lalu tiap klik mengirim POST ke "simpanan-toggle"
- * (URL-nya masih berisi "__slug__" yang diganti di sini).
+ * Materi maupun quiz memakai tabel simpanan di database (tb_simpanan_materi
+ * dan tb_simpanan_quiz), jadi statusnya sama di perangkat mana pun.
+ * Daftar tiap ruang dibaca sekali lewat meta "simpanan-*-daftar", lalu tiap
+ * klik mengirim POST ke "simpanan-toggle" (URL-nya masih berisi "__slug__"
+ * atau "__id__" yang diganti di sini).
  *
- * Quiz masih di localStorage dan dipisah lewat atribut
- * data-bookmark-ruang="quiz" karena belum punya tabel penyimpanan.
+ * Kunci materi adalah slug, kunci quiz adalah id, karena kedua tombolnya
+ * memang memakai kunci yang dipakai halaman detailnya masing-masing.
+ *
+ * Di halaman Simpan (elemen [data-simpanan-halaman]) melepas simpanan
+ * ikut membuang kartunya dari daftar, supaya daftar tidak menampilkan
+ * barang yang sudah tidak disimpan.
  */
 function initBookmark() {
     const tombol = Array.from(document.querySelectorAll("[data-bookmark]"));
@@ -231,10 +236,39 @@ function initBookmark() {
         return;
     }
 
-    const meta = (nama) => document.querySelector(`meta[name="${nama}"]`)?.content || "";
-    const token = () => document.querySelector('meta[name="csrf-token"]')?.content || "";
-    const urlDaftar = meta("simpanan-daftar");
-    const urlToggle = meta("simpanan-toggle");
+    const meta = (nama) =>
+        document.querySelector(`meta[name="${nama}"]`)?.content || "";
+    const token = () =>
+        document.querySelector('meta[name="csrf-token"]')?.content || "";
+
+    /*
+     * Dua ruang yang sama-sama disimpan ke database. Bentuknya map supaya
+     * seluruh alur (baca daftar, klik, sinkron) cukup ditulis sekali untuk
+     * keduanya.
+     */
+    const ruangAda = ["materi", "quiz"];
+
+    const urlDaftar = {
+        materi: meta("simpanan-daftar"),
+        quiz: meta("simpanan-quiz-daftar"),
+    };
+
+    const urlToggle = {
+        materi: meta("simpanan-toggle"),
+        quiz: meta("simpanan-quiz-toggle"),
+    };
+
+    const kunci = {
+        materi: "__slug__",
+        quiz: "__id__",
+    };
+
+    const kunciDaftar = {
+        materi: "slug",
+        quiz: "id",
+    };
+
+    const halamanSimpanan = document.querySelector("[data-simpanan-halaman]");
 
     const terapkan = (el, tersimpan) => {
         el.setAttribute("aria-pressed", tersimpan ? "true" : "false");
@@ -253,64 +287,83 @@ function initBookmark() {
     const dariRuang = (ruang) =>
         tombol.filter((el) => (el.dataset.bookmarkRuang || "materi") === ruang);
 
-    const tombolMateri = dariRuang("materi");
-    const tombolQuiz = dariRuang("quiz");
-
-    // Satu slug bisa punya lebih dari satu tombol (kartu daftar + kepala
+    // Satu kunci bisa punya lebih dari satu tombol (kartu daftar + kepala
     // detail), jadi semuanya diperbarui bersama supaya tidak pernah beda.
-    const sinkronMateri = (slug, tersimpan) => {
-        tombolMateri
-            .filter((el) => el.dataset.bookmark === slug)
+    const sinkron = (ruang, nilai, tersimpan) => {
+        dariRuang(ruang)
+            .filter((el) => el.dataset.bookmark === nilai)
             .forEach((el) => terapkan(el, tersimpan));
     };
 
-    /* ---------- Ruang quiz: localStorage ---------- */
-
-    const kunciQuiz = "kk-quiz-disimpan";
-
-    const bacaQuiz = () => {
-        try {
-            return JSON.parse(window.localStorage.getItem(kunciQuiz) || "[]");
-        } catch {
-            return [];
-        }
-    };
-
-    const tulisQuiz = (daftar) => {
-        try {
-            window.localStorage.setItem(kunciQuiz, JSON.stringify(daftar));
-        } catch {
-            // Mode privat / storage penuh: bookmark tetap jalan di sesi ini.
-        }
-    };
-
-    const daftarQuiz = bacaQuiz();
-
-    tombolQuiz.forEach((el) => terapkan(el, daftarQuiz.includes(el.dataset.bookmark)));
-
-    /* ---------- Ruang materi: database ---------- */
-
     /*
-     * Status awal dari server sudah benar untuk tombol di halaman detail,
-     * tapi kartu di daftar masih mengirim aria-pressed="false" bawaan.
-     * Satu fetch membetulkan semuanya sekaligus.
+     * Status awal dari server sudah benar untuk tombol di halaman detail
+     * materi, tapi kartu di daftar masih mengirim aria-pressed="false"
+     * bawaan. Satu fetch per ruang membetulkan semuanya sekaligus.
      */
-    if (tombolMateri.length && urlDaftar) {
-        fetch(urlDaftar, {
+    ruangAda.forEach((ruang) => {
+        if (!dariRuang(ruang).length || !urlDaftar[ruang]) {
+            return;
+        }
+
+        fetch(urlDaftar[ruang], {
             headers: { Accept: "application/json" },
             credentials: "same-origin",
         })
             .then((res) => (res.ok ? res.json() : null))
             .then((data) => {
-                const tersimpan = Array.isArray(data?.slug) ? data.slug : [];
+                const tersimpan = Array.isArray(data?.[kunciDaftar[ruang]])
+                    ? data[kunciDaftar[ruang]].map(String)
+                    : [];
 
-                tombolMateri.forEach((el) => terapkan(el, tersimpan.includes(el.dataset.bookmark)));
+                dariRuang(ruang).forEach((el) =>
+                    terapkan(el, tersimpan.includes(el.dataset.bookmark)),
+                );
             })
             .catch(() => {
                 // Gagal memuat daftar: status dari server (halaman detail)
                 // tetap dipertahankan, kartu lain dibiarkan sesuai markup.
             });
-    }
+    });
+
+    /*
+     * Di halaman Simpan, kartu yang baru dilepas simpanannya keluar dari
+     * daftar: kartu tetap ada sampai server mengonfirmasi, jadi kegagalan
+     * jaringan tidak membuat kartu hilang lalu muncul lagi.
+     */
+    const buangKartu = (tombol) => {
+        const kartu = tombol.closest(".kartu-materi, .kartu-quiz");
+
+        if (!kartu) {
+            return;
+        }
+
+        // Angka tab ikut diperbarui supaya tidak menampilkan jumlah yang
+        // sudah basi setelah kartunya hilang.
+        const angka = document.querySelector(
+            '[role="tab"][aria-selected="true"] .tab-karya__jumlah',
+        );
+
+        if (angka) {
+            const jumlah = Number(angka.textContent);
+            angka.textContent = String(
+                Math.max(0, (Number.isFinite(jumlah) ? jumlah : 1) - 1),
+            );
+        }
+
+        if (reducedMotion) {
+            kartu.remove();
+            return;
+        }
+
+        kartu.classList.add(
+            "transition",
+            "duration-200",
+            "opacity-0",
+            "scale-95",
+        );
+
+        window.setTimeout(() => kartu.remove(), 200);
+    };
 
     /* ---------- Klik ---------- */
 
@@ -322,32 +375,20 @@ function initBookmark() {
             event.stopPropagation();
 
             const ruang = el.dataset.bookmarkRuang || "materi";
-            const id = el.dataset.bookmark;
-
-            if (ruang === "quiz") {
-                const daftar = bacaQuiz();
-                const sudah = daftar.includes(id);
-                const baru = sudah ? daftar.filter((x) => x !== id) : [...daftar, id];
-
-                tulisQuiz(baru);
-                tombolQuiz
-                    .filter((x) => x.dataset.bookmark === id)
-                    .forEach((x) => terapkan(x, !sudah));
-
-                return;
-            }
+            const nilai = el.dataset.bookmark;
+            const pintu = urlToggle[ruang];
 
             // Optimistik dulu supaya tombol terasa instan, lalu serahkan
             // ke server sebagai pemilik keadaan sebenarnya.
             const berikutnya = el.getAttribute("aria-pressed") !== "true";
 
-            sinkronMateri(id, berikutnya);
+            sinkron(ruang, nilai, berikutnya);
 
-            if (!urlToggle) {
+            if (!pintu) {
                 return;
             }
 
-            fetch(urlToggle.replace("__slug__", encodeURIComponent(id)), {
+            fetch(pintu.replace(kunci[ruang], encodeURIComponent(nilai)), {
                 method: "POST",
                 headers: {
                     Accept: "application/json",
@@ -361,12 +402,16 @@ function initBookmark() {
                 .then((res) => (res.ok ? res.json() : null))
                 .then((data) => {
                     if (data && typeof data.tersimpan === "boolean") {
-                        sinkronMateri(id, data.tersimpan);
+                        sinkron(ruang, nilai, data.tersimpan);
+
+                        if (halamanSimpanan && !data.tersimpan) {
+                            buangKartu(el);
+                        }
                     }
                 })
                 .catch(() => {
                     // Jaringan gagal: kembalikan tombol ke keadaan semula.
-                    sinkronMateri(id, !berikutnya);
+                    sinkron(ruang, nilai, !berikutnya);
                 });
         });
     });
@@ -600,11 +645,124 @@ function initUiuxNilai() {
     }
 }
 
+/*
+ * Halaman "Simpan": daftar kartu yang panjangnya tidak dibatasi
+ * pagination.
+ *
+ * Tautan "Muat lagi" yang di-render Blade tetap tautan biasa ke
+ * ?page=2, jadi tanpa JavaScript daftar tetap bisa dibaca habis. Kalau
+ * JavaScript jalan, tautan itu malah diperlakukan sebagai pemicu
+ * pemuatan: kartu berikutnya disisipkan ke dalam grid yang sudah ada
+ * (data-simpan-grid), lalu tautannya diarahkan ke halaman setelahnya.
+ * Kalau tombolnya sudah terlihat di layar, halaman berikutnya dimuat
+ * duluan, jadi menggulir ke bawah tidak pernah berhenti di halaman
+ * yang sama.
+ *
+ * Elemen grid punya opacity 0 sampai dapat kelas .is-reveal, dan itu
+ * hanya dipasang initReveal() sekali saat halaman pertama dimuat.
+ * Karena itu kartu yang baru disisipkan langsung diberi kelas itu,
+ * kalau tidak kartunya tidak terlihat sama sekali.
+ */
+function initMuatLebih() {
+    const tautan = document.querySelector("[data-muat-lebih]");
+    const grid = document.querySelector("[data-simpan-grid]");
+
+    if (!tautan || !grid) {
+        return;
+    }
+
+    let sedang = false;
+
+    const sisipkan = (html) => {
+        const sebelumnya = new Set(Array.from(grid.children));
+
+        grid.insertAdjacentHTML("beforeend", html);
+
+        Array.from(grid.children).forEach((el) => {
+            if (!sebelumnya.has(el)) {
+                el.classList.add("is-reveal");
+            }
+        });
+    };
+
+    const muat = async (alamat) => {
+        if (sedang || !alamat) {
+            return;
+        }
+
+        sedang = true;
+        tautan.setAttribute("aria-busy", "true");
+
+        try {
+            const res = await fetch(alamat, {
+                headers: { Accept: "application/json" },
+                credentials: "same-origin",
+            });
+
+            const data = res.ok ? await res.json() : null;
+
+            if (!data || typeof data.kartu !== "string") {
+                return;
+            }
+
+            sisipkan(data.kartu);
+
+            // null = tidak ada halaman berikutnya, jadi tombolnya
+            // dibuang dan tidak ada yang perlu dimuat lagi.
+            if (data.berikutnya) {
+                tautan.setAttribute("href", data.berikutnya);
+            } else {
+                tautan.remove();
+            }
+        } catch {
+            // Jaringan gagal: tautan dibiarkan apa adanya, jadi klik
+            // berikutnya masih membuka halaman penuh sebagai cadangan.
+        } finally {
+            sedang = false;
+            tautan.removeAttribute("aria-busy");
+        }
+    };
+
+    tautan.addEventListener("click", (event) => {
+        // Modifier ditekan atau klik bukan tombol kiri = membuka di tab
+        // lain, jadi halaman ini tidak perlu dimuat.
+        if (
+            event.metaKey ||
+            event.ctrlKey ||
+            event.shiftKey ||
+            event.button !== 0
+        ) {
+            return;
+        }
+
+        event.preventDefault();
+        muat(tautan.getAttribute("href"));
+    });
+
+    if ("IntersectionObserver" in window) {
+        const pemantau = new IntersectionObserver(
+            (entries) => {
+                entries.forEach((entry) => {
+                    if (entry.isIntersecting) {
+                        muat(tautan.getAttribute("href"));
+                    }
+                });
+            },
+            // Dilebihkan 400px supaya halaman berikutnya sudah siap
+            // sebelum tombolnya benar-benar terlihat.
+            { rootMargin: "0px 0px 400px 0px" },
+        );
+
+        pemantau.observe(tautan);
+    }
+}
+
 initReveal();
 initScrollProgress();
 initNavSpy();
 initCari();
 initBookmark();
 initQuizMuat();
+initMuatLebih();
 initKonfirmasi();
 initUiuxNilai();

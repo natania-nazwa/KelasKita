@@ -32,7 +32,7 @@
         ];
 @endphp
 
-<div class="mt-5 flex flex-col items-center overflow-clip rounded-[2rem] border border-lavender bg-white px-6 py-16 text-center shadow-[0_20px_45px_-34px_rgba(33,26,58,0.4)]">
+<div class="karya-kosong">
 
     <span class="relative flex h-16 w-16 items-center justify-center">
         <span class="absolute inset-0 rounded-3xl bg-lavender/70 blur-xl" aria-hidden="true"></span>
@@ -50,7 +50,7 @@
 
     @if ($alasan === 'cari')
         <a href="{{ route('user.karya-saya', array_filter(['tab' => $tab !== 'materi' ? $tab : null], fn ($n) => filled($n))) }}"
-            class="mt-6 inline-flex items-center gap-2 rounded-full bg-primary px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-primary-dark">
+            class="tombol-materi mt-6 inline-flex items-center gap-2 rounded-full bg-primary px-5 py-2.5 text-sm font-semibold text-white">
             Reset Pencarian
         </a>
     @elseif ($tab === 'quiz')

@@ -45,15 +45,36 @@ class MateriKelolaController extends Controller
         $data = $request->isian();
         $berkasBaru = BerkasMateri::simpan($request);
 
+        /*
+         * Tombol Hapus pada thumbnail dikirim sebagai thumbnail_hapus.
+         * Berkas barunya menang kalau pengguna juga mengunggah pengganti,
+         * jadi bendera ini hanya berarti kalau tidak ada berkas baru.
+         */
+        $buangThumbnail = $request->boolean('thumbnail_hapus')
+            && ! isset($berkasBaru['thumbnail']);
+
+        /*
+         * Berkas lama ditangkap sebelum fill(): begitu diisi, kolomnya sudah
+         * menunjuk berkas baru, jadi berkas lama yang justru harus dibuang
+         * bisa terlewat dan menumpuk di disk.
+         */
+        $berkasLama = $item->thumbnail;
+
+        $item->fill([
+            ...$data,
+            ...$berkasBaru,
+            ...($buangThumbnail ? ['thumbnail' => null] : []),
+        ])->save();
+
         // Berkas yang diganti harus dihapus supaya storage tidak menumpuk
         // berkas yang sudah tidak dirujuk materi mana pun.
-        foreach (['thumbnail', 'audio'] as $kolom) {
-            if (isset($berkasBaru[$kolom])) {
-                BerkasMateri::hapus($item->{$kolom});
-            }
+        if (isset($berkasBaru['thumbnail'])) {
+            BerkasMateri::hapus($berkasLama);
         }
 
-        $item->fill([...$data, ...$berkasBaru])->save();
+        if ($buangThumbnail) {
+            BerkasMateri::hapus($berkasLama);
+        }
 
         /*
          * Status tidak pernah diubah diam-diam oleh pemilik. Satu-satunya
@@ -101,7 +122,7 @@ class MateriKelolaController extends Controller
         $item = $this->materiMilik($request, $materi);
         $nama = $item->nama;
 
-        BerkasMateri::hapus($item->thumbnail, $item->audio);
+        BerkasMateri::hapus($item->thumbnail);
         $item->delete();
 
         return redirect()

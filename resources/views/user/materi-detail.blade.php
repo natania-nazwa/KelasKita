@@ -8,8 +8,12 @@
         supaya latar bertekstur menutup seluruh viewport, lalu padding kecil
         dikembalikan sebagai jarak kartu. Nilainya harus selalu pasangan:
         -m-6 dengan p-4, dan lg:-m-10 dengan lg:p-5.
+
+        min-h-nya 100dvh, bukan 100dvh dikurangi 4rem: top bar halaman ini
+        disembunyikan (lihat $sembunyiTopbar di layouts/app), jadi tidak ada
+        lagi baris setinggi 4rem di atas yang perlu dikurangi.
     --}}
-    <div class="kanvas-materi -m-6 min-h-[calc(100dvh-4rem)] p-4 sm:p-5 lg:-m-10 lg:p-5">
+    <div class="kanvas-materi -m-6 min-h-[100dvh] p-4 sm:p-5 lg:-m-10 lg:p-5">
 
         {{-- 1. Kembali ke daftar; filter yang sedang aktif ikut dibawa. --}}
         <div class="mb-3 sm:mb-4">
@@ -35,11 +39,15 @@
             Proporsi 27 : 73 mengikuti rancangan halaman. Sidebar baru tampil
             kalau materi punya lebih dari satu seksi; materi satu halaman
             jadi satu kolom penuh supaya tidak ada ruang kosong di kiri.
+
+            Daftar Isi sengaja TIDAK memakai position: sticky. Ia harus ikut
+            ter-scroll bersama halaman dan hilang ke atas begitu digulir,
+            supaya tidak menepa isi yang sedang dibaca.
         --}}
         @if (count($detail['seksi']) > 1)
             <div class="mt-4 grid items-start gap-6 sm:mt-5 lg:grid-cols-[minmax(0,27fr)_minmax(0,73fr)]">
 
-                <div class="min-w-0 lg:sticky lg:top-24">
+                <div class="min-w-0">
                     <x-materi.detail-daftar-isi :seksi="$detail['seksi']" />
                 </div>
 
@@ -53,18 +61,7 @@
             </div>
         @endif
 
-        {{-- 4. Audio pembelajaran bila materi punya rekaman. --}}
-        @if (filled($detail['audio']))
-            <div class="kartu-detail mt-4 p-4 sm:mt-5 sm:p-5">
-                <p class="font-mono text-[10px] font-bold uppercase tracking-[0.16em] text-primary">
-                    Dengarkan materi
-                </p>
-
-                <audio controls preload="metadata" class="mt-3 w-full" src="{{ $detail['audio'] }}"></audio>
-            </div>
-        @endif
-
-        {{-- 5. Saran baca. Kalau semua materi lain berasal dari kategori yang
+        {{-- 4. Saran baca. Kalau semua materi lain berasal dari kategori yang
              sama, namanya disebut; kalau bercampur, judulnya netral saja. --}}
         @if ($terkini !== [])
             <section class="mt-6 sm:mt-8">

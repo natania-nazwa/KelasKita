@@ -6,7 +6,7 @@ use App\Support\BerkasMateri;
 use Tests\TestCase;
 
 /**
- * URL publik thumbnail & audio materi.
+ * URL publik thumbnail materi.
  *
  * Kolom thumbnail menyimpan dua bentuk nilai: path unggahan di disk publik
  * (mis. "thumbnails/abc.jpg") dan URL penuh untuk data contoh. Keduanya
@@ -31,6 +31,5 @@ class BerkasMateriTest extends TestCase
     public function test_path_unggahan_mempertahankan_nama_folder(): void
     {
         $this->assertSame(asset('storage/thumbnails/abc.jpg'), BerkasMateri::url('thumbnails/abc.jpg'));
-        $this->assertSame(asset('storage/audio/abc.mp3'), BerkasMateri::url('audio/abc.mp3'));
     }
 }

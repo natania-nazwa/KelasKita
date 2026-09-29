@@ -5,7 +5,7 @@
  *   - daftar bab (tambah, pilih, rename, duplikat, urutkan, hapus)
  *   - editor rich text sederhana berbasis contenteditable
  *   - preview yang selalu mengikuti bab aktif
- *   - unggah thumbnail/audio + character counter
+ *   - unggah thumbnail + character counter
  *   - menyusun field "isi" (teks polos) sebelum form dikirim
  *
  * Modul ini berhenti langsung kalau halamannya tidak dibuka, jadi
@@ -46,15 +46,13 @@ function initTambahMateri(akar) {
     const thumbnailImg = $("[data-thumbnail-img]");
     const thumbnailHapus = $("[data-thumbnail-hapus]");
     const thumbnailError = $("[data-thumbnail-error]");
+    const thumbnailFlagHapus = $("[data-thumbnail-hapus-flag]");
+    const thumbnailKini = $("[data-thumbnail-kini]");
     const thumbnailZoom = $("[data-thumbnail-zoom]");
     const thumbnailZoomNilai = $("[data-thumbnail-zoom-nilai]");
     const thumbnailPerbesar = $("[data-thumbnail-perbesar]");
     const thumbnailPerkecil = $("[data-thumbnail-perkecil]");
     const thumbnailReset = $("[data-thumbnail-reset]");
-
-    const audioInput = $("[data-audio-input]");
-    const audioNama = $("[data-audio-nama]");
-    const audioError = $("[data-audio-error]");
 
     const gambarInput = $("[data-gambar-input]");
 
@@ -63,26 +61,43 @@ function initTambahMateri(akar) {
     const tabPreview = $("[data-tab-preview]");
     const panelBab = $("[data-panel-bab]");
     const panelPreview = $("[data-panel-preview]");
+    const panelIsian = $("[data-isian-panel]");
 
+    /*
+     * Elemen pratinjau. Semuanya memakai komponen halaman detail yang
+     * sama (x-materi.detail-kepala dan kartu seksi), jadi yang ada di sini
+     * hanya titik tempat isinya ditimpa: judul, badge, thumbnail, dan isi
+     * bab.
+     */
     const p = {
         indeks: $("[data-preview-indeks]"),
         bar: $("[data-preview-bar]"),
-        kategori: $("[data-preview-kategori]"),
-        jumlahBadge: $("[data-preview-bab-badge]"),
-        judul: $("[data-preview-judul]"),
-        bab: $("[data-preview-bab]"),
-        babJudul: $("[data-preview-bab-judul]"),
-        isi: $("[data-preview-isi]"),
-        outline: $("[data-preview-outline]"),
         posisi: $("[data-preview-posisi]"),
         prev: $("[data-preview-prev]"),
         next: $("[data-preview-next]"),
-        bingkai: $("[data-preview-thumbnail]"),
-        thumbImg: $("[data-preview-thumbnail-img]"),
-        dengar: $("[data-preview-dengar]"),
-        dengarLabel: $("[data-preview-dengar-label]"),
-        dengarHint: $("[data-preview-dengar-hint]"),
+
+        judul: $("[data-pratinjau-judul]"),
+        kategori: $("[data-pratinjau-kategori]"),
+        kategoriIkon: $("[data-pratinjau-kategori-ikon]"),
+        kesulitan: $("[data-pratinjau-kesulitan]"),
+        thumbnail: $("[data-pratinjau-thumbnail]"),
+        thumbIkon: $("[data-pratinjau-thumb-ikon]"),
+        waktu: $("[data-pratinjau-waktu]"),
+
+        bab: $("[data-preview-bab]"),
+        isi: $("[data-preview-isi]"),
     };
+
+    /* Warna lencana tingkat kesulitan, sama dengan yang dipakai
+       components/materi/detail-kepala.blade.php. */
+    const WARNA_KESULITAN = {
+        mudah: "bg-[#dcfce7] text-[#15803d]",
+        sedang: "bg-[#fef3c7] text-[#b45309]",
+        sulit: "bg-[#fee2e2] text-[#b91c1c]",
+    };
+
+    const kesulitan = $("[data-kesulitan]");
+    const estimasiWaktu = $("#estimasi_waktu");
 
     const saklar = $("[data-publikasikan]");
     const wadahCatatan = $("[data-catatan-wadah]");
@@ -96,8 +111,6 @@ function initTambahMateri(akar) {
     let bab = [];
     let aktifId = null;
     let urlThumbnail = "";
-    let urlAudio = "";
-    let audio = null;
     let menungguHapus = null;
     let idSeret = null;
     let tundaPreview = null;
@@ -110,7 +123,7 @@ function initTambahMateri(akar) {
      */
     let potong = { zoom: 1, nx: 0, ny: 0 };
 
-    /** Batas ukuran berkas thumbnail/audio: 100MB. */
+    /** Batas ukuran berkas thumbnail: 100MB. */
     const BATAS_BERKAS = 100 * 1024 * 1024;
 
     const uid = () => "bab-" + Math.random().toString(36).slice(2, 9);
@@ -137,6 +150,16 @@ function initTambahMateri(akar) {
 
         // Tombol tambah bab hanya relevan pada tab daftar bab.
         tombolTambah.classList.toggle("hidden", diPreview);
+
+        /*
+         * Kartu "Isi Materi" disembunyikan selama pratinjau yang terbuka.
+         * Editor itu yang paling panjang di halaman, dan isinya persis
+         * apa yang sudah sedang dibaca di pratinjau, jadi menampilkan dua
+         *-duanya cuma membuat halaman jauh lebih panjang tanpa menambah
+         * informasi. Yang disembunyikan hanya tampilannya: isian editor tetap
+         * ada dan tetap ikut terkirim saat form disimpan.
+         */
+        panelIsian?.classList.toggle("hidden", diPreview);
 
         // Bingkai preview tadinya display:none, jadi posisi potongan
         // thumbnail dihitung ulang begitu tabnya terbuka.
@@ -629,6 +652,47 @@ function initTambahMateri(akar) {
         tundaPreview = window.setTimeout(renderPratinjau, 140);
     }
 
+    /*
+     * Warna lencana dan ikon kategori diambil dari <option> kategori di
+     * form, bukan dari daftar hardcode di JavaScript. Jadi katalog di
+     * App\Models\Pelajaran tetap satu-satunya sumber warna kategori.
+     */
+    function terangkanKategori() {
+        const terpilih = kategori.selectedOptions[0];
+        const nama = (terpilih?.textContent || "Pilih kategori").trim();
+        const ikon = terpilih?.dataset.ikon || "";
+
+        p.kategori.textContent = nama;
+        p.kategoriIkon.textContent = ikon;
+
+        if (ikon) {
+            p.kategoriIkon.classList.remove("hidden");
+        } else {
+            p.kategoriIkon.classList.add("hidden");
+        }
+
+        // Tanpa thumbnail, kartu kepala memakai ikon kategori sebagai gantinya.
+        p.thumbIkon.textContent = ikon;
+    }
+
+    function terangkanKesulitan() {
+        const nilai = kesulitan.value;
+
+        p.kesulitan.textContent = nilai;
+        p.kesulitan.className = "lencana capitalize " + (WARNA_KESULITAN[String(nilai).toLowerCase()] || "bg-lavender text-dark/60");
+    }
+
+    /*
+     * Halaman detail menulis waktu baca sebagai "10 menit baca", sementara
+     * isian form bebasnya teks ("10 menit", "1 jam"). Yang diambil
+     * angkanya supaya kalimat pratinjau sama dengan halaman detail.
+     */
+    function terangkanWaktuBaca() {
+        const angka = estimasiWaktu.value.match(/\d+/);
+
+        p.waktu.textContent = angka ? `${Number(angka[0])} menit baca` : "Belum diisi";
+    }
+
     function renderPratinjau() {
         const index = indeksAktif();
         const total = bab.length;
@@ -636,13 +700,11 @@ function initTambahMateri(akar) {
         if (!sekarang || index < 0) return;
 
         p.judul.textContent = judulMateri.value.trim() || "Judul materi belum diisi";
-        p.kategori.textContent = kategori.value
-            ? (kategori.selectedOptions[0]?.textContent || "Kategori").trim()
-            : "Kategori";
-        p.jumlahBadge.textContent = `${total} Bab`;
+        terangkanKategori();
+        terangkanKesulitan();
+        terangkanWaktuBaca();
 
-        p.bab.textContent = `Bab ${index + 1}`;
-        p.babJudul.textContent = sekarang.title;
+        p.bab.textContent = `${index + 1}. ${sekarang.title}`;
 
         const isi = sekarang.content || "";
         if (p.isi.innerHTML !== isi) {
@@ -654,29 +716,7 @@ function initTambahMateri(akar) {
         p.posisi.textContent = `Bab ${index + 1} dari ${total}`;
         p.prev.disabled = index <= 0;
         p.next.disabled = index >= total - 1;
-
-        if (total > 1) {
-            p.outline.classList.remove("hidden");
-            p.outline.innerHTML = bab
-                .map(
-                    (item, i) => `
-                    <button type="button" class="pratinjau-outline__item${item.id === aktifId ? " is-aktif" : ""}"
-                        data-outline="${esc(item.id)}">
-                        <span class="pratinjau-outline__nomor">${i + 1}</span>
-                        <span class="min-w-0 truncate">Bab ${i + 1}: ${esc(item.title)}</span>
-                    </button>`,
-                )
-                .join("");
-        } else {
-            p.outline.classList.add("hidden");
-            p.outline.innerHTML = "";
-        }
     }
-
-    p.outline.addEventListener("click", (event) => {
-        const item = event.target.closest("[data-outline]");
-        if (item) pilih(item.dataset.outline);
-    });
 
     p.prev.addEventListener("click", () => {
         const index = indeksAktif();
@@ -688,42 +728,9 @@ function initTambahMateri(akar) {
         if (index < bab.length - 1) pilih(bab[index + 1].id);
     });
 
-    p.dengar.addEventListener("click", async () => {
-        if (!urlAudio) {
-            tunjukHint("Upload audio terlebih dahulu.");
-            return;
-        }
-
-        if (!audio) {
-            audio = new Audio(urlAudio);
-            audio.addEventListener("ended", () => {
-                p.dengarLabel.textContent = "Dengarkan materi";
-            });
-        }
-
-        if (audio.paused) {
-            try {
-                await audio.play();
-                p.dengarLabel.textContent = "Jeda audio";
-            } catch {
-                tunjukHint("Audio tidak dapat diputar.");
-            }
-        } else {
-            audio.pause();
-            p.dengarLabel.textContent = "Dengarkan materi";
-        }
-    });
-
-    function tunjukHint(pesan) {
-        p.dengarHint.textContent = pesan;
-        p.dengarHint.classList.remove("hidden");
-        window.clearTimeout(tunjukHint.tunda);
-        tunjukHint.tunda = window.setTimeout(() => p.dengarHint.classList.add("hidden"), 2600);
-    }
-
     /* ============================================================
        FORM: counter, unggah, submit
-       ============================================================ */
+    ============================================================ */
 
     function hitungJudul() {
         judulCount.textContent = `${judulMateri.value.length}/100`;
@@ -733,12 +740,19 @@ function initTambahMateri(akar) {
         tipsCount.textContent = `${tips.value.length}/500`;
     }
 
+    /*
+     * Tiga isian ini ikut dibaca pratinjau, jadi perubahannya memicu
+     * render ulang: judul, kategori (nama, ikon, dan warna lencana), dan
+     * tingkat kesulitan.
+     */
     judulMateri.addEventListener("input", () => {
         hitungJudul();
         jadwalPreview();
     });
 
-    kategori.addEventListener("change", renderPratinjau);
+    kategori.addEventListener("change", jadwalPreview);
+    kesulitan.addEventListener("change", jadwalPreview);
+    estimasiWaktu.addEventListener("input", jadwalPreview);
     tips.addEventListener("input", hitungTips);
 
     /* --- Thumbnail: unggah, zoom, geser --- */
@@ -768,21 +782,18 @@ function initTambahMateri(akar) {
     }
 
     /**
-     * Terapkan zoom + posisi ke gambar form dan gambar preview.
+     * Terapkan zoom + posisi ke gambar di bingkai crop form.
+     *
+     * Kepala pratinjau memakai kelas .thumb-materi yang sudah menangani
+     * sendiri skalanya, jadi tidak ikut dihitung di sini: gambar di sana
+     * cuma object-fit, tanpa zoom dan geser.
      */
     function terapkanPotongan() {
-        const pasangan = [
-            [thumbnailBingkai, thumbnailImg],
-            [p.bingkai, p.thumbImg],
-        ];
+        if (!urlThumbnail) return;
 
-        pasangan.forEach(([bingkai, gambar]) => {
-            if (!bingkai || !gambar || !gambar.getAttribute("src")) return;
-
-            const batas = batasGeser(bingkai, gambar);
-            gambar.style.transform =
-                `translate(${batas.x * potong.nx}px, ${batas.y * potong.ny}px) scale(${potong.zoom})`;
-        });
+        const batas = batasGeser(thumbnailBingkai, thumbnailImg);
+        thumbnailImg.style.transform =
+            `translate(${batas.x * potong.nx}px, ${batas.y * potong.ny}px) scale(${potong.zoom})`;
     }
 
     function aturZoom(nilai) {
@@ -809,10 +820,28 @@ function initTambahMateri(akar) {
         thumbnailImg.style.transform = "";
         thumbnailPreview.classList.add("hidden");
         thumbnailDrop.classList.remove("hidden");
-        p.thumbImg.classList.add("hidden");
-        p.thumbImg.removeAttribute("src");
-        p.thumbImg.style.transform = "";
         thumbnailError.classList.add("hidden");
+
+        /*
+         * Gambar yang sekarang tersimpan ikut diminta dibuang lewat server.
+         * Tanpa bendera ini tombol Hapus cuma membersihkan pratinjau browser:
+         * setelah halaman dimuat ulang gambarnya muncul lagi.
+         */
+        if (thumbnailFlagHapus) {
+            thumbnailFlagHapus.value = "1";
+        }
+
+        if (thumbnailKini) {
+            thumbnailKini.classList.add("hidden");
+        }
+
+        // Kepala pratinjau memakai elemen yang sama dengan halaman detail.
+        if (p.thumbnail.getAttribute("src")) {
+            p.thumbnail.classList.add("hidden");
+            p.thumbIkon.classList.remove("hidden");
+            p.thumbnail.removeAttribute("src");
+            p.thumbnail.style.transform = "";
+        }
     }
 
     thumbnailInput.addEventListener("change", () => {
@@ -837,6 +866,19 @@ function initTambahMateri(akar) {
 
         thumbnailError.classList.add("hidden");
 
+        /*
+         * Berkas baru menggantikan yang lama, jadi permintaan hapus dari
+         * langkah sebelumnya dibatalkan dan thumbnail tersimpan kembali
+         * disebutkan sebagai berkas yang akan diganti.
+         */
+        if (thumbnailFlagHapus) {
+            thumbnailFlagHapus.value = "0";
+        }
+
+        if (thumbnailKini) {
+            thumbnailKini.classList.remove("hidden");
+        }
+
         const pembaca = new FileReader();
         pembaca.onload = () => {
             urlThumbnail = pembaca.result;
@@ -844,14 +886,14 @@ function initTambahMateri(akar) {
             thumbnailPreview.classList.remove("hidden");
             thumbnailDrop.classList.add("hidden");
 
-            p.thumbImg.src = pembaca.result;
-            p.thumbImg.classList.remove("hidden");
+            p.thumbnail.src = pembaca.result;
+            p.thumbnail.classList.remove("hidden");
+            p.thumbIkon.classList.add("hidden");
 
             resetPotongan();
 
-            // ukuranAsli baru diketahui setelah gambar selesai dibaca.
+            // Ukuran asli baru diketahui setelah gambar selesai dibaca.
             thumbnailImg.addEventListener("load", terapkanPotongan, { once: true });
-            p.thumbImg.addEventListener("load", terapkanPotongan, { once: true });
             terapkanPotongan();
         };
         pembaca.readAsDataURL(berkas);
@@ -930,31 +972,6 @@ function initTambahMateri(akar) {
     });
 
     window.addEventListener("resize", terapkanPotongan);
-
-    /* --- Audio --- */
-
-    audioInput.addEventListener("change", () => {
-        const berkas = audioInput.files && audioInput.files[0];
-        if (!berkas) return;
-
-        if (berkas.size > BATAS_BERKAS) {
-            audioError.textContent = "Ukuran audio maksimal 100MB.";
-            audioError.classList.remove("hidden");
-            audioInput.value = "";
-            return;
-        }
-
-        audioError.classList.add("hidden");
-
-        if (urlAudio) URL.revokeObjectURL(urlAudio);
-        urlAudio = URL.createObjectURL(berkas);
-        audio = null;
-
-        audioNama.textContent = berkas.name;
-        audioNama.classList.remove("hidden");
-        p.dengarLabel.textContent = "Dengarkan materi";
-        p.dengarHint.classList.add("hidden");
-    });
 
     /* --- Saklar publikasi ---
      * Saklar hanya ada di halaman tambah. Di form edit(status tidak berubah
@@ -1052,6 +1069,40 @@ function initTambahMateri(akar) {
             })),
         );
     });
+
+    /* ============================================================
+       ACTION BAR: SELAMAT DI SCROLL KE BAWAH
+       ============================================================
+       Baris tombol disembunyikan selama form masih diisi, lalu muncul
+       begitu halaman sudah di-scroll ke bawah. Yang diamati adalah pikuan
+       setinggi 1px tepat di atas baris tombol, bukan baris tombolnya
+       sendiri: baris itu menempel di dasar layar, jadi posisinya tidak
+       pernah berubah dan tidak bisa dijadikan penanda.
+
+       "Turun 15% dari bawah" dipakai sebagai batas: tanpa itu baris
+       tombol muncul sebelum pengguna benar-benar sampai ke ujung form. */
+
+    const picuActionBar = $("[data-action-bar-picu]");
+    const actionBar = $("[data-action-bar]");
+
+    function tampilkanActionBar(tampil) {
+        actionBar.classList.toggle("is-terlihat", tampil);
+    }
+
+    if (picuActionBar && actionBar) {
+        if ("IntersectionObserver" in window) {
+            const pengamatActionBar = new IntersectionObserver(
+                ([entri]) => tampilkanActionBar(entri.isIntersecting),
+                { rootMargin: "0px 0px -15% 0px" },
+            );
+
+            pengamatActionBar.observe(picuActionBar);
+        } else {
+            // Peramban tanpa IntersectionObserver: lebih baik langsung
+            // tampil daripada membiarkan form tanpa tombol simpan.
+            tampilkanActionBar(true);
+        }
+    }
 
     /* ============================================================
        MULAI

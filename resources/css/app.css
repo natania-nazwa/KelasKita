@@ -1,4 +1,4 @@
-﻿@import url('https://fonts.googleapis.com/css2?family=Caveat:wght@600;700&family=JetBrains+Mono:wght@400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500;1,600;1,700&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Caveat:wght@600;700&family=JetBrains+Mono:wght@400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500;1,600;1,700&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap');
 @import 'tailwindcss';
 
 @source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
@@ -535,7 +535,12 @@ html {
 }
 
 /* Bookmark di pojok kanan atas thumbnail. Tombol, bukan tautan, supaya
-   diklik tidak membuka halaman materi. */
+   diklik tidak membuka halaman materi.
+
+   Ikonnya selalu terisi: ungu berarti sudah disimpan, putih berarti
+   belum. Tidak ada latar lingkaran di belakangnya, jadi yang membedakan
+   hanya warna ikonny. Drop shadow tipis supaya ikon putih tetap terbaca
+   di atas thumbnail yang terang. */
 .kartu-materi__simpan {
     position: absolute;
     right: 0.625rem;
@@ -543,27 +548,31 @@ html {
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 2rem;
-    height: 2rem;
-    border-radius: 9999px;
-    background-color: rgba(255, 255, 255, 0.92);
-    color: color-mix(in oklab, var(--color-dark) 45%, transparent);
-    box-shadow: 0 6px 14px -8px rgba(33, 26, 58, 0.5);
+    width: 2.5rem;
+    height: 2.5rem;
+    color: #fff;
+    filter: drop-shadow(0 1px 2px rgba(33, 26, 58, 0.45));
     transition:
-        background-color 0.25s ease,
         color 0.25s ease,
         transform 0.25s ease;
 }
 
+.kartu-materi__simpan path {
+    fill: currentColor;
+}
+
 .kartu-materi__simpan:hover {
-    background-color: #fff;
-    color: var(--color-primary);
-    transform: scale(1.08);
+    transform: scale(1.12);
+}
+
+.kartu-materi__simpan:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
 }
 
 .kartu-materi__simpan[aria-pressed='true'] {
-    background-color: var(--color-primary);
-    color: #fff;
+    color: var(--color-primary);
+    filter: drop-shadow(0 1px 2px rgba(33, 26, 58, 0.25));
 }
 
 .kartu-materi__badan {
@@ -773,17 +782,23 @@ html {
 }
 
 /*
- * Jarak berhenti scroll harus melebihi tinggi top bar (4rem) supaya judul
- * seksi tidak tertutup saat tautan Daftar Isi diklik. Di mobile ada header
- * kedua yang menempel di bawah top bar, jadi jaraknya ditambah lagi.
+ * Jarak berhenti scroll saat tautan Daftar Isi diklik, supaya judul seksi
+ * tidak tertutup.
+ *
+ * Di ponsel dan tablet yang menutupi hanya header mobile (baris logo +
+ * strip menu), jadi jaraknya mengikuti tinggi header itu.
+ *
+ * Di layar lebar tidak ada apa pun yang menutupi: top bar halaman ini
+ * disembunyikan dan header mobile sudah hilang, jadi cukup ruang kecil
+ * supaya judul tidak menempel tepi atas.
  */
 .materi-seksi {
-    scroll-margin-top: 7.5rem;
+    scroll-margin-top: 7rem;
 }
 
 @media (min-width: 1024px) {
     .materi-seksi {
-        scroll-margin-top: 5.5rem;
+        scroll-margin-top: 2rem;
     }
 }
 
@@ -955,7 +970,7 @@ html {
 
 /*
  * Baris metadata + tombol Simpan. gap horizontal 1rem (16px) berada di
- * rentang 14–18px yang diminta rancangan, dan margin-left:auto menekan
+ * rentang 14�18px yang diminta rancangan, dan margin-left:auto menekan
  * tombolnya ke ujung kanan pada layar lebar.
  */
 .kartu-kepala__meta {
@@ -1557,7 +1572,8 @@ html {
 }
 
 /* Bookmark di pojok kanan atas thumbnail. Tombol, bukan tautan, supaya
-   diklik tidak membuka halaman detail quiz. */
+   diklik tidak membuka halaman detail quiz. Bentuk dan warnanya sama
+   persis dengan tombol bookmark di kartu materi. */
 .kartu-quiz__simpan {
     position: absolute;
     right: 0.625rem;
@@ -1566,27 +1582,31 @@ html {
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 2rem;
-    height: 2rem;
-    border-radius: 9999px;
-    background-color: rgba(255, 255, 255, 0.92);
-    color: color-mix(in oklab, var(--color-dark) 45%, transparent);
-    box-shadow: 0 6px 14px -8px rgba(33, 26, 58, 0.5);
+    width: 2.5rem;
+    height: 2.5rem;
+    color: #fff;
+    filter: drop-shadow(0 1px 2px rgba(33, 26, 58, 0.45));
     transition:
-        background-color 0.25s ease,
         color 0.25s ease,
         transform 0.25s ease;
 }
 
+.kartu-quiz__simpan path {
+    fill: currentColor;
+}
+
 .kartu-quiz__simpan:hover {
-    background-color: #fff;
-    color: var(--color-primary);
-    transform: scale(1.08);
+    transform: scale(1.12);
+}
+
+.kartu-quiz__simpan:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
 }
 
 .kartu-quiz__simpan[aria-pressed='true'] {
-    background-color: var(--color-primary);
-    color: #fff;
+    color: var(--color-primary);
+    filter: drop-shadow(0 1px 2px rgba(33, 26, 58, 0.25));
 }
 
 .kartu-quiz__badan {
@@ -1810,6 +1830,33 @@ html {
     font-weight: 600;
     color: rgba(255, 255, 255, 0.75);
 }
+
+/* ---------- Pintasan di dalam papan Quiz ----------
+   Tombol "Masukkan Kode" duduk di baris yang sama dengan lencana.
+   Bentuknya sengaja meniru lencana itu (kaca putih di atas ungu),
+   jadi terbaca sebagai bagian dari papan, bukan objek yang ditempel
+   di atasnya. */
+.quiz-kepala__aksi {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    border-radius: 9999px;
+    background-color: rgba(255, 255, 255, 0.16);
+    padding: 0.45rem 0.9rem;
+    font-size: 0.8125rem;
+    font-weight: 700;
+    color: #fff;
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.28);
+    transition:
+        background-color 0.2s ease,
+        box-shadow 0.2s ease;
+}
+
+.quiz-kepala__aksi:hover {
+    background-color: rgba(255, 255, 255, 0.26);
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.45);
+}
+
 
 /* ---------- Kolom cari + filter di dalam hero ---------- */
 .quiz-kepala .kolom-cari,
@@ -2180,40 +2227,6 @@ html {
         0 24px 44px -26px color-mix(in oklab, var(--k) 60%, transparent);
 }
 
-/* Varian kartu pertama quick action: gradasi ungu, teks jadi putih. */
-.dash-kartu--sorot {
-    border-color: transparent;
-    background-image: linear-gradient(
-        135deg,
-        #a66bea 0%,
-        var(--color-primary) 55%,
-        var(--color-primary-dark) 100%
-    );
-    box-shadow: 0 14px 30px -18px
-        color-mix(in oklab, var(--color-primary) 85%, transparent);
-}
-
-.dash-kartu--sorot:hover,
-.dash-kartu--sorot:focus-visible {
-    border-color: transparent;
-    box-shadow: 0 22px 40px -18px
-        color-mix(in oklab, var(--color-primary) 92%, transparent);
-}
-
-.dash-kartu--sorot .dash-aksi-judul,
-.dash-kartu--sorot .dash-aksi-panah {
-    color: #fff;
-}
-
-.dash-kartu--sorot .dash-aksi-desk {
-    color: rgba(255, 255, 255, 0.78);
-}
-
-.dash-kartu--sorot .dash-ikon-kotak {
-    background-color: rgba(255, 255, 255, 0.2);
-    color: #fff;
-}
-
 /* Kepala seksi: ikon kotak + judul, dengan aksi "Lihat Semua" di kanan. */
 .dash-kepala {
     display: flex;
@@ -2292,18 +2305,49 @@ html {
     color: color-mix(in oklab, var(--color-dark) 38%, transparent);
 }
 
-/* Kartu aksi cepat */
+/* Kartu aksi cepat: tiga kartu berbagi satu bentuk, tiap kartu memakai
+   warna lembut sendiri lewat --k. Warnanya tidak pernah dipakai pekat
+   penuh: kartu hanya mewarnai latar (--k dicampur putih) sementara ikon
+   dan teks tetap gelap dari --k-gelap supaya kontrasnya tetap aman. */
 .dash-aksi {
     gap: 0.75rem;
     height: 100%;
     padding: 1rem;
+    border-color: color-mix(in oklab, var(--k) 30%, var(--color-lavender));
+    background-color: color-mix(in oklab, var(--k) 13%, white);
+    box-shadow: 0 1px 2px rgba(33, 26, 58, 0.03);
+}
+
+.dash-aksi:hover,
+.dash-aksi:focus-visible {
+    background-color: color-mix(in oklab, var(--k) 21%, white);
+}
+
+/* Kartu pertama tetap yang paling menonjol, tapi lewat tint yang sedikit
+   lebih pekat dan garis yang lebih tegas, bukan gradasi solid dengan teks
+   putih seperti sebelumnya. Aturan ini sengaja ada setelah .dash-aksi
+   supaya tint yang lebih pekat itu yang menang. */
+.dash-kartu--sorot {
+    border-color: color-mix(in oklab, var(--k) 48%, var(--color-lavender));
+    background-color: color-mix(in oklab, var(--k) 22%, white);
+}
+
+.dash-kartu--sorot:hover,
+.dash-kartu--sorot:focus-visible {
+    background-color: color-mix(in oklab, var(--k) 30%, white);
+}
+
+/* Kotak ikon di kartu aksi butuh tint lebih kuat supaya bentuknya tetap
+   terbaca di atas latar yang sudah berwarna. */
+.dash-aksi .dash-ikon-kotak {
+    background-color: color-mix(in oklab, var(--k) 30%, white);
 }
 
 .dash-aksi-judul {
     font-size: 0.875rem;
     font-weight: 700;
     line-height: 1.35;
-    color: var(--color-dark);
+    color: var(--k-gelap, var(--color-primary-dark));
 }
 
 .dash-aksi-desk {
@@ -2337,98 +2381,25 @@ html {
     transform: translateX(3px);
 }
 
-/* Kartu quiz. Padding dan ukuran teks sengaja dibuat sama dengan
-   .dash-materi__* supaya baris "Materi Terbaru" dan "Quiz Terbaru" terlihat
-   sebagai satu set, keduanya juga dijajar empat kartu secara sejajar. */
-.dash-quiz {
-    gap: 0.625rem;
-    height: 100%;
-    padding: 0.75rem 0.875rem 0.875rem;
-}
+/* ============================================================
+   KARTU MATERI & QUIZ DI DASHBOARD
+   Dua section ini sengaja dibuat sebagai satu set: kelas di bawah
+   ditulis berpasangan (dash-materi__* dan dash-quiz__*) supaya
+   "Materi Terbaru" dan "Quiz Terbaru" terlihat berasal dari satu
+   desain, dan keduanya dijajar empat kartu secara sejajar.
 
-.dash-lencana {
-    display: inline-flex;
-    align-items: center;
-    align-self: flex-start;
-    max-width: 100%;
-    border-radius: 9999px;
-    background-color: color-mix(in oklab, var(--k) 12%, white);
-    padding: 0.15rem 0.5rem;
-    font-size: 0.625rem;
-    font-weight: 700;
-    color: var(--k-gelap);
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-}
+   Dipisah dari .kartu-materi / .kartu-quiz milik halaman Materi
+   dan Quiz karena lebar kolomnya berbeda: di dashboard empat kartu
+   dijajar satu baris (~200-300px per kartu), di halaman detail tiga
+   sampai empat kolom (~330px). Padding, ukuran teks, dan susunan meta
+   di bawah karena itu lebih rapat supaya tidak ada yang terpotong.
+   ============================================================ */
 
-.dash-quiz-judul {
-    font-size: 0.875rem;
-    font-weight: 700;
-    line-height: 1.35;
-    color: var(--color-dark);
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-}
+/* ---------- Struktur yang dipakai kedua kartu ---------- */
 
-.dash-quiz-meta {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 0.25rem 0.625rem;
-    font-size: 0.625rem;
-    font-weight: 500;
-    color: color-mix(in oklab, var(--color-dark) 50%, transparent);
-}
-
-.dash-quiz-meta span {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.25rem;
-}
-
-.dash-tombol {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 0.4rem;
-    width: 100%;
-    margin-top: auto;
-    border-radius: 0.75rem;
-    background-color: var(--color-primary);
-    padding: 0.5rem 0.75rem;
-    font-size: 0.75rem;
-    font-weight: 600;
-    color: #fff;
-    box-shadow: 0 10px 22px -14px
-        color-mix(in oklab, var(--color-primary) 85%, transparent);
-    transition:
-        background-color 0.25s ease,
-        box-shadow 0.25s ease,
-        transform 0.25s ease;
-}
-
-.dash-kartu--pindah:hover .dash-tombol {
-    background-color: var(--color-primary-dark);
-    transform: translateY(-1px);
-    box-shadow: 0 16px 28px -14px
-        color-mix(in oklab, var(--color-primary) 90%, transparent);
-}
-
-/* Kartu materi (dashboard).
-   Terpisah dari .kartu-materi milik halaman Materi karena lebar kolomnya
-   berbeda: di dashboard empat kartu dijajar satu baris (~200-300px per
-   kartu), di halaman Materi tiga kolom (~330px). Padding, ukuran teks, dan
-   susunan meta di bawah sengaja lebih rapat supaya tidak terpotong. */
-.dash-materi {
-    height: 100%;
-    overflow: hidden;
-}
-
-/* Thumbnail: tinggi seragam (16:9) di setiap kartu. */
-.dash-materi__gambar {
+/* Banner 16:9 di setiap kartu, tinggi seragam. */
+.dash-materi__gambar,
+.dash-quiz__gambar {
     position: relative;
     width: 100%;
     aspect-ratio: 16 / 9;
@@ -2446,9 +2417,28 @@ html {
         );
 }
 
-/* Foto asli (kalau materi punya gambar) menutupi banner dan zoom ringan
-   saat kartu di-hover. */
-.dash-materi__foto {
+/* Kabut gelap di bagian bawah banner supaya lencana dan tombol yang
+   melayang di sana tetap terbaca, baik dengan foto maupun tanpa foto.
+   ::after digambar sebagai anak terakhir, jadi lencana, badge, dan
+   bookmark di bawah diberi z-index supaya tetap di atas kabut ini. */
+.dash-materi__gambar::after,
+.dash-quiz__gambar::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    background: linear-gradient(
+        to top,
+        rgba(28, 18, 66, 0.5) 0%,
+        rgba(28, 18, 66, 0.1) 45%,
+        transparent 72%
+    );
+    pointer-events: none;
+}
+
+/* Foto asli (kalau ada) menutupi banner dan zoom ringan saat hover. */
+.dash-materi__foto,
+.dash-quiz__foto {
     width: 100%;
     height: 100%;
     object-fit: cover;
@@ -2456,12 +2446,15 @@ html {
 }
 
 .dash-kartu--pindah:hover .dash-materi__foto,
-.dash-kartu--pindah:focus-visible .dash-materi__foto {
+.dash-kartu--pindah:focus-visible .dash-materi__foto,
+.dash-kartu--pindah:hover .dash-quiz__foto,
+.dash-kartu--pindah:focus-visible .dash-quiz__foto {
     transform: scale(1.07);
 }
 
 /* Tanpa foto, ikon kategori jadi centerpiece banner. */
-.dash-materi__ikon {
+.dash-materi__ikon,
+.dash-quiz__ikon {
     position: absolute;
     inset: 0;
     display: flex;
@@ -2476,15 +2469,19 @@ html {
 }
 
 .dash-kartu--pindah:hover .dash-materi__ikon,
-.dash-kartu--pindah:focus-visible .dash-materi__ikon {
+.dash-kartu--pindah:focus-visible .dash-materi__ikon,
+.dash-kartu--pindah:hover .dash-quiz__ikon,
+.dash-kartu--pindah:focus-visible .dash-quiz__ikon {
     transform: scale(1.12) rotate(-5deg);
 }
 
-/* Badge kategori, melayang di pojok kiri bawah thumbnail. */
-.dash-materi__lencana {
+/* Badge kategori, melayang di pojok kiri bawah banner. */
+.dash-materi__lencana,
+.dash-quiz__lencana {
     position: absolute;
     left: 0.5rem;
     bottom: 0.5rem;
+    z-index: 2;
     display: inline-flex;
     align-items: center;
     max-width: calc(100% - 1rem);
@@ -2501,40 +2498,115 @@ html {
         color-mix(in oklab, var(--k-gelap) 60%, transparent);
 }
 
-/* Bookmark di pojok kanan atas thumbnail. Tombol, bukan tautan, supaya
-   diklik tidak membuka halaman materi. */
-.dash-materi__simpan {
+/* Bookmark di pojok kanan atas banner. Tombol, bukan tautan, supaya
+   diklik tidak membuka halaman detail. Ikon terisi: ungu berarti sudah
+   disimpan, putih berarti belum, tanpa latar lingkaran. */
+.dash-materi__simpan,
+.dash-quiz__simpan {
     position: absolute;
     right: 0.5rem;
     top: 0.5rem;
+    z-index: 2;
     display: flex;
     align-items: center;
     justify-content: center;
     width: 1.75rem;
     height: 1.75rem;
-    border-radius: 9999px;
-    background-color: rgba(255, 255, 255, 0.92);
-    color: color-mix(in oklab, var(--color-dark) 45%, transparent);
-    backdrop-filter: blur(4px);
-    box-shadow: 0 6px 14px -8px rgba(33, 26, 58, 0.5);
+    color: #fff;
+    filter: drop-shadow(0 1px 2px rgba(33, 26, 58, 0.45));
     transition:
-        background-color 0.25s ease,
         color 0.25s ease,
         transform 0.25s ease;
 }
 
-.dash-materi__simpan:hover {
-    background-color: #fff;
+.dash-materi__simpan path,
+.dash-quiz__simpan path {
+    fill: currentColor;
+}
+
+.dash-materi__simpan:hover,
+.dash-quiz__simpan:hover {
+    transform: scale(1.12);
+}
+
+.dash-materi__simpan:focus-visible,
+.dash-quiz__simpan:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+}
+
+.dash-materi__simpan[aria-pressed='true'],
+.dash-quiz__simpan[aria-pressed='true'] {
     color: var(--color-primary);
-    transform: scale(1.08);
+    filter: drop-shadow(0 1px 2px rgba(33, 26, 58, 0.25));
 }
 
-.dash-materi__simpan[aria-pressed="true"] {
-    background-color: var(--color-primary);
-    color: #fff;
+/* Penanda aksi ("Baca" / "Kerjakan") yang muncul saat kursor di atas
+   kartu. Semi transparan supaya tidak menutupi banner. */
+.dash-materi__aksi,
+.dash-quiz__aksi {
+    position: absolute;
+    right: 0.5rem;
+    bottom: 0.5rem;
+    z-index: 2;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    border-radius: 9999px;
+    background-color: rgba(255, 255, 255, 0.94);
+    padding: 0.2rem 0.5rem;
+    font-size: 0.625rem;
+    font-weight: 700;
+    color: var(--k-gelap);
+    white-space: nowrap;
+    box-shadow: 0 6px 14px -10px rgba(33, 26, 58, 0.6);
+    opacity: 0;
+    transform: translateY(0.35rem);
+    transition:
+        opacity 0.28s ease,
+        transform 0.28s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
-.dash-materi__badan {
+.dash-kartu--pindah:hover .dash-materi__aksi,
+.dash-kartu--pindah:focus-visible .dash-materi__aksi,
+.dash-kartu--pindah:hover .dash-quiz__aksi,
+.dash-kartu--pindah:focus-visible .dash-quiz__aksi {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.dash-materi__aksi svg,
+.dash-quiz__aksi svg {
+    transition: transform 0.25s ease;
+}
+
+.dash-kartu--pindah:hover .dash-materi__aksi svg,
+.dash-kartu--pindah:focus-visible .dash-materi__aksi svg,
+.dash-kartu--pindah:hover .dash-quiz__aksi svg,
+.dash-kartu--pindah:focus-visible .dash-quiz__aksi svg {
+    transform: translateX(2px);
+}
+
+/* Garis aksen warna kategori di sisi atas badan kartu. */
+.dash-materi__aksen,
+.dash-quiz__aksen {
+    height: 0.25rem;
+    background-image: linear-gradient(
+        90deg,
+        var(--k),
+        color-mix(in oklab, var(--k) 35%, white)
+    );
+}
+
+/* ---------- Kartu materi ---------- */
+
+.dash-materi {
+    height: 100%;
+    overflow: hidden;
+}
+
+.dash-materi__badan,
+.dash-quiz__badan {
     display: flex;
     flex: 1;
     flex-direction: column;
@@ -2542,7 +2614,29 @@ html {
     padding: 0.75rem 0.875rem 0.875rem;
 }
 
-.dash-materi__judul {
+/* Badge tingkat kesulitan, melayang di pojok kiri atas banner. Warna
+   pill-nya datang dari kelas Tailwind di markup, sama seperti badge
+   kesulitan di halaman detail materi. */
+.dash-materi__kesulitan {
+    position: absolute;
+    left: 0.5rem;
+    top: 0.5rem;
+    z-index: 2;
+    display: inline-flex;
+    align-items: center;
+    max-width: calc(100% - 2.75rem);
+    border-radius: 9999px;
+    padding: 0.15rem 0.5rem;
+    font-size: 0.625rem;
+    font-weight: 700;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    box-shadow: 0 6px 14px -10px rgba(33, 26, 58, 0.7);
+}
+
+.dash-materi__judul,
+.dash-quiz__judul {
     font-size: 0.875rem;
     font-weight: 700;
     line-height: 1.35;
@@ -2556,11 +2650,14 @@ html {
 }
 
 .dash-kartu--pindah:hover .dash-materi__judul,
-.dash-kartu--pindah:focus-visible .dash-materi__judul {
+.dash-kartu--pindah:focus-visible .dash-materi__judul,
+.dash-kartu--pindah:hover .dash-quiz__judul,
+.dash-kartu--pindah:focus-visible .dash-quiz__judul {
     color: var(--k-gelap);
 }
 
-.dash-materi__deskripsi {
+.dash-materi__deskripsi,
+.dash-quiz__deskripsi {
     margin-top: 0.375rem;
     font-size: 0.6875rem;
     line-height: 1.6;
@@ -2572,9 +2669,10 @@ html {
 }
 
 /* Meta disusun dua baris, bukan satu: di lebar 200-250px nama pembuat dan
-   pil jumlah materi tidak mungkin berdampingan tanpa salah satunya
-   terpotong. margin-top:auto tetap mendorongnya ke dasar kartu. */
-.dash-materi__meta {
+   chip waktu/bab tidak mungkin berdampingan tanpa salah satunya terpotong.
+   margin-top:auto tetap mendorongnya ke dasar kartu. */
+.dash-materi__meta,
+.dash-quiz__meta {
     display: flex;
     flex-direction: column;
     gap: 0.5rem;
@@ -2585,14 +2683,16 @@ html {
         color-mix(in oklab, var(--color-lavender) 80%, transparent);
 }
 
-.dash-materi__pembuat {
+.dash-materi__pembuat,
+.dash-quiz__pembuat {
     display: flex;
     align-items: center;
     gap: 0.5rem;
     min-width: 0;
 }
 
-.dash-materi__nama {
+.dash-materi__nama,
+.dash-quiz__nama {
     min-width: 0;
     font-size: 0.6875rem;
     font-weight: 600;
@@ -2602,9 +2702,19 @@ html {
     white-space: nowrap;
 }
 
-.dash-materi__jumlah {
+/* Kelompok chip di baris meta: waktu baca dan jumlah bab (materi), atau
+   jumlah soal (quiz). */
+.dash-materi__chip {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.375rem;
+    min-width: 0;
+}
+
+.dash-materi__jumlah,
+.dash-quiz__jumlah {
     display: inline-flex;
-    align-self: flex-start;
     align-items: center;
     gap: 0.3rem;
     border-radius: 9999px;
@@ -2620,9 +2730,53 @@ html {
     white-space: nowrap;
 }
 
-.dash-materi__jumlah svg {
+.dash-materi__jumlah svg,
+.dash-quiz__jumlah svg {
     color: var(--color-primary);
 }
+
+/* ---------- Kartu quiz ---------- */
+
+.dash-quiz {
+    height: 100%;
+    overflow: hidden;
+}
+
+/* Badge durasi, melayang di pojok kiri atas banner. */
+.dash-quiz__durasi {
+    position: absolute;
+    left: 0.5rem;
+    top: 0.5rem;
+    z-index: 2;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    border-radius: 9999px;
+    background-color: rgba(255, 255, 255, 0.92);
+    padding: 0.15rem 0.5rem;
+    font-size: 0.625rem;
+    font-weight: 700;
+    color: var(--k-gelap);
+    white-space: nowrap;
+    backdrop-filter: blur(4px);
+    box-shadow: 0 6px 14px -10px rgba(33, 26, 58, 0.6);
+}
+
+/* Badge "Quiz Saya" di sebelah judul, supaya karya sendiri mudah
+   dikenali di antara quiz yang lain. */
+.dash-quiz__milik {
+    display: inline-flex;
+    align-items: center;
+    flex-shrink: 0;
+    border-radius: 9999px;
+    background-color: color-mix(in oklab, var(--color-primary) 12%, white);
+    padding: 0.1rem 0.4rem;
+    font-size: 0.5625rem;
+    font-weight: 700;
+    color: var(--color-primary-dark);
+    white-space: nowrap;
+}
+
 
 /* Panel sidebar */
 .dash-panel {
@@ -3646,152 +3800,46 @@ html {
         border: 1px solid var(--color-ungu-line);
     }
 
-    /* ---------- Preview ---------- */
+    /* ---------- Preview ----------
+       Pratinjau memakai komponen halaman detail (kartu-kepala, kartu-detail,
+       materi-seksi, isi-materi), jadi styles-nya ikut dari blok detail
+       materi. Yang dipakai dari blok ini hanya .pratinjau-kotak, yaitu
+       penjaga min-width supaya kolom pratinjau tidak ikut melebar. */
     .pratinjau-kotak {
         min-width: 0;
     }
 
-    .pratinjau-frame {
-        overflow: hidden;
-        border-radius: 1rem;
-        border: 1px solid var(--color-ungu-line);
-        background-color: #fff;
-    }
+    /* ---------- Action bar ----------
+       Baris tombol hanya muncul setelah halaman di-scroll ke bawah, jadi
+       saat masih mengisi form tidak ada yang menutupi isi di bawahnya.
 
-    /* Isi preview dibatasi tingginya supaya kartu preview
-       tidak terlalu panjang; sisanya digulir. */
-    .pratinjau-isi {
-        max-height: 11rem;
-        overflow-y: auto;
-    }
-
-    .pratinjau-banner {
-        position: relative;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        aspect-ratio: 16 / 9;
-        background:
-            radial-gradient(circle at 78% 20%, color-mix(in oklab, var(--color-ungu) 34%, transparent), transparent 58%),
-            linear-gradient(135deg, #f3eeff, #e6dcff);
-        color: var(--color-ungu);
-    }
-
-    .pratinjau-isi h2 {
-        margin: 1rem 0 0.45rem;
-        font-size: 1.1rem;
-        font-weight: 700;
-        color: var(--color-dark);
-    }
-
-    .pratinjau-isi h3 {
-        margin: 0.85rem 0 0.4rem;
-        font-size: 1rem;
-        font-weight: 700;
-        color: var(--color-dark);
-    }
-
-    .pratinjau-isi p {
-        margin-bottom: 0.7rem;
-    }
-
-    .pratinjau-isi ul,
-    .pratinjau-isi ol {
-        margin: 0.5rem 0 0.75rem;
-        padding-left: 1.3rem;
-    }
-
-    .pratinjau-isi ul {
-        list-style: disc;
-    }
-
-    .pratinjau-isi ol {
-        list-style: decimal;
-    }
-
-    .pratinjau-isi li {
-        margin-bottom: 0.2rem;
-    }
-
-    .pratinjau-isi blockquote {
-        margin: 0.75rem 0;
-        border-left: 3px solid var(--color-ungu-soft);
-        border-radius: 0.75rem;
-        background-color: var(--color-ungu-bg);
-        padding: 0.65rem 0.85rem;
-        color: #4c4470;
-        font-size: 0.875rem;
-        font-style: italic;
-    }
-
-    .pratinjau-isi a {
-        color: var(--color-ungu);
-        text-decoration: underline;
-    }
-
-    .pratinjau-isi img {
-        display: block;
-        max-width: 100%;
-        margin: 0.75rem 0;
-        border-radius: 0.75rem;
-        border: 1px solid var(--color-ungu-line);
-    }
-
-    .pratinjau-isi > *:first-child {
-        margin-top: 0;
-    }
-
-    .pratinjau-outline {
-        display: flex;
-        flex-direction: column;
-        gap: 0.35rem;
-        border-radius: 0.85rem;
-        border: 1px solid var(--color-ungu-line);
-        background-color: var(--color-ungu-bg);
-        padding: 0.55rem;
-    }
-
-    .pratinjau-outline__item {
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
-        border-radius: 0.6rem;
-        padding: 0.4rem 0.5rem;
-        font-size: 0.75rem;
-        font-weight: 600;
-        color: var(--color-dark);
-        text-align: left;
+       Yang disembunyikan cuma opacity + visibility, bukan display: tinggi
+       baris tetap diboccer, sehingga muncul-hilangnya tidak menggeser
+       isi form. Atribut hidden tidak dipakai karena rules .sticky dan
+       utilitas flex di elemen yang sama akan mengalahinya. */
+    [data-action-bar] {
+        opacity: 0;
+        visibility: hidden;
+        transform: translateY(0.75rem);
         transition:
-            background-color 0.18s ease,
-            color 0.18s ease;
+            opacity 0.24s ease,
+            transform 0.24s ease,
+            visibility 0.24s;
     }
 
-    .pratinjau-outline__item:hover {
-        background-color: #fff;
+    [data-action-bar].is-terlihat {
+        opacity: 1;
+        visibility: visible;
+        transform: none;
     }
 
-    .pratinjau-outline__item.is-aktif {
-        background-color: var(--color-ungu);
-        color: #fff;
-    }
-
-    .pratinjau-outline__item.is-aktif .pratinjau-outline__nomor {
-        background-color: rgba(255, 255, 255, 0.25);
-        color: #fff;
-    }
-
-    .pratinjau-outline__nomor {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        flex-shrink: 0;
-        min-width: 1.35rem;
-        height: 1.35rem;
-        border-radius: 0.45rem;
-        background-color: #fff;
-        color: var(--color-ungu);
-        font-size: 0.625rem;
-        font-weight: 800;
+    @media (prefers-reduced-motion: reduce) {
+        [data-action-bar] {
+            transform: none;
+            transition:
+                opacity 0.24s ease,
+                visibility 0.24s;
+        }
     }
 
     /* ---------- Saklar publikasi ---------- */
@@ -5131,7 +5179,7 @@ html {
     }
 
     /* Tipe Benar / Salah tidak punya baris tambahan, jadi tombolnya
-       disembunyikan — display:flex di atas bisa menimpa atribut hidden. */
+       disembunyikan � display:flex di atas bisa menimpa atribut hidden. */
     .tombol-pilihan-tambah[hidden] {
         display: none;
     }
@@ -5178,7 +5226,7 @@ html {
     }
 
     /* ============================================================
-       BUILDER SOAL — LAYAR LEBAR
+       BUILDER SOAL � LAYAR LEBAR
        ------------------------------------------------------------
        Panduan langkah disusun jadi empat kolom begitu ada ruangnya,
        dengan garis tipis penghubung di celah grid.
@@ -5656,95 +5704,356 @@ html {
        KARYA SAYA
        Kartu di halaman ini memakai kartu materi/quiz yang sudah ada
        (thumbnail, lencana kategori, judul, deskripsi). Kelas di bawah
-       hanya menambah bagian yang belum ada: tab kategori, lencana
-       status, baris informasi, dan baris aksi.
+       hanya menambah bagian yang belum ada: kepala halaman, tab
+       kategori, lencana status, baris informasi, dan baris aksi.
+
+       Semua aturan tambahan ditulis dengan prefiks .karya- dan, kalau
+       menyangkut kartu, diturunkan dari .karya-kartu. Kartu materi dan
+       quiz yang sama dipakai juga di halaman Materi dan Quiz, jadi
+       perubahan di sini tidak boleh bocor ke sana.
        ============================================================ */
 
+    /* ---------- Kepala halaman (papan hero) ----------
+       Papan pastel di bagian atas halaman. Warnanya sengaja dijaga
+       lembut: ungu muda, biru langit, dan peach bercampur, bukan ungu
+       pekat seperti kepala Quiz. Karena dasarnya terang, teksnya memakai
+       ungu tua dan bukan putih supaya kontrasnya tetap nyaman dibaca. */
+    .karya-kepala {
+        position: relative;
+        overflow: hidden;
+        border-radius: 2rem;
+        background-image:
+            radial-gradient(22rem 16rem at 88% -14%, rgba(167, 139, 250, 0.55), transparent 66%),
+            radial-gradient(19rem 14rem at 6% 116%, rgba(125, 211, 252, 0.5), transparent 68%),
+            radial-gradient(17rem 13rem at 100% 108%, rgba(253, 186, 186, 0.42), transparent 70%),
+            linear-gradient(135deg, #f6f2ff 0%, #eae2ff 44%, #e6efff 100%);
+        box-shadow:
+            0 30px 58px -36px rgba(107, 85, 220, 0.55),
+            inset 0 0 0 1px rgba(124, 96, 235, 0.14);
+    }
+
+    /* Pola titik tipis supaya bidang pastel tidak terasa polos. */
+    .karya-kepala::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background-image: radial-gradient(rgba(124, 96, 235, 0.22) 1px, transparent 1px);
+        background-size: 18px 18px;
+        opacity: 0.5;
+        pointer-events: none;
+    }
+
+    /* Lingkaran besar di pojok kanan bawah: pemanis visual halaman ini. */
+    .karya-kepala::after {
+        content: '';
+        position: absolute;
+        right: -5rem;
+        bottom: -9rem;
+        width: 26rem;
+        height: 26rem;
+        border-radius: 9999px;
+        background: radial-gradient(circle, rgba(255, 255, 255, 0.85), transparent 66%);
+        pointer-events: none;
+    }
+
+    /* Isi hero naik satu tingkat supaya tidak tertutup ::before / ::after. */
+    .karya-kepala__isi {
+        position: relative;
+        z-index: 1;
+    }
+
+    /* Kaca putih di atas pastel: bentuknya sama dengan lencana di kepala
+       Materi dan Quiz, jadi ketiga halaman terasa satu keluarga. */
+    .karya-kepala__lencana {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+        border-radius: 9999px;
+        background-color: rgba(255, 255, 255, 0.72);
+        padding: 0.35rem 0.85rem;
+        font-family: var(--font-mono);
+        font-size: 0.6875rem;
+        font-weight: 600;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        color: #6d4fd6;
+        box-shadow: inset 0 0 0 1px rgba(109, 79, 214, 0.18);
+    }
+
+    .karya-kepala__judul {
+        margin-top: 0.85rem;
+        font-size: clamp(1.5rem, 3.4vw, 2.125rem);
+        font-weight: 800;
+        line-height: 1.15;
+        letter-spacing: -0.02em;
+        color: #372a7d;
+    }
+
+    .karya-kepala__deskripsi {
+        margin-top: 0.5rem;
+        max-width: 34rem;
+        font-size: 0.875rem;
+        line-height: 1.65;
+        color: rgba(55, 42, 125, 0.72);
+    }
+
+    /* Petunjuk kecil di dalam papan: memberi tahu dua hal yang selalu
+       berlaku di halaman ini, jadi tidak perlu diulang di daftar. */
+    .karya-kepala__petunjuk {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        margin-top: 1.15rem;
+    }
+
+    .karya-kepala__petunjuk > span {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.45rem;
+        border-radius: 0.9rem;
+        background-color: rgba(255, 255, 255, 0.7);
+        padding: 0.45rem 0.8rem;
+        font-size: 0.75rem;
+        font-weight: 600;
+        color: #4c3aa8;
+        box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.9);
+    }
+
+    .karya-kepala__petunjuk svg {
+        flex-shrink: 0;
+        color: #7c5ce0;
+    }
+
+    /* ---------- Kartu ringkasan (jumlah karya) ---------- */
+
+    /* Tiap kartu memakai warna kategorinya sendiri (--k), jadi empat
+       angka ini terbaca sebagai empat hal berbeda, bukan empat angka
+       yang sama di empat kotak.
+
+       Isi kartunya tidak putih polos: latarnya warna --k yang dicampur
+       putih, jadi keempatnya sudah berbeda warna sejak diamati, lalu
+       warna itu makin kuat saat kursor mendekat. */
+    .karya-angka {
+        --k: var(--color-primary);
+        --k-gelap: var(--color-primary-dark);
+        position: relative;
+        overflow: hidden;
+        gap: 0.1rem;
+        padding: 1.05rem 1.15rem 1.1rem;
+        border-color: color-mix(in oklab, var(--k) 30%, white);
+        background-color: color-mix(in oklab, var(--k) 10%, white);
+        background-image:
+            radial-gradient(13rem 8rem at 112% -34%, color-mix(in oklab, var(--k) 30%, transparent), transparent 66%),
+            radial-gradient(10rem 7rem at -12% 128%, color-mix(in oklab, var(--k) 16%, transparent), transparent 70%);
+        box-shadow:
+            0 1px 2px rgba(33, 26, 58, 0.04),
+            0 14px 28px -24px color-mix(in oklab, var(--k) 70%, transparent);
+        transition:
+            transform 0.3s cubic-bezier(0.22, 1, 0.36, 1),
+            background-color 0.3s ease,
+            border-color 0.3s ease,
+            box-shadow 0.3s ease;
+    }
+
+    .karya-angka:hover {
+        transform: translateY(-5px);
+        border-color: color-mix(in oklab, var(--k) 55%, white);
+        background-color: color-mix(in oklab, var(--k) 15%, white);
+        box-shadow:
+            0 2px 4px rgba(33, 26, 58, 0.05),
+            0 24px 44px -24px color-mix(in oklab, var(--k) 80%, transparent);
+    }
+
+    /* Garis warna di sisi atas: pengenal cepat saat empat kartu berdiri
+       sejajar dan angka besarnya sudah sama-sama besar. */
+    .karya-angka::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        height: 0.25rem;
+        width: 100%;
+        background-image: linear-gradient(
+            90deg,
+            var(--k),
+            color-mix(in oklab, var(--k) 18%, transparent)
+        );
+    }
+
+    /* Ikon kotak dibuat lebih besar, membulat, dan memakai warna
+       kategorinya, bukan lavender generik seperti di dashboard. */
+    .karya-angka .dash-ikon-kotak {
+        width: 3rem;
+        height: 3rem;
+        margin-bottom: 0.75rem;
+        border-radius: 1.1rem;
+        background-image: linear-gradient(
+            140deg,
+            color-mix(in oklab, var(--k) 40%, white),
+            color-mix(in oklab, var(--k) 16%, white)
+        );
+        box-shadow:
+            inset 0 0 0 1px color-mix(in oklab, var(--k) 26%, transparent),
+            0 8px 16px -10px color-mix(in oklab, var(--k) 70%, transparent);
+        transition:
+            transform 0.3s cubic-bezier(0.22, 1, 0.36, 1),
+            box-shadow 0.3s ease;
+    }
+
+    .karya-angka:hover .dash-ikon-kotak {
+        transform: scale(1.08) rotate(-6deg);
+        box-shadow:
+            inset 0 0 0 1px color-mix(in oklab, var(--k) 40%, transparent),
+            0 12px 22px -10px color-mix(in oklab, var(--k) 80%, transparent);
+    }
+
+    .karya-angka .dash-ikon-kotak svg {
+        width: 1.3rem;
+        height: 1.3rem;
+        stroke-width: 1.9;
+    }
+
+    /* tabular-nums supaya angka tidak bergeser saat nilainya berubah. */
+    .karya-angka__nilai {
+        font-size: 2.15rem;
+        font-weight: 800;
+        line-height: 1;
+        letter-spacing: -0.03em;
+        color: var(--k-gelap);
+        font-variant-numeric: tabular-nums;
+    }
+
+    .karya-angka__label {
+        margin-top: 0.3rem;
+        font-size: 0.8125rem;
+        font-weight: 800;
+        letter-spacing: -0.01em;
+        color: color-mix(in oklab, var(--color-dark) 85%, transparent);
+    }
+
+    .karya-angka__catatan {
+        margin-top: 0.15rem;
+        font-size: 0.6875rem;
+        line-height: 1.5;
+        color: color-mix(in oklab, var(--color-dark) 50%, transparent);
+    }
+
+    /* ---------- Bilah alat: tab + cari + tombol tambah ----------
+       Tab, kolom cari, dan tombol tambah diberi satu panel putih
+       bersama. Semuanya sudah punya bentuknya sendiri, jadi dilingkari
+       panel yang sama membuat ketiganya terbaca sebagai satu kendali
+       halaman, bukan tiga elemen yang kebetulan berdampingan. */
+    .karya-alat {
+        position: relative;
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.85rem;
+        border-radius: 1.5rem;
+        border: 1px solid var(--color-lavender);
+        background-color: #fff;
+        padding: 0.6rem 0.65rem;
+        box-shadow:
+            0 1px 2px rgba(33, 26, 58, 0.04),
+            0 20px 38px -32px rgba(33, 26, 58, 0.45);
+    }
+
+    /* Kabut ungu tipis di pojok kiri panel: menyatukan bilah alat dengan
+       papan kepala di atasnya yang juga bercorak lembut. */
+    .karya-alat::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        border-radius: inherit;
+        background-image: radial-gradient(18rem 6rem at 4% 0%, color-mix(in oklab, var(--color-lavender) 55%, transparent), transparent 70%);
+        pointer-events: none;
+    }
+
+    .karya-alat > * {
+        position: relative;
+        z-index: 1;
+    }
+
+    /* Sisi kanan: kolom cari melebar penuh di ponsel supaya tidak ada
+       scroll horizontal, tombol tambah tetap ikut baris yang sama
+       begitu ada ruang. */
+    .karya-alat__kanan {
+        display: flex;
+        flex: 1 1 18rem;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 0.6rem;
+        min-width: 0;
+        justify-content: flex-end;
+    }
+
+    @media (max-width: 639px) {
+        .karya-alat__kanan > * {
+            flex: 1 1 100%;
+        }
+    }
+
     /* ---------- Tab Materi Saya / Quiz Saya ---------- */
+    /* Rel-nya dibuat penuh dan diberi garis tipis, jadi bentuknya seperti
+       satu pil yang utuh, bukan sekadar deretan tombol. */
     .tab-karya {
         display: flex;
         flex-shrink: 0;
         gap: 0.25rem;
-        padding: 0.25rem;
+        padding: 0.3rem;
         border-radius: 9999px;
         background-color: color-mix(in oklab, var(--color-lavender) 55%, transparent);
+        box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--color-lavender) 85%, transparent);
         width: fit-content;
         max-width: 100%;
         overflow-x: auto;
     }
 
     .tab-karya__item {
+        position: relative;
         display: inline-flex;
         align-items: center;
-        gap: 0.4rem;
+        gap: 0.45rem;
         white-space: nowrap;
         border-radius: 9999px;
-        padding: 0.55rem 1.05rem;
+        padding: 0.55rem 1.1rem;
         font-size: 0.8125rem;
         font-weight: 700;
         color: color-mix(in oklab, var(--color-primary) 85%, var(--color-dark));
         transition:
             background-color 0.25s ease,
             color 0.25s ease,
-            box-shadow 0.25s ease;
+            box-shadow 0.25s ease,
+            transform 0.25s ease;
     }
 
     .tab-karya__item:hover {
-        background-color: color-mix(in oklab, var(--color-lavender) 85%, transparent);
+        background-color: #fff;
         color: var(--color-primary-dark);
+        box-shadow: 0 6px 14px -10px color-mix(in oklab, var(--color-primary) 80%, transparent);
     }
 
+    /* Tab aktif memakai gradasi lembut, bukan ungu solid: warna halaman
+       ini memang sengaja tidak dominan. */
     .tab-karya__item--aktif,
     .tab-karya__item--aktif:hover {
-        background-color: var(--color-primary);
+        background-image: linear-gradient(135deg, #8b6ef0, #6d4fd6);
         color: #fff;
-        box-shadow: 0 8px 18px -12px color-mix(in oklab, var(--color-primary) 90%, transparent);
+        box-shadow: 0 12px 22px -12px color-mix(in oklab, #6d4fd6 90%, transparent);
     }
 
     .tab-karya__jumlah {
         border-radius: 9999px;
-        padding: 0.05rem 0.4rem;
+        padding: 0.05rem 0.42rem;
         font-size: 0.6875rem;
         font-weight: 700;
         background-color: color-mix(in oklab, var(--color-dark) 8%, transparent);
-    }
-
-    .tab-karya__item--aktif .tab-karya__jumlah {
-        background-color: rgba(255, 255, 255, 0.22);
-    }
-
-    /* ---------- Kartu ringkasan (jumlah karya) ---------- */
-    .karya-angka {
-        gap: 0.1rem;
-        padding: 1rem 1.1rem 1.05rem;
-    }
-
-    .karya-angka .dash-ikon-kotak {
-        width: 2.5rem;
-        height: 2.5rem;
-        margin-bottom: 0.65rem;
-    }
-
-    /* tabular-nums supaya angka tidak bergeser saat nilainya berubah. */
-    .karya-angka__nilai {
-        font-size: 1.75rem;
-        font-weight: 800;
-        line-height: 1.1;
-        letter-spacing: -0.02em;
-        color: var(--color-dark);
         font-variant-numeric: tabular-nums;
     }
 
-    .karya-angka__label {
-        font-size: 0.8125rem;
-        font-weight: 700;
-        color: color-mix(in oklab, var(--color-dark) 78%, transparent);
-    }
-
-    .karya-angka__catatan {
-        font-size: 0.6875rem;
-        line-height: 1.5;
-        color: color-mix(in oklab, var(--color-dark) 45%, transparent);
+    .tab-karya__item--aktif .tab-karya__jumlah {
+        background-color: rgba(255, 255, 255, 0.26);
     }
 
     /* ---------- Lencana status ---------- */
@@ -5752,9 +6061,9 @@ html {
         display: inline-flex;
         flex-shrink: 0;
         align-items: center;
-        gap: 0.3rem;
+        gap: 0.35rem;
         border-radius: 9999px;
-        padding: 0.25rem 0.6rem;
+        padding: 0.28rem 0.65rem;
         font-size: 0.6875rem;
         font-weight: 700;
         white-space: nowrap;
@@ -5763,33 +6072,37 @@ html {
         box-shadow: inset 0 0 0 1px var(--color-lavender);
     }
 
+    /* Semua status memakai warna yang sama, jadi tidak ada status yang
+       terlihat "lebih berbahaya" dari yang lain karena warnanya beda.
+       Yang membedakan hanya intensitas tint-nya. */
     .karya-status--aktif,
     .karya-status--terbit {
-        background-color: color-mix(in oklab, var(--color-lavender) 80%, transparent);
-        color: var(--color-primary-dark);
-        box-shadow: none;
+        background-color: color-mix(in oklab, #a78bfa 22%, white);
+        color: #6d4fd6;
+        box-shadow: inset 0 0 0 1px color-mix(in oklab, #a78bfa 30%, transparent);
     }
 
     .karya-status--menunggu {
-        background-color: color-mix(in oklab, #f6cd6b 28%, white);
-        color: #8a6208;
-        box-shadow: none;
+        background-color: color-mix(in oklab, #fcd34d 30%, white);
+        color: #a1710b;
+        box-shadow: inset 0 0 0 1px color-mix(in oklab, #fcd34d 45%, transparent);
     }
 
     .karya-status--ditolak {
-        background-color: #fdecee;
-        color: #a8323c;
-        box-shadow: none;
+        background-color: color-mix(in oklab, #fda4af 26%, white);
+        color: #be3f5c;
+        box-shadow: inset 0 0 0 1px color-mix(in oklab, #fda4af 40%, transparent);
     }
 
-    /* Titik warna di depan teks status, warna-nya mengikuti teks lencana
+    /* Titik warna di depan teks status, warnanya mengikuti teks lencana
        sehingga maknanya terbaca tanpa perlu melihat katanya. */
     .karya-status__titik {
-        width: 0.4rem;
-        height: 0.4rem;
+        width: 0.42rem;
+        height: 0.42rem;
         flex-shrink: 0;
         border-radius: 9999px;
         background-color: currentColor;
+        box-shadow: 0 0 0 3px color-mix(in oklab, currentColor 18%, transparent);
     }
 
     /* Di pojok thumbnail, lencana memakai latar putih transparan + blur:
@@ -5798,12 +6111,17 @@ html {
         position: absolute;
         top: 0.625rem;
         right: 0.625rem;
+        z-index: 2;
         background-color: rgba(255, 255, 255, 0.9);
         box-shadow: 0 6px 14px -10px rgba(33, 26, 58, 0.6);
         backdrop-filter: blur(4px);
     }
 
-    /* ---------- Baris informasi (jumlah bab, tanggal) ---------- */
+    /* ---------- Baris informasi (jumlah bab, tanggal) ----------
+       Warnanya diambil dari warna kategori kartu (--k), bukan ungu brand.
+       Semua kartu dalam satu baris memakai kategori yang berbeda, dan
+       chip yang ikut warna kartunya membuat kelompok informasi tiap karya
+       mudah dicocokkan dengan thumbnail-nya. */
     .karya-info {
         display: flex;
         flex-wrap: wrap;
@@ -5817,16 +6135,17 @@ html {
         align-items: center;
         gap: 0.3rem;
         border-radius: 9999px;
-        background-color: color-mix(in oklab, var(--color-lavender) 45%, transparent);
+        background-color: color-mix(in oklab, var(--k) 11%, white);
         padding: 0.2rem 0.55rem;
         font-size: 0.6875rem;
         font-weight: 700;
-        color: color-mix(in oklab, var(--color-primary) 88%, var(--color-dark));
+        color: var(--k-gelap, var(--color-primary-dark));
         white-space: nowrap;
+        box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--k) 16%, transparent);
     }
 
     .karya-info__butir svg {
-        color: var(--color-primary);
+        color: var(--k, var(--color-primary));
     }
 
     /* Tanggal dibuat bukan informasi utama, jadi warnanya dibuat lebih redup
@@ -5836,10 +6155,59 @@ html {
         padding-inline: 0.15rem;
         color: color-mix(in oklab, var(--color-dark) 45%, transparent);
         font-weight: 600;
+        box-shadow: none;
     }
 
     .karya-info__butir--sepuh svg {
         color: color-mix(in oklab, var(--color-dark) 35%, transparent);
+    }
+
+    /* ---------- Kartu karya (bentuk turunan .kartu-materi) ----------
+       Kartu di halaman ini memakai .kartu-materi supaya tidak ada dua
+       bentuk kartu di aplikasi, tapi diberi kelas .karya-kartu juga
+       supaya penyesuaian di bawah tidak ikut mengubah kartu di halaman
+       Materi dan Quiz yang memakai kelas yang sama. */
+    .karya-kartu {
+        border-radius: 1.25rem;
+        border-color: color-mix(in oklab, var(--k) 24%, var(--color-lavender));
+        box-shadow:
+            0 1px 2px rgba(33, 26, 58, 0.04),
+            0 16px 32px -26px color-mix(in oklab, var(--k) 60%, transparent);
+    }
+
+    .karya-kartu:hover,
+    .karya-kartu:focus-within {
+        transform: translateY(-6px);
+        border-color: color-mix(in oklab, var(--k) 58%, var(--color-lavender));
+        box-shadow:
+            0 2px 4px rgba(33, 26, 58, 0.05),
+            0 34px 60px -30px color-mix(in oklab, var(--k) 78%, transparent);
+    }
+
+    .karya-kartu .kartu-materi__badan {
+        padding: 0.95rem 1.05rem 1.05rem;
+    }
+
+    /* Judul dan deskripsi diberi jarak napas lebih longgar dari kartu di
+       halaman Materi: kartu di sini punya tiga baris informasi dan tiga
+       tombol, jadi judulnya butuh tidak feel sempit di atasnya. */
+    .karya-kartu .kartu-materi__judul {
+        font-size: 1rem;
+    }
+
+    .karya-kartu .kartu-materi__deskripsi {
+        line-height: 1.65;
+    }
+
+    /* Garis aksen warna kategori menyambung langsung ke thumbnail, sama
+       seperti kartu di halaman Materi dan Quiz. */
+    .karya-kartu .kartu-materi__aksen {
+        height: 0.25rem;
+        background-image: linear-gradient(
+            90deg,
+            var(--k, var(--color-primary)),
+            color-mix(in oklab, var(--k, var(--color-primary)) 28%, transparent)
+        );
     }
 
     /* ---------- Baris aksi (lihat / edit / hapus) ----------
@@ -5853,8 +6221,8 @@ html {
         gap: 0.45rem;
         min-width: 0;
         margin-top: auto;
-        padding-top: 0.85rem;
-        border-top: 1px dashed color-mix(in oklab, var(--color-lavender) 80%, transparent);
+        padding-top: 0.9rem;
+        border-top: 1px dashed color-mix(in oklab, var(--k) 24%, var(--color-lavender));
     }
 
     .karya-aksi__tombol {
@@ -5886,21 +6254,49 @@ html {
         transform: translateY(0);
     }
 
+    /* Form di dalam baris aksi tidak boleh menambah jarak sendiri, dan
+       tombolnya harus tetap bisa membesar seperti tombol biasa. */
+    .karya-aksi form {
+        display: contents;
+    }
+
     /* Tombol utama mengisi ruang sisa baris, jadi tiga tombol selalu
        terbagi rata dan tidak ada sisa ruang mati di kanan. */
     .karya-aksi__tombol--utama {
         flex: 1 1 auto;
     }
 
+    /* Tombol utama memakai warna kategori kartu, bukan ungu brand. Satu
+       baris kartu dengan empat kategori berbeda punya tombol "Lihat"
+       berwarna berbeda, jadi mata bisa mencocokkannya dengan thumbnail
+       kartunya tanpa membaca teksnya. */
     .karya-aksi__tombol--lihat {
-        border-color: var(--color-primary);
-        background-color: var(--color-primary);
+        border-color: transparent;
+        background-image: linear-gradient(
+            135deg,
+            color-mix(in oklab, var(--k) 88%, white),
+            var(--k-gelap)
+        );
         color: #fff;
+        box-shadow: 0 12px 22px -14px color-mix(in oklab, var(--k) 95%, transparent);
     }
 
     .karya-aksi__tombol--lihat:hover {
-        border-color: var(--color-primary-dark);
-        background-color: var(--color-primary-dark);
+        border-color: transparent;
+        background-image: linear-gradient(
+            135deg,
+            var(--k),
+            color-mix(in oklab, var(--k-gelap) 88%, black)
+        );
+        box-shadow: 0 16px 28px -14px color-mix(in oklab, var(--k) 95%, transparent);
+    }
+
+    .karya-aksi__tombol--lihat svg {
+        transition: transform 0.25s ease;
+    }
+
+    .karya-aksi__tombol--lihat:hover svg {
+        transform: translateX(3px);
     }
 
     .karya-aksi__tombol--hapus:hover {
@@ -5921,6 +6317,268 @@ html {
 
     .karya-judul a:hover {
         color: var(--k-gelap, var(--color-primary-dark));
+    }
+
+    /* ---------- Empty state ---------- */
+    .karya-kosong {
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        overflow: hidden;
+        border-radius: 1.75rem;
+        border: 1px solid var(--color-lavender);
+        background-color: #fff;
+        padding: 3.25rem 1.5rem;
+        text-align: center;
+        box-shadow:
+            0 1px 2px rgba(33, 26, 58, 0.04),
+            0 24px 50px -36px rgba(33, 26, 58, 0.5);
+    }
+
+    /* Kabut warna lembut di dua sudut supaya bidang kosong ini punya
+       kedalaman dan tidak terasa seperti kotak yang belum keisi. Warnanya
+       sengaja pastel, sama seperti kepala halaman di atasnya. */
+    .karya-kosong::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background-image:
+            radial-gradient(24rem 14rem at 88% -12%, rgba(196, 181, 253, 0.5), transparent 70%),
+            radial-gradient(20rem 13rem at -6% 112%, rgba(186, 230, 253, 0.42), transparent 72%),
+            radial-gradient(16rem 11rem at 46% 122%, rgba(254, 205, 211, 0.32), transparent 74%);
+        pointer-events: none;
+    }
+
+    /* Garis putus-putus tipis di sekeliling: menandai bahwa ini area
+       yang menunggu diisi, bukan sekadar panel kosong. */
+    .karya-kosong::after {
+        content: '';
+        position: absolute;
+        inset: 0.75rem;
+        border-radius: 1.25rem;
+        border: 1.5px dashed color-mix(in oklab, var(--color-primary) 18%, transparent);
+        pointer-events: none;
+    }
+
+    .karya-kosong > * {
+        position: relative;
+        z-index: 1;
+    }
+
+    /* ---------- Pagination ---------- */
+    .karya-hal nav {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: center;
+        gap: 0.4rem;
+    }
+
+    .karya-hal nav > div {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: center;
+        gap: 0.4rem;
+        width: 100%;
+    }
+
+    .karya-hal nav > div:first-child {
+        display: none;
+    }
+
+    .karya-hal nav a,
+    .karya-hal nav span {
+        border-radius: 9999px !important;
+        border-color: var(--color-lavender) !important;
+        background-color: #fff !important;
+        color: color-mix(in oklab, var(--color-dark) 70%, transparent) !important;
+        font-weight: 700;
+        box-shadow: none;
+        transition:
+            background-color 0.2s ease,
+            border-color 0.2s ease,
+            color 0.2s ease;
+    }
+
+    .karya-hal nav a:hover {
+        border-color: var(--color-primary) !important;
+        background-color: color-mix(in oklab, var(--color-primary) 8%, white) !important;
+        color: var(--color-primary-dark) !important;
+    }
+
+    /* Halaman yang sedang dibuka: gradasi lembut, sama dengan tab aktif. */
+    .karya-hal nav [aria-current='page'] span {
+        border-color: transparent !important;
+        background-image: linear-gradient(135deg, #8b6ef0, #6d4fd6) !important;
+        color: #fff !important;
+        box-shadow: 0 10px 20px -12px color-mix(in oklab, #6d4fd6 90%, transparent) !important;
+    }
+
+    /* Tombol panah dan tanda pisah tidak perlu kotak kosong. */
+    .karya-hal nav [aria-disabled='true'] span {
+        background-color: transparent !important;
+        border-color: transparent !important;
+        opacity: 0.35;
+    }
+
+    .karya-hal nav [aria-disabled='true'] > span {
+        background-color: transparent !important;
+        border-color: transparent !important;
+    }
+
+    /* ============================================================
+       HALAMAN SIMPAN
+       Daftar di sini memakai komponen kartu yang sama dengan halaman
+       Materi dan Quiz, jadi yang perlu ditulis di bawah hanya kepala
+       halamannya: papan hero-nya mengikuti pola .materi-kepala
+       (latar ungu muda, teks ungu tua) supaya berpindah antara ketiga
+       halaman itu tidak terasa seperti halaman yang berbeda.
+
+       Yang membedakan hanya isi papan: dua angka (Materi / Quiz) dan
+       tab, bukan kolom cari dan filter kategori. Pencarian di sini
+       sudah ada di top bar.
+       ============================================================ */
+
+    .simpan-kepala {
+        position: relative;
+        overflow: hidden;
+        border-radius: 1.75rem;
+        background-image:
+            radial-gradient(38rem 20rem at 88% -10%, rgba(255, 255, 255, 0.75), transparent 62%),
+            linear-gradient(135deg, #f2edff 0%, #e5dcff 48%, #d4c8fa 100%);
+        box-shadow:
+            0 28px 55px -34px rgba(107, 85, 220, 0.55),
+            inset 0 0 0 1px rgba(124, 96, 235, 0.16);
+    }
+
+    /* Pola titik dan lingkaran besar di pojok: pemanis yang sama dengan
+       papan Materi, supaya dua halaman ini benar-benar terasa sekerabat. */
+    .simpan-kepala::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background-image: radial-gradient(rgba(107, 85, 220, 0.25) 1px, transparent 1px);
+        background-size: 18px 18px;
+        opacity: 0.5;
+        pointer-events: none;
+    }
+
+    .simpan-kepala::after {
+        content: '';
+        position: absolute;
+        right: -6rem;
+        bottom: -8rem;
+        width: 22rem;
+        height: 22rem;
+        border-radius: 9999px;
+        background: radial-gradient(circle, rgba(255, 255, 255, 0.7), transparent 68%);
+        pointer-events: none;
+    }
+
+    /* Isi hero naik satu tingkat supaya tidak tertutup ::before / ::after. */
+    .simpan-kepala__isi {
+        position: relative;
+        z-index: 1;
+    }
+
+    .simpan-kepala__lencana {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+        border-radius: 9999px;
+        background-color: rgba(255, 255, 255, 0.72);
+        padding: 0.35rem 0.8rem;
+        font-family: var(--font-mono);
+        font-size: 0.6875rem;
+        font-weight: 600;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        color: #5a48c8;
+        box-shadow: inset 0 0 0 1px rgba(90, 72, 200, 0.22);
+    }
+
+    .simpan-kepala__judul {
+        margin-top: 0.85rem;
+        font-size: clamp(1.5rem, 3.4vw, 2.125rem);
+        font-weight: 800;
+        line-height: 1.15;
+        letter-spacing: -0.02em;
+        color: #3a2f8f;
+    }
+
+    .simpan-kepala__deskripsi {
+        margin-top: 0.5rem;
+        max-width: 34rem;
+        font-size: 0.875rem;
+        line-height: 1.65;
+        color: rgba(58, 47, 143, 0.72);
+    }
+
+    .simpan-kepala__statistik {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        margin-top: 1.1rem;
+    }
+
+    .simpan-kepala__statistik > div {
+        display: flex;
+        align-items: baseline;
+        gap: 0.4rem;
+        border-radius: 0.9rem;
+        background-color: rgba(255, 255, 255, 0.66);
+        padding: 0.45rem 0.75rem;
+        box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.95);
+    }
+
+    .simpan-kepala__angka {
+        font-family: var(--font-mono);
+        font-size: 1.0625rem;
+        font-weight: 700;
+        line-height: 1;
+        color: #4a3ab8;
+        font-variant-numeric: tabular-nums;
+    }
+
+    .simpan-kepala__satuan {
+        font-size: 0.6875rem;
+        font-weight: 600;
+        color: rgba(74, 58, 184, 0.65);
+    }
+
+    /* Tab di dalam papan: bentuk .tab-karya sudah sama dengan tab di
+       halaman Karya Saya dan Hasil, jadi initBookmark() yang memperbarui
+       angkanya tidak perlu tahu halaman mana. Yang diubah hanya warnanya,
+       supaya tab ikut bergabung dengan papan dan tidak terbaca sebagai
+       elemen yang ditempel di atasnya. */
+    .simpan-kepala .tab-karya {
+        background-color: rgba(255, 255, 255, 0.55);
+        box-shadow: inset 0 0 0 1px rgba(90, 72, 200, 0.16);
+    }
+
+    .simpan-kepala .tab-karya__item {
+        color: #4a3ab8;
+    }
+
+    .simpan-kepala .tab-karya__item:hover {
+        background-color: rgba(255, 255, 255, 0.75);
+        color: #3a2f8f;
+    }
+
+    .simpan-kepala .tab-karya__item--aktif,
+    .simpan-kepala .tab-karya__item--aktif:hover {
+        background-color: #5b46cf;
+        color: #fff;
+    }
+
+    .simpan-kepala .tab-karya__jumlah {
+        background-color: rgba(90, 72, 200, 0.12);
+    }
+
+    .simpan-kepala .tab-karya__item--aktif .tab-karya__jumlah {
+        background-color: rgba(255, 255, 255, 0.22);
     }
 
     /* ============================================================
@@ -6507,14 +7165,58 @@ html {
     /* ============================================================
        HALAMAN MENGERJAKAN SOAL
        ============================================================
-       Satu kolom selebar 48rem (max-w-3xl) berisi tiga bagian dari atas
-       ke bawah: kepala quiz berwarna ungu, navigator mini, lalu kartu
-       putih dengan pertanyaannya.
+       Satu kolom selebar 56rem (max-w-4xl) berisi dua bagian dari atas
+       ke bawah: kepala quiz berwarna ungu, lalu kartu putih dengan
+       pertanyaannya. Daftar soal tidak lagi menempel di bawah kartu,
+       tapi pindah ke dialog yang dibuka dari tombol di kepala halaman.
 
        Kepala sengaja dibuat tinggi rendah (sekitar 4rem) dan teksnya
-       putih semua. Kalau headernya ikut jadi besar, kaum students
-       akan melihat lebih banyak dekorasi daripada pertanyaan.
+       putih semua. Kalau kepalanya ikut jadi besar, peserta akan melihat
+       lebih banyak dekorasi daripada pertanyaan.
+
+       Tingginya kolom ini mengikuti tinggi layar, bukan tinggi isinya:
+       kepala tetap setinggi isinya, kartu soal yang menyerap sisa ruang,
+       dan kaki soal (tombol navigasi) terdorong ke tepi bawah kartu.
+       Tanpa itu, kartu soal yang isinya pendek menggantung di tengah
+       halaman dengan ruang kosong besar di bawahnya.
        ============================================================ */
+
+    /* ---------- Kolom yang mengisi tinggi halaman ----------
+       .soal-kanvas hanya jadi wadah flex baris, sedangkan isinya
+       (.soal-kanvas__isi) yang jadi kolom flex. Dipisah dua supaya
+       spacing halaman tetap ditulis di utility class pada blade. */
+    .soal-kanvas {
+        display: flex;
+    }
+
+    .soal-kanvas__isi {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+        min-width: 0;
+    }
+
+    /* Kartu soal, badan kartunya, dan form jawaban semuanya jadi kolom
+       flex yang mengisi sisa tinggi. Tiga tingkat ini yang membuat isian
+       tetap menempel di atas dan tombol di kaki kartu terdorong ke
+       bawah, tanpa harus mengorbankan jarak antarbagian yang sudah ada. */
+    .soal-kanvas__isi > .lobi-kartu,
+    .soal-kanvas__isi .lobi-kartu__badan,
+    .soal-kanvas__isi [data-soal-form] {
+        display: flex;
+        flex-direction: column;
+        flex: 1 1 auto;
+        min-height: 0;
+    }
+
+    /* margin-top: auto, bukan nilai tetap: kalau tidak ada ruang sisa
+       (soal pendek di layar kecil), auto kembali jadi nol dan
+       padding-top di bawahnya yang menyediakan jarak 1.25rem yang
+       sama seperti sebelumnya. */
+    .soal-kanvas__isi .soal-kaki {
+        margin-top: auto;
+        padding-top: 1.25rem;
+    }
 
     /* ---------- Kepala quiz ---------- */
     .soal-kepala {
@@ -6581,23 +7283,10 @@ html {
         min-width: 0;
     }
 
-    .soal-kepala__posisi {
-        display: flex;
-        align-items: baseline;
-        gap: 0.3rem;
-        font-size: 0.8125rem;
-        font-weight: 700;
-        color: #fff;
-    }
-
-    .soal-kepala__posisi span {
-        font-weight: 500;
-        color: rgba(255, 255, 255, 0.72);
-    }
-
+    /* Teks "Soal N dari M" sudah dihapus dari kepala halaman, jadi yang
+       tersisa progress bar saja dan tidak lagi butuh jarak ke atas. */
     .soal-kepala__progres {
         height: 0.3rem;
-        margin-top: 0.35rem;
         border-radius: 9999px;
         background-color: rgba(255, 255, 255, 0.28);
         overflow: hidden;
@@ -6611,11 +7300,14 @@ html {
         transition: width 0.4s cubic-bezier(0.22, 1, 0.36, 1);
     }
 
+    /* Progress bar mengisi seluruh ruang yang tersisa di kepala, bukan
+       kolom selebar tetap: judul quiz yang dipendekkan atau dipanjangkan
+       tidak mengubah panjang bar ini. */
     @media (min-width: 40rem) {
         .soal-kepala__tengah {
             order: 0;
             width: auto;
-            flex: 0 1 14rem;
+            flex: 1 1 14rem;
         }
     }
 
@@ -6674,28 +7366,136 @@ html {
         }
     }
 
-    /* ---------- Navigator mini ---------- */
+    /* ---------- Navigator daftar soal ----------
+       Tiga bagian yang saling terkait: tombol pembuka di kepala halaman,
+       isi dialognya, dan kotak nomor di dalam dialog. Semuanya berawalan
+       .soal-nav__ supaya jelas satu kelompok, bukan tiga hal terpisah. */
+
+    .soal-nav__buka {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35rem;
+        border-radius: 9999px;
+        padding: 0.4rem 0.75rem;
+        /* Lapisan putih yang sama persis dengan .soal-kepala__jam, jadi
+           tombol daftar soal dan timer terbaca sebagai satu kelompok
+           kendali di ujung kanan kepala, bukan dua hal yang tak berkaitan.
+           Bentuk pill, bukan kotak, karena tugasnya membuka sesuatu. */
+        background-color: rgba(255, 255, 255, 0.18);
+        color: #fff;
+        font-size: 0.8125rem;
+        font-weight: 700;
+        font-variant-numeric: tabular-nums;
+        transition: background-color 0.2s ease;
+    }
+
+    .soal-nav__buka:hover {
+        background-color: rgba(255, 255, 255, 0.28);
+    }
+
+    .soal-nav__buka:focus-visible {
+        outline: 2px solid #fff;
+        outline-offset: 2px;
+    }
+
+    .soal-nav__buka__total {
+        font-weight: 500;
+        color: rgba(255, 255, 255, 0.72);
+    }
+
+    /* ---------- Isi dialog ---------- */
+    .soal-nav__tutup {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        width: 2rem;
+        height: 2rem;
+        border-radius: 0.7rem;
+        border: 1px solid var(--color-lavender);
+        background-color: #fff;
+        color: color-mix(in oklab, var(--color-dark) 55%, transparent);
+        transition:
+            border-color 0.2s ease,
+            color 0.2s ease;
+    }
+
+    .soal-nav__tutup:hover {
+        border-color: var(--color-primary);
+        color: var(--color-primary);
+    }
+
+    /* Dua kartu angka: total soal dan yang sudah dijawab. Grid dua kolom
+       tetap, bukan tiga, karena tidak ada angka ketiga yang perlu ikut. */
+    .soal-nav__ringkasan {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 0.6rem;
+        margin-top: 1rem;
+    }
+
+    .soal-nav__stat {
+        min-width: 0;
+        border-radius: 1rem;
+        border: 1px solid var(--color-lavender);
+        background-color: var(--color-brand-bg);
+        padding: 0.7rem 0.85rem;
+    }
+
+    /* Kartu "sudah dijawab" memakai ungu muda supaya angkanya langsung
+       terbaca sebagai sesuatu yang bertambah, bukan sekadar angka lain. */
+    .soal-nav__stat--terjawab {
+        border-color: color-mix(in oklab, var(--color-primary) 26%, var(--color-lavender));
+        background-color: var(--color-ungu-bg);
+    }
+
+    .soal-nav__stat__angka {
+        display: block;
+        font-size: 1.375rem;
+        font-weight: 800;
+        line-height: 1.15;
+        letter-spacing: -0.02em;
+        color: var(--color-dark);
+        font-variant-numeric: tabular-nums;
+    }
+
+    .soal-nav__stat--terjawab .soal-nav__stat__angka {
+        color: var(--color-primary);
+    }
+
+    .soal-nav__stat__label {
+        display: block;
+        margin-top: 0.1rem;
+        font-size: 0.6875rem;
+        font-weight: 600;
+        color: color-mix(in oklab, var(--color-dark) 50%, transparent);
+    }
+
+    /* ---------- Kotak nomor ---------- */
     .soal-nav {
-        margin-top: 0.9rem;
+        margin-top: 1rem;
     }
 
     .soal-nav__daftar {
         display: flex;
         flex-wrap: wrap;
-        gap: 0.4rem;
+        gap: 0.5rem;
     }
 
+    /* Kotaknya lebih besar dari versi yang pernah menempel di bawah kartu
+       soalnya: sekarang satu-satunya jalan pindah soal ada di sini, jadi
+       target sentuhnya dibuat layak untuk jari, bukan setipis garis. */
     .soal-nav__tombol {
         display: flex;
         align-items: center;
         justify-content: center;
-        width: 2rem;
-        height: 2rem;
-        border-radius: 0.7rem;
+        width: 2.5rem;
+        height: 2.5rem;
+        border-radius: 0.8rem;
         border: 1.5px solid var(--color-lavender);
         background-color: #fff;
         color: color-mix(in oklab, var(--color-dark) 45%, transparent);
-        font-size: 0.75rem;
+        font-size: 0.8125rem;
         font-weight: 700;
         font-variant-numeric: tabular-nums;
         transition:
@@ -6704,21 +7504,43 @@ html {
             color 0.2s ease;
     }
 
-    /* Sudah dijawab: ungu muda dengan tanda centang. */
+    /* Tiga keadaan isi kotak, sengaja cuma warna latarnya:
+       ragu = kuning, sudah dijawab = ungu pekat, belum = putih. Tidak ada
+       legenda tertulis lagi karena perbedaan sebesar ini sudah langsung
+       terbaca sendiri, dan legenda hanya menambah dua baris teks lagi di
+       dialog yang isinya sudah padat. */
     .soal-nav__tombol--terjawab {
-        border-color: color-mix(in oklab, var(--color-primary) 32%, var(--color-lavender));
-        background-color: var(--color-ungu-bg);
-        color: var(--color-primary);
-    }
-
-    /* Soal yang sedang dibuka: ungu penuh dan tebal. Menimpa keadaan
-       "terjawab" karena soal ini boleh dua-duanya. */
-    .soal-nav__tombol--kini,
-    .soal-nav__tombol--kini.soal-nav__tombol--terjawab {
         border-color: var(--color-primary);
         background-color: var(--color-primary);
         color: #fff;
-        box-shadow: 0 0 0 3px color-mix(in oklab, var(--color-primary) 16%, transparent);
+    }
+
+    /* Ragu didahulukan dari "terjawab" supaya menimpanya: menandai soal
+       yang sudah dijawab tetap kuning, karena justru itu soal yang paling
+       perlu ditinjau lagi. Warna kuningnya diambil dari palet peringatan
+       yang sudah dipakai timer dan kartu hasil (#d99a06), bukan warna
+       kuning baru, supaya aplikasi tidak bertambah satu rona. */
+    .soal-nav__tombol--ragu {
+        border-color: #c98a05;
+        background-color: #f0b429;
+        color: #3d2a00;
+    }
+
+    /* Soal yang sedang dibuka ditandai cincin, bukan warna latar. Kalau
+       penanda posisi ikut memakai warna isi, soal yang sedang dibuka tapi
+       belum dijawab akan terlihat sama persis dengan yang sudah
+       dijawab, dan justru itu informasi yang paling dibutuhkan peserta. */
+    .soal-nav__tombol--kini {
+        border-color: var(--color-primary);
+        font-weight: 800;
+        box-shadow: 0 0 0 3px color-mix(in oklab, var(--color-primary) 22%, transparent);
+    }
+
+    /* Cincin di atas kotak yang warnanya sudah terisi, jadi cincinnya diberi
+       lapisan putih supaya tidak tenggelam di dalam latar yang sama. */
+    .soal-nav__tombol--kini.soal-nav__tombol--terjawab,
+    .soal-nav__tombol--kini.soal-nav__tombol--ragu {
+        box-shadow: 0 0 0 3px #fff, 0 0 0 6px color-mix(in oklab, var(--color-primary) 55%, transparent);
     }
 
     /* ---------- Kartu soal ---------- */
@@ -6816,6 +7638,83 @@ html {
         mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12 9v3.75m9-.75a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9 3.75h.008v.008H12v-.008Z'/%3E%3C/svg%3E");
         mask-size: contain;
         mask-repeat: no-repeat;
+    }
+
+    /* ---------- Tanda "ragu" ----------
+       Tombol di tengah kaki soal: kotak kecil bercentang yang menandai
+       soal ini perlu ditinjau lagi.
+
+       .soal-ragu adalah form-nya, bukan tombolnya, jadi display: flex
+       supaya tombolnya ikut selebar form di layar sempit. Bentuk tombolnya
+       sendiri sengaja bukan .tombol-garis: yang itu berbingkai penuh dan
+       dipakai untuk navigasi, sedangkan "Ragu" adalah catatan kecil yang
+       tidak boleh terlihat seabesar perpindahan soal. */
+    .soal-ragu {
+        display: flex;
+    }
+
+    .soal-ragu__tombol {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+        width: 100%;
+        border-radius: 9999px;
+        border: 1.5px solid var(--color-lavender);
+        background-color: #fff;
+        padding: 0.6rem 1.05rem;
+        font-size: 0.8125rem;
+        font-weight: 700;
+        color: color-mix(in oklab, var(--color-dark) 62%, transparent);
+        transition:
+            border-color 0.2s ease,
+            background-color 0.2s ease,
+            color 0.2s ease;
+    }
+
+    .soal-ragu__tombol:hover {
+        border-color: #e6c36a;
+        color: #8a5b00;
+    }
+
+    .soal-ragu__tombol:focus-visible {
+        outline: 2px solid var(--color-primary);
+        outline-offset: 2px;
+    }
+
+    /* Kotak centangnya. Warnanya transparan saat belum ditandai, jadi
+       centangnya benar-benar hilang dan kotak terlihat kosong — bukan
+       centang pucat yang masih terbaca. */
+    .soal-ragu__kotak {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        width: 1.15rem;
+        height: 1.15rem;
+        border-radius: 0.35rem;
+        border: 1.5px solid var(--color-lavender);
+        background-color: #fff;
+        color: transparent;
+        transition:
+            border-color 0.2s ease,
+            background-color 0.2s ease,
+            color 0.2s ease;
+    }
+
+    /* Sudah ditandai: kotak dan label sama-sama kuning, warna yang sama
+       dengan kotak ragu di daftar soal supaya keduanya dibaca sebagai satu
+       keadaan, bukan dua. */
+    .soal-ragu--ada .soal-ragu__tombol {
+        border-color: #e6c36a;
+        background-color: color-mix(in oklab, #f0b429 12%, #fff);
+        color: #8a5b00;
+    }
+
+    .soal-ragu--ada .soal-ragu__kotak {
+        border-color: #c98a05;
+        background-color: #f0b429;
+        color: #3d2a00;
     }
 
     /* ---------- Navigasi antar soal ---------- */
@@ -8886,7 +9785,8 @@ html {
  * Yang SENGAJA tidak ada di sini:
  *   - .saklar::after  tombol bulat di saklar harus tetap putih supaya
  *                     kelihatan melayang di atas relnya.
- *   - .quiz-kepala, .materi-kepala, dan .soal-kepala
+ *   - .quiz-kepala, .materi-kepala, .simpan-kepala, .karya-kepala, dan
+ *     .soal-kepala
  *                     papan ungu di kepala halaman; teksnya sudah putih
  *     dan ungu tua, jadi mengubah latarnya justru merusak kontrasnya.
  *   - .soal-nav__tombol--kini
@@ -8919,6 +9819,8 @@ html {
         .soal-nav__tombol,
         .lobi-kode__salin,
         .karya-aksi__tombol,
+        .karya-alat,
+        .karya-kosong,
         .tab-quiz__item,
         .tab-unsur__tombol,
         .bab-chip,
@@ -8929,9 +9831,6 @@ html {
         .alat-editor,
         .alat-pilih,
         .kertas-editor,
-        .pratinjau-frame,
-        .pratinjau-outline__item,
-        .pratinjau-outline__nomor,
         .area-unggah,
         .kendali-zoom,
         .tombol-garis,
@@ -8939,7 +9838,6 @@ html {
         .profil-kartu,
         .profil-kepala,
         .modal__panel,
-        .daftar-soal__pilihan,
         .detail-quiz__bagikan,
         .detail-bagitutup
     ) {
@@ -8947,10 +9845,17 @@ html {
     }
 
 
-/* Kartu aksi menempel di pojok thumbnail: tombol simpan, lencana durasi,
-   dan tombol aksi. Warnanya dibuat gelap supaya tidak menyala
-   di atas banner yang sudah gelap. */
-[data-theme='gelap'] :is(.kartu-materi__simpan, .kartu-quiz__simpan, .dash-materi__simpan, .kartu-materi__aksi, .kartu-quiz__aksi) {
+/* Kartu aksi menempel di pojok banner: lencana dan tombol aksi. Warnanya
+   dibuat gelap supaya tidak menyala di atas banner yang sudah gelap.
+   Tombol bookmark tidak ada di daftar ini karena sudah tidak memakai
+   latar lingkaran, hanya warna ikonnya. */
+[data-theme='gelap'] :is(
+        .kartu-materi__aksi,
+        .kartu-quiz__aksi,
+        .dash-materi__aksi,
+        .dash-quiz__durasi,
+        .dash-quiz__aksi
+    ) {
     background-color: rgba(30, 24, 62, 0.94);
 }
 
@@ -8971,14 +9876,160 @@ html {
 
 /* ---------- (5) Penyesuaian kecil ---------- */
 
+/* Chip informasi di kartu Karya Saya warnanya diturunkan dari --k
+   (warna kategori) yang selalu berupa warna terang, jadi di mode gelap
+   latarnya ikut digelapkan. Tanpa ini chip akan menerangi baris
+   informasi kartu di atas latar gelap. */
+[data-theme='gelap'] .karya-info__butir {
+    background-color: color-mix(in oklab, var(--k) 16%, #191336);
+    color: color-mix(in oklab, var(--k) 45%, #ece8ff);
+    box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--k) 28%, transparent);
+}
+
+/* Kartu ringkasan dan lencana status di mode gelap. Semuanya memakai
+   warna pastel (putih yang dicampur --k), jadi di mode gelap tint-nya
+   ikut digelapkan supaya tidak menjadi sumber cahaya di halaman. */
+[data-theme='gelap'] .karya-angka {
+    background-color: color-mix(in oklab, var(--k) 12%, #191336);
+    border-color: color-mix(in oklab, var(--k) 26%, #191336);
+    background-image:
+        radial-gradient(13rem 8rem at 112% -34%, color-mix(in oklab, var(--k) 22%, transparent), transparent 66%),
+        radial-gradient(10rem 7rem at -12% 128%, color-mix(in oklab, var(--k) 12%, transparent), transparent 70%);
+}
+
+[data-theme='gelap'] .karya-angka:hover {
+    background-color: color-mix(in oklab, var(--k) 18%, #191336);
+    border-color: color-mix(in oklab, var(--k) 40%, #191336);
+}
+
+[data-theme='gelap'] .karya-angka .dash-ikon-kotak {
+    background-image: linear-gradient(
+        140deg,
+        color-mix(in oklab, var(--k) 30%, #191336),
+        color-mix(in oklab, var(--k) 12%, #191336)
+    );
+    color: color-mix(in oklab, var(--k) 45%, #ece8ff);
+}
+
+[data-theme='gelap'] .karya-angka__nilai {
+    color: color-mix(in oklab, var(--k) 40%, #ece8ff);
+}
+
+/* Lencana status: tint-nya diturunkan dari warna status yang sama, tapi
+   dicampur dengan kartu gelap, bukan putih. */
+[data-theme='gelap'] :is(.karya-status--aktif, .karya-status--terbit) {
+    background-color: color-mix(in oklab, #a78bfa 20%, #191336);
+    color: color-mix(in oklab, #a78bfa 45%, #ece8ff);
+}
+
+[data-theme='gelap'] .karya-status--menunggu {
+    background-color: color-mix(in oklab, #fcd34d 18%, #191336);
+    color: color-mix(in oklab, #fcd34d 45%, #ece8ff);
+}
+
+[data-theme='gelap'] .karya-status--ditolak {
+    background-color: color-mix(in oklab, #fda4af 18%, #191336);
+    color: color-mix(in oklab, #fda4af 50%, #ece8ff);
+}
+
+/* Pagination Karya Saya mengikuti tampilan kartu yang sama: tombolnya
+   memakai kartu gelap, bukan putih polos dari tampilan bawaan. */
+[data-theme='gelap'] .karya-hal nav a,
+[data-theme='gelap'] .karya-hal nav span {
+    background-color: #191336 !important;
+    border-color: var(--color-lavender) !important;
+    color: color-mix(in oklab, var(--color-dark) 75%, transparent) !important;
+}
+
+[data-theme='gelap'] .karya-hal nav a:hover {
+    border-color: var(--color-primary) !important;
+    background-color: color-mix(in oklab, var(--color-primary) 20%, #191336) !important;
+    color: #c9b8ff !important;
+}
+
+/* Kepala halaman Karya Saya tetap terang di mode gelap, sama seperti
+   kepala Materi dan Quiz. Yang perlu digelapkan hanya kolom cari di
+   dalamnya, karena latar putihnya tidak boleh menyilaukan halaman gelap. */
+[data-theme='gelap'] .karya-alat .kolom-cari:focus {
+    background-color: #221b45;
+}
+
 /* Halaman mengerjakan soal: kepala .soal-kepala sudah ungu penuh dengan
    teks putih, jadi tidak boleh ikut gelap. Yang perlu disesuaikan hanya
-   kotak navigator mini, supaya yang "sudah dijawab" tetap kelihatan
-   berbeda dari yang belum. */
-[data-theme='gelap'] .soal-nav__tombol--terjawab:not(.soal-nav__tombol--kini) {
-    background-color: #221b45;
+   isi dialog daftar soal, supaya yang "sudah dijawab" tetap kelihatan
+   berbeda dari yang belum.
+
+   Kotak yang sudah dijawab tetap ungu pekat dengan teks putih seperti di
+   mode terang: warna itu yang membedakan dia dari kotak putih, jadi
+   menurunkannya di mode gelap justru menghilangkan satu-satunya penanda
+   yang tersisa di situ. Yang dinaikkan sedikit hanya warnanya, supaya
+   tidak terlihat gelap di atas dialog yang memang gelap. */
+[data-theme='gelap'] .soal-nav__tombol--terjawab {
+    background-color: var(--color-ungu);
+    border-color: var(--color-ungu-soft);
+}
+
+/* Cincin penanda "soal yang sedang dibuka" memakai lapisan putih sebagai
+   pemisah dari kotak yang warnanya sudah terisi, dan di mode gelap lapisan
+   itu jadi warna kartu dialog supaya cincinnya tidak terbaca sebagai
+   lubang. */
+[data-theme='gelap'] .soal-nav__tombol--kini.soal-nav__tombol--terjawab,
+[data-theme='gelap'] .soal-nav__tombol--kini.soal-nav__tombol--ragu {
+    box-shadow:
+        0 0 0 3px #191336,
+        0 0 0 6px color-mix(in oklab, var(--color-ungu-soft) 70%, transparent);
+}
+
+/* Kartu ringkasan pada dialog yang sama. Latarnya diturunkan supaya
+   tidak ikut seterang kartu soal, sementara angka "sudah dijawab"
+   tetap ungu terang supaya kelihatan bertambah. */
+[data-theme='gelap'] .soal-nav__stat {
+    background-color: #191536;
     border-color: var(--color-ungu-line);
+}
+
+[data-theme='gelap'] .soal-nav__stat__angka {
+    color: #efeaff;
+}
+
+[data-theme='gelap'] .soal-nav__stat--terjawab {
+    background-color: #221b45;
+}
+
+[data-theme='gelap'] .soal-nav__stat--terjawab .soal-nav__stat__angka {
     color: #b09bff;
+}
+
+/* Tanda "ragu" di kaki soal. Sama seperti kotak ragu di dialog, warna
+   kuningnya tidak diturunkan: justru di mode gelaplah kuning paling
+   dibutuhkan, karena kartu soal sudah gelap dan kotak putihnya cepat
+   tenggelam. Yang digelapkan hanya lantarnya. */
+[data-theme='gelap'] .soal-ragu__tombol {
+    border-color: var(--color-ungu-line);
+    background-color: #191336;
+    color: color-mix(in oklab, var(--color-dark) 75%, transparent);
+}
+
+[data-theme='gelap'] .soal-ragu__tombol:hover {
+    border-color: #e6c36a;
+    color: #f3d38a;
+}
+
+[data-theme='gelap'] .soal-ragu__kotak {
+    border-color: var(--color-ungu-line);
+    background-color: #191336;
+}
+
+[data-theme='gelap'] .soal-ragu--ada .soal-ragu__tombol {
+    border-color: color-mix(in oklab, #f0b429 55%, transparent);
+    background-color: color-mix(in oklab, #f0b429 14%, #191336);
+    color: #f3d38a;
+}
+
+[data-theme='gelap'] .soal-ragu--ada .soal-ragu__kotak {
+    border-color: #f0b429;
+    background-color: #f0b429;
+    color: #241a00;
 }
 
 
@@ -9593,7 +10644,7 @@ html {
 }
 
 /*
- * Baris metadata: "Dibuat oleh Admin • 10 Soal • Tingkat Mudah".
+ * Baris metadata: "Dibuat oleh Admin � 10 Soal � Tingkat Mudah".
  *
  * Pemisah memakai ::before pada setiap butir kecuali yang pertama,
  * bukan elemen bullet tersendiri. Alasannya baris ini boleh
@@ -9612,7 +10663,7 @@ html {
 }
 
 .detail-quiz__meta li + li::before {
-    content: '•';
+    content: '�';
     margin-right: 0.7rem;
     color: color-mix(in oklab, var(--color-dark) 32%, transparent);
 }
@@ -9797,22 +10848,15 @@ html {
     overflow: hidden;
 }
 
-.daftar-soal__baris + .daftar-soal__baris {
-    border-top: 1px solid color-mix(in oklab, var(--garis-kartu) 70%, transparent);
-}
-
-.daftar-soal__tombol {
+.daftar-soal__baris {
     display: flex;
-    width: 100%;
     align-items: center;
     gap: 0.85rem;
     padding: 0.9rem 1.1rem;
-    text-align: left;
-    transition: background-color 0.2s ease;
 }
 
-.daftar-soal__tombol:hover {
-    background-color: color-mix(in oklab, var(--color-lavender) 40%, transparent);
+.daftar-soal__baris + .daftar-soal__baris {
+    border-top: 1px solid color-mix(in oklab, var(--garis-kartu) 70%, transparent);
 }
 
 .daftar-soal__nomor {
@@ -9832,77 +10876,21 @@ html {
 
 /*
  * min-width:0 + flex:1 supaya pertanyaan panjang membungkus di dalam
- * card, bukan mendorong ikon panah ke luar layar.
+ * card. line-clamp membatasi ke dua baris, jadi daftar hanya menampilkan
+ * inti soalnya saja.
  */
 .daftar-soal__teks {
     min-width: 0;
     flex: 1;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    overflow: hidden;
     font-size: 0.875rem;
     font-weight: 500;
     line-height: 1.5;
     color: color-mix(in oklab, var(--color-dark) 82%, transparent);
     overflow-wrap: anywhere;
-}
-
-.daftar-soal__panah {
-    width: 1.125rem;
-    height: 1.125rem;
-    flex-shrink: 0;
-    color: color-mix(in oklab, var(--color-dark) 45%, transparent);
-    transition: transform 0.2s ease;
-}
-
-.daftar-soal__tombol[aria-expanded='true'] .daftar-soal__panah {
-    transform: rotate(180deg);
-}
-
-.daftar-soal__isi {
-    padding: 0.85rem 1.1rem 1.1rem;
-    background-color: var(--color-brand-bg);
-}
-
-/*
- * Atribut polos tidak cukup di sini: elemen ini juga memakai kelas
- * utilitas, dan kelas display dari Tailwind bisa menang. Selektor
- * di bawah menutup celah itu tanpa perlu !important.
- */
-.daftar-soal__isi[hidden] {
-    display: none;
-}
-
-/* Tanpa JavaScript tidak ada yang bisa menutup baris, jadi isinya
-   dibiarkan terbuka semua. */
-@media (scripting: none) {
-    .daftar-soal__isi[hidden] {
-        display: block;
-    }
-}
-
-.daftar-soal__pilihan {
-    display: flex;
-    align-items: flex-start;
-    gap: 0.5rem;
-    border-radius: 0.6rem;
-    border: 1px solid color-mix(in oklab, var(--garis-kartu) 80%, transparent);
-    background-color: #fff;
-    padding: 0.5rem 0.6rem;
-    font-size: 0.8125rem;
-    line-height: 1.5;
-    color: color-mix(in oklab, var(--color-dark) 75%, transparent);
-}
-
-.daftar-soal__huruf {
-    display: flex;
-    width: 1.25rem;
-    height: 1.25rem;
-    flex-shrink: 0;
-    align-items: center;
-    justify-content: center;
-    border-radius: 0.35rem;
-    background-color: color-mix(in oklab, var(--color-lavender) 70%, transparent);
-    font-size: 0.625rem;
-    font-weight: 800;
-    color: var(--color-primary-dark);
 }
 
 /* ---------- Dialog Bagikan ---------- */
@@ -10542,6 +11530,550 @@ html {
 
 [data-theme='gelap'] .uiux-hasil__kosong-ikon {
     background-color: color-mix(in oklab, var(--color-primary) 22%, #191336);
+}
+
+/* ---------- Tombol "Lihat Peringkat" di kartu hasil ----------
+   Punya gaya sendiri, bukan --garis atau --utama, karena yang dibuka bukan
+   halaman lain milik pengguna ini melainkan daftar orang lain. Berwarna ungu
+   solid supaya jelas berbeda dari "Lihat Hasil Detail" yang ada di atasnya,
+   tapi tanpa bayangan hover yang mengangkat tombol supaya tidak terlihat
+   seperti tombol utama kedua. */
+.uiux-hasil__tombol--peringkat {
+    border: 1px solid color-mix(in oklab, var(--color-primary) 45%, transparent);
+    background-color: color-mix(in oklab, var(--color-lavender) 60%, white);
+    color: var(--color-primary-dark);
+}
+
+.uiux-hasil__tombol--peringkat:hover {
+    border-color: var(--color-primary);
+    background-color: color-mix(in oklab, var(--color-lavender) 85%, white);
+}
+
+[data-theme='gelap'] .uiux-hasil__tombol--peringkat {
+    background-color: color-mix(in oklab, var(--color-primary) 24%, #191336);
+    color: #c4b5fd;
+}
+
+/* ================================================================
+   PERINGKAT SESI QUIZ
+   Dipakai di user/quiz-peringkat.blade.php.
+
+   Satu halaman berisi kepala (judul quiz + jumlah peserta + status),
+   kartu "Posisi kamu", podium tiga besar, lalu daftar sisanya.
+
+   Semuanya memakai token yang sudah ada (--color-primary,
+   --color-primary-dark, --color-lavender, --color-brand-bg,
+   --garis-kartu, --teks-isi) supaya tidak memperkenalkan palet baru
+   dan otomatis ikut mode gelap.
+
+   Podium disusun dengan tiga kolom yang lebarnya sama, dan urutan
+   2-1-3 dibentuk dari tinggi kolom saja: kolom tengah (peringkat 1)
+   paling tinggi, kolom kiri (peringkat 2) addict lebih pendek, kolom
+   kanan (peringkat 3) paling pendek. Kalau urutan di markup ikut
+   diacak supaya "1" di tengah, daftar nama di bawahnya akan ikut
+   salah baca; urutan di DOM sengaja dibiarkan 1-2-3 dan yang dipindah
+   hanya tampilannya lewat order.
+   ================================================================ */
+
+/* ---------- Kepala ---------- */
+.peringkat-kepala {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    min-width: 0;
+    border-radius: 1.15rem;
+    border: 1px solid var(--garis-kartu);
+    background-color: #fff;
+    padding: 1rem 1.15rem;
+    box-shadow: 0 22px 44px -34px rgba(33, 26, 58, 0.45);
+}
+
+.peringkat-kepala__ikon {
+    display: flex;
+    flex-shrink: 0;
+    width: 2.5rem;
+    height: 2.5rem;
+    align-items: center;
+    justify-content: center;
+    border-radius: 0.9rem;
+    background: linear-gradient(140deg, color-mix(in oklab, var(--color-lavender) 75%, white), color-mix(in oklab, var(--color-primary) 25%, white));
+    color: var(--color-primary-dark);
+}
+
+/* ---------- Chip status ---------- */
+.peringkat-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    border-radius: 9999px;
+    background-color: color-mix(in oklab, var(--color-lavender) 65%, white);
+    padding: 0.35rem 0.8rem;
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: var(--color-primary-dark);
+}
+
+/* ---------- Kartu "Posisi kamu" ----------
+   Strip ungu muda dengan angka peringkat besar di kiri. Angkanya
+   ditonjolkan karena inilah satu-satunya bagian halaman ini yang
+   tentang orang yang sedang membaca. */
+.peringkat-saya {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    min-width: 0;
+    margin-top: 1rem;
+    border-radius: 1.15rem;
+    border: 1px solid color-mix(in oklab, var(--color-primary) 30%, var(--garis-kartu));
+    background: linear-gradient(120deg, color-mix(in oklab, var(--color-lavender) 70%, white), color-mix(in oklab, #f6cd6b 16%, white));
+    padding: 0.95rem 1.15rem;
+}
+
+.peringkat-saya__label {
+    font-size: 0.6875rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: color-mix(in oklab, var(--color-primary) 80%, var(--color-dark));
+}
+
+.peringkat-saya__peringkat {
+    display: flex;
+    align-items: baseline;
+    gap: 0.5rem;
+    font-family: var(--font-display);
+    font-size: 1.5rem;
+    font-weight: 700;
+    line-height: 1.2;
+    color: var(--color-primary-dark);
+}
+
+.peringkat-saya__peringkat span {
+    font-family: var(--font-sans);
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: color-mix(in oklab, var(--color-dark) 55%, transparent);
+}
+
+.peringkat-saya__nilai {
+    display: flex;
+    align-items: baseline;
+    gap: 0.35rem;
+}
+
+.peringkat-saya__nilai-angka {
+    font-size: 1.75rem;
+    font-weight: 800;
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
+    color: var(--color-primary-dark);
+}
+
+.peringkat-saya__nilai-skala {
+    font-size: 0.6875rem;
+    font-weight: 600;
+    color: color-mix(in oklab, var(--color-dark) 50%, transparent);
+}
+
+/* ---------- Catatan untuk host ---------- */
+.peringkat-catatan {
+    margin-top: 1rem;
+    border-radius: 0.9rem;
+    border: 1px dashed color-mix(in oklab, var(--color-primary) 30%, var(--garis-kartu));
+    background-color: color-mix(in oklab, var(--color-brand-bg) 70%, white);
+    padding: 0.8rem 1rem;
+    font-size: 0.8125rem;
+    line-height: 1.7;
+    color: var(--teks-isi);
+}
+
+/* ---------- Podium 2 - 1 - 3 ----------
+   align-items: flex-end membuat semua kolom duduk di garis dasar yang
+   sama, sehingga yang berbeda hanya tingginya: itu yang membuatnya
+   terbaca sebagai podium. Urutan di DOM sengaja dibiarkan 1-2-3 supaya
+   urutan baca pembaca layar tetap sama dengan urutannya; yang dipindah
+   hanya posisi tampilnya lewat order, sehingga yang di tengah (1) punya
+   order 2, yang di kiri (2) punya order 1, dan yang di kanan (3)
+   tetap order 3. */
+.peringkat-podium {
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    gap: 0.5rem;
+    margin-top: 1.25rem;
+}
+
+.peringkat-podium__petak {
+    display: flex;
+    flex: 1 1 0;
+    min-width: 0;
+    max-width: 12rem;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.2rem;
+    border-radius: 1.15rem 1.15rem 0.6rem 0.6rem;
+    border: 1px solid var(--garis-kartu);
+    border-bottom: none;
+    background-color: #fff;
+    padding: 0.9rem 0.6rem 1.1rem;
+    text-align: center;
+    box-shadow: 0 22px 40px -34px rgba(33, 26, 58, 0.5);
+}
+
+/* Peringkat 1: paling tinggi dan di tengah. */
+.peringkat-podium__petak--1 {
+    order: 2;
+    min-height: 15.5rem;
+    border-color: color-mix(in oklab, #f6cd6b 55%, var(--garis-kartu));
+    background: linear-gradient(180deg, color-mix(in oklab, #f6cd6b 16%, white), #fff 62%);
+}
+
+/* Peringkat 2: di kiri, sedikit lebih pendek. */
+.peringkat-podium__petak--2 {
+    order: 1;
+    min-height: 13rem;
+}
+
+/* Peringkat 3: di kanan, paling pendek dari trio. */
+.peringkat-podium__petak--3 {
+    order: 3;
+    min-height: 11.25rem;
+}
+
+/* Di layar sempit tiga kolom tetap dipakai karena itu yang membuat
+   bentuknya terbaca sebagai podium, tapi tinggi kolom dan jaraknya
+   diperkecil supaya nama dan angkanya tidak terpotong. */
+@media (max-width: 480px) {
+    .peringkat-podium {
+        gap: 0.35rem;
+    }
+
+    .peringkat-podium__petak {
+        padding: 0.7rem 0.4rem 0.85rem;
+    }
+
+    .peringkat-podium__petak--1 {
+        min-height: 13.5rem;
+    }
+
+    .peringkat-podium__petak--2 {
+        min-height: 11.5rem;
+    }
+
+    .peringkat-podium__petak--3 {
+        min-height: 10rem;
+    }
+
+    .peringkat-podium__nama {
+        font-size: 0.75rem;
+    }
+}
+
+.peringkat-podium__petak[data-saya='true'] {
+    box-shadow:
+        0 0 0 2px color-mix(in oklab, var(--color-primary) 55%, transparent),
+        0 22px 40px -34px rgba(33, 26, 58, 0.5);
+}
+
+/* Medali: lingkaran kecil di atas kolom, dengan warna sesuai
+   tempatnya. Nomor 1 memakai emas, 2 perak, 3 perunggu, sama dengan
+   warna peringkat di rekap host supaya tidak ada dua palet untuk satu
+   arti yang sama. */
+.peringkat-podium__nomor {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.9rem;
+    height: 1.9rem;
+    border-radius: 0.7rem;
+    background-color: var(--color-brand-bg);
+    font-size: 0.8125rem;
+    font-weight: 800;
+    color: var(--color-muted);
+    box-shadow: inset 0 0 0 1px var(--garis-kartu);
+}
+
+.peringkat-podium__petak--1 .peringkat-podium__nomor {
+    background-color: color-mix(in oklab, #f6cd6b 32%, white);
+    color: #8a6208;
+    box-shadow: none;
+}
+
+.peringkat-podium__petak--2 .peringkat-podium__nomor {
+    background-color: color-mix(in oklab, #cfd5e6 45%, white);
+    color: #4b5578;
+    box-shadow: none;
+}
+
+.peringkat-podium__petak--3 .peringkat-podium__nomor {
+    background-color: color-mix(in oklab, #e0a578 32%, white);
+    color: #8a4a1c;
+    box-shadow: none;
+}
+
+.peringkat-podium__avatar {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    width: 2.75rem;
+    height: 2.75rem;
+    margin-top: 0.5rem;
+    border-radius: 9999px;
+    background: linear-gradient(135deg, var(--a, var(--color-primary)), var(--a-gelap, var(--color-primary-dark)));
+    color: #fff;
+    font-size: 0.9375rem;
+    font-weight: 700;
+    line-height: 1;
+    user-select: none;
+}
+
+.peringkat-podium__petak--1 .peringkat-podium__avatar {
+    width: 3.25rem;
+    height: 3.25rem;
+    font-size: 1.125rem;
+}
+
+.peringkat-podium__nama {
+    max-width: 100%;
+    margin-top: 0.45rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 0.875rem;
+    font-weight: 700;
+    color: var(--color-dark);
+}
+
+.peringkat-podium__nilai {
+    margin-top: 0.15rem;
+    font-size: 1.375rem;
+    font-weight: 800;
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
+    color: var(--color-primary-dark);
+}
+
+.peringkat-podium__nilai span {
+    font-size: 0.5em;
+    font-weight: 700;
+}
+
+.peringkat-podium__rincian {
+    margin-top: 0.2rem;
+    font-size: 0.6875rem;
+    color: color-mix(in oklab, var(--color-dark) 50%, transparent);
+}
+
+/* ---------- Kartu daftar peserta ---------- */
+.peringkat-kartu {
+    min-width: 0;
+    margin-top: 1.25rem;
+    border-radius: 1.15rem;
+    border: 1px solid var(--garis-kartu);
+    background-color: #fff;
+    padding: 1.1rem 1.15rem;
+    box-shadow: 0 22px 44px -34px rgba(33, 26, 58, 0.45);
+}
+
+.peringkat-kartu__judul {
+    font-size: 0.9375rem;
+    font-weight: 800;
+    color: var(--color-dark);
+}
+
+.peringkat-daftar {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+    min-width: 0;
+    margin-top: 0.85rem;
+}
+
+.peringkat-daftar__baris {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+    min-width: 0;
+    border-radius: 0.85rem;
+    background-color: var(--color-brand-bg);
+    padding: 0.55rem 0.75rem;
+}
+
+/* Baris milik orang yang sedang membaca. Warnanya tidak jadi satu-satunya
+   penanda: ada juga label "Kamu" di sebelah namanya, supaya tetap
+   terbaca oleh yang tidak membedakan warna. */
+.peringkat-daftar__baris--saya {
+    background-color: color-mix(in oklab, var(--color-lavender) 55%, white);
+    box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--color-primary) 35%, transparent);
+}
+
+.peringkat-daftar__nomor {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    width: 1.85rem;
+    height: 1.85rem;
+    border-radius: 0.65rem;
+    background-color: #fff;
+    font-size: 0.75rem;
+    font-weight: 800;
+    color: var(--color-muted);
+    box-shadow: inset 0 0 0 1px var(--garis-kartu);
+}
+
+.peringkat-daftar__avatar {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    width: 2.1rem;
+    height: 2.1rem;
+    border-radius: 9999px;
+    background: linear-gradient(135deg, var(--a, var(--color-primary)), var(--a-gelap, var(--color-primary-dark)));
+    color: #fff;
+    font-size: 0.6875rem;
+    font-weight: 700;
+    line-height: 1;
+    user-select: none;
+}
+
+.peringkat-daftar__nama {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 0.875rem;
+    font-weight: 700;
+    color: var(--color-dark);
+}
+
+.peringkat-daftar__baris--saya .peringkat-daftar__nama::after {
+    content: 'Kamu';
+    display: inline-block;
+    margin-left: 0.45rem;
+    border-radius: 9999px;
+    background-color: color-mix(in oklab, var(--color-primary) 18%, white);
+    padding: 0.05rem 0.45rem;
+    font-size: 0.625rem;
+    font-weight: 700;
+    vertical-align: middle;
+    color: var(--color-primary-dark);
+}
+
+.peringkat-daftar__rincian {
+    margin-top: 0.05rem;
+    font-size: 0.6875rem;
+    color: color-mix(in oklab, var(--color-dark) 50%, transparent);
+}
+
+.peringkat-daftar__nilai {
+    flex-shrink: 0;
+    font-size: 1rem;
+    font-weight: 800;
+    font-variant-numeric: tabular-nums;
+    color: var(--color-primary-dark);
+}
+
+/* ---------- Belum ada peserta ---------- */
+.peringkat-kosong {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-top: 1.25rem;
+    border-radius: 1.15rem;
+    border: 1px solid var(--garis-kartu);
+    background-color: #fff;
+    padding: 2.5rem 1.5rem;
+    text-align: center;
+    box-shadow: 0 22px 44px -34px rgba(33, 26, 58, 0.45);
+}
+
+.peringkat-kosong__ikon {
+    display: flex;
+    width: 3.5rem;
+    height: 3.5rem;
+    align-items: center;
+    justify-content: center;
+    border-radius: 9999px;
+    background-color: color-mix(in oklab, var(--color-lavender) 70%, white);
+    color: var(--color-primary);
+}
+
+.peringkat-kosong__judul {
+    margin-top: 0.9rem;
+    font-size: 1.0625rem;
+    font-weight: 800;
+    color: var(--color-dark);
+}
+
+.peringkat-kosong__teks {
+    max-width: 26rem;
+    margin-top: 0.3rem;
+    font-size: 0.8125rem;
+    line-height: 1.7;
+    color: var(--teks-isi);
+}
+
+/* ---------- Mode gelap ----------
+   Hanya permukaan yang menulis #fff atau warna terang secara harfiah
+   perlu ditimpa; sisanya sudah otomatis gelap karena memakai token. */
+[data-theme='gelap'] :is(.peringkat-kepala, .peringkat-kartu, .peringkat-kosong, .peringkat-podium__petak) {
+    background-color: #191336;
+}
+
+[data-theme='gelap'] .peringkat-podium__petak--1 {
+    background: linear-gradient(180deg, color-mix(in oklab, #f6cd6b 14%, #191336), #191336 70%);
+}
+
+[data-theme='gelap'] .peringkat-saya {
+    background: linear-gradient(120deg, color-mix(in oklab, var(--color-lavender) 32%, #191336), color-mix(in oklab, #f6cd6b 10%, #191336));
+}
+
+[data-theme='gelap'] .peringkat-daftar__baris {
+    background-color: color-mix(in oklab, #241c48, #191336);
+}
+
+[data-theme='gelap'] .peringkat-daftar__baris--saya {
+    background-color: color-mix(in oklab, var(--color-primary) 22%, #191336);
+}
+
+[data-theme='gelap'] .peringkat-daftar__nomor {
+    background-color: #241c48;
+}
+
+[data-theme='gelap'] .peringkat-chip {
+    background-color: color-mix(in oklab, var(--color-primary) 22%, #191336);
+    color: #c4b5fd;
+}
+
+[data-theme='gelap'] .peringkat-catatan {
+    background-color: color-mix(in oklab, #241c48, #191336);
+}
+
+[data-theme='gelap'] .peringkat-kosong__ikon {
+    background-color: color-mix(in oklab, var(--color-primary) 22%, #191336);
+}
+
+/* Medali di mode gelap memakai versi lebih pekat supaya kontrasnya
+   tetap terbaca di atas kolom yang sudah gelap. */
+[data-theme='gelap'] .peringkat-podium__petak--1 .peringkat-podium__nomor {
+    background-color: color-mix(in oklab, #f6cd6b 26%, #191336);
+    color: #fde68a;
+}
+
+[data-theme='gelap'] .peringkat-podium__petak--2 .peringkat-podium__nomor {
+    background-color: color-mix(in oklab, #cfd5e6 24%, #191336);
+    color: #dbe2f3;
+}
+
+[data-theme='gelap'] .peringkat-podium__petak--3 .peringkat-podium__nomor {
+    background-color: color-mix(in oklab, #e0a578 26%, #191336);
+    color: #f3c39c;
 }
 
 

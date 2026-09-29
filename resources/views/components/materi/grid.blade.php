@@ -20,8 +20,7 @@
     ellipsis, jadi kartu tetap rapi walau kolomnya sempit.
 --}}
 
-<div data-reveal-stagger
-    class="grid grid-cols-2 gap-4 min-w-0 sm:gap-5 lg:grid-cols-4">
+<div data-reveal-stagger {{ $attributes->class(['grid grid-cols-2 gap-4 min-w-0 sm:gap-5 lg:grid-cols-4']) }}>
     @forelse ($daftar as $materi)
         <x-materi.kartu :materi="$materi" :kata-kunci="$kataKunci" />
     @empty

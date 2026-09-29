@@ -131,6 +131,35 @@ Route::middleware('auth')
             ->name('simpanan.materi');
 
         /*
+         * =============================================================
+         * SIMPANAN
+         * =============================================================
+         * Tujuan tombol bookmark di pojok kanan atas kartu materi dan
+         * kartu quiz: halaman "Simpanan" menampilkan keduanya sebagai
+         * kartu, lengkap dengan tab Materi / Quiz dan pencarian.
+         *
+         * Menyimpan dan melepas dilakukan lewat fetch, bukan lewat form
+         * halaman ini, supaya tombol bookmark yang sama bisa dipakai di
+         * halaman Materi, Quiz, detail materi, dan halaman Simpanan itu
+         * sendiri tanpa membuka halaman lain.
+         *
+         * "simpanan" segmen literal dan didaftarkan di sini juga sebagai
+         * penanda: seluruh rute simpanan berkumpul di satu blok, dan
+         * tidak ada route berparameter yang bisa menelannya karena pola
+         * "/{quiz:slug}/soal/{nomor}" di bawah menuntut tiga segmen.
+         */
+        Route::get('/simpanan', User\SimpananController::class)->name('simpanan');
+
+        // Halaman berikutnya untuk tombol "Muat lagi" di halaman Simpan.
+        // Dikirim sebagai JSON berisi kartu + tautan halaman setelahnya,
+        // bukan halaman penuh, supaya daftar yang sudah dibaca tetap utuh.
+        Route::get('/simpanan/muat', [User\SimpananController::class, 'muat'])
+            ->name('simpanan.muat');
+
+        Route::get('/simpanan/quiz', [User\SimpananQuizController::class, 'data'])
+            ->name('simpanan.quiz');
+
+        /*
          * Kelola materi milik sendiri (edit, simpan, hapus). Dipakai dari
          * menu "Karya Saya". Parameter materi tetap slug, sama seperti
          * halaman detail, dan controller menolak dengan 403 kalau materi itu
@@ -206,6 +235,14 @@ Route::middleware('auth')
         Route::get('/quiz/detail-quiz/{quiz}/mulai', User\QuizMulaiController::class)->name('quiz.mulai');
 
         /*
+         * Tombol bookmark di pojok kanan atas kartu quiz. Kembaran dari
+         * "/materi-detail/{materi}/simpan" di atas, hanya identifikasinya
+         * memakai id karena halaman detail quiz memang memakai id.
+         */
+        Route::post('/quiz/detail-quiz/{quiz}/simpan', [User\SimpananQuizController::class, 'toggle'])
+            ->name('quiz.simpan');
+
+        /*
          * Host membuka sesi lobby dari halaman detail quiz mode kodenya.
          * Sesi memakai kode yang sama dengan kode akses quiz, jadi angka di
          * lobby persis sama dengan yang diketik peserta.
@@ -243,6 +280,21 @@ Route::middleware('auth')
         Route::post('/sesi/{sesi}/akhiri', [User\SesiHostController::class, 'akhiri'])->name('sesi.akhiri');
         Route::post('/sesi/{sesi}/selesai', [User\SesiKerjakanController::class, 'selesai'])->name('sesi.selesai');
         Route::get('/sesi/{sesi}/hasil', [User\SesiHasilController::class, '__invoke'])->name('sesi.hasil');
+
+        /*
+         * Halaman peringkat sesi: nama, peringkat, dan skor nilai semua
+         * orang yang masuk lewat kode, urut dari yang tertinggi.
+         *
+         * Berbeda dari /sesi/{sesi}/hasil di atas yang dipakai host, yang ini
+         * yang dibuka peserta lewat tombol "Lihat Peringkat" di kartu hasil
+         * quiz mode kode. Keduanya membaca App\Support\DaftarPeringkat, jadi
+         * urutan yang dilihat keduanya tidak mungkin berbeda.
+         *
+         * Daftar ini tidak memakai halaman terpisah untuk tiap peran: host dan
+         * peserta memakai URL yang sama, dan penjaga sesi di controller yang
+         * membedakan siapa yang boleh membukanya.
+         */
+        Route::get('/sesi/{sesi}/peringkat', [User\SesiPeringkatController::class, '__invoke'])->name('sesi.peringkat');
         /*
          * =============================================================
          * MENGERJAKAN QUIZ
@@ -288,6 +340,22 @@ Route::middleware('auth')
         Route::post('/{quiz:slug}/soal/{nomor}', [User\SesiKerjakanController::class, 'simpan'])
             ->where('quiz', '^(?!judulsoal)[a-z0-9-]+$')
             ->name('judulsoal.jawab');
+
+        /*
+         * Tanda "ragu": aksi terpisah, bukan field di form jawaban.
+         *
+         * Form jawaban tidak boleh ikut terpakai karena satu klik di
+         * tombolnya berarti "pentingkan soal ini", bukan "kirim jawaban".
+         * Kalau keduanya jadi satu form, menandai ragu di tengah isian akan
+         * ikut mengirim jawaban yang belum selesai — atau sebaliknya,
+         * peserta tidak bisa menandai soal yang isiannya masih kosong.
+         *
+         * Satu aksi untuk dua arah: memutar status, jadi tombolnya cukup
+         * satu dan klik ganda tidak pernah menghasilkan dua baris.
+         */
+        Route::post('/{quiz:slug}/soal/{nomor}/ragu', [User\SesiKerjakanController::class, 'ragu'])
+            ->where('quiz', '^(?!judulsoal)[a-z0-9-]+$')
+            ->name('judulsoal.ragu');
 
         /*
          * URL lama halaman menjawab soal: /user/judulsoal/soal/{nomor}.

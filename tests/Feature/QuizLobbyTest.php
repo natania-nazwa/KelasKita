@@ -9,6 +9,7 @@ use App\Models\PesertaQuiz;
 use App\Models\Quiz;
 use App\Models\SesiQuiz;
 use App\Models\Soal;
+use App\Models\SoalRagu;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -970,6 +971,125 @@ class QuizLobbyTest extends TestCase
         $this->assertMatchesRegularExpression('/data-sisa="(1[0-9]\d|2\d\d)"/', $isi);
     }
 
+    /**
+     * Ini bug yang dilaporkan: pengguna mengerjakan quiz milik orang lain
+     * yang sudah dipublikasikan, waktunya habis, lalu menekan "Mulai Quiz"
+     * lagi untuk mengulang.
+     *
+     * Sesi lamanya masih berstatus started karena pengguna tidak pernah
+     * menekan tombol di dialog, jadi sesi itulah yang dipakai ulang. Akibatnya
+     * pengguna mendarat di soal pertama dengan sisa waktu 0, dan dialog
+     * "Waktu Anda Habis" langsung muncul di halaman yang seharusnya baru.
+     *
+     * Percobaan baru harus dapat waktu penuh dan tanpa dialog, sedangkan
+     * percobaan lama ikut ditutup supaya tidak menggantung di menu Hasil.
+     */
+    public function test_mulai_quiz_lagi_setelah_waktu_habis_membuka_percobaan_baru_tanpa_dialog(): void
+    {
+        $pemilik = $this->buatPengguna(['nama' => 'Rangga', 'email' => 'rangga@example.com']);
+        $pengguna = $this->buatPengguna(['nama' => 'Irma', 'email' => 'irma@example.com']);
+
+        // Quiz milik orang lain: statusnya sudah terbit, jadi yang sedang
+        // login hanya peserta biasa, bukan pemilik.
+        $quiz = $this->buatQuiz($pemilik, 'Belajar Pemrograman Dasar');
+        $this->buatSoal($quiz);
+
+        $this->actingAs($pengguna)->get(route('user.quiz.mulai', $quiz));
+        $sesiLama = SesiQuiz::query()->firstOrFail();
+
+        $this->actingAs($pengguna)
+            ->get(route('user.judulsoal.soal', [$quiz->slug, 1]).'?sesi='.$sesiLama->getKey())
+            ->assertOk();
+
+        // Waktunya habis, tapi peserta menutup tab tanpa menekan tombol dialog.
+        PengerjaanQuiz::query()->firstOrFail()->forceFill([
+            'dimulai_pada' => now()->subMinutes(11),
+        ])->save();
+
+        $this->actingAs($pengguna)->get(route('user.quiz.mulai', $quiz));
+
+        // Sesi baru, bukan sesi lama yang dipakai ulang.
+        $sesiBaru = SesiQuiz::query()->latest('id')->firstOrFail();
+        $this->assertNotSame($sesiLama->getKey(), $sesiBaru->getKey());
+        $this->assertSame(SesiQuiz::STATUS_SELESAI, $sesiLama->refresh()->status);
+
+        // Percobaan lama ditutup dengan benar, bukan menggantung di menu Hasil.
+        $pengerjaanLama = PengerjaanQuiz::query()
+            ->where('sesi_id', $sesiLama->getKey())
+            ->firstOrFail();
+        $this->assertTrue($pengerjaanLama->sudahSelesai());
+
+        $isi = $this->actingAs($pengguna)
+            ->get(route('user.judulsoal.soal', [$quiz->slug, 1]).'?sesi='.$sesiBaru->getKey())
+            ->assertOk()
+            ->getContent();
+
+        // Timer penuh: dialog "Waktu Anda Habis" hanya dipicu JavaScript dari
+        // angka ini, jadi sisa waktu yang masih besar adalah bukti pop up
+        // tidak akan muncul di percobaan baru ini.
+        $this->assertMatchesRegularExpression('/data-sisa="(5\d\d|6\d\d)"/', $isi);
+        $this->assertStringNotContainsString('data-sisa="0"', $isi);
+    }
+
+    /**
+     * Percobaan yang masih punya waktu harus diteruskan, bukan dianggap
+     * habis. Tanpa ini, menekan "Mulai Quiz" di tengah jalan akan
+     * memotong pengerjaan yang sedang berjalan.
+     */
+    public function test_mulai_quiz_lagi_selama_waktu_masih_ada_melanjutkan_sesi_yang_sama(): void
+    {
+        $pengguna = $this->buatPengguna();
+        $quiz = $this->buatQuiz($pengguna);
+        $this->buatSoal($quiz);
+
+        $this->actingAs($pengguna)->get(route('user.quiz.mulai', $quiz));
+        $sesi = SesiQuiz::query()->firstOrFail();
+
+        $this->actingAs($pengguna)
+            ->get(route('user.judulsoal.soal', [$quiz->slug, 1]).'?sesi='.$sesi->getKey())
+            ->assertOk();
+
+        PengerjaanQuiz::query()->firstOrFail()->forceFill([
+            'dimulai_pada' => now()->subMinutes(3),
+        ])->save();
+
+        $this->actingAs($pengguna)->get(route('user.quiz.mulai', $quiz));
+
+        $this->assertSame(1, SesiQuiz::query()->count());
+        $this->assertSame(SesiQuiz::STATUS_DIMULAI, $sesi->refresh()->status);
+        $this->assertFalse(
+            PengerjaanQuiz::query()->firstOrFail()->sudahSelesai()
+        );
+    }
+
+    /**
+     * Quiz tanpa batas waktu tidak punya hitungan waktu, jadi percobaan
+     * lamanya tidak boleh ikut ditutup hanya karena "Mulai Quiz" ditekan lagi.
+     */
+    public function test_mulai_quiz_lagi_tanpa_batas_waktu_melanjutkan_sesi_yang_sama(): void
+    {
+        $pengguna = $this->buatPengguna();
+        $quiz = $this->buatQuiz($pengguna);
+        $quiz->update(['durasi' => 0]);
+        $this->buatSoal($quiz);
+
+        $this->actingAs($pengguna)->get(route('user.quiz.mulai', $quiz));
+        $sesi = SesiQuiz::query()->firstOrFail();
+
+        $this->actingAs($pengguna)
+            ->get(route('user.judulsoal.soal', [$quiz->slug, 1]).'?sesi='.$sesi->getKey())
+            ->assertOk();
+
+        PengerjaanQuiz::query()->firstOrFail()->forceFill([
+            'dimulai_pada' => now()->subDays(3),
+        ])->save();
+
+        $this->actingAs($pengguna)->get(route('user.quiz.mulai', $quiz));
+
+        $this->assertSame(1, SesiQuiz::query()->count());
+        $this->assertSame(SesiQuiz::STATUS_DIMULAI, $sesi->refresh()->status);
+    }
+
     public function test_menjawab_soal_terakhir_langsung_menampilkan_hasil(): void
     {
         $host = $this->buatPengguna();
@@ -1150,6 +1270,31 @@ class QuizLobbyTest extends TestCase
     }
 
     /**
+     * Top bar dihapus di halaman mengerjakan soal, sama seperti di halaman
+     * yang memang butuh fokus penuh. Pencarian global, tombol notifikasi,
+     * dan chip akun tidak boleh ikut terender di sini, sementara navigasi
+     * mobile harus tetap naik ke top-0 karena tidak ada lagi baris 4rem
+     * di atasnya.
+     */
+    public function test_halaman_mengerjakan_soal_tanpa_top_bar(): void
+    {
+        $pengguna = $this->buatPengguna();
+        $quiz = $this->buatQuiz($pengguna);
+        $this->buatSoal($quiz);
+
+        $this->actingAs($pengguna)->get(route('user.quiz.mulai', $quiz));
+
+        $respons = $this->actingAs($pengguna)
+            ->get(route('user.judulsoal.soal', [$quiz->slug, 1]))
+            ->assertOk();
+
+        $respons->assertDontSee('data-app-topbar', false)
+            ->assertDontSee('id="cari-topbar"', false)
+            ->assertDontSee('Notifikasi', false)
+            ->assertSee('sticky top-0', false);
+    }
+
+    /**
      * Hanya halaman menjawab soal yang memakai slug judul. Halaman detail,
      * edit, dan hasil tetap memakai angka id, jadi tidak ada tautan lama
      * yang ikut berubah. Halaman detail memakai segmen literal
@@ -1251,12 +1396,14 @@ class QuizLobbyTest extends TestCase
     }
 
     /**
-     * Navigator kotak nomor sudah dihapus dari halaman soal. Keputusannya ada
-     * supaya tidak sengaja dibalik: kotak itu menambah satu query per halaman
-     * dan hanya jadi penanda, sedangkan posisi soal sudah tampil di kepala
-     * halaman.
+     * Daftar soal jadi dialog, bukan deretan kotak yang menempel di
+     * bawah kartu soal. Yang diuji bentuknya: ada tombol pembuka di
+     * kepala halaman, ada kotak nomor 1..N, dan kotak yang soalannya
+     * sudah tersimpan ditandai "terjawab" supaya warnanya beda dari yang
+     * belum. Satu query sudah cukup untuk dua hal itu, jadi tidak ada
+     * alasan kotak nomor tidak bisa jadi navigator.
      */
-    public function test_halaman_soal_tidak_lagi_menampilkan_navigator_kotak_nomor(): void
+    public function test_dialog_daftar_soal_menandai_soal_yang_sudah_dijawab(): void
     {
         $host = $this->buatPengguna();
         $peserta = $this->buatPengguna(['nama' => 'Maya', 'email' => 'maya@example.com']);
@@ -1267,16 +1414,242 @@ class QuizLobbyTest extends TestCase
         $sesi = $this->buatSesi($quiz, $host, SesiQuiz::STATUS_DIMULAI);
         $this->ikut($sesi, $peserta);
 
-        $isi = $this->actingAs($peserta)
+        // Satu soal dijawab dulu supaya ada beda antara yang sudah dan
+        // yang belum. Menjawab soal 1 tanpa sesi di URL tetap butuh sesi
+        // dari session, jadi dibaca dari tautan soal seperti di aplikasi.
+        $this->actingAs($peserta)
             ->get(route('user.judulsoal.soal', [$quiz->slug, 1]).'?sesi='.$sesi->getKey())
+            ->assertOk();
+
+        $this->actingAs($peserta)
+            ->post(route('user.judulsoal.jawab', [$quiz->slug, 1]), [
+                'jawaban' => 'A',
+                'sesi' => $sesi->getKey(),
+            ])
+            ->assertRedirect(route('user.judulsoal.soal', [$quiz->slug, 2]));
+
+        $isi = $this->actingAs($peserta)
+            ->get(route('user.judulsoal.soal', [$quiz->slug, 2]).'?sesi='.$sesi->getKey())
             ->assertOk()
             ->getContent();
 
-        $this->assertStringNotContainsString('soal-nav', $isi);
-        $this->assertStringNotContainsString('aria-label="Keadaan tiap soal"', $isi);
+        $this->assertStringContainsString('data-soal-nav-buka', $isi);
+        $this->assertStringContainsString('data-soal-nav-dialog', $isi);
 
-        // Posisi soal tetap terbaca di kepala halaman.
-        $this->assertStringContainsString('Soal 1', $isi);
+        // Dua kartu ringkasan: total soal dan yang sudah dijawab.
+        $this->assertStringContainsString('Total soal', $isi);
+        $this->assertStringContainsString('Sudah dijawab', $isi);
+
+        // Tiga kotak, satu per soal, dan tiap kotak menunjuk ke tautan
+        // soal itu — jadi tetap bisa dipakai tanpa JavaScript. Yang
+        // dihitung adalah kelas dasarnya (diakhiri spasi), bukan
+        // "soal-nav__tombol" polos, karena dua modifikasi warnanya juga
+        // memuat nama kelas itu.
+        $this->assertSame(3, substr_count($isi, 'class="soal-nav__tombol '));
+        $this->assertStringContainsString(route('user.judulsoal.soal', [$quiz->slug, 3]), $isi);
+
+        // Soal 1 sudah dijawab, soal 2 yang sedang dibuka dan belum
+        // dijawab, soal 3 belum dibuka sama sekali. Warna background-nya
+        // yang membedakan keduanya: soal 1 memakai --terjawab (ungu
+        // pekat), soal 2 hanya --kini (cincin).
+        $this->assertSame(1, substr_count($isi, 'soal-nav__tombol--terjawab'));
+        $this->assertStringContainsString('aria-label="Soal 1, sudah dijawab"', $isi);
+        $this->assertStringContainsString('aria-label="Soal 2, belum dijawab"', $isi);
+        $this->assertStringContainsString('soal-nav__tombol--kini', $isi);
+        $this->assertStringContainsString('aria-current="true"', $isi);
+
+        // Legenda "Sudah dijawab / Belum dijawab" dihapus: perbedaan
+        // warna antar kotak sudah cukup jelas tanpa penjelasan tertulis.
+        $this->assertStringNotContainsString('soal-nav__keterangan', $isi);
+    }
+
+    /**
+     * Tanda "ragu": satu aksi untuk dua arah. Yang diuji bukan cuma
+     * toggling-nya, tapi juga tiga hal yang mudah rusak di sekitarnya:
+     * tandanya tidak boleh ikut terhitung sebagai jawaban, kotak di
+     * dialog harus ikut berubah jadi kuning, dan tombol "Selanjutnya"
+     * harus tetap mengirim form jawaban padahal kini ia berada di luar
+     * form itu.
+     */
+    public function test_tanda_ragu_menyalakan_dan_mematikan_kotak_soal(): void
+    {
+        $host = $this->buatPengguna();
+        $peserta = $this->buatPengguna(['nama' => 'Maya', 'email' => 'maya@example.com']);
+        $quiz = $this->buatQuiz($host, 'Quiz Dua Soal');
+        $this->buatSoal($quiz, 1);
+        $this->buatSoal($quiz, 2);
+        $sesi = $this->buatSesi($quiz, $host, SesiQuiz::STATUS_DIMULAI);
+        $this->ikut($sesi, $peserta);
+
+        $tautan = fn (int $nomor) => route('user.judulsoal.soal', [$quiz->slug, $nomor]);
+
+        $this->actingAs($peserta)->get($tautan(1).'?sesi='.$sesi->getKey());
+
+        // Belum ditandai: tombolnya belum tertekan dan kotak soal 1 di
+        // dialog masih putih (tidak punya kelas ragu).
+        $belum = $this->actingAs($peserta)
+            ->get($tautan(1).'?sesi='.$sesi->getKey())
+            ->assertOk()
+            ->getContent();
+
+        $this->assertStringContainsString('aria-pressed="false"', $belum);
+        $this->assertStringNotContainsString('soal-nav__tombol--ragu', $belum);
+
+        // Menandai.
+        $this->actingAs($peserta)
+            ->post(route('user.judulsoal.ragu', [$quiz->slug, 1]), ['sesi' => $sesi->getKey()])
+            ->assertRedirect($tautan(1));
+
+        $this->assertSame(1, SoalRagu::query()->count());
+
+        $sudah = $this->actingAs($peserta)
+            ->get($tautan(1).'?sesi='.$sesi->getKey())
+            ->assertOk()
+            ->getContent();
+
+        $this->assertStringContainsString('aria-pressed="true"', $sudah);
+        $this->assertStringContainsString('soal-ragu--ada', $sudah);
+        $this->assertStringContainsString('soal-nav__tombol--ragu', $sudah);
+        $this->assertStringContainsString('aria-label="Soal 1, ragu, perlu ditinjau lagi"', $sudah);
+
+        /*
+         * Menandai ragu bukan menjawab: jumlah jawaban yang tersimpan
+         * harus tetap nol, dan nilai pun tidak boleh tersentuh.
+         */
+        $this->assertSame(0, JawabanQuiz::query()->count());
+        $this->assertSame(0, PengerjaanQuiz::query()->firstOrFail()->jumlah_dijawab);
+
+        // Melepas lagi.
+        $this->actingAs($peserta)
+            ->post(route('user.judulsoal.ragu', [$quiz->slug, 1]), ['sesi' => $sesi->getKey()])
+            ->assertRedirect($tautan(1));
+
+        $this->assertSame(0, SoalRagu::query()->count());
+    }
+
+    /**
+     * Tanda ragu milik satu pengerjaan, bukan milik pengguna + quiz.
+     * Kalau tidak begitu, menandai ragu di percobaan pertama akan ikut
+     * muncul di percobaan berikutnya untuk quiz yang sama.
+     */
+    public function test_tanda_ragu_tidak_bocor_ke_percobaan_lain(): void
+    {
+        $pengguna = $this->buatPengguna();
+        $quiz = $this->buatQuiz($pengguna, 'Quiz Dua Soal');
+        $this->buatSoal($quiz, 1);
+        $this->buatSoal($quiz, 2);
+
+        // Percobaan pertama.
+        $this->actingAs($pengguna)->get(route('user.quiz.mulai', $quiz));
+        $sesiPertama = SesiQuiz::query()->firstOrFail();
+
+        $this->actingAs($pengguna)
+            ->post(route('user.judulsoal.ragu', [$quiz->slug, 1]), ['sesi' => $sesiPertama->getKey()])
+            ->assertRedirect();
+
+        $this->assertSame(1, SoalRagu::query()->count());
+
+        // Percobaan kedua, sesi baru untuk quiz yang sama.
+        SesiQuiz::query()->whereKey($sesiPertama->getKey())->delete();
+        PengerjaanQuiz::query()->delete();
+        SoalRagu::query()->delete();
+        JawabanQuiz::query()->delete();
+
+        $this->actingAs($pengguna)->get(route('user.quiz.mulai', $quiz));
+
+        $isi = $this->actingAs($pengguna)
+            ->get(route('user.judulsoal.soal', [$quiz->slug, 1]))
+            ->assertOk()
+            ->getContent();
+
+        $this->assertStringNotContainsString('soal-nav__tombol--ragu', $isi);
+        $this->assertStringContainsString('aria-pressed="false"', $isi);
+    }
+
+    /**
+     * Tombol "Ragu" tidak boleh menjadi jalan submits isian jawaban.
+     * Kalau ia ikut mengirim form jawaban, satu klik untuk menandai
+     * soal akan diam-diam ikut menyimpan jawaban — termasuk jawaban
+     * kosong yang harus ditolak.
+     */
+    public function test_tombol_ragu_tidak_mengirim_jawaban(): void
+    {
+        $pengguna = $this->buatPengguna();
+        $quiz = $this->buatQuiz($pengguna, 'Quiz Dua Soal');
+        $this->buatSoal($quiz, 1);
+        $this->buatSoal($quiz, 2);
+
+        $this->actingAs($pengguna)->get(route('user.quiz.mulai', $quiz));
+        $sesi = SesiQuiz::query()->firstOrFail();
+
+        // Isian sengaja dikosongkan: kalau tombolnya ikut mengirim form
+        // jawaban, permintaan ini akan gagal validasi.
+        $this->actingAs($pengguna)
+            ->post(route('user.judulsoal.ragu', [$quiz->slug, 1]), ['sesi' => $sesi->getKey()])
+            ->assertRedirect(route('user.judulsoal.soal', [$quiz->slug, 1]));
+
+        $this->assertSame(0, JawabanQuiz::query()->count());
+    }
+
+    /**
+     * Pemeriksaan isian di resources/js/quiz-kerjakan.js mencari tombol
+     * "Selanjutnya" di seluruh dokumen, karena di markup ia berada di
+     * luar form jawaban. Yang diuji di sini hanya bentuk markupnya:
+     * atribut form-nya harus menunjuk ke form yang benar, kalau tidak
+     * tombolnya tidak akan mengirim apa pun.
+     */
+    public function test_tombol_selanjutnya_mengirim_form_jawaban_laluar_form(): void
+    {
+        $pengguna = $this->buatPengguna();
+        $quiz = $this->buatQuiz($pengguna, 'Quiz Dua Soal');
+        $this->buatSoal($quiz, 1);
+        $this->buatSoal($quiz, 2);
+
+        $this->actingAs($pengguna)->get(route('user.quiz.mulai', $quiz));
+
+        $isi = $this->actingAs($pengguna)
+            ->get(route('user.judulsoal.soal', [$quiz->slug, 1]))
+            ->assertOk()
+            ->getContent();
+
+        $this->assertStringContainsString('id="soal-jawab"', $isi);
+        $this->assertStringContainsString('form="soal-jawab"', $isi);
+
+        // Teks tombolnya "Selanjutnya", bukan lagi "Simpan & Lanjut".
+        $this->assertStringContainsString('Selanjutnya', $isi);
+        $this->assertStringNotContainsString('Simpan & Lanjut', $isi);
+    }
+
+    /**
+     * Teks "Soal N dari M" dihapus dari kepala halaman karena angka yang
+     * sama sudah ada di dalam dialog daftar soal. Yang boleh hilang cuma
+     * teksnya: posisi soal tetap harus terbaca, jadi teksnya disimpan
+     * sebagai sr-only di dalam progress bar dan atribut aria-valuenow
+     * progress bar tetap terisi.
+     */
+    public function test_kepala_halaman_tidak_lagi_menulis_posisi_soal(): void
+    {
+        $host = $this->buatPengguna();
+        $peserta = $this->buatPengguna(['nama' => 'Maya', 'email' => 'maya@example.com']);
+        $quiz = $this->buatQuiz($host, 'Quiz Dua Soal');
+        $this->buatSoal($quiz, 1);
+        $this->buatSoal($quiz, 2);
+        $sesi = $this->buatSesi($quiz, $host, SesiQuiz::STATUS_DIMULAI);
+        $this->ikut($sesi, $peserta);
+
+        $isi = $this->actingAs($peserta)
+            ->get(route('user.judulsoal.soal', [$quiz->slug, 2]).'?sesi='.$sesi->getKey())
+            ->assertOk()
+            ->getContent();
+
+        // Kelas .soal-kepala__posisi dipakai untuk teks yang sudah dihapus,
+        // jadi tidak boleh ada di markup lagi.
+        $this->assertStringNotContainsString('soal-kepala__posisi', $isi);
+
+        // Tapi posisi soal tetap terbaca: lewat sr-only di dalam progress
+        // bar dan lewat atribut aria-valuenow.
+        $this->assertStringContainsString('aria-valuenow="2"', $isi);
+        $this->assertStringContainsString('sr-only">Soal 2 dari 2</span>', $isi);
     }
 
     public function test_halaman_soal_tanpa_sesi_dikirim_ke_daftar_quiz(): void

@@ -16,9 +16,11 @@
     keduanya lewat persetujuan admin yang sama, jadi pemiliknya tidak perlu
     membuka tiap tab untuk tahu apakah masih ada yang ditunggu.
 
-    Kartu putih dan kotak ikon memakai .dash-kartu / .dash-ikon-kotak yang
-    sama dengan kartu dashboard, supaya deret ini terasa sebagai bagian dari
-    aplikasi ini, bukan widget yang ditempel.
+    Bentuk kartunya tetap .dash-kartu (yang sama dengan kartu dashboard)
+    supaya deret ini terasa sebagai bagian dari aplikasi ini, bukan widget
+    yang ditempel. Yang membedakan hanya warnanya: tiap kartu memakai warna
+    kategorinya sendiri lewat --k / --k-gelap, jadi empat angka ini terlihat
+    sebagai empat hal berbeda dan bukan empat angka yang sama.
 --}}
 
 @php
@@ -28,41 +30,45 @@
             'label' => 'Materi Saya',
             'catatan' => 'materi yang sudah kamu buat',
             'ikon' => 'buku',
-            'warna' => '#8b7bf0',
-            'warna_gelap' => '#5b46cf',
+            'warna' => '#a78bfa',
+            'warna_gelap' => '#6d4fd6',
         ],
         [
             'nilai' => $quiz,
             'label' => 'Quiz Saya',
             'catatan' => 'quiz yang sudah kamu buat',
             'ikon' => 'benar',
-            'warna' => '#4fd0e0',
-            'warna_gelap' => '#0e8ba0',
+            'warna' => '#5ed3e8',
+            'warna_gelap' => '#0f8fa8',
         ],
         [
             'nilai' => $soal,
             'label' => 'Total Soal',
             'catatan' => 'soal di semua quiz milikmu',
             'ikon' => 'dokumen',
-            'warna' => '#f78299',
-            'warna_gelap' => '#d63a63',
+            'warna' => '#f9a8b8',
+            'warna_gelap' => '#d9557a',
         ],
         [
             'nilai' => $menunggu,
             'label' => 'Menunggu Persetujuan',
             'catatan' => $menunggu > 0 ? 'materi & quiz sedang ditinjau admin' : 'sudah ditinjau admin',
             'ikon' => 'jam',
-            'warna' => '#f6cd6b',
-            'warna_gelap' => '#b8830c',
+            'warna' => '#fcd34d',
+            'warna_gelap' => '#b07d09',
         ],
     ];
 @endphp
 
-<div data-reveal-stagger class="mt-6 grid min-w-0 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+{{-- Jarak ke elemen di atas dikendalikan oleh halaman, bukan di sini,
+     supaya deret kartu ini bisa ditumpuk di atas papan kepala. --}}
+<div data-reveal-stagger class="grid min-w-0 gap-4 sm:grid-cols-2 xl:grid-cols-4">
     @foreach ($daftar as $item)
-        <article style="--k: {{ $item['warna'] }}; --k-gelap: {{ $item['warna_gelap'] }};" class="dash-kartu karya-angka">
+        <article style="--k: {{ $item['warna'] }}; --k-gelap: {{ $item['warna_gelap'] }};"
+            class="dash-kartu karya-angka">
+
             <span class="dash-ikon-kotak" aria-hidden="true">
-                <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <svg fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                     <path stroke-linecap="round" stroke-linejoin="round" d="{{ \App\Support\Ikon::path($item['ikon']) }}" />
                 </svg>
             </span>

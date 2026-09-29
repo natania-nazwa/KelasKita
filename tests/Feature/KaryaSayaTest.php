@@ -471,10 +471,9 @@ class KaryaSayaTest extends TestCase
         $user = $this->buatPengguna();
         $pelajaran = $this->buatPelajaran();
         $materi = $this->buatMateri($pelajaran, $user, 'Belajar Blade');
-        $materi->update(['thumbnail' => 'thumbnails/lama.png', 'audio' => 'audio/lama.mp3']);
+        $materi->update(['thumbnail' => 'thumbnails/lama.png']);
 
         Storage::disk('public')->put('thumbnails/lama.png', 'lama');
-        Storage::disk('public')->put('audio/lama.mp3', 'lama');
 
         // Kolom berkas dibiarkan kosong: lampiran yang ada tidak boleh hilang
         // hanya karena form disimpan tanpa mengunggah ulang.
@@ -490,9 +489,44 @@ class KaryaSayaTest extends TestCase
         $setelah = $materi->fresh();
 
         $this->assertSame('thumbnails/lama.png', $setelah->thumbnail);
-        $this->assertSame('audio/lama.mp3', $setelah->audio);
         Storage::disk('public')->assertExists('thumbnails/lama.png');
-        Storage::disk('public')->assertExists('audio/lama.mp3');
+    }
+
+    /**
+     * Tombol Hapus pada thumbnail materi harus benar-benar membuang
+     * berkasnya: kolom jadi kosong dan gambarnya hilang dari disk, bukan
+     * cuma pratinjau di browser.
+     */
+    public function test_thumbnail_materi_bisa_dihapus_lewat_bendera_hapus(): void
+    {
+        Storage::fake('public');
+
+        $user = $this->buatPengguna();
+        $pelajaran = $this->buatPelajaran();
+        $materi = $this->buatMateri($pelajaran, $user, 'Belajar Blade');
+        $materi->update(['thumbnail' => 'thumbnails/lama.png']);
+
+        Storage::disk('public')->put('thumbnails/lama.png', 'lama');
+
+        // Form edit memang menitipkan bendera itu.
+        $this->actingAs($user)
+            ->get(route('user.materi.edit', $materi->slug))
+            ->assertOk()
+            ->assertSee('name="thumbnail_hapus"', false)
+            ->assertSee('data-thumbnail-hapus-flag', false);
+
+        $this->actingAs($user)
+            ->put(route('user.materi.update', $materi->slug), [
+                'pelajaran_id' => $pelajaran->id,
+                'nama' => 'Belajar Blade',
+                'isi' => 'Isi materi yang definitely lebih dari dua puluh karakter.',
+                'tingkat_kesulitan' => 'Mudah',
+                'thumbnail_hapus' => 1,
+            ])
+            ->assertSessionHasNoErrors();
+
+        $this->assertNull($materi->fresh()->thumbnail);
+        Storage::disk('public')->assertMissing('thumbnails/lama.png');
     }
 
     public function test_form_edit_quiz_membuka_dengan_soal_lama(): void

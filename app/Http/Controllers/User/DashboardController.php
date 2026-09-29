@@ -3,29 +3,33 @@
 namespace App\Http\Controllers\User;
 
 use App\Http\Controllers\Controller;
-use App\Models\Pelajaran;
+use App\Models\Materi;
+use App\Models\Quiz;
 use App\Models\User;
 use App\Support\DaftarJadwal;
+use App\Support\DaftarMateri;
+use App\Support\DaftarQuiz;
 use App\Support\Ikon;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
-use Illuminate\Support\Str;
 use Illuminate\View\View;
 
 /**
  * Halaman dashboard untuk pengguna (siswa).
  *
  * Semua data di bawah sengaja dibuat sebagai array polos supaya komponen di
- * resources/views/components/dashboard tidak tahu-menahu soal Eloquent. Nanti
- * tinggal ganti isi tiap method dengan hasil query (Model / API) tanpa
- * menyentuh markup di user/dashboard.blade.php.
+ * resources/views/components/dashboard tidak tahu-menahu soal Eloquent. Bentuk
+ * array tiap kartu materi dan quiz sengaja sama persis dengan hasil
+ * App\Support\DaftarMateri dan App\Support\DaftarQuiz, jadi section
+ * "Materi Terbaru" dan "Quiz Terbaru" di dashboard memakai sumber data yang
+ * sama dengan halaman Materi dan halaman Quiz.
  *
  * Bentuk yang dipakai tiap kelompok data:
  *   ringkasan     => [label, nilai, perubahan, ikon, warna]
  *   aksiCepat     => [judul, deskripsi, ikon, warna, warna_gelap, tautan, sorot]
  *   aksesCepat    => [judul, deskripsi, ikon, warna, warna_gelap, tautan]
- *   materiTerbaru => [slug, judul, deskripsi, jumlah_materi, kategori[], pembuat[]]
- *   quizTerbaru   => [slug, judul, jumlah_soal, durasi, kategori[], tautan]
+ *   materiTerbaru => hasil App\Support\DaftarMateri::petakan()
+ *   quizTerbaru   => hasil App\Support\DaftarQuiz::petakan()
  *   jadwal        => hasil App\Support\DaftarJadwal::hariIni()
  *   peringkat     => [peringkat, skor, nama, inisial, warna, warna_gelap, ...]
  *   kalender      => [nama_bulan, nama_hari, sel[], sebelumnya, berikutnya]
@@ -34,18 +38,28 @@ use Illuminate\View\View;
  */
 class DashboardController extends Controller
 {
+    /**
+     * Berapa kartu yang ditampilkan di section materi dan quiz terbaru.
+     *
+     * Empat, karena grid di dashboard mengizinkan empat kartu satu baris di
+     * layar lebar. Kalau someday jadi dua baris, angka ini yang diubah.
+     */
+    private const JUMLAH_TERBARU = 4;
+
     public function __invoke(Request $request): View
     {
+        $pengguna = $request->user();
+
         return view('user.dashboard', [
-            'pengguna' => $request->user(),
+            'pengguna' => $pengguna,
 
             'ringkasan' => $this->ringkasan(),
             'aksiCepat' => $this->aksiCepat(),
             'aksesCepat' => $this->aksesCepat(),
             'materiTerbaru' => $this->materiTerbaru(),
-            'quizTerbaru' => $this->quizTerbaru(),
+            'quizTerbaru' => $this->quizTerbaru($pengguna?->getKey()),
             'jadwal' => $this->jadwal($request),
-            'peringkat' => $this->peringkat($request->user()),
+            'peringkat' => $this->peringkat($pengguna),
             'kalender' => $this->kalender($request),
             'streak' => $this->streak(),
         ]);
@@ -90,7 +104,18 @@ class DashboardController extends Controller
 
     /**
      * Tiga kartu aksi yang membawanya ke halaman inti aplikasi.
-     * "sorot" menandai kartu pertama supaya jadi titik masuk paling menonjol.
+     *
+     * Warnanya sengaja memakai tiga hue berbeda (ungu, biru, hijau) dan
+     * semuanya dalam versi terang/lembut. Kartu tidak memakai warna pekat
+     * penuh supaya tiga kartu ini tampil tenang berdampingan; pewarnaannya
+     * diterapkan di resources/css/app.css lewat .dash-aksi yang mencampur --k
+     * dengan putih.
+     *
+     * "sorot" hanya menandai kartu pertama supaya tint-nya sedikit lebih pekat
+     * dan jadi titik masuk utama, bukan lagi gradasi solid dengan teks putih.
+     *
+     * Kartu "Buat Quiz" langsung ke form tambah quiz, bukan ke daftar quiz,
+     * supaya sekali klik sudah sampai di tempat mengisinya.
      */
     private function aksiCepat(): array
     {
@@ -100,7 +125,7 @@ class DashboardController extends Controller
                 'deskripsi' => 'Temukan materi menarik dari guru dan teman-temanmu.',
                 'ikon' => Ikon::path('buku'),
                 'warna' => '#a78bfa',
-                'warna_gelap' => '#6c4de6',
+                'warna_gelap' => '#5b3fd6',
                 'tautan' => route('user.materi'),
                 'sorot' => true,
             ],
@@ -108,17 +133,17 @@ class DashboardController extends Controller
                 'judul' => 'Buat Quiz',
                 'deskripsi' => 'Uji pemahamanmu dengan membuat atau mengerjakan quiz.',
                 'ikon' => Ikon::path('dokumen'),
-                'warna' => '#8b80e6',
-                'warna_gelap' => '#5a4cc9',
-                'tautan' => route('user.quiz'),
+                'warna' => '#93c5fd',
+                'warna_gelap' => '#1d4ed8',
+                'tautan' => route('user.quiz.tambah'),
                 'sorot' => false,
             ],
             [
                 'judul' => 'Masukkan Kode',
                 'deskripsi' => 'Gabung ke quiz yang sudah dibuat dengan kode.',
                 'ikon' => Ikon::path('gembok'),
-                'warna' => '#b39ef5',
-                'warna_gelap' => '#6a45c9',
+                'warna' => '#6ee7b7',
+                'warna_gelap' => '#047857',
                 'tautan' => route('user.sesi.gabung'),
                 'sorot' => false,
             ],
@@ -129,17 +154,20 @@ class DashboardController extends Controller
      * Dua tombol ringkas di panel "Akses Cepat" sidebar. Menunjuk ke fitur
      * yang paling sering dipakai; bedanya dengan kartu aksi cepat di kolom
      * utama hanya tampilan bodynya yang lebih ringkas.
+     *
+     * Tombol pertama langsung membuka form tambah materi, bukan daftar
+     * materi, supaya sekali klik sudah sampai di tempat mengisinya.
      */
     private function aksesCepat(): array
     {
         return [
             [
-                'judul' => 'Buat Quiz',
-                'deskripsi' => 'Buat kuis baru dengan soal sendiri',
+                'judul' => 'Buat Materi',
+                'deskripsi' => 'Buat materi baru dan bagikan',
                 'ikon' => Ikon::path('tambah'),
                 'warna' => '#a78bfa',
                 'warna_gelap' => '#6c4de6',
-                'tautan' => route('user.quiz'),
+                'tautan' => route('user.materi.tambah'),
             ],
             [
                 'judul' => 'Masukkan Kode',
@@ -153,58 +181,48 @@ class DashboardController extends Controller
     }
 
     /**
-     * Empat materi terbaru. Bentuk array-nya sengaja dibuat sama persis
-     * dengan App\Support\DaftarMateri supaya kartu yang dirender
-     * (x-materi.kartu) tidak perlu tahu asal datanya.
+     * Empat materi terbaru yang sudah tayang.
+     *
+     * Query dan pemetaannya sengaja memakai App\Support\DaftarMateri, sama
+     * seperti halaman Materi, jadi kartu di dashboard benar-benar menampilkan
+     * materi yang ada di aplikasi dan bentuk datanya tidak akan pernah beda
+     * dari kartu di halaman Materi.
      */
     private function materiTerbaru(): array
     {
-        $daftar = [
-            ['kategori' => 'pemrograman', 'judul' => 'HTML Dasar', 'deskripsi' => 'Materi dasar HTML untuk pemula.', 'pembuat' => 'Admin', 'jumlah' => 10],
-            ['kategori' => 'pemrograman', 'judul' => 'CSS Dasar', 'deskripsi' => 'Membuat tampilan web lebih menarik.', 'pembuat' => 'Natania', 'jumlah' => 8],
-            ['kategori' => 'desain-web', 'judul' => 'UI/UX Design', 'deskripsi' => 'Mengenal dasar desain antarmuka.', 'pembuat' => 'Keyla', 'jumlah' => 6],
-            ['kategori' => 'pemrograman', 'judul' => 'JavaScript Dasar', 'deskripsi' => 'Logika dan interaksi pada website.', 'pembuat' => 'Irma', 'jumlah' => 12],
-        ];
+        $materi = Materi::query()
+            ->terbit()
+            ->with(['pelajaran', 'pembuat'])
+            ->latest('created_at')
+            ->latest('id')
+            ->take(self::JUMLAH_TERBARU)
+            ->get();
 
-        return array_map(function (array $baris, int $urut) {
-            return [
-                'id' => $urut + 1,
-                'slug' => Str::slug($baris['judul']),
-                'judul' => $baris['judul'],
-                'deskripsi' => $baris['deskripsi'],
-                // Belum ada kolom gambar, jadi banner kartu memakai gradasi
-                // warna kategori (lihat .kartu-materi__gambar).
-                'thumbnail' => null,
-                'tingkat_kesulitan' => 'Mudah',
-                'jumlah_materi' => $baris['jumlah'],
-                'tautan' => route('user.materi'),
-                'kategori' => Pelajaran::warna($baris['kategori']),
-                'pembuat' => $this->orang($baris['pembuat']),
-            ];
-        }, $daftar, array_keys($daftar));
+        return DaftarMateri::petakan($materi);
     }
 
     /**
-     * Empat quiz terbaru. Durasi disimpan sebagai angka menit supaya
-     * komponen bebas memformatnya sendiri.
+     * Empat quiz terbaru yang sudah tayang.
+     *
+     * Sama seperti materiTerbaru(): sumber dan pemetaannya diambil dari
+     * App\Support\DaftarQuiz supaya kartu dashboard identik dengan kartu di
+     * halaman Quiz, termasuk jumlah soal dan durasinya.
+     *
+     * Id pengguna diteruskan supaya kartu bisa menandai "Quiz Saya" untuk
+     * quiz milik orang yang sedang login.
      */
-    private function quizTerbaru(): array
+    private function quizTerbaru(?int $idPengguna): array
     {
-        $daftar = [
-            ['kategori' => 'pemrograman', 'judul' => 'Pengantar HTML', 'soal' => 5, 'durasi' => 2],
-            ['kategori' => 'pemrograman', 'judul' => 'Dasar-Dasar CSS', 'soal' => 5, 'durasi' => 3],
-            ['kategori' => 'pemrograman', 'judul' => 'Logika Pemrograman', 'soal' => 10, 'durasi' => 5],
-            ['kategori' => 'desain-web', 'judul' => 'Desain UI/UX', 'soal' => 8, 'durasi' => 4],
-        ];
+        $quiz = Quiz::query()
+            ->terbit()
+            ->with(['pelajaran', 'pembuat'])
+            ->withCount(['soal as jumlah_soal_termuat' => fn ($soal) => $soal->aktif()])
+            ->latest('created_at')
+            ->latest('id')
+            ->take(self::JUMLAH_TERBARU)
+            ->get();
 
-        return array_map(fn (array $baris) => [
-            'slug' => Str::slug($baris['judul']),
-            'judul' => $baris['judul'],
-            'jumlah_soal' => $baris['soal'],
-            'durasi' => $baris['durasi'],
-            'tautan' => route('user.quiz'),
-            'kategori' => Pelajaran::warna($baris['kategori']),
-        ], $daftar);
+        return DaftarQuiz::petakan($quiz, $idPengguna);
     }
 
     /**

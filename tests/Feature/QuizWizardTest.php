@@ -1171,6 +1171,100 @@ class QuizWizardTest extends TestCase
         $this->assertDatabaseCount('tb_quiz', 0);
     }
 
+    /**
+     * Mengganti thumbnail harus menyimpan berkas barunya, membuang yang
+     * lamanya, dan menyisakan kolom yang menunjuk berkas yang benar-benar
+     * ada di disk — kalau tidak, gambarnya tampil rusak di semua halaman.
+     */
+    public function test_thumbnail_baru_saat_edit_mengganti_berkas_lama(): void
+    {
+        Storage::fake('public');
+
+        $user = $this->buatPengguna();
+        $pelajaran = $this->buatPelajaran();
+
+        $this->actingAs($user)
+            ->post('/user/quiz/tambah', $this->isianLengkap($pelajaran, [
+                'thumbnail' => UploadedFile::fake()->image('lama.jpg'),
+            ]))
+            ->assertSessionHasNoErrors();
+
+        $quiz = Quiz::query()->where('judul', 'HTML Dasar')->firstOrFail();
+        $lama = $quiz->thumbnail;
+
+        $this->assertNotNull($lama);
+        Storage::disk('public')->assertExists($lama);
+
+        $this->actingAs($user)
+            ->put(route('user.quiz.update', $quiz), $this->isianLengkap($pelajaran, [
+                'thumbnail' => UploadedFile::fake()->image('baru.jpg'),
+            ]))
+            ->assertSessionHasNoErrors();
+
+        $tersimpan = $quiz->fresh()->thumbnail;
+
+        $this->assertNotNull($tersimpan);
+        $this->assertNotSame($lama, $tersimpan);
+        Storage::disk('public')->assertExists($tersimpan);
+        Storage::disk('public')->assertMissing($lama);
+    }
+
+    /**
+     * Tombol Hapus pada thumbnail dikirim sebagai thumbnail_hapus. Tanpa
+     * bendera itu dibaca controller, tombolnya hanya berhenti di pratinjau
+     * browser dan gambarnya muncul lagi setelah halaman dimuat ulang.
+     */
+    public function test_thumbnail_quiz_bisa_dihapus_lewat_bendera_hapus(): void
+    {
+        Storage::fake('public');
+
+        $user = $this->buatPengguna();
+        $pelajaran = $this->buatPelajaran();
+
+        $this->actingAs($user)
+            ->post('/user/quiz/tambah', $this->isianLengkap($pelajaran, [
+                'thumbnail' => UploadedFile::fake()->image('lama.jpg'),
+            ]))
+            ->assertSessionHasNoErrors();
+
+        $quiz = Quiz::query()->where('judul', 'HTML Dasar')->firstOrFail();
+        $lama = $quiz->thumbnail;
+
+        // Form edit memang menitipkan bendera itu.
+        $this->actingAs($user)
+            ->get(route('user.quiz.edit', $quiz))
+            ->assertOk()
+            ->assertSee('name="thumbnail_hapus"', false)
+            ->assertSee('data-wizard-thumbnail-hapus-flag', false);
+
+        $this->actingAs($user)
+            ->put(route('user.quiz.update', $quiz), $this->isianLengkap($pelajaran, [
+                'thumbnail_hapus' => 1,
+            ]))
+            ->assertSessionHasNoErrors();
+
+        $setelah = $quiz->fresh();
+
+        $this->assertNull($setelah->thumbnail);
+        Storage::disk('public')->assertMissing($lama);
+    }
+
+    /**
+     * Galat thumbnail harus selalu siap di DOM: JavaScript menolak berkas
+     * yang kebesaran atau formatnya salah lewat elemen itu, dan tampilGalat()
+     * diam saja kalau elemennya tidak ada.
+     */
+    public function test_kolom_galat_thumbnail_selalu_dirender_meski_kosong(): void
+    {
+        $user = $this->buatPengguna();
+        $this->buatPelajaran();
+
+        $this->actingAs($user)
+            ->get('/user/quiz/tambah')
+            ->assertOk()
+            ->assertSee('data-wizard-thumbnail-galat', false);
+    }
+
     public function test_form_ubah_membuka_wizard_dengan_isi_quiz_yang_tersimpan(): void
     {
         $user = $this->buatPengguna();

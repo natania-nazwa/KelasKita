@@ -68,43 +68,36 @@
 
     <div data-wizard-quiz data-langkah="{{ $langkahAwal }}" data-abjad="{{ \App\Support\KodeQuiz::ABJAD }}"
         data-panjang="{{ \App\Support\KodeQuiz::PANJANG }}"
-        class="kanvas-halaman -m-6 min-h-[calc(100dvh-4rem)] p-6 pb-28 lg:-m-10 lg:p-10 lg:pb-28">
-
-        {{-- =========================
-             BREADCRUMB
-        ========================== --}}
-        <nav aria-label="Breadcrumb">
-            <ol class="flex flex-wrap items-center gap-1.5 text-xs font-semibold">
-                <li>
-                    <a href="{{ route('user.dashboard') }}"
-                        class="text-muted transition hover:text-ungu">Home</a>
-                </li>
-
-                <li class="text-ungu-soft" aria-hidden="true">/</li>
-
-                {{-- Quiz dibuat dan dikelola lewat menu Karya Saya. --}}
-                <li>
-                    <a href="{{ route('user.karya-saya', ['tab' => 'quiz']) }}"
-                        class="text-muted transition hover:text-ungu">Karya Saya</a>
-                </li>
-
-                <li class="text-ungu-soft" aria-hidden="true">/</li>
-
-                <li class="text-dark" aria-current="page">{{ $modeEdit ? 'Edit Quiz' : 'Buat Quiz' }}</li>
-            </ol>
-        </nav>
+        class="kanvas-halaman -m-6 min-h-[100dvh] p-6 pb-28 lg:-m-10 lg:p-10 lg:pb-28">
 
         {{-- =========================
              HEADER HALAMAN
-        ========================== --}}
-        <header class="mt-4">
-            <h1 class="text-2xl font-extrabold tracking-tight text-dark sm:text-3xl">
-                {{ $modeEdit ? 'Edit Quiz' : 'Buat Quiz Baru' }}
-            </h1>
+        ==========================
+             Breadcrumb "Home / Karya Saya / Buat Quiz" tidak dipakai lagi:
+             top bar halaman ini sudah disembunyikan (lihat $sembunyiTopbar
+             di layouts/app), jadi "Kembali" menggantikan cara pulang biasa —
+             tombolnya duduk di kanan atas, lurus dengan judul. --}}
+        <header class="flex flex-wrap items-start justify-between gap-4">
+            <div class="min-w-0">
+                <h1 class="text-2xl font-extrabold tracking-tight text-dark sm:text-3xl">
+                    {{ $modeEdit ? 'Edit Quiz' : 'Buat Quiz Baru' }}
+                </h1>
 
-            <p class="mt-1.5 max-w-xl text-sm leading-relaxed text-muted" data-wizard-subjudul>
-                Tentukan informasi dasar untuk kuis yang akan kamu buat.
-            </p>
+                <p class="mt-1.5 max-w-xl text-sm leading-relaxed text-muted" data-wizard-subjudul>
+                    Tentukan informasi dasar untuk kuis yang akan kamu buat.
+                </p>
+            </div>
+
+            <a href="{{ route('user.karya-saya', ['tab' => 'quiz']) }}"
+                class="tombol-garis ml-auto shrink-0 self-start py-2">
+                <svg class="h-4 w-4 shrink-0" fill="none" stroke="currentColor" stroke-width="2.2"
+                    viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                    <path stroke-linecap="round" stroke-linejoin="round"
+                        d="M10.5 19.5 3 12m0 0 7.5-7.5M3 12h18" />
+                </svg>
+
+                Kembali
+            </a>
         </header>
 
         @if ($modeEdit)

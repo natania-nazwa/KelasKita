@@ -9,6 +9,11 @@
          "__slug__" diganti JS dengan slug materi yang sedang diklik. --}}
     <meta name="simpanan-daftar" content="{{ route('user.simpanan.materi') }}">
     <meta name="simpanan-toggle" content="{{ route('user.materi.simpan', ['materi' => '__slug__']) }}">
+
+    {{-- Pintu API bookmark quiz, kembaran dari materi di atas. Kuncinya
+         id quiz, jadi "__id__" diganti JS dengan id yang sedang diklik. --}}
+    <meta name="simpanan-quiz-daftar" content="{{ route('user.simpanan.quiz') }}">
+    <meta name="simpanan-quiz-toggle" content="{{ route('user.quiz.simpan', ['quiz' => '__id__']) }}">
     <title>@yield('title', 'Dashboard | KelasKita')</title>
 
     {{--
@@ -56,6 +61,15 @@
             .materi-seksi[hidden],
             [data-catatan-wadah][hidden] {
                 display: block !important;
+            }
+
+            /* Baris tombol "Tambah Materi" sengaja disembunyikan sampai
+               halaman di-scroll ke bawah. Tanpa JavaScript tidak ada yang
+               bisa memunculkannya, jadi di sini dikembalikan. */
+            [data-action-bar] {
+                opacity: 1 !important;
+                visibility: visible !important;
+                transform: none !important;
             }
         </style>
     </noscript>
@@ -106,6 +120,10 @@
                      * "Jadwal Hari Ini" milik dashboard, jadi ikut ada di
                      * sidebar supaya halaman itu bisa dibuka langsung dari
                      * menu tanpa harus lewat dashboard dulu.
+                     *
+                     * "Simpan" adalah tujuan tombol bookmark di pojok
+                     * kanan atas kartu materi dan kartu quiz: yang disimpan
+                     * lewat tombol itu muncul sebagai kartu di halaman ini.
                      */
                     $menu = [
                         ['route' => 'user.dashboard', 'pola' => ['user.dashboard'], 'label' => 'Dashboard', 'ikon' => 'm2.25 12 8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25'],
@@ -114,6 +132,7 @@
                         ['route' => 'user.quiz',      'pola' => ['user.quiz', 'user.sesi.*', 'user.judulsoal.*', 'user.uiux.hasil'], 'label' => 'Quiz',      'ikon' => 'M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z'],
                         ['route' => 'user.karya-saya','pola' => ['user.karya-saya'], 'label' => 'Karya Saya','ikon' => \App\Support\Ikon::path('pena')],
                         ['route' => 'user.hasil',     'pola' => ['user.hasil'], 'label' => 'Hasil',     'ikon' => \App\Support\Ikon::path('catatan')],
+                        ['route' => 'user.simpanan',  'pola' => ['user.simpanan*'], 'label' => 'Simpan', 'ikon' => \App\Support\Ikon::path('markah')],
                         ['route' => 'user.profil',    'pola' => ['user.profil'], 'label' => 'Profil',    'ikon' => 'M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z'],
                     ];
 
@@ -191,6 +210,30 @@
                  * yang layak dipertahankan, jadi header-nya dihilang
                  * seluruhnya, bukan dikosongkan.
                  *
+                 * "Tambah/Edit Materi" dan "Tambah/Edit Quiz": di halaman itu
+                 * pengguna sudah tahu persis sedang mengerjakan apa, jadi
+                 * pencarian global tidak relevan, notifikasi tidak pernah
+                 * dibaca, dan chip akun cuma menduplikasi menu Profil di
+                 * sidebar. "Detail Materi" dan "Detail Quiz": pengguna sedang
+                 * fokus membaca satu materi atau satu quiz, jadi pencarian
+                 * global dan notifikasi hanya mengalihkan perhatian. "Profil":
+                 * chip akun di top bar tidak berguna karena isinya justru
+                 * halaman itu sendiri.
+                 * Baris utuhnya dihapus, bukan dikosongkan.
+                 *
+                 * "Mengerjakan soal": sama seperti dua halaman di atas, peserta
+                 * sedang fokus ke satu soal, dan di sana ada timer yang
+                 * berjalan, jadi pencarian global, notifikasi, dan chip akun
+                 * semuanya hanya mengalihkan perhatian dari soal yang sedang
+                 * dikerjakan.
+                 *
+                 * "Karya Saya": di halaman itu pencarian global kembar dari
+                 * kolom cari yang sudah ada di dalam halaman (komponen
+                 * karya.cari), notifikasi tidak pernah dibaca, dan chip akun
+                 * cuma menduplikasi menu Profil di sidebar. Ketiganya
+                 * dihapus supaya ruang atas halaman langsung dipakai papan
+                 * kepala Karya Saya.
+                 *
                  * Efeknya: header mobile di bawah tidak lagi punya top bar
                  * untuk dilompati, maka posisinya ikut naik dari top-16 ke
                  * top-0. Sidebar dan navigasi mobile tetap ada.
@@ -199,7 +242,19 @@
                  * satu-satunya tempat yang memutuskan top bar tampil
                  * atau tidak.
                  */
-                $sembunyiTopbar = request()->routeIs('user.sesi.gabung', 'user.jadwal');
+                $sembunyiTopbar = request()->routeIs(
+                    'user.sesi.gabung',
+                    'user.jadwal',
+                    'user.materi.tambah',
+                    'user.materi.edit',
+                    'user.materi.detail',
+                    'user.quiz.tambah',
+                    'user.quiz.edit',
+                    'user.quiz.detail',
+                    'user.judulsoal.*',
+                    'user.profil',
+                    'user.karya-saya',
+                );
             @endphp
 
             @php
@@ -208,15 +263,13 @@
                  * Default-nya Materi, jadi setiap halaman baru tetap punya
                  * perilaku yang masuk akal tanpa harus mengatur apa pun.
                  *
-                 * Di "Karya Saya" tab yang sedang aktif ikut dibawa, supaya
-                 * mengetik di sana tetap mencari karya pada tab yang sama.
-                 *
                  * Di "Hasil" kolom ini ikut mencari nama quiz pada riwayat,
                  * karena di halaman itu satu-satunya yang dicari adalah quiz.
                  *
-                 * Halaman "Jadwal" sengaja tidak punya cabang di sini:
-                 * top bar-nya disembunyikan (lihat $sembunyiTopbar di atas)
-                 * dan pencarian jadwalnya sudah ada di panel daftar.
+                 * Halaman "Jadwal" dan "Karya Saya" sengaja tidak punya
+                 * cabang di sini: top bar keduanya disembunyikan (lihat
+                 * $sembunyiTopbar di atas) dan pencarian mereka sudah ada
+                 * di dalam halaman masing-masing.
                  */
                 $cariTopbar = match (true) {
                     request()->routeIs('user.hasil.daftar') => [
@@ -242,9 +295,11 @@
                             fn ($nilai) => filled($nilai)
                         ),
                     ],
-                    request()->routeIs('user.karya-saya*') => [
-                        'aksi' => 'user.karya-saya',
-                        'placeholder' => 'Cari karya...',
+                    request()->routeIs('user.simpanan*') => [
+                        'aksi' => 'user.simpanan',
+                        'placeholder' => 'Cari simpan...',
+                        // Tab yang sedang aktif ikut dibawa, supaya mengetik
+                        // di sini tetap mencari pada tab yang sama.
                         'param' => ['tab' => request('tab') === 'quiz' ? 'quiz' : 'materi'],
                     ],
                     default => [

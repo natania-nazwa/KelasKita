@@ -33,7 +33,6 @@ use Illuminate\Support\Str;
     'deskripsi',
     'isi',
     'thumbnail',
-    'audio',
     'tingkat_kesulitan',
     'status',
     'catatan_admin',

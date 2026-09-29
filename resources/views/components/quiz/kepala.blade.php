@@ -31,13 +31,31 @@
         {{-- Baris atas: lencana di kiri, tiga angka di kanan. Di layar
              sempit angka turun ke bawah lencana karena flex-wrap. --}}
         <div class="flex flex-wrap items-start justify-between gap-4">
-            <span class="quiz-kepala__lencana">
-                <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
-                </svg>
+            <div class="flex flex-wrap items-center gap-2.5">
+                <span class="quiz-kepala__lencana">
+                    <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 0 1 18 0Z" />
+                    </svg>
 
-                Latihan
-            </span>
+                    Latihan
+                </span>
+
+                {{--
+                    Pintasan "Masukkan Kode". Alurnya sama persis dengan
+                    tombol yang sama di dashboard: sekali klik langsung ke
+                    halaman Gabung Quiz untuk mengetik kode, bukan ke daftar
+                    quiz dulu. Quiz mode kode milik orang lain tidak pernah
+                    muncul di daftar ini, jadi tanpa pintasan ini fitur itu
+                    hanya bisa dicapai lewat dashboard.
+                --}}
+                <a href="{{ route('user.sesi.gabung') }}" class="quiz-kepala__aksi">
+                    <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="1.9" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="{{ \App\Support\Ikon::path('kode') }}" />
+                    </svg>
+
+                    Masukkan Kode
+                </a>
+            </div>
 
             <div class="quiz-kepala__statistik">
                 <div>

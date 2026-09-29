@@ -7,7 +7,12 @@
 ])
 
 {{--
-    Tab "Materi Saya" / "Quiz Saya" + pencarian + tombol tambah.
+    Tab "Materi Saya" / "Quiz Saya" + pencarian + tombol tambah, semuanya
+    di dalam satu panel putih (.karya-alat).
+
+    Ketiganya dilingkari panel yang sama supaya terbaca sebagai satu
+    kendali halaman: pengguna memilih tab, mengetik kata kunci, atau
+    membuat karya baru, semuanya dari tempat yang sama.
 
     Tiap tab adalah tautan biasa, jadi kata kunci ikut terbawa dan
     alamatnya tetap bisa disalin. Nilai kosong tidak perlu masuk URL
@@ -32,15 +37,9 @@
     ];
 @endphp
 
-{{--
-    Susunan: tab di kiri, cari + tombol di kanan. xl:flex-row karena tiga
-    elemen ini muat side-by-side hanya di layar besar; di bawah itu
-    membungkus ke bawah dan kolom cari melebar penuh supaya tidak ada
-    scroll horizontal di ponsel.
---}}
-<div class="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
+<div class="karya-alat">
 
-    {{-- Tab: aktif = ungu solid + teks putih, tidak aktif = lavender muda. --}}
+    {{-- Tab: aktif = ungu pekat + teks putih, tidak aktif = lavender muda. --}}
     <div class="tab-karya" role="tablist" aria-label="Pilih karya saya">
         @foreach ($daftarTab as $item)
             @php $aktif = $tab === $item['nilai']; @endphp
@@ -54,8 +53,8 @@
         @endforeach
     </div>
 
-    <div class="flex flex-col gap-3 sm:flex-row sm:items-center">
-        <x-karya.cari :tab="$tab" :kata-kunci="$kataKunci" class="min-w-0" />
+    <div class="karya-alat__kanan">
+        <x-karya.cari :tab="$tab" :kata-kunci="$kataKunci" />
 
         @if ($tab === 'quiz')
             {{-- Komponen tombol yang sama dengan halaman Quiz, hanya

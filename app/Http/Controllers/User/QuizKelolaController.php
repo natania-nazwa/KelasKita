@@ -46,7 +46,23 @@ class QuizKelolaController extends Controller
         $this->pastikanMilik($request, $quiz);
 
         $data = $request->isian();
+
+        /*
+         * Thumbnail lama ditangkap sebelum save(): begitu save() selesai,
+         * getOriginal() sudah berisi nilai baru, jadi berkas yang justru
+         * baru disimpan bisa ikut terhapus dan gambarnya tampil rusak
+         * di mana pun quiz ini ditampilkan.
+         */
+        $thumbnailLama = $quiz->thumbnail;
         $thumbnailBaru = BerkasQuiz::simpan($request)['thumbnail'] ?? null;
+
+        /*
+         * Tombol Hapus pada thumbnail dikirim sebagai thumbnail_hapus.
+         * Kalau pengguna juga mengunggah berkas baru, berkas barulah yang
+         * menang — JavaScript sudah menurunkan bendera itu begitu gambar
+         * dipilih, tapi disini dua-duanya dicek lagi.
+         */
+        $buangThumbnail = $request->boolean('thumbnail_hapus') && $thumbnailBaru === null;
 
         /*
          * Status tidak pernah diubah diam-diam oleh pemilik. Satu-satunya
@@ -79,11 +95,15 @@ class QuizKelolaController extends Controller
             'tampilkan_jawaban' => $data['tampilkan_jawaban'],
             'kode_akses' => $data['kode_akses'] ?? null,
             'catatan_pengajuan' => $data['catatan_pengajuan'] ?? null,
-            ...($thumbnailBaru !== null ? ['thumbnail' => $thumbnailBaru] : []),
+            ...($thumbnailBaru !== null
+                ? ['thumbnail' => $thumbnailBaru]
+                : ($buangThumbnail ? ['thumbnail' => null] : [])),
         ])->save();
 
-        if ($thumbnailBaru !== null) {
-            BerkasQuiz::hapus($quiz->getOriginal('thumbnail'));
+        // Berkas lama dibuang hanya kalau memang ada penggantinya — baik
+        // berkas baru maupun permintaan hapus dari pengguna.
+        if ($thumbnailBaru !== null || $buangThumbnail) {
+            BerkasQuiz::hapus($thumbnailLama);
         }
 
         if ($menjadiKode) {

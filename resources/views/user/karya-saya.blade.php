@@ -12,7 +12,13 @@
         bisa disalin. Daftar hanya berisi karya pengguna sendiri: filter
         dibuat oleh scope milik() di model, bukan oleh Blade.
     --}}
-    <div class="kanvas-halaman -m-6 min-h-[calc(100dvh-4rem)] p-6 lg:-m-10 lg:p-10">
+    {{--
+        min-h-[100dvh], bukan min-h-[calc(100dvh-4rem)]: tinggi halaman ini
+        dihitung tanpa top bar karena top bar-nya disembunyikan (lihat
+        $sembunyiTopbar di layouts/app.blade.php). Kalau heights lama dipakai,
+        akan ada 4rem ruang kosong yang tidak pernah terisi di bawah.
+    --}}
+    <div class="kanvas-halaman -m-6 min-h-[100dvh] p-5 sm:p-6 lg:-m-10 lg:p-8 xl:p-10">
 
         {{-- Kabar berhasil menambah, mengubah, atau menghapus karya. --}}
         @if (session('sukses'))
@@ -48,25 +54,31 @@
 
         {{-- =========================
              JUDUL HALAMAN
-        ========================== --}}
+        ==========================
+             Papan ungu di paling atas: lencana, judul, dan subtitle. --}}
         <x-karya.kepala />
 
         {{-- =========================
              RINGKASAN KARYA
         ==========================
-             Empat angka besar di atas halaman: berapa materi, berapa quiz,
-             berapa soal, dan berapa yang masih menunggu persetujuan admin.
-             Angkanya mencakup seluruh karya, jadi tetap sama walau berpindah
-             tab atau memuat halaman berikutnya. --}}
-        <x-karya.ringkasan :materi="$ringkasan['materi']" :quiz="$ringkasan['quiz']"
-            :soal="$ringkasan['soal']" :menunggu="$ringkasan['menunggu']" />
+             Empat angka besar di bawah kepala halaman: berapa materi, berapa
+             quiz, berapa soal, dan berapa yang masih menunggu persetujuan
+             admin. Angkanya mencakup seluruh karya, jadi tetap sama walau
+             berpindah tab atau memuat halaman berikutnya.
+
+             Deret kartu ini naik sedikit ke dalam papan kepala supaya
+             keduanya terbaca sebagai satu blok utuh, bukan dua bagian
+             yang dipisahkan celah putih. --}}
+        <div class="-mt-10 sm:-mt-12">
+            <x-karya.ringkasan :materi="$ringkasan['materi']" :quiz="$ringkasan['quiz']"
+                :soal="$ringkasan['soal']" :menunggu="$ringkasan['menunggu']" />
+        </div>
 
         {{-- =========================
              TAB + PENCARIAN + TOMBOL TAMBAH
         ==========================
-             Sengaja tanpa kartu pembungkus: tab, kolom cari, dan tombol
-             sudah punya bentuknya sendiri, jadi tidak perlu dilingkari
-             panel putih lagi. --}}
+             Ketiganya dilingkari satu panel putih (karya-alat) supaya
+             terbaca sebagai satu kendali halaman. --}}
         <section data-reveal class="mt-6">
             <x-karya.tab :tab="$tab" :jumlah-materi="$jumlahPerTab['materi']"
                 :jumlah-quiz="$jumlahPerTab['quiz']" :kata-kunci="$kataKunci" />
@@ -80,7 +92,9 @@
              jadi tiga kolom membuatnya lega. Dua kolom di tablet, satu di
              ponsel. --}}
         @if ($daftar === [])
-            <x-karya.kosong :alasan="$alasanKosong" :tab="$tab" />
+            <div data-reveal class="mt-5">
+                <x-karya.kosong :alasan="$alasanKosong" :tab="$tab" />
+            </div>
         @else
             <div data-reveal-stagger
                 class="mt-5 grid grid-cols-1 gap-5 min-w-0 sm:grid-cols-2 xl:grid-cols-3">
@@ -93,7 +107,7 @@
                 @endforeach
             </div>
 
-            <div class="mt-8">
+            <div class="karya-hal mt-8">
                 {{ $paginasi->links() }}
             </div>
         @endif>

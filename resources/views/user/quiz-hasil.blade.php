@@ -104,6 +104,19 @@
                                 {{ $jumlahPeserta }} peserta
                             </span>
 
+                            {{-- Daftar di bawah ini memakai kelas yang sama
+                                 dengan tombol lain supaya tidak ada gaya
+                                 tombol ketiga di halaman ini. Halaman
+                                 peringkat adalah tampilan yang sama persis,
+                                 hanya untuk peserta. --}}
+                            <a href="{{ route('user.sesi.peringkat', $sesi) }}" class="tombol-garis">
+                                <svg class="h-4 w-4 shrink-0" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="{{ \App\Support\Ikon::path('piala') }}" />
+                                </svg>
+
+                                Lihat Peringkat
+                            </a>
+
                             @unless ($sesi->sudahSelesai())
                                 <form method="POST" action="{{ route('user.sesi.akhiri', $sesi) }}"
                                     data-lobi-konfirmasi-judul="Akhiri quiz?"

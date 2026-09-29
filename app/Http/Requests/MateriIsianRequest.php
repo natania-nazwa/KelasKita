@@ -53,10 +53,9 @@ class MateriIsianRequest extends FormRequest
                 Rule::requiredIf(fn (): bool => $this->diajukanUlang()),
             ],
 
-            // Thumbnail & audio: maksimal 100MB per berkas, disimpan
-            // ke disk publik sebagai path di kolom tb_materi.
+            // Thumbnail: maksimal 100MB per berkas, disimpan ke disk
+            // publik sebagai path di kolom tb_materi.
             'thumbnail' => ['nullable', 'file', 'mimes:jpg,jpeg,png,webp', 'max:102400'],
-            'audio' => ['nullable', 'file', 'mimes:mp3,wav,m4a,ogg', 'max:102400'],
         ];
     }
 
@@ -77,9 +76,6 @@ class MateriIsianRequest extends FormRequest
             'thumbnail.file' => 'Thumbnail harus berupa file gambar.',
             'thumbnail.mimes' => 'Format thumbnail harus JPG, PNG, atau WEBP.',
             'thumbnail.max' => 'Ukuran thumbnail maksimal 100MB.',
-            'audio.file' => 'Audio harus berupa file audio.',
-            'audio.mimes' => 'Format audio harus MP3, WAV, M4A, atau OGG.',
-            'audio.max' => 'Ukuran audio maksimal 100MB.',
         ];
     }
 

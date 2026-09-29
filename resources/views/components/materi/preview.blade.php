@@ -1,13 +1,84 @@
 {{--
     Isi tab "Preview" pada kartu Daftar Bab: pratinjau tampilan siswa.
 
-    Komponen ini hanya fragmen (tanpa kartu/header sendiri) karena
-    berada di dalam kartu Daftar Bab. Semua isinya diisi JavaScript
-    mengikuti bab yang sedang aktif pada editor.
+    Komponen ini sengaja memakai komponen halaman detail yang sama
+    (x-materi.detail-kepala dan kelas kartu yang dipakai
+    x-materi.detail-seksi), supaya yang terlihat di sini persis seperti
+    halaman yang nanti dibaca siswa. Bedanya hanya sumber isinya: di sini
+    semuanya berasal dari form dan diisi ulang oleh
+    resources/js/materi-tambah.js setiap kali bab, judul, atau kategori
+    berubah.
+
+    Dua bagian halaman detail yang tidak ikut ditiru:
+      - Daftar Isi: saat materi baru disusun, daftar babnya masih ikut
+        berganti setiap kali bab ditambah atau dihapus, jadi belum bisa
+        dipakai sebagai navigasi. Yang menggantikannya adalah tombol
+        Sebelumnya / Selanjutnya di bawah.
+      - Tombol Simpan: materi yang sedang disusun belum punya slug, jadi
+        belum bisa disimpan.
+
+    Data placeholder untuk kepala pratinjau dirakit di dalam komponen ini,
+    jadi pemanggil cukup menulis <x-materi.preview :kategori="$kategori" :materi="$materi" />.
 --}}
+@props([
+    // Kategori dan materi yang sedang disusun, diteruskan dari form.
+    // Dipakai untuk merakit kepala pratinjau supaya dimulai dari nilai
+    // yang sama dengan isian form.
+    'kategori' => [],
+    'materi' => null,
+])
+
+@php
+    /*
+     * Kategori dan tingkat kesulitan yang terpilih di form. Pratinjau
+     * dimulai dari nilai yang sama supaya tidak melompat begitu tab
+     * Preview dibuka untuk pertama kali.
+     */
+    $pelajaranTerpilih = collect($kategori)
+        ->first(fn ($item) => (int) $item->id === (int) old('pelajaran_id', $materi?->pelajaran_id));
+    $gayaKategori = \App\Models\Pelajaran::warna(
+        $pelajaranTerpilih?->slug ?? '',
+        $pelajaranTerpilih?->nama ?? 'Pilih kategori'
+    );
+
+    /*
+     * Halaman detail menampilkan waktu baca sebagai angka menit ("10 menit
+     * baca"), sedangkan isian form bebasnya teks ("10 menit", "1 jam").
+     * Angkanya yang dipakai supaya pratinjau dan halaman detail kalimatnya
+     * sama persis.
+     */
+    $estimasi = (string) old('estimasi_waktu', '10 menit');
+    $waktuBaca = preg_match('/\d+/', $estimasi, $angka) ? (int) $angka[0] : 10;
+
+    $pengguna = auth()->user();
+
+    $detailPratinjau = [
+        'judul' => old('nama', $materi?->nama) ?: 'Judul materi belum diisi',
+        'slug' => '',
+        // Form tidak punya isian deskripsi, jadi sama seperti halaman detail
+        // untuk materi yang memang tidak berdeskripsi, bagian ini tidak
+        // dirender.
+        'deskripsi' => null,
+        'thumbnail' => $materi?->thumbnail ? \App\Support\BerkasMateri::url($materi->thumbnail) : null,
+        'tingkat_kesulitan' => old('tingkat_kesulitan', $materi?->tingkat_kesulitan ?? 'Mudah'),
+        'waktu_baca' => $waktuBaca,
+        'tanggal' => \App\Support\DetailMateri::tanggal(now()),
+        'jumlah_dilihat' => 0,
+        'dilihat' => '0',
+        'tersimpan' => false,
+        'kategori' => $gayaKategori,
+        'pembuat' => $pengguna ? [
+            'nama' => $pengguna->nama,
+            'inisial' => $pengguna->inisial(),
+            'warna' => $pengguna->warnaAvatar()['warna'],
+            'warna_gelap' => $pengguna->warnaAvatar()['warna_gelap'],
+        ] : null,
+    ];
+@endphp
+
 <div {{ $attributes->class(['pratinjau-kotak']) }}>
-    {{-- Progress bab + nomor halaman preview --}}
-    <div class="flex items-center gap-3">
+    {{-- Progress bab + posisi bab yang sedang aktif --}}
+    <div class="mb-3 flex items-center gap-3">
         <div class="h-1.5 flex-1 overflow-hidden rounded-full bg-ungu-bg" role="presentation">
             <div data-preview-bar class="h-full rounded-full bg-ungu transition-[width] duration-300"
                 style="width: 100%"></div>
@@ -19,70 +90,23 @@
         </span>
     </div>
 
-    <div class="pratinjau-frame mt-3">
-        {{-- Thumbnail --}}
-        <div class="pratinjau-banner" data-preview-thumbnail>
-            <svg class="h-9 w-9 opacity-70" fill="none" stroke="currentColor" stroke-width="1.6"
-                viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-                <path stroke-linecap="round" stroke-linejoin="round" d="m2.25 15.75 5.159-5.159a2.25 2.25 0 0 1 3.182 0l5.159 5.159m-1.5-1.5 1.409-1.409a2.25 2.25 0 0 1 3.182 0l2.909 2.909M3.75 19.5h16.5a1.5 1.5 0 0 0 1.5-1.5V6a1.5 1.5 0 0 0-1.5-1.5H3.75A1.5 1.5 0 0 0 2.25 6v12a1.5 1.5 0 0 0 1.5 1.5Z" />
-            </svg>
+    {{-- Kepala: komponen yang sama dengan halaman detail materi. --}}
+    <x-materi.detail-kepala :detail="$detailPratinjau" pratinjau />
 
-            <img data-preview-thumbnail-img alt="" class="absolute inset-0 hidden h-full w-full object-cover">
-        </div>
+    {{--
+        Isi bab aktif. Strukturnya meniru x-materi.detail-seksi: kartu
+        yang sama, judul bernomor yang sama, dan kelas .isi-materi yang
+        sama untuk tipografinya. Bedanya isi bab belum dipecah jadi blok
+        seperti di halaman detail, jadi masih ditampilkan apa adanya
+        seperti yang tertulis di editor.
+    --}}
+    <section class="kartu-detail materi-seksi mt-4 p-5 sm:p-6 lg:p-7">
+        <h2 class="materi-seksi__judul" data-preview-bab>1. Bab Baru</h2>
 
-        <div class="space-y-3 p-4">
-            {{-- Kategori --}}
-            <div class="flex flex-wrap items-center gap-2">
-                <span data-preview-kategori
-                    class="inline-flex max-w-full items-center gap-1.5 truncate rounded-full border border-ungu-line bg-ungu-bg px-2.5 py-1 text-[11px] font-extrabold text-ungu-dark">
-                    Kategori
-                </span>
+        <div class="isi-materi mt-4" data-preview-isi></div>
+    </section>
 
-                <span data-preview-bab-badge
-                    class="hidden inline-flex items-center gap-1.5 rounded-full bg-lavender px-2.5 py-1 text-[11px] font-extrabold text-ungu-dark">
-                    1 Bab
-                </span>
-            </div>
-
-            {{-- Judul --}}
-            <div>
-                <h3 data-preview-judul class="text-base font-extrabold leading-snug tracking-tight text-dark">
-                    Judul materi belum diisi
-                </h3>
-            </div>
-
-            {{-- Tombol dengarkan --}}
-            <div class="flex flex-wrap items-center gap-2">
-                <button type="button" data-preview-dengar
-                    class="inline-flex items-center gap-2 rounded-full bg-ungu px-3.5 py-2 text-xs font-bold text-white transition hover:bg-ungu-dark">
-                    <svg class="h-3.5 w-3.5" fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M5.25 5.653c0-.856.917-1.398 1.667-.986l11.54 6.347a1.125 1.125 0 0 1 0 1.972l-11.54 6.347a1.125 1.125 0 0 1-1.667-.986V5.653Z" />
-                    </svg>
-
-                    <span data-preview-dengar-label>Dengarkan materi</span>
-                </button>
-
-                <span data-preview-dengar-hint
-                    class="hidden text-[11px] font-semibold text-muted">Upload audio terlebih dahulu.</span>
-            </div>
-
-            {{-- Navigasi bab pada preview (muncul bila materi punya banyak bab) --}}
-            <div data-preview-outline class="pratinjau-outline hidden" role="navigation"
-                aria-label="Daftar bab pada preview"></div>
-
-            {{-- Isi bab aktif --}}
-            <div class="border-t border-dashed border-ungu-line pt-3">
-                <p data-preview-bab
-                    class="text-[10px] font-extrabold uppercase tracking-[0.16em] text-ungu-soft">Bab 1</p>
-
-                <h4 data-preview-bab-judul class="mt-0.5 text-sm font-bold text-dark">Pendahuluan</h4>
-
-                <div class="isi-materi pratinjau-isi mt-2 text-[13px] leading-relaxed" data-preview-isi></div>
-            </div>
-        </div>
-    </div>
-
-    {{-- Navigasi preview --}}
+    {{-- Navigasi preview: pengganti Daftar Isi yang belum bisa dipakai. --}}
     <div class="mt-3 flex items-center justify-between gap-2">
         <button type="button" data-preview-prev
             class="tombol-garis px-3 py-1.5 text-xs disabled:cursor-not-allowed disabled:opacity-40">

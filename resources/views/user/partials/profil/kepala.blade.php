@@ -78,13 +78,6 @@
 
                     Bergabung sejak {{ $bergabung }}
                 </span>
-
-                {{-- Peran hanya dibaca, tidak bisa diubah dari halaman ini. --}}
-                <span
-                    class="rounded-full bg-lavender px-2.5 py-0.5 font-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-primary"
-                >
-                    {{ $pengguna->isAdmin() ? 'Admin' : 'Siswa' }}
-                </span>
             </p>
         </div>
 

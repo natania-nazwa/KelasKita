@@ -264,6 +264,26 @@
                                 </a>
                             </div>
 
+                            {{-- ==================== TOMBOL PERINGKAT ====================
+                                 Hanya untuk pengerjaan yang bagian dari sesi
+                                 mode KODE. Di situ saja ada daftar orang lain
+                                 yang masuk lewat kode, jadi di situ saja
+                                 peringkatnya berarti sesuatu. Quiz publik
+                                 dikerjakan sendirian, jadi menampilkan tombol
+                                 ini hanya akan membuka daftar berisi satu
+                                 nama. --}}
+                            @if ($tautanPeringkat !== null)
+                                <div data-reveal class="uiux-hasil__aksi">
+                                    <a href="{{ $tautanPeringkat }}" class="uiux-hasil__tombol uiux-hasil__tombol--peringkat">
+                                        <svg class="h-4 w-4 shrink-0" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="{{ \App\Support\Ikon::path('piala') }}" />
+                                        </svg>
+
+                                        Lihat Peringkat
+                                    </a>
+                                </div>
+                            @endif
+
                             @if ($tautanSesi !== null)
                                 <p class="uiux-hasil__catatan uiux-hasil__catatan--tengah">
                                     Pengerjaan ini bagian dari sesi live. Rekap nilai seluruh peserta ada di

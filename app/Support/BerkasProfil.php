@@ -11,7 +11,7 @@ use Illuminate\Support\Facades\Storage;
  *
  * Bentuknya sengaja meniru App\Support\BerkasMateri supaya aturan nama
  * folder, tempat simpan, dan penghapusan berkas lama hanya satu tempat.
- * Bedanya hanya field-nya: satu foto profil, bukan thumbnail + audio.
+ * Bedanya hanya field-nya: satu foto profil, bukan thumbnail materi.
  */
 final class BerkasProfil
 {

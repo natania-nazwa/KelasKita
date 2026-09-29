@@ -1,9 +1,12 @@
 // Halaman mengerjakan soal (resources/views/user/quiz-kerjakan.blade.php).
 //
-// Dua hal yang tidak bisa dikerjakan di server:
+// Tiga hal yang tidak bisa dikerjakan di server:
 //   1. hitung mundur timer, karena harus bergerak tiap detik;
 //   2. pemeriksaan isian sebelum form dikirim, supaya peserta tidak
-//      sempat menekan tombol lalu baru tahu jawabannya kosong.
+//      sempat menekan tombol lalu baru tahu jawabannya kosong;
+//   3. buka/tutup dialog daftar soal, karena isinya perlu fokus dan
+//      pemindahan fokus harus baru terjadi ketika dialognya benar-benar
+//      terbuka.
 //
 // Kelima tipe soal memakai isian yang berbeda (radio, checkbox, select,
 // input teks, textarea), jadi pemeriksaan di bawah sengaja membaca
@@ -84,6 +87,9 @@ function initTimer() {
      * peramban lama tidak mengenal inert dan tombol yang sudah ditekan
      * masih bisa mengirim form sebelum dialognya selesai tampil.
      *
+     * "Selanjutnya" ikut disebut meski letaknya di luar form jawaban, jadi
+     * selector-nya tidak bisa hanya mengandalkan [data-soal-form].
+     *
      * Dialog sengaja tidak punya tombol batal, tidak menutup saat Escape
      * ditekan, dan tidak menutup saat area gelap diklik. Ketiganya berarti
      * "lanjut mengerjakan", dan justru itu yang tidak boleh terjadi di
@@ -96,6 +102,16 @@ function initTimer() {
 
         sudahTutup = true;
 
+        /*
+         * Dialog daftar soal ditutup lebih dulu. Elemennya sengaja berada
+         * di luar elemen yang dikunci, jadi tanpa baris ini daftar soal
+         * masih terbuka di atas dialog "Waktu Anda Habis" dan menutupi
+         * satu-satunya jalan keluar dari halaman ini.
+         */
+        document
+            .querySelector("[data-soal-nav-dialog]")
+            ?.classList.remove("is-buka");
+
         if (halaman) {
             halaman.setAttribute("inert", "");
             halaman.setAttribute("aria-hidden", "true");
@@ -103,7 +119,7 @@ function initTimer() {
 
         document
             .querySelectorAll(
-                "[data-soal-form] input, [data-soal-form] select, [data-soal-form] textarea, [data-soal-form] button",
+                "[data-soal-form] input, [data-soal-form] select, [data-soal-form] textarea, [data-soal-form] button, [data-soal-lanjut]",
             )
             .forEach((el) => {
                 el.disabled = true;
@@ -157,12 +173,18 @@ function initTimer() {
 /**
  * Pemeriksaan isian sebelum form dikirim.
  *
- * Tombol "Simpan & Lanjut" sengaja tidak punya atribut disabled di markup
+ * Tombol "Selanjutnya" sengaja tidak punya atribut disabled di markup
  * supaya tetap berguna tanpa JavaScript. Di sini tombolnya baru dinonaktifkan
  * setelah halaman siap, dan hanya selama isiannya kosong. Kalau peserta
  * menekan tombolnya tanpa isian, form tidak terkirim dan pesannya muncul di
  * dalam kartu, jadi mereka tidak sempat berpindah soal baru tahu
  * jawabannya kosong.
+ *
+ * Tombol dicari di seluruh dokumen, bukan di dalam form: di markup ia
+ * berada di luar form jawaban (karena "Ragu" di tengahnya adalah form
+ * sendiri, dan HTML tidak boleh punya form di dalam form). Tombol itu
+ * tetap mengirim form jawaban lewat atribut form="soal-jawab", jadi
+ * hubungan keduanya tidak berubah — hanya tempat mencarinya.
  */
 function initIsian() {
     const form = document.querySelector("[data-soal-form]");
@@ -171,7 +193,7 @@ function initIsian() {
         return;
     }
 
-    const tombol = form.querySelector("[data-soal-lanjut]");
+    const tombol = document.querySelector("[data-soal-lanjut]");
     const galat = form.querySelector("[data-soal-galat]");
     const isian = form.querySelectorAll(
         'input[type="radio"], input[type="checkbox"], input[type="text"], select, textarea',
@@ -242,5 +264,58 @@ function initIsian() {
     perbarui();
 }
 
+/**
+ * Dialog daftar soal.
+ *
+ * Yang membuat dialog ini bisa berdiri sendiri cuma tiga hal: kelas
+ * "is-buka" untuk menampilkannya (sama persis dengan dialog hapus bab dan
+ * dialog konfirmasi sesi), satu handler Escape, dan satu handler klik di
+ * area gelap. Kotak nomor di dalamnya bukan tombol JavaScript, tapi tautan
+ * biasa ke halaman soal itu, jadi daftar soal tetap berguna tanpa
+ * JavaScript — yang hilang tanpa JavaScript cuma cara membukanya.
+ *
+ * Fokus dipindah ke tombol tutup saat terbuka dan dikembalikan ke tombol
+ * pembuka saat ditutup. Tanpa itu, peserta yang memakai keyboard akan
+ * terus fokus di tombol pembuka di belakang dialog dan tidak pernah tahu
+ * bahwa isinya sudah terbuka.
+ */
+function initNavigasi() {
+    const buka = document.querySelector("[data-soal-nav-buka]");
+    const dialog = document.querySelector("[data-soal-nav-dialog]");
+
+    if (!buka || !dialog) {
+        return;
+    }
+
+    const tutup = () => {
+        dialog.classList.remove("is-buka");
+        buka.focus();
+    };
+
+    buka.addEventListener("click", () => {
+        dialog.classList.add("is-buka");
+        dialog.querySelector("[data-soal-nav-tutup]")?.focus();
+    });
+
+    // Dua tombol tutup: silang di kanan judul dan "Tutup" di bawah.
+    dialog.querySelectorAll("[data-soal-nav-tutup]").forEach((tombol) => {
+        tombol.addEventListener("click", tutup);
+    });
+
+    // Klik tepat pada area gelap, bukan pada kotak dialog di atasnya.
+    dialog.addEventListener("click", (event) => {
+        if (event.target === dialog) {
+            tutup();
+        }
+    });
+
+    document.addEventListener("keydown", (event) => {
+        if (event.key === "Escape" && dialog.classList.contains("is-buka")) {
+            tutup();
+        }
+    });
+}
+
 initTimer();
 initIsian();
+initNavigasi();

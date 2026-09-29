@@ -3,10 +3,26 @@
 @section ('title', 'Profil | KelasKita')
 
 @section ('content')
-    <div data-reveal>
-        <h1 class="text-2xl font-extrabold text-dark sm:text-3xl">Profil</h1>
+    <div data-reveal class="flex flex-wrap items-start justify-between gap-4">
+        <div class="min-w-0">
+            <h1 class="text-2xl font-extrabold text-dark sm:text-3xl">Profil</h1>
 
-        <p class="mt-1 text-dark/60">Kelola informasi akun dan preferensi kamu.</p>
+            <p class="mt-1 text-dark/60">Kelola informasi akun dan preferensi kamu.</p>
+        </div>
+
+        {{-- Top bar halaman ini disembunyikan (lihat $sembunyiTopbar di
+             layouts/app), jadi "Kembali" menggantikan cara pulang biasa:
+             tombolnya duduk di kanan atas, lurus dengan judul. --}}
+        <a href="{{ route('user.dashboard') }}"
+            class="tombol-garis ml-auto shrink-0 self-start py-2">
+            <svg class="h-4 w-4 shrink-0" fill="none" stroke="currentColor" stroke-width="2.2"
+                viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round"
+                    d="M10.5 19.5 3 12m0 0 7.5-7.5M3 12h18" />
+            </svg>
+
+            Kembali
+        </a>
     </div>
 
     {{-- Kabar berhasil. Semua aksi di halaman ini (simpan profil, hapus

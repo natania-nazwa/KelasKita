@@ -19,56 +19,57 @@
         $modeEdit = $materi !== null;
     @endphp
 
+    {{-- Top bar halaman ini disembunyikan (lihat $sembunyiTopbar di
+         layouts/app), jadi kanvas tidak lagi didorong oleh baris setinggi
+         4rem dan langsung setinggi layar. --}}
     <div data-tambah-materi
-        class="kanvas-materi -m-6 min-h-[calc(100dvh-4rem)] p-6 pb-0 lg:-m-10 lg:p-10 lg:pb-0">
-
-        {{-- =========================
-             BREADCRUMB
-        ========================== --}}
-        <nav aria-label="Breadcrumb">
-            <ol class="flex flex-wrap items-center gap-1.5 text-xs font-semibold">
-                <li>
-                    <a href="{{ route('user.dashboard') }}"
-                        class="text-muted transition hover:text-ungu">Home</a>
-                </li>
-
-                <li class="text-ungu-soft" aria-hidden="true">/</li>
-
-                {{-- Materi dibuat dan dikelola lewat menu Karya Saya. --}}
-                <li>
-                    <a href="{{ route('user.karya-saya', ['tab' => 'materi']) }}"
-                        class="text-muted transition hover:text-ungu">Karya Saya</a>
-                </li>
-
-                <li class="text-ungu-soft" aria-hidden="true">/</li>
-
-                <li class="text-dark" aria-current="page">{{ $modeEdit ? 'Edit Materi' : 'Tambah Materi' }}</li>
-            </ol>
-        </nav>
+        class="kanvas-materi -m-6 min-h-[100dvh] p-6 pb-0 lg:-m-10 lg:p-10 lg:pb-0">
 
         {{-- =========================
              HEADER HALAMAN
-        ========================== --}}
-        <header class="mt-4 flex items-start gap-4">
-            <span class="mt-0.5 flex h-12 w-12 shrink-0 items-center justify-center rounded-full border border-ungu-line bg-ungu-bg text-ungu sm:h-14 sm:w-14"
-                aria-hidden="true">
-                <svg class="h-6 w-6 sm:h-7 sm:w-7" fill="none" stroke="currentColor" stroke-width="1.7"
-                    viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.042A8.967 8.967 0 0 0 6 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 0 1 6 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 0 1 6-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0 0 18 18a8.967 8.967 0 0 0-6 2.292m0-14.25v14.25" />
-                </svg>
-            </span>
+        ==========================
+             Breadcrumb "Home / Karya Saya / Tambah Materi" dihapus: top bar
+             halaman ini sudah disembunyikan, jadi jalur pulang-nya теперь
+             ditangani tombol "Kembali" di kanan judul. --}}
+        <header class="flex flex-wrap items-start justify-between gap-4">
+            {{-- Ikon + judul + penjelas jadi satu blok, supaya justify-between
+                 di header cuma menyisakan ruang di antara blok ini dan
+                 tombol Kembali, bukan memencah ikon dari judul. --}}
+            <div class="flex min-w-0 items-start gap-4">
+                <span class="mt-0.5 flex h-12 w-12 shrink-0 items-center justify-center rounded-full border border-ungu-line bg-ungu-bg text-ungu sm:h-14 sm:w-14"
+                    aria-hidden="true">
+                    <svg class="h-6 w-6 sm:h-7 sm:w-7" fill="none" stroke="currentColor" stroke-width="1.7"
+                        viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.042A8.967 8.967 0 0 0 6 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 0 1 6 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 0 1 6-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0 0 18 18a8.967 8.967 0 0 0-6 2.292m0-14.25v14.25" />
+                    </svg>
+                </span>
 
-            <div class="min-w-0">
-                <h1 class="text-2xl font-extrabold tracking-tight text-dark sm:text-3xl">
-                    {{ $modeEdit ? 'Edit Materi' : 'Tambah Materi' }}
-                </h1>
+                <div class="min-w-0">
+                    <h1 class="text-2xl font-extrabold tracking-tight text-dark sm:text-3xl">
+                        {{ $modeEdit ? 'Edit Materi' : 'Tambah Materi' }}
+                    </h1>
 
-                <p class="mt-1 text-sm leading-relaxed text-muted sm:text-base">
-                    {{ $modeEdit
-                        ? 'Perbaiki isi materi ini. Materi tetap milikmu dan bisa kamu ubah kapan saja.'
-                        : 'Buat materi pembelajaran untuk siswa.' }}
-                </p>
+                    <p class="mt-1 text-sm leading-relaxed text-muted sm:text-base">
+                        {{ $modeEdit
+                            ? 'Perbaiki isi materi ini. Materi tetap milikmu dan bisa kamu ubah kapan saja.'
+                            : 'Buat materi pembelajaran untuk siswa.' }}
+                    </p>
+                </div>
             </div>
+
+            {{-- Top bar halaman ini disembunyikan (lihat $sembunyiTopbar di
+                 layouts/app), jadi "Kembali" menggantikan cara pulang biasa:
+                 tombolnya duduk di kanan atas, lurus dengan judul. --}}
+            <a href="{{ route('user.karya-saya', ['tab' => 'materi']) }}"
+                class="tombol-garis ml-auto shrink-0 self-start py-2">
+                <svg class="h-4 w-4 shrink-0" fill="none" stroke="currentColor" stroke-width="2.2"
+                    viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                    <path stroke-linecap="round" stroke-linejoin="round"
+                        d="M10.5 19.5 3 12m0 0 7.5-7.5M3 12h18" />
+                </svg>
+
+                Kembali
+            </a>
         </header>
 
         @if ($errors->any())
@@ -102,7 +103,7 @@
                 <x-materi.informasi :kategori="$kategori" :materi="$materi" />
 
                 {{-- Daftar bab + preview (tab) --}}
-                <x-materi.bab />
+                <x-materi.bab :kategori="$kategori" :materi="$materi" />
 
                 {{-- Editor isi materi --}}
                 <x-materi.editor :isi="$modeEdit ? $materi->isi : null" />
@@ -115,8 +116,16 @@
 
             {{-- =========================
                  ACTION BAR
+            ==========================
+                 Baris tombol hanya muncul setelah halaman di-scroll ke
+                 bawah, jadi selama form sedang diisi tidak ada yang
+                 menutupi isian. Yang menandainya sudah sampai bawah
+                 adalah pikuan setinggi 1px tepat di atasnya, diamati
+                 oleh materi-tambah.js.
             ========================== --}}
-            <div
+            <div data-action-bar-picu class="h-px" aria-hidden="true"></div>
+
+            <div data-action-bar
                 class="sticky bottom-0 z-30 -mx-6 mt-5 border-t border-ungu-line bg-white/95 px-6 py-4 shadow-[0_-16px_32px_-30px_rgba(49,46,129,0.7)] backdrop-blur lg:-mx-10 lg:px-10">
                 @php
                     /*

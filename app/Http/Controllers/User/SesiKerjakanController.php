@@ -9,6 +9,7 @@ use App\Models\PesertaQuiz;
 use App\Models\Quiz;
 use App\Models\SesiQuiz;
 use App\Models\Soal;
+use App\Models\SoalRagu;
 use App\Models\User;
 use App\Support\Penilaian;
 use App\Support\PenjagaSesi;
@@ -113,7 +114,17 @@ class SesiKerjakanController extends Controller
             'nomor' => $posisi + 1,
             'jumlahSoal' => $daftar->count(),
             'jawaban' => $this->jawabanSoal($pengerjaan, $soal),
-            'jumlahDijawab' => $pengerjaan->jumlah_dijawab,
+            /*
+             * (int) karena instance yang baru dibuat lewat create() belum
+             * pernah dibaca ulang dari database, jadi jumlah_dijawab masih
+             * null di memori walau kolomnya sudah berisi 0. Tanpa
+             * pemindahan ini, halaman soal yang pertama kali dibuka akan
+             * menampilkan badge kosong dan kalimat "dari 2 soal sudah
+             * dijawab." tanpa angkanya di depannya.
+             */
+            'jumlahDijawab' => (int) $pengerjaan->jumlah_dijawab,
+            'nomorTerjawab' => $this->nomorTerjawab($pengerjaan, $daftar),
+            'nomorRagu' => $this->nomorRagu($pengerjaan, $daftar),
             'sisaDetik' => $this->sisaDetik($sesi->quiz, $pengerjaan),
             'waktuSedikit' => self::WAKTU_SEDIKIT,
             'waktuMendekuti' => self::WAKTU_MENDEKUTI,
@@ -255,6 +266,63 @@ class SesiKerjakanController extends Controller
     }
 
     /**
+     * Tandai satu soal sebagai "ragu", atau lepas tandanya kalau sudah ada.
+     *
+     * Satu aksi untuk dua arah supaya formnya cukup satu tombol, dan klik
+     * ganda tidak pernah menghasilkan dua baris: delete() mengembalikan
+     * jumlah baris yang hilang, jadi 0 berarti memang belum ditandai.
+     *
+     * Tanda ini sama sekali tidak menyentuh tb_jawaban_quiz, jadi menandai
+     * ragu tidak pernah mengubah nilai, benar/salah, atau jumlah jawaban
+     * yang sudah tersimpan.
+     *
+     * Setelah berubah, peserta dikembalikan ke soal yang sama persis,
+     * jadi posisinya tidak bergeser hanya karena menandai sesuatu.
+     */
+    public function ragu(Request $request, ?Quiz $quiz, int $nomor): RedirectResponse
+    {
+        $pengguna = $request->user();
+
+        $sesi = $this->sesiUntuk($request, $quiz);
+
+        if ($sesi === null) {
+            return $this->tidakBekerja();
+        }
+
+        if ($larangan = $this->larangan($sesi, $pengguna)) {
+            return $larangan;
+        }
+
+        $sesi->loadMissing('quiz');
+
+        $daftar = $sesi->quiz->soal()->aktif()->terurut()->get();
+
+        $posisi = $this->posisi($daftar, $nomor);
+
+        abort_if($posisi === null, 404);
+
+        $soal = $daftar[$posisi];
+
+        $pengerjaan = $this->pengerjaan($sesi, $pengguna);
+
+        $pasangan = [
+            'pengerjaan_quiz_id' => $pengerjaan->getKey(),
+            'soal_id' => $soal->getKey(),
+        ];
+
+        $ditandai = SoalRagu::query()->where($pasangan)->delete() === 0;
+
+        if ($ditandai) {
+            SoalRagu::query()->create($pasangan);
+        }
+
+        // Id sesi tidak ikut di URL, jadi kembali ke soal yang sama cukup
+        // menulis ulang sesi aktif yang sudah dilakukan oleh
+        // larangan() di atas — persis seperti redirect setelah menjawab.
+        return redirect()->route('user.judulsoal.soal', [$sesi->quiz->slug, $posisi + 1]);
+    }
+
+    /**
      * Halaman hasil mana yang jadi tujuan setelah pengguna selesai.
      *
      * Tiga pemanggil (soal terakhir, tombol "Selesai", dan sesi yang sudah
@@ -332,6 +400,8 @@ class SesiKerjakanController extends Controller
             'jumlahSoal' => 0,
             'jawaban' => null,
             'jumlahDijawab' => 0,
+            'nomorTerjawab' => [],
+            'nomorRagu' => [],
             'sisaDetik' => null,
             'waktuSedikit' => self::WAKTU_SEDIKIT,
             'waktuMendekuti' => self::WAKTU_MENDEKUTI,
@@ -434,6 +504,73 @@ class SesiKerjakanController extends Controller
     }
 
     /**
+     * Nomor soal yang jawabannya sudah tersimpan, urut menaik.
+     *
+     * @param  Collection<int, Soal>  $daftar
+     * @return array<int, int>
+     */
+    private function nomorTerjawab(PengerjaanQuiz $pengerjaan, Collection $daftar): array
+    {
+        return $this->nomorSesuaiId(
+            $daftar,
+            $pengerjaan->jawaban()->pluck('soal_id')
+        );
+    }
+
+    /**
+     * Nomor soal yang ditandai "ragu", urut menaik.
+     *
+     * @param  Collection<int, Soal>  $daftar
+     * @return array<int, int>
+     */
+    private function nomorRagu(PengerjaanQuiz $pengerjaan, Collection $daftar): array
+    {
+        return $this->nomorSesuaiId(
+            $daftar,
+            SoalRagu::query()
+                ->where('pengerjaan_quiz_id', $pengerjaan->getKey())
+                ->pluck('soal_id')
+        );
+    }
+
+    /**
+     * Ubah daftar id soal jadi daftar nomor urut soal, urut menaik.
+     *
+     * Dua hal yang dikerjakan di sini, dan keduanya penting supaya view
+     * tidak perlu tahu soal mana yang mana:
+     *
+     *   - Yang dikirim adalah nomor urut (1..N), bukan id soal. View hanya
+     *     mencetak angka di dalam kotak-kotaknya, jadi yang diterimanya
+     *     cukup data yang bisa dibaca manusia.
+     *   - Id dari database bisa datang sebagai string pada sebagian driver
+     *     (mis. pgsql), jadi semuanya dikembalikan ke int lebih dulu supaya
+     *     perbandingan dengan in_array yang ketat selalu benar.
+     *
+     * Urut naik bukan kebetulan: view memakai hasil ini langsung di dalam
+     * satu larik, jadi kotak nomor soal-soal yang sudah dijawab dimulai dari
+     * kotak pertama, bukan disebar di antara kotak yang belum dijawab.
+     *
+     * @param  Collection<int, Soal>  $daftar
+     * @param  Collection<int, mixed>  $id
+     * @return array<int, int>
+     */
+    private function nomorSesuaiId(Collection $daftar, $id): array
+    {
+        $dicari = $id
+            ->map(fn ($nilai) => (int) $nilai)
+            ->all();
+
+        return $daftar
+            ->values()
+            ->map(fn (Soal $soal, int $index) => in_array((int) $soal->getKey(), $dicari, true)
+                ? $index + 1
+                : null)
+            ->filter()
+            ->values()
+            ->all();
+    }
+
+    /**
      * Sesi yang sedang dikerjakan, kalau memang sesi milik quiz itu.
      *
      * Sesi dibaca dari session pengguna (App\Support\SesiAktif) karena id
@@ -468,22 +605,14 @@ class SesiKerjakanController extends Controller
      * Sisa waktu dalam detik, atau null kalau quiz ini tidak punya batas
      * waktu.
      *
-     * Dihitung dari kolom dimulai_pada pengerjaan, bukan dari waktu
-     * halaman ini dibuka, jadi menekan refresh atau berpindah soal tidak
-     * mengulang waktu dari awal. Durasi diambil dari kolom quiz.durasi
-     * (menit), dan durasi nol atau kosong berarti quiz tanpa batas waktu.
+     * Hitungannya hidup di PengerjaanQuiz::sisaDetik() supaya timer di
+     * halaman ini dan pemeriksaan "percobaan ini sudah kehabisan waktu" di
+     * QuizMulaiController tidak pernah berbeda jawaban untuk pengerjaan
+     * yang sama.
      */
     private function sisaDetik(Quiz $quiz, PengerjaanQuiz $pengerjaan): ?int
     {
-        $durasi = (int) $quiz->durasi * 60;
-
-        if ($durasi <= 0) {
-            return null;
-        }
-
-        $mulai = $pengerjaan->dimulai_pada?->getTimestamp() ?? now()->getTimestamp();
-
-        return max(0, $durasi - (time() - $mulai));
+        return $pengerjaan->sisaDetik($quiz);
     }
 
     /**

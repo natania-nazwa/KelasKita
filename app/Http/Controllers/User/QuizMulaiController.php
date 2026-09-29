@@ -78,6 +78,16 @@ class QuizMulaiController extends Controller
      * Sesi yang pengerjaannya sudah tuntas ikut ditutup dulu di sini, supaya
      * menekan "Mulai Quiz" lagi benar-benar membuka latihan baru, bukan
      * mengulang soal-soal yang sudah dijawab.
+     *
+     * Percobaan yang WAKTUNYA sudah habis juga ikut dianggap tuntas, walau
+     * peserta tidak pernah menekan tombolnya di dialog "Waktu Anda Habis".
+     * Kalau tidak, sesi lamanya tetap berstatus started lalu dipakai ulang:
+     * pengguna mendarat di soal pertama dengan sisa waktu 0, jadi dialognya
+     * muncul lagi di halaman yang seharusnya baru sama sekali.
+     *
+     * Sesi mode kode tidak lewat sini sama sekali, jadi peserta yang masuk
+     * lewat kode tetap melihat dialog di sesi yang memang sedang berjalan
+     * untuk semua orang.
      */
     private function sesiTerbuka(Quiz $quiz, ?int $idPengguna): ?SesiQuiz
     {
@@ -96,18 +106,63 @@ class QuizMulaiController extends Controller
             return null;
         }
 
-        $sudahTuntas = PengerjaanQuiz::query()
+        $pengerjaan = PengerjaanQuiz::query()
             ->where('sesi_id', $sesi->getKey())
             ->where('pengguna_id', $idPengguna)
-            ->selesai()
-            ->exists();
+            ->latest('id')
+            ->first();
 
-        if ($sudahTuntas) {
+        // Sesi sudah jalan tapi belum ada jawaban sama sekali. Kalau
+        // waktunya masih ada, ini lanjutan yang sah; kalau sudah lewat,
+        // sesi ini tidak bisa dilanjutkan dan harus ditinggalkan.
+        if ($pengerjaan === null) {
+            if ($this->waktuSesiHabis($quiz, $sesi)) {
+                $sesi->tutup();
+
+                return null;
+            }
+
+            return $sesi;
+        }
+
+        if ($pengerjaan->sudahSelesai()) {
+            $sesi->tutup();
+
+            return null;
+        }
+
+        if ($pengerjaan->waktuSudahHabis($quiz)) {
+            /*
+             * Pengerjaannya ikut ditutup, bukan cuma sesinya. Kalau tidak,
+             * baris "Belum Selesai" di menu Hasil akan tetap menggantung
+             * walaupun sesinya sudah ditinggalkan.
+             */
+            $pengerjaan->hitungUlang();
+            $pengerjaan->forceFill(['selesai_pada' => now()])->save();
+
             $sesi->tutup();
 
             return null;
         }
 
         return $sesi;
+    }
+
+    /**
+     * Sesi yang belum punya satu pun pengerjaan tapi sudah berjalan melewati
+     * durasi quiz, sudah dianggap lewat waktunya.
+     *
+     * Hitungannya memakai kolom dimulai_pada sesi, bukan started_pada
+     * pengerjaan, karena di keadaan ini belum ada pengerjaan yang bisa dibaca.
+     */
+    private function waktuSesiHabis(Quiz $quiz, SesiQuiz $sesi): bool
+    {
+        $durasi = (int) $quiz->durasi * 60;
+
+        if ($durasi <= 0 || $sesi->dimulai_pada === null) {
+            return false;
+        }
+
+        return $durasi <= time() - $sesi->dimulai_pada->getTimestamp();
     }
 }

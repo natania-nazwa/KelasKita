@@ -1,5 +1,15 @@
 @props([
     'detail',
+    /*
+     * Mode pratinjau: dipakai tab "Preview" pada form Tambah Materi.
+     *
+     * Markup-nya sama persis dengan halaman detail, supaya yang terlihat di
+     * pratinjau persis seperti yang nanti dibaca siswa. Bedanya cuma isi:
+     * beberapa elemen punya atribut data-pratinjau-* yang diisi ulang oleh
+     * resources/js/materi-tambah.js setiap kali form berubah, dan tombol
+     * Simpan dilewati karena materi yang disusun belum punya slug.
+     */
+    'pratinjau' => false,
 ])
 
 @php
@@ -19,6 +29,7 @@
     $pembuat = $detail['pembuat'];
     $tersimpan = (bool) ($detail['tersimpan'] ?? false);
     $kesulitan = strtolower((string) $detail['tingkat_kesulitan']);
+    $adaThumbnail = filled($detail['thumbnail']);
 
     $warnaKesulitan = [
         'mudah' => 'bg-[#dcfce7] text-[#15803d]',
@@ -35,14 +46,18 @@
     --}}
     <div class="kartu-kepala__isi">
         <div class="thumb-materi kartu-kepala__thumb">
-            @if (filled($detail['thumbnail']))
-                <img src="{{ $detail['thumbnail'] }}" loading="lazy"
-                    alt="Thumbnail materi {{ $detail['judul'] }}" class="thumb-materi__foto">
-            @else
-                {{-- Belum ada gambar: gradasi warna kategori + ikon mapel,
-                     sama seperti kartu di halaman daftar. --}}
-                <span class="thumb-materi__ikon" aria-hidden="true">{{ $kategori['ikon'] }}</span>
-            @endif
+            {{--
+                Gambar dan ikon sama-sama selalu dirender, yang satu
+                disembunyikan. Di halaman detail tinggal satu yang sesuai,
+                sedangkan di pratinjau JavaScript butuh kedua-duanya untuk
+                bergantian begitu kategori atau thumbnail berubah.
+            --}}
+            <img @if ($adaThumbnail) src="{{ $detail['thumbnail'] }}" @endif loading="lazy"
+                data-pratinjau-thumbnail alt="Thumbnail materi {{ $detail['judul'] }}"
+                class="thumb-materi__foto {{ $adaThumbnail ? '' : 'hidden' }}">
+
+            <span class="thumb-materi__ikon {{ $adaThumbnail ? 'hidden' : '' }}" data-pratinjau-thumb-ikon
+                aria-hidden="true">{{ $kategori['ikon'] }}</span>
         </div>
 
         <div class="kartu-kepala__identitas">
@@ -50,20 +65,21 @@
             {{-- A. Badge kategori (utama) + tingkat kesulitan. --}}
             <div class="flex flex-wrap items-center gap-2">
                 <span class="lencana bg-lavender text-primary-dark">
-                    <span class="mr-1.5" aria-hidden="true">{{ $kategori['ikon'] }}</span>
+                    <span class="mr-1.5" data-pratinjau-kategori-ikon aria-hidden="true">{{ $kategori['ikon'] }}</span>
 
-                    {{ $kategori['nama'] }}
+                    <span data-pratinjau-kategori>{{ $kategori['nama'] }}</span>
                 </span>
 
                 @if (filled($detail['tingkat_kesulitan']))
-                    <span class="lencana capitalize {{ $warnaKesulitan[$kesulitan] ?? 'bg-lavender text-dark/60' }}">
+                    <span class="lencana capitalize {{ $warnaKesulitan[$kesulitan] ?? 'bg-lavender text-dark/60' }}"
+                        data-pratinjau-kesulitan>
                         {{ $detail['tingkat_kesulitan'] }}
                     </span>
                 @endif
             </div>
 
             {{-- B. Judul. --}}
-            <h1 class="kartu-kepala__judul">{{ $detail['judul'] }}</h1>
+            <h1 class="kartu-kepala__judul" data-pratinjau-judul>{{ $detail['judul'] }}</h1>
 
             @if (filled($detail['deskripsi']))
                 <p class="kartu-kepala__deskripsi">{{ $detail['deskripsi'] }}</p>
@@ -83,7 +99,7 @@
                             style="--a: {{ $pembuat['warna'] }}; --a-gelap: {{ $pembuat['warna_gelap'] }};"
                             aria-hidden="true">{{ $pembuat['inisial'] }}</span>
 
-                        <span class="font-semibold text-dark/75">{{ $pembuat['nama'] }}</span>
+                        <span class="font-semibold text-dark/75" data-pratinjau-pembuat>{{ $pembuat['nama'] }}</span>
                     </span>
                 @endif
 
@@ -93,7 +109,7 @@
                             <path stroke-linecap="round" stroke-linejoin="round" d="{{ \App\Support\Ikon::path('kalender') }}" />
                         </svg>
 
-                        {{ $detail['tanggal'] }}
+                        <span data-pratinjau-tanggal>{{ $detail['tanggal'] }}</span>
                     </span>
                 @endif
 
@@ -110,17 +126,19 @@
                         <path stroke-linecap="round" stroke-linejoin="round" d="{{ \App\Support\Ikon::path('jam') }}" />
                     </svg>
 
-                    {{ $detail['waktu_baca'] }} menit baca
+                    <span data-pratinjau-waktu>{{ $detail['waktu_baca'] }} menit baca</span>
                 </span>
 
-                <button type="button" data-bookmark="{{ $detail['slug'] }}" aria-pressed="{{ $tersimpan ? 'true' : 'false' }}"
-                    data-bookmark-teks="Simpan" class="tombol-simpan kartu-kepala__simpan">
-                    <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="1.9" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="{{ \App\Support\Ikon::path('markah') }}" />
-                    </svg>
+                @unless ($pratinjau)
+                    <button type="button" data-bookmark="{{ $detail['slug'] }}" aria-pressed="{{ $tersimpan ? 'true' : 'false' }}"
+                        data-bookmark-teks="Simpan" class="tombol-simpan kartu-kepala__simpan">
+                        <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="1.9" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="{{ \App\Support\Ikon::path('markah') }}" />
+                        </svg>
 
-                    <span data-bookmark-teks-nowel>{{ $tersimpan ? 'Tersimpan' : 'Simpan' }}</span>
-                </button>
+                        <span data-bookmark-teks-nowel>{{ $tersimpan ? 'Tersimpan' : 'Simpan' }}</span>
+                    </button>
+                @endunless
             </div>
         </div>
     </div>

@@ -1,43 +1,8 @@
-// Halaman detail quiz: baris soal yang bisa dilipat, tombol Bagikan, dan
-// pemotretan banner kategori kalau fotonya gagal dimuat.
+// Halaman detail quiz: tombol Bagikan dan pemotretan banner kategori kalau
+// fotonya gagal dimuat.
 // Semua fungsi berhenti sendiri kalau elemennya tidak ada di halaman ini.
 
 const KELAS_TERBUKA = "is-buka";
-
-/**
- * Daftar soal: klik baris untuk membuka atau menutup pilihan jawabannya.
- *
- * Panel memakai atribut hidden, bukan kelas, jadi markup-nya tetap benar
- * tanpa JavaScript: semua baris tertutup. Aturan CSS di
- * @media (scripting: none) membukanya kembali kalau JavaScript mati.
- *
- * Panel dicari lewat aria-controls yang sudah ada di markup, bukan dari
- * nomor urut, supaya komponen ini tidak perlu tahu bentuk array soal.
- */
-function initSoalLipat() {
-    const tombol = document.querySelectorAll("[data-soal-lipat]");
-
-    if (!tombol.length) {
-        return;
-    }
-
-    tombol.forEach((item) => {
-        const panel = document.getElementById(
-            item.getAttribute("aria-controls") || "",
-        );
-
-        if (!panel) {
-            return;
-        }
-
-        item.addEventListener("click", () => {
-            const terbuka = item.getAttribute("aria-expanded") === "true";
-
-            item.setAttribute("aria-expanded", terbuka ? "false" : "true");
-            panel.hidden = terbuka;
-        });
-    });
-}
 
 /**
  * Tombol "Bagikan".
@@ -164,6 +129,5 @@ function initBanner() {
     });
 }
 
-initSoalLipat();
 initBagikan();
 initBanner();

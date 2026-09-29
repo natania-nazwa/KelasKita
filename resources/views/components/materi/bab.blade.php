@@ -9,6 +9,13 @@
     Daftar bab dirender oleh JavaScript (resources/js/materi-tambah.js),
     komponen ini hanya menyediakan kerangka + tombol tambah.
 --}}
+@props([
+    // Hanya diteruskan ke tab Preview, yang butuh nilai yang sama dengan
+    // form supaya kepala pratinjau dimulai dari isian yang sudah ada.
+    'kategori' => [],
+    'materi' => null,
+])
+
 <section {{ $attributes->class(['kartu-form']) }}>
     <header class="kartu-form__kepala flex-wrap gap-3">
         <span class="kartu-form__ikon" aria-hidden="true">
@@ -58,7 +65,7 @@
         {{-- Panel: preview materi --}}
         <div id="panel-preview" role="tabpanel" aria-labelledby="tab-preview" class="hidden"
             data-panel-preview>
-            <x-materi.preview />
+            <x-materi.preview :kategori="$kategori" :materi="$materi" />
         </div>
     </div>
 </section>

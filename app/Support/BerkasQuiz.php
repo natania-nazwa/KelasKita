@@ -9,9 +9,8 @@ use Illuminate\Support\Facades\Storage;
  * Berkas lampiran quiz (thumbnail) pada disk publik.
  *
  * Pemisahan dari App\Support\BerkasMateri disengaja: folder simpan dan
- * aturan jenis berkasnya berbeda, dan quiz tidak punya audio seperti
- * materi. Dua kelasnya tetap memakai pola yang sama supaya cara
- * membaca kolom thumbnail di view juga sama.
+ * aturan jenis berkasnya berbeda. Dua kelasnya tetap memakai pola yang
+ * sama supaya cara membaca kolom thumbnail di view juga sama.
  */
 final class BerkasQuiz
 {

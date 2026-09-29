@@ -20,7 +20,10 @@
 <section class="dash-kartu dash-panel min-w-0" aria-label="Kalender"
     style="--k: #6c4de6; --k-gelap: #5a3fd4;">
 
-    <x-dashboard.kepala judul="Kalender" ikon="kalender" label="Lihat Semua" />
+    {{-- Aksi "Lihat Semua" disembunyikan: panel kalender tidak punya halaman
+         tujuan sendiri, navigasi sudah lewat tombol bulan sebelumnya dan
+         berikutnya di dalam panel. --}}
+    <x-dashboard.kepala judul="Kalender" ikon="kalender" label="" />
 
     <div class="kalender-kepala">
         <p class="kalender-judul">{{ $kalender['nama_bulan'] }}</p>

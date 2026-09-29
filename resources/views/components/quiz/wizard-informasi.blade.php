@@ -178,12 +178,23 @@
                     pengguna menekan tombol Hapus pada thumbnail yang sudah
                     tersimpan, supaya berkasnya ikut terhapus dari disk
                     (lihat User\QuizKelolaController::update).
-                --}}
-                <input type="hidden" name="thumbnail_hapus" value="0" data-wizard-thumbnail-hapus-flag>
 
-                @if ($galatThumbnail)
-                    <p class="galat-baris" data-wizard-thumbnail-galat>{{ $galatThumbnail }}</p>
-                @endif            </div>
+                    Nilainya memakai old() supaya permintaan hapus tidak
+                    hilang kalau validasi server menolak kiriman lain.
+                --}}
+                <input type="hidden" name="thumbnail_hapus" value="{{ old('thumbnail_hapus', 0) }}"
+                    data-wizard-thumbnail-hapus-flag>
+
+                {{--
+                    Galat thumbnail selalu ada di DOM, meski kosong: JavaScript
+                    menolak berkas yang kebesaran atau formatnya salah lewat
+                    elemen ini, dan tampilGalat() diam saja kalau elemennya
+                    tidak ditemukan — pesannya jadi hilang tanpa jejak.
+                --}}
+                <p class="galat-baris" data-wizard-thumbnail-galat @unless ($galatThumbnail) hidden @endunless>
+                    {{ $galatThumbnail }}
+                </p>
+            </div>
         </div>
     </div>
 </section>

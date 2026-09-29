@@ -17,9 +17,9 @@ use Tests\TestCase;
  * Yang dijaga di sini adalah kontrak yang dibaca pengguna dari halaman ini:
  *   - keempat isi kartu informasi (kategori, kesulitan, jumlah soal, durasi)
  *     benar-benar berasal dari data quiz, bukan teks mati;
- *   - daftar soal menampilkan pertanyaannya dan pilihan jawabannya, tapi TIDAK
- *     pernah jawaban benar maupun pembahasan, karena halaman ini dibuka
- *     sebelum quiz dikerjakan;
+ *   - daftar soal menampilkan pertanyaannya saja (inti soal, tanpa pilihan),
+ *     dan TIDAK pernah jawaban benar maupun pembahasan, karena halaman ini
+ *     dibuka sebelum quiz dikerjakan;
  *   - tautan Kembali dan Mulai Quiz menuju route yang benar;
  *   - quiz tanpa soal, dan quiz draft milik orang lain, ditolak di kedua
  *     halaman (detail dan mulai).
@@ -124,7 +124,7 @@ class QuizDetailTest extends TestCase
         $this->assertStringContainsString('Kuis untuk menguji pemahaman dasar HTML dan CSS.', $isi);
     }
 
-    public function test_daftar_soal_menampilkan_pertanyaan_dan_pilihan_jawabannya(): void
+    public function test_daftar_soal_menampilkan_pertanyaan_tanpa_pilihan_jawaban(): void
     {
         $user = $this->buatPengguna();
         $quiz = $this->buatQuiz($user);
@@ -135,10 +135,11 @@ class QuizDetailTest extends TestCase
             ->assertOk()
             ->assertSee('Daftar Soal')
             ->assertSee('Apa tag untuk membuat judul terbesar di HTML?')
-            ->assertSee('&lt;h1&gt;', false)
-            // Baris soal adalah tombol akordion yang bisa dilipat.
-            ->assertSee('aria-expanded="false"', false)
-            ->assertSee('aria-controls="soal-1-isi"', false);
+            // Daftar soal hanya menampilkan inti pertanyaan: pilihan jawaban
+            // tidak ikut, dan barisnya bukan akordion yang bisa dilipat.
+            ->assertDontSee('&lt;h1&gt;', false)
+            ->assertDontSee('aria-expanded=', false)
+            ->assertDontSee('aria-controls=', false);
     }
 
     public function test_daftar_soal_tidak_membocorkan_jawaban_benar_maupun_pembahasan(): void

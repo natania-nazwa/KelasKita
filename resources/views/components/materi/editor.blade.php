@@ -6,13 +6,18 @@
     selalu mengikuti bab yang sedang aktif.
 
     $isi dipakai sebagai isi awal saat mengedit (mode tambah = null).
-    Depois JavaScript aktif, isinya digantikan isi bab yang dipilih dari
+    Setelah JavaScript aktif, isinya digantikan isi bab yang dipilih dari
     field "bab".
+
+    data-isian-panel menandai kartu ini supaya materi-tambah.js bisa
+    menyembunyikannya ketika tab Preview yang terbuka: yang sedang dibaca
+    pratinjau, jadi tidak perlu editor yang panjang sekaligus tampil di
+    bawahnya.
 --}}
 @props([
     'isi' => null,
 ])
-<section {{ $attributes->class(['kartu-form overflow-hidden']) }}>
+<section {{ $attributes->class(['kartu-form overflow-hidden']) }} data-isian-panel>
     <header class="kartu-form__kepala">
         <span class="kartu-form__ikon" aria-hidden="true">
             <svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">

@@ -34,10 +34,4 @@
             :nilai="$bergabung"
         />
     </dl>
-
-    {{-- Peran ditulis sebagai catatan, bukan baris data, supaya jelas
-        bahwa itu bukan sesuatu yang bisa diedit dari halaman ini. --}}
-    <p class="mt-4 rounded-xl bg-lavender/45 px-3.5 py-3 text-xs leading-relaxed text-dark/55">Peran akunmu
-    <strong class="font-bold text-primary">{{ $pengguna->isAdmin() ? 'Admin' : 'Siswa' }}</strong>
-    dan hanya bisa diubah oleh admin.</p>
 </section>

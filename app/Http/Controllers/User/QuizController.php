@@ -65,7 +65,7 @@ class QuizController extends Controller
         return Quiz::query()
             ->terbit()
             ->with(['pelajaran', 'pembuat'])
-            ->withCount(['soal' => fn ($soal) => $soal->aktif()]);
+            ->withCount(['soal as jumlah_soal_termuat' => fn ($soal) => $soal->aktif()]);
     }
 
     /**

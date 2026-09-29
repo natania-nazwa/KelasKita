@@ -110,6 +110,22 @@ class QuizHalamanTest extends TestCase
             ->assertSee('3 Soal');
     }
 
+    /**
+     * Halaman Quiz punya pintasan "Masukkan Kode" di kepalanya. Alurnya sama
+     * dengan tombol yang sama di dashboard: satu klik langsung ke halaman
+     * Gabung Quiz, tanpa lewat daftar quiz.
+     */
+    public function test_kepala_quiz_memiliki_pintasan_masukkan_kode(): void
+    {
+        $user = $this->buatPengguna();
+
+        $this->actingAs($user)
+            ->get(route('user.quiz'))
+            ->assertOk()
+            ->assertSee('Masukkan Kode')
+            ->assertSee(route('user.sesi.gabung'), false);
+    }
+
     public function test_pencarian_menyaring_berdasarkan_judul(): void
     {
         $user = $this->buatPengguna();

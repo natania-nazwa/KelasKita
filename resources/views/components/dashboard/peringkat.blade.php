@@ -14,7 +14,10 @@
 <section class="dash-kartu dash-panel min-w-0" aria-label="Leaderboard"
     style="--k: #6c4de6; --k-gelap: #5a3fd4;">
 
-    <x-dashboard.kepala judul="Leaderboard" ikon="mahkota" :tautan="$tautan" />
+    {{-- Aksi "Lihat Semua" disembunyikan: panel leaderboard di sidebar
+         tidak punya halaman tujuan sendiri, jadi tautannya selalu kosong
+         dan hanya menampilkan teks yang redup. --}}
+    <x-dashboard.kepala judul="Leaderboard" ikon="mahkota" :tautan="$tautan" label="" />
 
     <div data-reveal-stagger class="grid gap-0.5">
         @forelse ($daftar as $baris)

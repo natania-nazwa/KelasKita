@@ -36,7 +36,6 @@ final class DetailMateri
      *     slug: string,
      *     deskripsi: ?string,
      *     thumbnail: ?string,
-     *     audio: ?string,
      *     tingkat_kesulitan: ?string,
      *     waktu_baca: int,
      *     tanggal: ?string,
@@ -61,10 +60,9 @@ final class DetailMateri
             'judul' => $materi->nama,
             'slug' => $materi->slug,
             'deskripsi' => $materi->deskripsi,
-            // Thumbnail dan audio dipanggil ulang lewat BerkasMateri::url,
-            // yang tahu bedanya antara path unggahan dan URL penuh.
+            // Thumbnail dipanggil ulang lewat BerkasMateri::url, yang tahu
+            // bedanya antara path unggahan dan URL penuh.
             'thumbnail' => BerkasMateri::url($materi->thumbnail),
-            'audio' => BerkasMateri::url($materi->audio),
             'tingkat_kesulitan' => $materi->tingkat_kesulitan,
             'waktu_baca' => $materi->waktuBaca(),
             'tanggal' => self::tanggal($materi->created_at),
@@ -91,8 +89,12 @@ final class DetailMateri
 
     /**
      * "12 Mei 2025" tanpa bergantung pada locale aplikasi.
+     *
+     * Dipakai juga oleh pratinjau pada form Tambah Materi, supaya tanggal
+     * di kepala pratinjau ditulis dengan aturan yang sama dengan halaman
+     * detail.
      */
-    private static function tanggal(mixed $waktu): ?string
+    public static function tanggal(mixed $waktu): ?string
     {
         if (! $waktu instanceof DateTimeInterface) {
             return null;
