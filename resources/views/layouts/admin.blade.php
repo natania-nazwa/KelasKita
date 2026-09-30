@@ -65,11 +65,15 @@
              * (lingkaran centang, "centang" di App\Support\Ikon): menu dengan
              * label yang sama harus punya lambang yang sama supaya berpindah
              * antara dua sidebar tidak terasa seperti dua aplikasi berbeda.
+             *
+             * Penanda aktif memakai admin.quiz* supaya menu ini tetap menyala
+             * di halaman detail dan form editnya, sama seperti menu Materi
+             * di atasnya.
              */
             'label' => 'Quiz',
             'ikon' => 'centang',
             'href' => route('admin.quiz'),
-            'aktif' => request()->routeIs('admin.quiz'),
+            'aktif' => request()->routeIs('admin.quiz*'),
         ],
         [
             'label' => 'Pengguna',
@@ -215,11 +219,20 @@
 
                 {{--
                     Pencarian topbar. Aplikasi belum punya pencarian
-                    global, jadi form ini mengirim "q" ke halaman Kelola
-                    Materi yang memang sudah punya kolom pencarian: kotak
-                    ini benar-benar bekerja, bukan hanya hiasan.
+                    global, jadi form ini mengirim "q" ke halaman daftar yang
+                    sedang dibuka — Kotak Materi atau Kotak Quiz — karena
+                    keduanya punya daftar published-only dengan pencarian yang
+                    sama. Tanpa itu, mengetik kata kunci di halaman Quiz akan
+                    mendarat di halaman Materi dan hasilnya tidak pernah
+                    terlihat, padahal kotak ini terlihat bisa dipakai.
+
+                    Halaman lain (Dashboard, Verifikasi, Pengaturan) memakai
+                    default: Materi, karena itu satu-satunya daftar konten
+                    dengan kolom pencarian yang selalu ada.
                 --}}
-                <form class="ad-atas__cari" method="GET" action="{{ route('admin.materi') }}" role="search">
+                <form class="ad-atas__cari" method="GET"
+                    action="{{ request()->routeIs('admin.quiz*') ? route('admin.quiz') : route('admin.materi') }}"
+                    role="search">
                     <label for="cari-ad">Cari materi, quiz, pengguna</label>
 
                     <x-admin.ikon nama="cari" class="ad-atas__cari-ikon" />

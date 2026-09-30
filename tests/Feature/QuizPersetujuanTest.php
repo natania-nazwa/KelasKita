@@ -235,7 +235,15 @@ class QuizPersetujuanTest extends TestCase
         }
     }
 
-    public function test_halaman_tinjau_quiz_membuka_di_tab_menunggu(): void
+    /**
+     * Halaman admin/quiz bukan lagi tempat memutuskan persetujuan.
+     *
+     * Dulu halaman itutinjau dengan tab per status. Sekarang jadi halaman
+     * kelola quiz yang sudah terbit — sama seperti halaman Materi — jadi
+     * quiz yang masih menunggu tidak muncul di sana, dan keputusan tetap
+     * diambil di menu Verifikasi (lihat VerifikasiHalamanTest).
+     */
+    public function test_halaman_quiz_hanya_menampilkan_quiz_yang_sudah_terbit(): void
     {
         $admin = $this->buatAdmin();
         $pemilik = $this->buatPengguna();
@@ -245,17 +253,31 @@ class QuizPersetujuanTest extends TestCase
         $this->actingAs($admin)
             ->get(route('admin.quiz'))
             ->assertOk()
-            ->assertSee('Quiz Menunggu')
-            ->assertDontSee('Quiz Terbit');
-
-        $this->actingAs($admin)
-            ->get(route('admin.quiz', ['status' => Quiz::STATUS_PUBLISHED]))
-            ->assertOk()
             ->assertSee('Quiz Terbit')
+            ->assertDontSee('Quiz Menunggu');
+
+        // Parameter status lama tidak lagi berarti apa pun, dan tidak boleh
+        // diam-diam membuka daftar yang tidak pernah ada.
+        $this->actingAs($admin)
+            ->get(route('admin.quiz', ['status' => Quiz::STATUS_PENDING]))
+            ->assertOk()
             ->assertDontSee('Quiz Menunggu');
     }
 
-    public function test_pengguna_biasa_tidak_bisa_membuka_halaman_tinjau_quiz(): void
+    public function test_keputusan_quiz_tidak_lagi_ada_di_halaman_quiz(): void
+    {
+        $admin = $this->buatAdmin();
+        $this->buatQuiz($this->buatPengguna(), Quiz::STATUS_PUBLISHED, 'Quiz Terbit');
+
+        $this->actingAs($admin)
+            ->get(route('admin.quiz'))
+            ->assertOk()
+            ->assertDontSee('Setujui &amp; Terbitkan')
+            ->assertDontSee('Tolak Quiz')
+            ->assertDontSee('Menunggu Persetujuan');
+    }
+
+    public function test_pengguna_biasa_tidak_bisa_membuka_halaman_quiz(): void
     {
         $user = $this->buatPengguna();
         $quiz = $this->buatQuiz($user, Quiz::STATUS_PENDING);

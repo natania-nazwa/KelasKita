@@ -48,12 +48,12 @@
          Memakai .ad-seksi juga supaya jarak ke kartu filter di bawahnya
          datang dari aturan .ad-seksi + .ad-seksi.
     ====================== --}}
-    <section class="ad-seksi ad-hero ad-hero--materi">
-        <div class="ad-hero-materi__susun">
-            <div class="ad-hero-materi__teks">
-                <h1 class="ad-hero-materi__judul">Materi</h1>
+    <section class="ad-seksi ad-hero ad-hero--konten">
+        <div class="ad-hero-konten__susun">
+            <div class="ad-hero-konten__teks">
+                <h1 class="ad-hero-konten__judul">Materi</h1>
 
-                <p class="ad-hero-materi__sub">
+                <p class="ad-hero-konten__sub">
                     Kelola materi pembelajaran yang telah dipublikasikan untuk pengguna KelasKita.
                 </p>
             </div>
@@ -63,7 +63,7 @@
                 informasi di dalamnya yang perlu dibaca pembaca layar, dan teks
                 yang penting sudah ada di sebelah kiri.
             --}}
-            <img class="ad-hero-materi__gambar" src="{{ asset('images/buku.png') }}"
+            <img class="ad-hero-konten__gambar" src="{{ asset('images/buku.png') }}"
                 alt="" aria-hidden="true" loading="lazy" decoding="async">
         </div>
     </section>
@@ -194,7 +194,7 @@
     {{-- =====================
          DAFTAR MATERI
     ====================== --}}
-    <div class="ad-seksi ad-materi__daftar">
+    <div class="ad-seksi ad-daftar-kartu">
         @if ($daftar === [])
             @if ($kataKunci !== '' || $adaFilter)
                 <x-admin.kosong ikon="cari" judul="Materi tidak ditemukan"

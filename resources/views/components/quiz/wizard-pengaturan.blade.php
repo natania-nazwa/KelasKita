@@ -6,6 +6,18 @@
     // dengan atribut hidden supaya halaman tetap terbaca (dan tidak
     // menumpuk tiga panel) sebelum JavaScript berjalan.
     'terlihat' => false,
+
+    /*
+     * Apakah form ini dipakai admin (admin.quiz-edit).
+     *
+     * Blok "Ajukan Persetujuan Admin" milik alur pemilik menuju admin, jadi
+     * di form admin blok itu tidak dirender sama sekali: admin adalah pihak
+     * yang menyetujui, dan save()-nya tidak pernah menurunkan status quiz
+     * (lihat Admin\QuizKelolaController::update). Dimatikan lewat prop,
+     * bukan disembunyikan dengan CSS, supaya isian publikasikan yang tidak
+     * ada tidak pernah ikut terkirim.
+     */
+    'admin' => false,
 ])
 
 @php
@@ -152,12 +164,17 @@
 
             {{-- =========================
                  AJUKAN PERSETUJUAN
-            ==========================
-                 Hanya untuk quiz mode publik. Quiz mode kode tidak pernah
-                 tayang untuk semua pengguna, jadi blok ini disembunyikan
-                 bersama saat cara publikasi diganti ke "Gunakan Kode". --}}
-            <div data-wizard-approval-area
-                @if ($terpilih === \App\Models\Quiz::VISIBILITAS_PRIVAT) hidden @endif>
+             ==========================
+                  Hanya untuk quiz mode publik. Quiz mode kode tidak pernah
+                  tayang untuk semua pengguna, jadi blok ini disembunyikan
+                  bersama saat cara publikasi diganti ke "Gunakan Kode".
+
+                  Dan blok ini milik form pemilik saja: form admin tidak
+                  pernah punya yang perlu diputuskan, jadi seluruh area-nya
+                  tidak dirender sama sekali (lihat prop $admin di atas). --}}
+            @unless ($admin)
+                <div data-wizard-approval-area
+                    @if ($terpilih === \App\Models\Quiz::VISIBILITAS_PRIVAT) hidden @endif>
                 <div class="pengaturan-saklar">
                     <div class="min-w-0 flex-1">
                         <label class="pengaturan-saklar__judul" for="saklar-publikasikan">
@@ -216,12 +233,13 @@
                             placeholder="Contoh: Soal nomor 4 dan 5 sudah saya perbaiki, dan tiap soal kini punya pembahasan."
                             class="kolom-form mt-1.5">{{ old('catatan_pengajuan', $quiz->catatan_pengajuan) }}</textarea>
 
-                        <p class="galat-baris" id="catatan_pengajuan-galat">
+                        <p class="galat-baris" id="catatan-pengajuan-galat">
                             @error('catatan_pengajuan') {{ $message }} @enderror
                         </p>
                     </div>
                 @endif
-            </div>
+                </div>
+            @endunless
 
             {{-- =========================
                  DURASI + TAMPILKAN JAWABAN

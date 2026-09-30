@@ -10,6 +10,16 @@
      * kalau belum ada sesi berjalan.
      */
     'sesiHost' => null,
+    /*
+     * Apakah tombol aksi pembaca dirender.
+     *
+     * true (bawaan) untuk halaman detail milik pengguna. false untuk
+     * admin.quiz-detail: "Mulai Quiz", "Bagikan", dan form buka sesi adalah
+     * milik orang yang akan mengerjakan quiz, bukan milik admin yang sedang
+     * memeriksa isinya. Yang boleh ditampilkan di sana tetap identitas quiz
+     * dan statusnya, jadi hanya blok aksi yang dimatikan.
+     */
+    'aksi' => true,
 ])
 
 @php
@@ -96,62 +106,67 @@
             jadi ia dibuat setinggi tombol kedua dan sama-sama melebar rata,
             bukan menumpuk. Di layar sangat sempit keduanya turun ke bawah
             supaya teks dan ikon tidak pernah terpotong.
+
+            admin.quiz-detail mengirim $aksi=false, jadi blok ini tidak
+            dirender di sana: admin tidak akan mengerjakan quiz ini.
         --}}
-        <div class="detail-quiz__aksi">
-            <a href="{{ $kartu['tautan_mulai'] }}" class="detail-quiz__mulai">
-                <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="1.9"
-                    viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-                    <path stroke-linecap="round" stroke-linejoin="round"
-                        d="M5.25 5.653c0-.856.917-1.398 1.667-.986l11.54 6.347a1.125 1.125 0 0 1 0 1.972l-11.54 6.347a1.125 1.125 0 0 1-1.667-.986V5.653Z" />
-                </svg>
+        @if ($aksi)
+            <div class="detail-quiz__aksi">
+                <a href="{{ $kartu['tautan_mulai'] }}" class="detail-quiz__mulai">
+                    <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="1.9"
+                        viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round"
+                            d="M5.25 5.653c0-.856.917-1.398 1.667-.986l11.54 6.347a1.125 1.125 0 0 1 0 1.972l-11.54 6.347a1.125 1.125 0 0 1-1.667-.986V5.653Z" />
+                    </svg>
 
-                Mulai Quiz
-            </a>
+                    Mulai Quiz
+                </a>
 
-            <button type="button" class="detail-quiz__bagikan" data-bagikan-buka
-                aria-label="Bagikan quiz {{ $kartu['judul'] }}">
-                <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="1.9"
-                    viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-                    <path stroke-linecap="round" stroke-linejoin="round"
-                        d="M7.217 10.907a2.25 2.25 0 1 0 0 2.186m0-2.186c.18.324.283.696.283 1.093s-.103.77-.283 1.093m0-2.186 9.566-5.314m-9.566 7.5 9.566 5.314m0 0a2.25 2.25 0 1 0 3.935 2.186 2.25 2.25 0 0 0-3.935-2.186Zm0-12.814a2.25 2.25 0 1 0 3.933-2.185 2.25 2.25 0 0 0-3.933 2.185Z" />
-                </svg>
+                <button type="button" class="detail-quiz__bagikan" data-bagikan-buka
+                    aria-label="Bagikan quiz {{ $kartu['judul'] }}">
+                    <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="1.9"
+                        viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round"
+                            d="M7.217 10.907a2.25 2.25 0 1 0 0 2.186m0-2.186c.18.324.283.696.283 1.093s-.103.77-.283 1.093m0-2.186 9.566-5.314m-9.566 7.5 9.566 5.314m0 0a2.25 2.25 0 1 0 3.935 2.186 2.25 2.25 0 0 0-3.935-2.186Zm0-12.814a2.25 2.25 0 1 0 3.933-2.185 2.25 2.25 0 0 0-3.933 2.185Z" />
+                    </svg>
 
-                Bagikan
-            </button>
-        </div>
-
-        {{--
-            Quiz mode kode milik pengguna yang sedang login bisa dijalankan
-            bersama-sama: orang lain masuk lewat kode quiz ini, bukan lewat
-            tombol di atas. Jadisnya sengaja diletakkan sebagai catatan kecil
-            di bawah aksi, supaya tidak bersaing dengan CTA utama tapi tidak
-            hilang juga.
-        --}}
-        @if (($kartu['saya'] ?? false) && $jumlahSoal > 0 && ($kartu['pakai_kode'] ?? false))
-            {{--
-                Div, bukan <p>: di dalam bagian ini ada <form> buat sesi,
-                sedangkan <p> hanya boleh berisi teks dan elemen sebaris.
-            --}}
-            <div class="detail-quiz__host">
-                <span>
-                    Ingin menguji bersama teman? Bagikan kode
-                    <strong>{{ $kartu['kode_akses'] }}</strong> ke mereka.
-                </span>
-
-                @if ($sesiHost !== null)
-                    <a href="{{ $sesiHost['tautan'] }}" class="detail-quiz__host-tautan">
-                        Buka lobby
-                    </a>
-                @else
-                    <form method="POST" action="{{ $kartu['tautan_mulai_sesi'] }}" class="inline">
-                        @csrf
-
-                        <button type="submit" class="detail-quiz__host-tautan">
-                            Buka Sesi
-                        </button>
-                    </form>
-                @endif
+                    Bagikan
+                </button>
             </div>
+
+            {{--
+                Quiz mode kode milik pengguna yang sedang login bisa dijalankan
+                bersama-sama: orang lain masuk lewat kode quiz ini, bukan lewat
+                tombol di atas. Jadisnya sengaja diletakkan sebagai catatan kecil
+                di bawah aksi, supaya tidak bersaing dengan CTA utama tapi tidak
+                hilang juga.
+            --}}
+            @if (($kartu['saya'] ?? false) && $jumlahSoal > 0 && ($kartu['pakai_kode'] ?? false))
+                {{--
+                    Div, bukan <p>: di dalam bagian ini ada <form> buat sesi,
+                    sedangkan <p> hanya boleh berisi teks dan elemen sebaris.
+                --}}
+                <div class="detail-quiz__host">
+                    <span>
+                        Ingin menguji bersama teman? Bagikan kode
+                        <strong>{{ $kartu['kode_akses'] }}</strong> ke mereka.
+                    </span>
+
+                    @if ($sesiHost !== null)
+                        <a href="{{ $sesiHost['tautan'] }}" class="detail-quiz__host-tautan">
+                            Buka lobby
+                        </a>
+                    @else
+                        <form method="POST" action="{{ $kartu['tautan_mulai_sesi'] }}" class="inline">
+                            @csrf
+
+                            <button type="submit" class="detail-quiz__host-tautan">
+                                Buka Sesi
+                            </button>
+                        </form>
+                    @endif
+                </div>
+            @endif
         @endif
     </div>
 </article>

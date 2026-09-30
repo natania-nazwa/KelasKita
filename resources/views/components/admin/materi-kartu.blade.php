@@ -38,7 +38,7 @@
     $kesulitan = strtolower((string) $materi['tingkat_kesulitan']);
 @endphp
 
-<article class="ad-materi-kartu"
+<article class="ad-kartu-daftar"
     style="--k: {{ $kategori['warna'] }}; --k-gelap: {{ $kategori['warna_gelap'] }};">
 
     {{--
@@ -46,12 +46,12 @@
         thumbnail, gradasi warna kategori + ikon mapel menggantikannya —
         persis seperti kartu materi milik pengguna, bukan kotak kosong.
     --}}
-    <div class="ad-materi-kartu__gambar">
+    <div class="ad-kartu-daftar__gambar">
         @if (filled($materi['thumbnail']))
-            <img class="ad-materi-kartu__foto" src="{{ $materi['thumbnail'] }}"
+            <img class="ad-kartu-daftar__foto" src="{{ $materi['thumbnail'] }}"
                 alt="Thumbnail materi {{ $materi['judul'] }}" loading="lazy">
         @else
-            <span class="ad-materi-kartu__ikon" aria-hidden="true">{{ $kategori['ikon'] }}</span>
+            <span class="ad-kartu-daftar__ikon" aria-hidden="true">{{ $kategori['ikon'] }}</span>
         @endif
 
         {{--
@@ -60,27 +60,27 @@
             beradu dengan kategori yang sudah tampil di baris meta.
         --}}
         @if (filled($materi['tingkat_kesulitan']))
-            <span class="ad-materi-kartu__kesulitan capitalize">{{ $materi['tingkat_kesulitan'] }}</span>
+            <span class="ad-kartu-daftar__kesulitan capitalize">{{ $materi['tingkat_kesulitan'] }}</span>
         @endif
     </div>
 
     {{-- B. Isi kartu. --}}
-    <div class="ad-materi-kartu__badan">
-        <span class="ad-materi-kartu__aksen" aria-hidden="true"></span>
+    <div class="ad-kartu-daftar__badan">
+        <span class="ad-kartu-daftar__aksen" aria-hidden="true"></span>
 
-        <h3 class="ad-materi-kartu__judul">{{ $materi['judul'] }}</h3>
+        <h3 class="ad-kartu-daftar__judul">{{ $materi['judul'] }}</h3>
 
-        <p class="ad-materi-kartu__pembuat">
+        <p class="ad-kartu-daftar__pembuat">
             <span>Dibuat oleh:</span>
 
-            <span class="ad-materi-kartu__truncate">{{ $materi['pembuat']['nama'] }}</span>
+            <span class="ad-kartu-daftar__truncate">{{ $materi['pembuat']['nama'] }}</span>
         </p>
 
-        <p class="ad-materi-kartu__meta">
+        <p class="ad-kartu-daftar__meta">
             {{ $kategori['nama'] }} &middot; {{ $materi['jumlah_bab'] }} Bab
         </p>
 
-        <p class="ad-materi-kartu__tanggal">
+        <p class="ad-kartu-daftar__tanggal">
             {{ $materi['tanggal_label'] }}
             @if (filled($materi['tanggal_jam']))
                 &middot; {{ $materi['tanggal_jam'] }}
@@ -89,13 +89,13 @@
 
         {{--
             Status + aksi. Tombolnya terdorong ke bawah kartu lewat
-            margin-top: auto pada .ad-materi-kartu__kaki, jadi semua kartu
+            margin-top: auto pada .ad-kartu-daftar__kaki, jadi semua kartu
             dalam satu baris tetap sejajar walaupun judulnya beda panjang.
         --}}
-        <div class="ad-materi-kartu__kaki">
+        <div class="ad-kartu-daftar__kaki">
             <x-admin.lencana-materi :status="$materi['status']" :label="$materi['status_label']" />
 
-            <div class="ad-materi-kartu__aksi">
+            <div class="ad-kartu-daftar__aksi">
                 <a href="{{ $materi['tautan_detail'] }}" class="ad-tombol ad-tombol--halus ad-tombol--kecil">
                     <x-admin.ikon nama="mata" ukuran="w-3.5 h-3.5" />
 

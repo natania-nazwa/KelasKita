@@ -28,42 +28,20 @@
          * Isian awal tiap langkah.
          *
          * old() selalu menang supaya submit yang gagal validasi tidak
-         * membiarkan isian yang sudah diklik pengguna hilang. Setelah
-         * itu: data quiz yang sedang diedit, dan untuk quiz baru
-         * koleksi kosong.
+         * membiarkan isian yang sudah diklik pengguna hilang. Setelah itu:
+         * data quiz yang sedang diedit, dan untuk quiz baru koleksi kosong.
+         *
+         * Pemetaan soal ke baris isiannya dilakukan oleh
+         * App\Support\IsianSoalQuiz, yang dipakai juga oleh form edit di
+         * admin — jadi quiz yang sama tidak punya dua bentuk isian berbeda
+         * tergantung form mana yang membukanya.
          *
          * "langkahAwal" menentukan langkah mana yang langsung dibuka
          * setelah validasi gagal. Tanpa ini validate selalu melempar ke
          * langkah pertama walau masalahnya ada di Pengaturan.
          */
-        $baris = old(
-            'soal',
-            $modeEdit
-                ? $soal->map(fn ($s) => [
-                    'pertanyaan' => $s->pertanyaan,
-                    'tipe' => $s->tipe(),
-                    'pilihan' => array_values(array_map(
-                        fn ($huruf, $teks) => ['huruf' => $huruf, 'teks' => $teks],
-                        array_keys($s->pilihan()),
-                        array_values($s->pilihan()),
-                    )),
-                    'benar' => $s->hurufBenar(),
-                    'kunciTeks' => $s->kunciTeks(),
-                    'ceklis' => $s->tococok_persis,
-                    'pembahasan' => (string) $s->pembahasan,
-                    'tingkat' => $s->tingkat_kesulitan ?? \App\Models\Quiz::TINGKAT_MUDAH,
-                ])->all()
-                : []
-        );
-
-        /*
-         * Langkah tempat validasi server berhenti. Kalau galatnya milik
-         * soal, buka langkah 2; selain itu buka langkah 1 karena itu
-         * tempat semua isian lainnya dikumpulkan.
-         */
-        $langkahAwal = $errors->has('soal') || collect($errors->keys())->contains(
-            fn ($kunci) => str_starts_with((string) $kunci, 'soal.')
-        ) ? 2 : 1;
+        $baris = old('soal', \App\Support\IsianSoalQuiz::baris($modeEdit ? $soal : null));
+        $langkahAwal = \App\Support\IsianSoalQuiz::langkahAwal($errors);
     @endphp
 
     <div data-wizard-quiz data-langkah="{{ $langkahAwal }}" data-abjad="{{ \App\Support\KodeQuiz::ABJAD }}"

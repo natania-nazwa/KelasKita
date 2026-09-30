@@ -3,42 +3,88 @@
 @section('title', 'Quiz | KelasKita')
 
 @section('content')
-
     {{--
-        Halaman "Quiz": tempat admin melihat seluruh quiz yang ada,
-        dan menyetujui atau menolak yang masih menunggu.
+        Halaman "Quiz": daftar quiz yang sudah dipublikasikan.
 
-        Halaman dibuka ke tab "Menunggu Persetujuan" supaya pekerjaan
-        yang perlu dikerjakan selalu yang pertama terlihat. Penolakan
-        selalu lewat isian alasan karena alasan itu dibaca pemilik di
-        "Karya Saya" dan jadi dasar pengajuan ulang.
+        Sengaja ditiru seluruhnya dari halaman "Materi": hero yang sama, kartu
+        filter yang sama, grid kartu yang sama, paginasi yang sama, dan dialog
+        hapus yang sama. Yang berbeda hanya isi kartu dan gambarnya. Jadi
+        berpindah antara Materi dan Quiz di sidebar admin tidak terasa seperti
+        berpindah aplikasi, dan siapa pun yang sudah paham satu halaman tidak
+        perlu belajar ulang halaman yang lain.
 
-        Quiz mode kode tidak pernah minta persetujuan: kode seperti itu
-        dibuat langsung berstatus draft dan tidak pernah berstatus
-        menunggu, jadi tidak pernah muncul di tab "Menunggu
-        Persetujuan". Quiz seperti itu tetap bisa terlihat di tab Draft,
-        dan di sana lencana mode-nya membuat jelas bahwa tidak ada yang
-        perlu diputuskan.
+        Batas halaman ini juga sama dan disengaja: yang tampil hanya quiz
+        berstatus "published". Quiz yang masih menunggu keputusan ditinjau di
+        menu Verifikasi — halaman yang sama untuk materi dan quiz — dan yang
+        ditolak atau masih draft dikelola pemiliknya di "Karya Saya". Karena
+        itu halaman ini tidak punya tombol Setujui/Tolak dan tidak punya tab
+        status: dengan daftar yang sudah published-only, tab seperti itu hanya
+        mengulang daftar yang sama.
 
-        Yang tidak berubah dari sebelumnya: query, tab status, URL, dan
-        route yang dipakai tombol keputusan.
+        Isinya: cari, saring, baca detail, ubah, hapus. Daftar ini satu kolom
+        selebar penuh: kartu quiz tinggi hanya sebentar, jadi panel preview di
+        sebelah kanan lebih banyak mengambil ruang daripada yang terpakai.
+
+        Tombol "Lihat Quiz" membuka halaman detail yang memakai komponen
+        tampilan milik pengguna, jadi yang dibaca admin persis sama dengan
+        yang dibaca user.
     --}}
 
     @php
-        $tabStatus = collect($pilihanStatus)
-            ->map(fn (string $label, string $nilai): array => [
-                'label' => $label,
-                'nilai' => $nilai,
-                'jumlah' => $jumlahStatus[$nilai] ?? 0,
-                'href' => route('admin.quiz', ['status' => $nilai, 'q' => $kataKunci]),
-            ])
-            ->all();
+        /*
+         * Berapa saringan yang sedang aktif selain kata kunci. "urut" tidak
+         * ikut dihitung kalau masih bawaan, karena mengurutkan ulang daftar
+         * bukan hal yang perlu disorot sebagai filter aktif.
+         */
+        $jumlahFilter = count(array_filter([
+            'kategori' => $kategoriAktif,
+            'pembuat' => $pembuatAktif,
+            'urut' => $urutAktif === 'terbaru' ? null : $urutAktif,
+        ], fn ($nilai) => filled($nilai)));
+
+        $adaFilter = $jumlahFilter > 0;
     @endphp
 
-    <x-admin.kepala judul="Quiz"
-        subjudul="Kelola quiz yang dibuat dan dipublikasikan oleh pengguna." />
+    {{-- =====================
+         HERO BANNER
 
-    {{-- ==================== PESAN ==================== --}}
+         Dua kolom: teks di kiri, gambar di kanan. Ikon dan kutipan tidak
+         dipakai di sini — visual dengan logo dan slogan itu milik hero
+         Dashboard, sedangkan di halaman ini yang dibutuhkan cuma penanda
+         quiz.
+
+         Memakai .ad-seksi juga supaya jarak ke kartu filter di bawahnya
+         datang dari aturan .ad-seksi + .ad-seksi.
+    ====================== --}}
+    <section class="ad-seksi ad-hero ad-hero--konten">
+        <div class="ad-hero-konten__susun">
+            <div class="ad-hero-konten__teks">
+                <h1 class="ad-hero-konten__judul">Quiz</h1>
+
+                <p class="ad-hero-konten__sub">
+                    Kelola quiz yang telah dipublikasikan untuk pengguna KelasKita.
+                </p>
+            </div>
+
+            {{--
+                Ilustrasi siswa di laptop. Murni dekoratif, jadi alt-nya kosong:
+                tidak ada informasi di dalamnya yang perlu dibaca pembaca layar,
+                dan teks yang penting sudah ada di sebelah kiri.
+
+                Modifier --penuh karena gambarnya lebih lebar dari kotak hero
+                (828x552 di kotak bujur sangkar), bukan bujur sangkar seperti
+                buku.png di halaman Materi. Tanpa itu gambarnya hanya mengisi
+                dua pertiga kotak dan terlihat jauh lebih kecil dibanding
+                halaman sebelah — meski hero-nya sama persis.
+            --}}
+            <img class="ad-hero-konten__gambar ad-hero-konten__gambar--penuh" src="{{ asset('images/cover.png') }}"
+                alt="" aria-hidden="true" loading="lazy" decoding="async">
+        </div>
+    </section>
+
+    {{-- =====================
+         PESAN
+    ====================== --}}
     @if (session('sukses'))
         <div class="ad-seksi ad-alert ad-alert--sukses" role="status">
             <span class="ad-alert__ikon" aria-hidden="true">
@@ -49,243 +95,204 @@
         </div>
     @endif
 
-    @if ($errors->any())
-        <div class="ad-seksi ad-alert ad-alert--bahaya" role="alert">
-            <span class="ad-alert__ikon" aria-hidden="true">
-                <x-admin.ikon nama="silang-polos" ukuran="w-3.5 h-3.5" :tebal="2.6" />
-            </span>
+    {{-- =====================
+         FILTER
 
-            <div class="min-w-0">
-                <p class="font-semibold">Belum bisa diputuskan:</p>
+         Satu form GET untuk ketiga filter sekaligus, jadi mengganti filter
+         tidak mematikan filter lain yang sedang aktif. Tidak ada tombol
+         buka/tutup: kategorinya cuma tiga, dan menyembunyikannya di balik
+         popover hanya menambah satu klik untuk sesuatu yang selalu dipakai.
 
-                <ul class="mt-1 list-disc space-y-0.5 pl-5">
-                    @foreach ($errors->all() as $pesan)
-                        <li>{{ $pesan }}</li>
-                    @endforeach
-                </ul>
+         Kolom "Cari quiz" tidak ada di sini. Pencarian tetap berfungsi
+         lewat kotak pencarian di topbar, yang form-nya sudah mengarah ke
+         halaman ini dengan field "q" — jadi tidak ada pencarian yang
+         hilang, hanya satu kolom yang tidak lagi terduplikasi. Kata kunci
+         yang sedang aktif ikut dibawa sebagai query string supaya saringan
+         di bawah tidak hilang saat admin menyaring daftar.
+
+         Barisnya flex-wrap, jadi saat layar tidak cukup lebar isinya turun
+         sendiri — itu perilaku responsif, bukan dua baris yang sengaja
+         dirancang begitu.
+
+         Label select disembunyikan karena teks di dalamnya sudah menyebut apa
+         yang disaring ("Semua kategori", "Semua pembuat"), jadi tidak ada
+         yang perlu dibaca dua kali.
+    ====================== --}}
+    <div class="ad-seksi ad-kartu ad-alat-kotak">
+        <form method="GET" action="{{ route('admin.quiz') }}">
+            <div class="ad-alat-baris">
+                {{-- Pencarian yang sudah aktif ikut dibawa, supaya tidak hilang
+                     dari URL saat admin menyaring daftar. --}}
+                @if ($kataKunci !== '')
+                    <input type="hidden" name="q" value="{{ $kataKunci }}">
+                @endif
+
+                <div class="ad-alat-baris__field">
+                    <label class="sr-only" for="saring-kategori">Saring menurut kategori</label>
+
+                    <div class="ad-pilih__bungkus">
+                        <select id="saring-kategori" name="kategori" class="ad-pilih">
+                            <option value="">Semua kategori ({{ $totalQuiz }})</option>
+
+                            @foreach ($daftarKategori as $kategori)
+                                <option value="{{ $kategori['slug'] }}" @selected($kategoriAktif === $kategori['slug'])>
+                                    {{ $kategori['nama'] }} ({{ $kategori['jumlah'] }})
+                                </option>
+                            @endforeach
+                        </select>
+
+                        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="{{ \App\Support\Ikon::path('panah-bawah') }}" />
+                        </svg>
+                    </div>
+                </div>
+
+                <div class="ad-alat-baris__field">
+                    <label class="sr-only" for="saring-urut">Urutkan daftar</label>
+
+                    <div class="ad-pilih__bungkus">
+                        <select id="saring-urut" name="urut" class="ad-pilih">
+                            @foreach ($pilihanUrut as $nilai => $label)
+                                <option value="{{ $nilai }}" @selected($urutAktif === $nilai)>{{ $label }}</option>
+                            @endforeach
+                        </select>
+
+                        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="{{ \App\Support\Ikon::path('panah-bawah') }}" />
+                        </svg>
+                    </div>
+                </div>
+
+                <div class="ad-alat-baris__field">
+                    <label class="sr-only" for="saring-pembuat">Saring menurut pembuat</label>
+
+                    <div class="ad-pilih__bungkus">
+                        <select id="saring-pembuat" name="pembuat" class="ad-pilih">
+                            <option value="">Semua pembuat</option>
+
+                            @foreach ($daftarPembuat as $pembuat)
+                                <option value="{{ $pembuat['id'] }}" @selected($pembuatAktif === (string) $pembuat['id'])>
+                                    {{ $pembuat['nama'] }}
+                                </option>
+                            @endforeach
+                        </select>
+
+                        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="{{ \App\Support\Ikon::path('panah-bawah') }}" />
+                        </svg>
+                    </div>
+                </div>
+
+                <div class="ad-alat-baris__aksi">
+                    <button type="submit" class="ad-tombol ad-tombol--utama">Terapkan</button>
+
+                    {{--
+                        Selalu ikut dirender supaya posisinya tidak bergeser
+                        saat filter dipakai dan dilepas. Tanpa saringan yang
+                        aktif tautannya dimatikan: tidak ada yang perlu
+                        dihapus, jadi tidak boleh terlihat bisa diklik.
+                    --}}
+                    <a href="{{ route('admin.quiz') }}" @class([
+                        'ad-tombol',
+                        'ad-tombol--garis',
+                        'pointer-events-none opacity-40' => ! $adaFilter && $kataKunci === '',
+                    ]) @if (! $adaFilter && $kataKunci === '') aria-disabled="true" tabindex="-1" @endif>
+                        <x-admin.ikon nama="silang-polos" ukuran="w-4 h-4" />
+
+                        Hapus filter
+                    </a>
+                </div>
             </div>
-        </div>
-    @endif
-
-    {{-- ==================== TAB + PENCARIAN ==================== --}}
-    <div class="ad-seksi ad-alat">
-        <x-admin.tab :tab="$tabStatus" :aktif="$statusAktif" label="Filter status quiz" />
-
-        <form method="GET" action="{{ route('admin.quiz') }}" class="ad-alat__kanan">
-            <input type="hidden" name="status" value="{{ $statusAktif }}">
-
-            <div class="ad-cari">
-                <label for="q-quiz" class="sr-only">Cari quiz</label>
-
-                <x-admin.ikon nama="cari" class="ad-cari__ikon" />
-
-                <input id="q-quiz" name="q" type="search" value="{{ $kataKunci }}"
-                    placeholder="Cari judul atau kategori quiz..." autocomplete="off">
-            </div>
-
-            <button type="submit" class="ad-tombol ad-tombol--garis shrink-0">Cari</button>
         </form>
     </div>
 
-    {{-- ==================== DAFTAR QUIZ ==================== --}}
-    @if ($daftar === [])
-        <div class="ad-seksi">
-            <x-admin.kosong ikon="soal"
-                :judul="$kataKunci !== ''
-                    ? 'Tidak ada quiz “'.$kataKunci.'” di tab ini.'
-                    : ($statusAktif === \App\Models\Quiz::STATUS_PENDING
-                        ? 'Tidak ada quiz yang menunggu persetujuan.'
-                        : 'Belum ada quiz dengan status ini.')"
-                teks="Quiz publik yang diajukan pengguna akan muncul di sini." />
-        </div>
-    @else
-        <div class="ad-seksi ad-tabel__bungkus">
-            <table class="ad-tabel">
-                <thead>
-                    <tr>
-                        <th scope="col">No</th>
-                        <th scope="col">Judul Quiz</th>
-                        <th scope="col">Mode</th>
-                        <th scope="col">Soal</th>
-                        <th scope="col">Status</th>
-                        <th scope="col">Pembuat</th>
-                        <th scope="col">Tanggal</th>
-                        <th scope="col">Aksi</th>
-                    </tr>
-                </thead>
+    {{-- =====================
+         DAFTAR QUIZ
+    ====================== --}}
+    <div class="ad-seksi ad-daftar-kartu">
+        @if ($daftar === [])
+            @if ($kataKunci !== '' || $adaFilter)
+                <x-admin.kosong ikon="cari" judul="Quiz tidak ditemukan"
+                    teks="Coba gunakan kata kunci yang berbeda." />
+            @else
+                <x-admin.kosong ikon="soal" judul="Belum ada quiz"
+                    teks="Quiz yang telah disetujui akan muncul di sini." />
+            @endif
+        @else
+            @foreach ($daftar as $quiz)
+                <x-admin.quiz-kartu :quiz="$quiz" />
+            @endforeach
+        @endif
+    </div>
 
-                <tbody>
-                    @foreach ($daftar as $quiz)
-                        @php
-                            /*
-                             * Hanya quiz publik yang bisa menunggu
-                             * persetujuan. Quiz mode kode dibuat langsung
-                             * berstatus draft dan tidak pernah punya
-                             * status menunggu, jadi kondisi kedua ini
-                             * hanya jaga-jaga kalau datanya berubah
-                             * lewat jalur lain.
-                             */
-                            $bisaPutuskan = $quiz['status'] === \App\Models\Quiz::STATUS_PENDING
-                                && ! $quiz['pakai_kode'];
-                        @endphp
+    {{-- =====================
+         PAGINASI
 
-                        <tr>
-                            <td class="ad-tabel__nomor" data-label="No">
-                                {{ $paginasi->firstItem() + $loop->index }}
-                            </td>
-
-                            <td data-label="Judul Quiz">
-                                <div class="ad-tabel__nama">
-                                    <span class="ad-tinjau__ikon" style="background-color: {{ $quiz['kategori']['warna'] }};"
-                                        aria-hidden="true">
-                                        {{ $quiz['kategori']['ikon'] }}
-                                    </span>
-
-                                    <span class="ad-tabel__nama-teks">
-                                        <span class="ad-tabel__judul">{{ $quiz['judul'] }}</span>
-                                        <span class="ad-tabel__sub">
-                                            {{ $quiz['kategori']['nama'] }} ·
-                                            {{ $quiz['durasi'] > 0 ? '± '.$quiz['durasi'].' menit' : 'Tanpa batas waktu' }}
-                                        </span>
-                                    </span>
-                                </div>
-                            </td>
-
-                            <td data-label="Mode">
-                                <x-admin.mode :publik="! $quiz['pakai_kode']" />
-                            </td>
-
-                            <td data-label="Soal">
-                                <span class="tabular-nums">{{ $quiz['jumlah_soal'] }}</span>
-                            </td>
-
-                            <td data-label="Status">
-                                <x-admin.lencana :status="$quiz['status']" :label="$quiz['status_label']" />
-                            </td>
-
-                            <td data-label="Pembuat">{{ $quiz['pembuat']['nama'] }}</td>
-
-                            <td data-label="Tanggal">
-                                <span class="tabular-nums">{{ $quiz['dibuat_pada']?->translatedFormat('d M Y') }}</span>
-                            </td>
-
-                            <td data-label="">
-                                <div class="ad-tabel__aksi">
-                                    <button type="button" class="ad-tombol ad-tombol--kecil {{ $bisaPutuskan ? 'ad-tombol--utama' : 'ad-tombol--garis' }}"
-                                        data-dialog-buka
-                                        data-dialog-judul="Quiz: {{ $quiz['judul'] }}"
-                                        data-dialog-meta="{{ $quiz['kategori']['nama'] }} · {{ $quiz['jumlah_soal'] }} soal · {{ $quiz['pakai_kode'] ? 'Mode kode' : 'Mode publik' }} · oleh {{ $quiz['pembuat']['nama'] }} ({{ $quiz['dibuat_pada']?->translatedFormat('d M Y') }})"
-                                        data-dialog-isi="{{ $quiz['deskripsi'] ?: 'Tanpa deskripsi.' }}"
-                                        data-dialog-setujui="{{ $bisaPutuskan ? $quiz['tautan_setujui'] : '' }}"
-                                        data-dialog-tolak="{{ $bisaPutuskan ? $quiz['tautan_tolak'] : '' }}">
-                                        <x-admin.ikon nama="mata" ukuran="w-3.5 h-3.5" />
-                                        {{ $bisaPutuskan ? 'Tinjau' : 'Lihat' }}
-                                    </button>
-                                </div>
-                            </td>
-                        </tr>
-
-                        @if (filled($quiz['catatan_pengajuan']) || filled($quiz['catatan_admin']))
-                            <tr>
-                                <td colspan="8" class="!py-3">
-                                    @if (filled($quiz['catatan_admin']))
-                                        <p class="ad-alert ad-alert--bahaya !px-3 !py-2.5">
-                                            <span class="ad-alert__ikon" aria-hidden="true">
-                                                <x-admin.ikon nama="silang" ukuran="w-3 h-3" :tebal="2.6" />
-                                            </span>
-
-                                            <span class="min-w-0">
-                                                <strong>Alasan ditolak admin:</strong>
-                                                {{ $quiz['catatan_admin'] }}
-                                            </span>
-                                        </p>
-                                    @endif
-
-                                    @if (filled($quiz['catatan_pengajuan']))
-                                        <p class="ad-teks-2 mt-2 !text-xs">
-                                            <strong class="text-[#29245C]">Catatan pengajuan ulang:</strong>
-                                            {{ $quiz['catatan_pengajuan'] }}
-                                        </p>
-                                    @endif
-
-                                    @if ($quiz['jumlah_ditolak'] > 0)
-                                        <p class="ad-teks-2 mt-1 !text-xs">
-                                            Sudah {{ $quiz['jumlah_ditolak'] }}x ditolak
-                                            (sisa pengajuan {{ $quiz['sisa_pengajuan'] }}x).
-                                        </p>
-                                    @endif
-                                </td>
-                            </tr>
-                        @endif
-                    @endforeach
-                </tbody>
-            </table>
-        </div>
-
-        <div class="ad-seksi">
+         Cuma tombol halaman, di tengah dan tanpa kartu putih di belakang.
+         Jumlah data ("Menampilkan 1-8 dari 10 data") sengaja dihapus: dengan
+         empat kolom kartu, posisi kartu sudah memberitahu sedang berada di
+         halaman berapa.
+    ====================== --}}
+    @if ($daftar !== [])
+        <div class="ad-seksi ad-paginasi">
             {{ $paginasi->links() }}
         </div>
     @endif
 
-    {{-- ==================== DIALOG TINJAU ==================== --}}
-    <div class="ad-dialog" data-dialog role="dialog" aria-modal="true" aria-hidden="true"
-        aria-labelledby="dialog-quiz-judul">
-        <div class="ad-dialog__kartu">
+    {{--
+        =====================
+             DIALOG HAPUS QUIZ
 
+        Satu dialog untuk semua kartu, diisi dari data-* tombol yang ditekan
+        oleh admin.js, jadi daftar panjang tetap hanya punya satu kotak
+        konfirmasi.
+
+        Form-nya memakai @method('DELETE') ke admin.quiz.destroy. Tidak ada
+        form yang langsung terkirim: quiznya baru dihapus setelah tombol
+        "Hapus Quiz" ditekan.
+    ====================== --}}
+    <div class="ad-dialog" data-dialog-hapus role="dialog" aria-modal="true" aria-hidden="true"
+        aria-labelledby="dialog-hapus-judul">
+        <div class="ad-dialog__kartu">
             <header class="ad-dialog__kepala">
                 <div class="min-w-0 flex-1">
-                    <h2 class="ad-dialog__judul" id="dialog-quiz-judul" data-dialog-judul></h2>
+                    <h2 class="ad-dialog__judul" id="dialog-hapus-judul" data-hapus-judul>Hapus Quiz?</h2>
 
-                    <p class="ad-teks-2 mt-0.5 !text-xs" data-dialog-meta></p>
+                    <p class="ad-teks-2 mt-0.5 !text-xs" data-hapus-meta></p>
                 </div>
 
-                <button type="button" class="ad-dialog__tutup" data-dialog-tutup aria-label="Tutup">
+                <button type="button" class="ad-dialog__tutup" data-hapus-tutup aria-label="Tutup">
                     <x-admin.ikon nama="silang-polos" ukuran="w-4 h-4" />
                 </button>
             </header>
 
             <div class="ad-dialog__badan">
-                <p class="ad-field__label">Deskripsi quiz</p>
-
-                <div class="ad-isi-materi mt-2" data-dialog-isi></div>
-
-                <div class="mt-4" data-dialog-bagian-tolak hidden>
-                    <form method="POST" action="" id="form-tolak-quiz" data-dialog-form-tolak>
-                        @csrf
-
-                        <input type="hidden" name="status" value="{{ $statusAktif }}">
-
-                        <label class="ad-field__label" for="alasan-quiz">Alasan penolakan (dibaca pemilik)</label>
-
-                        <textarea class="ad-area mt-1.5" id="alasan-quiz" name="alasan" rows="3" required
-                            maxlength="500" data-dialog-alasan data-awal="{{ old('alasan') }}"
-                            placeholder="Contoh: Soal nomor 4 dan 5 punya kunci jawaban yang sama, tolong periksa kembali."></textarea>
-                    </form>
-                </div>
+                <p class="text-sm leading-relaxed text-dark/70">
+                    Quiz ini akan dihapus beserta seluruh soalnya, dan tidak lagi
+                    tersedia untuk pengguna. Riwayat pengerjaan yang sudah ada ikut
+                    terhapus. Tindakan ini tidak dapat dibatalkan.
+                </p>
             </div>
 
             <footer class="ad-dialog__kaki">
-                <button type="button" class="ad-tombol ad-tombol--garis" data-dialog-tutup>Batal</button>
+                <button type="button" class="ad-tombol ad-tombol--garis" data-hapus-tutup>Batal</button>
 
-                <button type="submit" class="ad-tombol ad-tombol--bahaya" form="form-tolak-quiz"
-                    data-dialog-tolak-tombol>
-                    <x-admin.ikon nama="silang" ukuran="w-4 h-4" />
-                    Tolak Quiz
-                </button>
+                <button type="submit" class="ad-tombol ad-tombol--bahaya" form="form-hapus-quiz">
+                    <x-admin.ikon nama="sampah" />
 
-                <button type="submit" class="ad-tombol ad-tombol--sukses" form="form-setujui-quiz"
-                    data-dialog-setujui>
-                    <x-admin.ikon nama="centang" ukuran="w-4 h-4" />
-                    Setujui &amp; Terbitkan
+                    Hapus Quiz
                 </button>
             </footer>
 
-            <form method="POST" action="" id="form-setujui-quiz" data-dialog-form-setujui hidden>
+            {{--
+                Form tidak terlihat, tapi tetap ada di DOM supaya tombolnya
+                bisa memakai atribut form=.
+            --}}
+            <form method="POST" action="" id="form-hapus-quiz" data-hapus-form hidden>
                 @csrf
 
-                <input type="hidden" name="status" value="{{ $statusAktif }}">
+                @method('DELETE')
             </form>
         </div>
     </div>
-
 @endsection

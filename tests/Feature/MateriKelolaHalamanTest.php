@@ -366,15 +366,15 @@ class MateriKelolaHalamanTest extends TestCase
             ->getContent();
 
         // Teks di kolom kiri.
-        $this->assertStringContainsString('ad-hero-materi__teks', $html);
-        $this->assertStringContainsString('ad-hero-materi__judul', $html);
+        $this->assertStringContainsString('ad-hero-konten__teks', $html);
+        $this->assertStringContainsString('ad-hero-konten__judul', $html);
         $this->assertStringContainsString('Kelola materi pembelajaran yang telah dipublikasikan', $html);
 
         // Gambar buku di kolom kanan.
-        $this->assertStringContainsString('ad-hero-materi__gambar', $html);
+        $this->assertStringContainsString('ad-hero-konten__gambar', $html);
         $this->assertStringContainsString(asset('images/buku.png'), $html);
         $this->assertLessThan(
-            strpos($html, 'ad-hero-materi__gambar'),
+            strpos($html, 'ad-hero-konten__gambar'),
             strpos($html, 'Kelola materi pembelajaran'),
             'Gambar harus di sebelah kanan teks, bukan di atas atau di kiri.',
         );
@@ -382,18 +382,18 @@ class MateriKelolaHalamanTest extends TestCase
         // Murni dekoratif: alt kosong, disembunyikan dari pembaca layar.
         $this->assertSame(
             1,
-            preg_match('/<img[^>]*ad-hero-materi__gambar[^>]*>/', $html, $tag),
+            preg_match('/<img[^>]*ad-hero-konten__gambar[^>]*>/', $html, $tag),
         );
         $this->assertStringContainsString('alt=""', $tag[0]);
         $this->assertStringContainsString('aria-hidden="true"', $tag[0]);
 
         // Yang tetap dihapus: kutipan, ikon, dan ilustrasi SVG lama.
         $this->assertStringNotContainsString('Ilmu hari ini', $html);
-        $this->assertStringNotContainsString('ad-hero-materi__kutip', $html);
-        $this->assertStringNotContainsString('ad-hero-materi__ilustrasi', $html);
-        $this->assertStringNotContainsString('ad-hero-materi__kiri', $html);
-        $this->assertStringNotContainsString('ad-hero-materi__kanan', $html);
-        $this->assertStringNotContainsString('ad-hero-materi__ikon', $html);
+        $this->assertStringNotContainsString('ad-hero-konten__kutip', $html);
+        $this->assertStringNotContainsString('ad-hero-konten__ilustrasi', $html);
+        $this->assertStringNotContainsString('ad-hero-konten__kiri', $html);
+        $this->assertStringNotContainsString('ad-hero-konten__kanan', $html);
+        $this->assertStringNotContainsString('ad-hero-konten__ikon', $html);
     }
 
     public function test_gambar_hero_terkunci_dari_dua_sisi_agar_tidak_mendorong_judul(): void
@@ -403,7 +403,7 @@ class MateriKelolaHalamanTest extends TestCase
         // di layar sempit.
         $css = file_get_contents(resource_path('css/admin.css'));
 
-        $this->assertSame(1, preg_match('/\.ad-hero-materi__gambar\s*\{([^}]*)\}/', $css, $cocok));
+        $this->assertSame(1, preg_match('/\.ad-hero-konten__gambar\s*\{([^}]*)\}/', $css, $cocok));
 
         $aturan = $this->tanpaKomentar($cocok[1]);
 
@@ -417,7 +417,7 @@ class MateriKelolaHalamanTest extends TestCase
     {
         $css = file_get_contents(resource_path('css/admin.css'));
 
-        $this->assertSame(1, preg_match('/\.ad-hero-materi__susun\s*\{([^}]*)\}/', $css, $cocok));
+        $this->assertSame(1, preg_match('/\.ad-hero-konten__susun\s*\{([^}]*)\}/', $css, $cocok));
 
         $aturan = $this->tanpaKomentar($cocok[1]);
 
@@ -504,7 +504,7 @@ class MateriKelolaHalamanTest extends TestCase
          */
         $css = file_get_contents(resource_path('css/admin.css'));
 
-        $this->assertSame(1, preg_match('/\.ad-materi-kartu__kaki\s*\{([^}]*)\}/', $css, $cocok));
+        $this->assertSame(1, preg_match('/\.ad-kartu-daftar__kaki\s*\{([^}]*)\}/', $css, $cocok));
 
         $aturan = $this->tanpaKomentar($cocok[1]);
 
@@ -512,7 +512,7 @@ class MateriKelolaHalamanTest extends TestCase
         $this->assertStringContainsString('min-width: 0', $aturan);
 
         // Tombolnya boleh turun baris tapi tidak boleh diremas.
-        $this->assertSame(1, preg_match('/\.ad-materi-kartu__aksi\s*\{([^}]*)\}/', $css, $aksi));
+        $this->assertSame(1, preg_match('/\.ad-kartu-daftar__aksi\s*\{([^}]*)\}/', $css, $aksi));
         $this->assertStringContainsString('flex-shrink: 0', $this->tanpaKomentar($aksi[1]));
     }
 
@@ -520,7 +520,7 @@ class MateriKelolaHalamanTest extends TestCase
     {
         /*
          * Menu tiga titik diposisikan absolute DI DALAM kartu, jadi
-         * overflow: hidden pada .ad-materi-kartu akan memotongnya persis di
+         * overflow: hidden pada .ad-kartu-daftar akan memotongnya persis di
          * tepi kartu — menunya tidak pernah terlihat dan tombolnya ikut
          * terlihat terpotong. Pembulatan sudut ada di blok gambar, bukan di
          * kartu, jadi kartu tidak butuh overflow sama sekali.
@@ -530,18 +530,18 @@ class MateriKelolaHalamanTest extends TestCase
          */
         $css = file_get_contents(resource_path('css/admin.css'));
 
-        $this->assertSame(1, preg_match('/\.ad-materi-kartu\s*\{([^}]*)\}/', $css, $kartu));
+        $this->assertSame(1, preg_match('/\.ad-kartu-daftar\s*\{([^}]*)\}/', $css, $kartu));
         $this->assertStringNotContainsString('overflow', $this->tanpaKomentar($kartu[1]));
 
         // Blok gambar yang memotong, dan hanya sudut atasnya yang dibulatkan.
-        $this->assertSame(1, preg_match('/\.ad-materi-kartu__gambar\s*\{([^}]*)\}/', $css, $gambar));
+        $this->assertSame(1, preg_match('/\.ad-kartu-daftar__gambar\s*\{([^}]*)\}/', $css, $gambar));
         $this->assertStringContainsString('overflow: hidden', $this->tanpaKomentar($gambar[1]));
         $this->assertMatchesRegularExpression('/border-radius:\s*[\d.]+rem\s+[\d.]+rem\s+0\s+0/', $gambar[1]);
 
         // Kartu yang di-hover dapat z-index supaya menunya tidak ketimpa.
         $this->assertSame(
             1,
-            preg_match('/\.ad-materi-kartu:hover,\s*\.ad-materi-kartu:focus-within\s*\{([^}]*)\}/', $css, $hover),
+            preg_match('/\.ad-kartu-daftar:hover,\s*\.ad-kartu-daftar:focus-within\s*\{([^}]*)\}/', $css, $hover),
         );
         $this->assertStringContainsString('z-index', $hover[1]);
     }
@@ -551,7 +551,7 @@ class MateriKelolaHalamanTest extends TestCase
      *
      * Diperlukan karena penjelasan DI DALAM aturan ikut menyebut nama
      * properti yang sedang diperiksa — misalnya komentar "sengaja TIDAK
-     * overflow: hidden" di .ad-materi-kartu. Tanpa ini test-nya akan salah
+     * overflow: hidden" di .ad-kartu-daftar. Tanpa ini test-nya akan salah
      * gagal justru karena penjelasannya sudah benar.
      */
     private function tanpaKomentar(string $aturan): string
@@ -659,13 +659,13 @@ class MateriKelolaHalamanTest extends TestCase
             ->getContent();
 
         // Kartu materi, tombol Lihat, dan menu tiga titik.
-        $this->assertStringContainsString('ad-materi-kartu', $halaman);
+        $this->assertStringContainsString('ad-kartu-daftar', $halaman);
         $this->assertStringContainsString(route('admin.materi.show', $materi->slug), $halaman);
         $this->assertStringContainsString('ad-titik__menu', $halaman);
 
         // Lencana "Materi" di depan judul sudah dicabut: halaman ini hanya
         // berisi materi, jadi lencana itu mengulang isi halaman.
-        $this->assertStringNotContainsString('ad-materi-kartu__tipe', $halaman);
+        $this->assertStringNotContainsString('ad-kartu-daftar__tipe', $halaman);
     }
 
     /*
@@ -683,8 +683,8 @@ class MateriKelolaHalamanTest extends TestCase
 
         // Susunan vertikal: gambar dulu, baru badan. Kalau urutannya
         // terbalik, kartu ini kembali jadi horizontal.
-        $gambar = strpos($html, 'ad-materi-kartu__gambar');
-        $badan = strpos($html, 'ad-materi-kartu__badan');
+        $gambar = strpos($html, 'ad-kartu-daftar__gambar');
+        $badan = strpos($html, 'ad-kartu-daftar__badan');
 
         $this->assertIsInt($gambar);
         $this->assertIsInt($badan);
@@ -692,7 +692,7 @@ class MateriKelolaHalamanTest extends TestCase
 
         // Bagian yang tidak boleh ikut: kolom horizontal yang dulu dipakai,
         // dan baris kosong yang menggantung di sebelah.
-        $this->assertStringNotContainsString('ad-materi-kartu__kanan', $html);
+        $this->assertStringNotContainsString('ad-kartu-daftar__kanan', $html);
     }
 
     public function test_kartu_menampilkan_kategori_dan_tidak_menampilkan_deskripsi(): void
@@ -777,23 +777,40 @@ class MateriKelolaHalamanTest extends TestCase
         $admin = $this->buatAdmin();
         $pemilik = $this->buatPengguna();
 
+        /*
+         * Tanggal terbit diberi berbeda-beda, satu menit per materi. Kalau
+         * semuanya now() dalam detik yang sama, urutannya seri dan database
+         * bebas menaruh kartunya di halaman mana saja — test ini lalu gagal
+         * tanpa ada yang benar-benar berubah.
+         */
         for ($i = 1; $i <= 21; $i++) {
-            $this->buatTerbit($pemilik, 'Materi Paginasi '.$i);
+            $this->buatTerbit(
+                $pemilik,
+                'Materi Paginasi '.$i,
+                terbitPada: now()->subMinutes(22 - $i)->toDateTimeString(),
+            );
         }
 
-        // Halaman pertama tepat 20 kartu; kartu ke-21 sudah di halaman dua.
-        $this->actingAs($admin)
-            ->get('/admin/materi')
-            ->assertOk()
-            ->assertSee('Materi Paginasi 1')
-            ->assertSee('Materi Paginasi 20')
-            ->assertDontSee('Materi Paginasi 21');
-
-        $this->actingAs($admin)
+        /*
+         * Jumlah kartu dihitung, bukan judulnya: "Materi Paginasi 2" adalah
+         * awalan dari "Materi Paginasi 21", jadi assertsSee pada nomor akan
+         * selalu cocok begitu saja. Yang benar-benar diuji di sini adalah
+         * batas 20 per halaman.
+         */
+        $halamanSatu = $this->actingAs($admin)->get('/admin/materi')->assertOk()->getContent();
+        $halamanDua = $this->actingAs($admin)
             ->get(route('admin.materi', ['page' => 2]))
             ->assertOk()
-            ->assertSee('Materi Paginasi 21')
-            ->assertDontSee('Materi Paginasi 20');
+            ->getContent();
+
+        $this->assertSame(20, substr_count($halamanSatu, 'ad-kartu-daftar__judul'));
+        $this->assertSame(1, substr_count($halamanDua, 'ad-kartu-daftar__judul'));
+
+        // Yang terbaru di halaman pertama, yang terlama di halaman kedua.
+        $this->assertStringContainsString('Materi Paginasi 21', $halamanSatu);
+        $this->assertStringNotContainsString('Materi Paginasi 1"', $halamanSatu);
+        $this->assertStringContainsString('Materi Paginasi 1"', $halamanDua);
+        $this->assertStringNotContainsString('Materi Paginasi 2"', $halamanDua);
     }
 
     public function test_jumlah_kartu_per_halaman_sama_dengan_halaman_pengguna(): void

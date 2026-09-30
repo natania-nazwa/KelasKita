@@ -3,94 +3,224 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Models\Pelajaran;
 use App\Models\Quiz;
-use App\Support\TinjauanQuiz;
+use App\Models\User;
+use App\Support\DaftarQuizAdmin;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
 use Illuminate\View\View;
 
 /**
- * Halaman "Tinjau Quiz": satu-satunya tempat admin melihat quiz yang
- * menunggu persetujuan dan memutuskan setujui atau tolak.
+ * Halaman "Quiz": mengelola quiz yang sudah dipublikasikan.
  *
- * Halaman ini terbuka otomatis ke tab "Menunggu Persetujuan" supaya yang
- * pertama dilihat admin memang pekerjaan yang perlu dikerjakan, bukan daftar
- * seluruh quiz.
+ * Pasangannya adalah halaman "Materi" dan disengaja ditiru seluruhnya:
+ * published-only, tanpa tab status, tanpa setujui/tolak, dengan hero, kartu
+ * filter, grid kartu, dan paginasi yang sama. Batasnya tegas — quiz yang
+ * masih menunggu keputusan milik halaman Verifikasi, dan yang ditolak atau
+ * masih draft milik "Karya Saya" pemiliknya — jadi halaman ini tidak pernah
+ * menampilkan quiz yang belum tayang seolah-olah sudah tayang.
  *
- * Quiz mode kode tidak pernah muncul di sini. Quiz seperti itu tidak tayang
- * untuk semua pengguna, jadi tidak ada yang perlu disetujui admin; yang
- * berbasis kode adalah miliknya sendiri, bukan milik seluruh pengguna.
+ * Yang bisa dilakukan di sini: mencari, menyaring, membuka detail,
+ * mengubah, dan menghapus.
+ *
+ * Tombol Edit pada kartu hanya muncul untuk quiz yang dibuat admin yang
+ * sedang login; quiz buatan pengguna lain bisa dibaca dan dihapus, tapi
+ * soalnya bukan hak admin untuk diubah. Aturan yang sama ditegakkan lagi di
+ * Admin\QuizKelolaController, jadi menyembunyikan tombolnya bukan satu-
+ * satunya penjaga.
  */
 class QuizController extends Controller
 {
+    /**
+     * Urutan daftar yang bisa dipilih, dan Closure pengurutannya.
+     *
+     * Hanya dua, dan keduanya dibaca dari tanggal terbit: urutan daftar di
+     * sini sama dengan urutan kemunculan quiz di halaman pengguna, jadi
+     * tidak ada angka yang hanya ada di area admin.
+     *
+     * Key dipakai sebagai nilai query string, jadi nilainya tidak boleh
+     * berubah tanpa sengaja: tautan lama yang memakai "urut=..." akan ikut
+     * ke nilai yang sama, dan nilai yang tidak dikenal jatuh ke "terbaru".
+     *
+     * Sengaja method, bukan const: Closure adalah kode yang baru jalan saat
+     * aplikasi dijalankan, sedangkan nilai const harus bisa dihitung saat
+     * file dikompilasi. Menulis Closure di dalam const membuat PHP 8.5
+     * menolak seluruh file dengan "Constant expression contains invalid
+     * operations", dan karena kelas ini ikut termuat saat boot, satu baris
+     * itu bisa menjatuhkan seluruh aplikasi.
+     *
+     * @return array<string, \Closure(Builder): Builder>
+     */
+    private static function urutan(): array
+    {
+        return [
+            'terbaru' => fn (Builder $query) => $query->orderByDesc('dipublish_pada')->orderByDesc('created_at'),
+            'terlama' => fn (Builder $query) => $query->orderBy('dipublish_pada')->orderBy('created_at'),
+        ];
+    }
+
     public function __invoke(Request $request): View
     {
-        $status = $this->statusTerpilih($request->query('status'));
-        $kataKunci = trim((string) $request->query('q', ''));
+        $kataKunci = trim((string) $request->query('q'));
+        $kategori = trim((string) $request->query('kategori'));
+        $pembuat = trim((string) $request->query('pembuat'));
+        $urut = $this->urutanTerpilih($request->query('urut'));
 
-        $daftar = $this->daftarQuiz($status, $kataKunci);
+        $daftar = $this->daftarQuiz($kataKunci, $kategori, $pembuat, $urut);
 
         return view('admin.quiz', [
-            'daftar' => $daftar['baris'],
-            'paginasi' => $daftar['hal'],
-            'statusAktif' => $status,
-            'pilihanStatus' => TinjauanQuiz::pilihanStatus(),
-            'jumlahStatus' => $this->jumlahStatus(),
+            'daftar' => DaftarQuizAdmin::petikan($daftar->items(), $request->user()?->getKey()),
+            'paginasi' => $daftar,
             'kataKunci' => $kataKunci,
+            'kategoriAktif' => $kategori,
+            'daftarKategori' => $this->daftarKategori(),
+            'daftarPembuat' => $this->daftarPembuat(),
+            'pembuatAktif' => $pembuat,
+            'urutAktif' => $urut,
+            'pilihanUrut' => $this->pilihanUrut(),
+            'totalQuiz' => Quiz::query()->terbit()->count(),
         ]);
     }
 
     /**
-     * Quiz sesuai status dan pencarian, siap jadi baris tabel.
+     * Quiz sesuai kata kunci, kategori, pembuat, dan urutan.
      *
-     * @return array{baris: array<int, array<string, mixed>>, hal: LengthAwarePaginator}
+     * Pencarian dibungkus satu grup WHERE supaya tidak bertabrakan dengan
+     * filter yang dipasang sebelumnya: tanpa grup itu, mengetik kata kunci
+     * akan membuat "atau" ikut meloloskan quiz dari kategori lain.
+     *
+     * Jumlah soal ikut dihitung lewat withCount dan langsung diberi nama
+     * jumlah_soal_termuat supaya Quiz::jumlahSoal() membacanya dari sana.
+     * Tanpa itu, kartu di daftar akan menjalankan satu query per baris.
      */
-    private function daftarQuiz(string $status, string $kataKunci): array
+    private function daftarQuiz(string $kataKunci, string $kategori, string $pembuat, string $urut): LengthAwarePaginator
     {
-        $hal = Quiz::query()
-            ->where('status', $status)
+        $query = Quiz::query()
+            ->terbit()
             ->with(['pelajaran', 'pembuat'])
-            ->withCount(['soal' => fn ($soal) => $soal->aktif()])
-            ->cari($kataKunci)
-            ->latest()
-            ->paginate(TinjauanQuiz::perHalaman())
-            ->withQueryString();
+            ->withCount(['soal as jumlah_soal_termuat' => fn (Builder $soal) => $soal->aktif()])
+            ->when($kategori !== '', fn (Builder $query) => $query->kategori($kategori))
+            ->when($pembuat !== '', fn (Builder $query) => $query->where('dibuat_oleh', $pembuat))
+            ->when($kataKunci !== '', fn (Builder $query) => $query->where(fn (Builder $query) => $this->kriteriaPencarian($query, $kataKunci)));
 
+        (self::urutan()[$urut])($query);
+
+        return $query->paginate(DaftarQuizAdmin::perHalaman())->withQueryString();
+    }
+
+    /**
+     * Kata kunci dicocokkan ke judul, deskripsi, nama pelajaran, dan
+     * identitas pembuat, supaya admin bisa menemukan quiz lewat judul, lewat
+     * kategori, maupun lewat siapa yang membuatnya.
+     *
+     * Isi soalnya sengaja tidak ikut dicari: satu query LIKE ke tb_soal untuk
+     * tiap kata kunci akan membuat daftar terasa lambat, dan mencari lewat
+     * teks soal bukan hal yang perlu dilakukan dari daftar.
+     */
+    private function kriteriaPencarian(Builder $query, string $kataKunci): Builder
+    {
+        $operator = $query->getConnection()->getDriverName() === 'pgsql' ? 'ilike' : 'like';
+        $pola = '%'.addcslashes($kataKunci, '%_\\').'%';
+
+        return $query->where(function (Builder $query) use ($pola, $operator) {
+            $query->where('judul', $operator, $pola)
+                ->orWhere('deskripsi', $operator, $pola)
+                ->orWhereHas('pelajaran', fn (Builder $pelajaran) => $pelajaran->where('nama', $operator, $pola))
+                ->orWhereHas('pembuat', fn (Builder $pembuat) => $pembuat->where('nama', $operator, $pola)->orWhere('email', $operator, $pola));
+        });
+    }
+
+    /**
+     * Kategori yang punya quiz published, lengkap dengan jumlahnya.
+     *
+     * Hanya kategori yang benar-benar berisi quiz yang ditawarkan, supaya
+     * memilih salah satunya tidak pernah menghasilkan daftar kosong karena
+     * alasan yang tidak terlihat. Urutannya mengikuti katalog Pelajaran,
+     * lalu abjad, supaya urutannya tidak ikut berubah setiap kali
+     * dipaginasi.
+     *
+     * @return Collection<int, array<string, mixed>>
+     */
+    private function daftarKategori(): Collection
+    {
+        $jumlah = Quiz::query()
+            ->terbit()
+            ->whereNotNull('pelajaran_id')
+            ->selectRaw('pelajaran_id, COUNT(*) as jumlah')
+            ->groupBy('pelajaran_id')
+            ->pluck('jumlah', 'pelajaran_id');
+
+        $urutanKatalog = collect(Pelajaran::KATALOG)
+            ->pluck('slug')
+            ->mapWithKeys(fn (string $slug, int $index) => [$slug => $index]);
+
+        return Pelajaran::query()
+            ->aktif()
+            ->orderBy('nama')
+            ->get()
+            ->map(fn (Pelajaran $pelajaran) => [
+                ...Pelajaran::warna($pelajaran->slug, $pelajaran->nama),
+                'jumlah' => (int) ($jumlah[$pelajaran->id] ?? 0),
+            ])
+            ->filter(fn (array $item) => $item['jumlah'] > 0)
+            ->sortBy(fn (array $item) => [$urutanKatalog[$item['slug']] ?? 99, $item['nama']])
+            ->values();
+    }
+
+    /**
+     * Pembuat yang punya quiz published, untuk dropdown filter.
+     *
+     * Hanya diambil dari quiz yang sudah terbit supaya pilihan ini tidak
+     * pernah berisi nama yang menyaring daftar menjadi kosong.
+     *
+     * @return Collection<int, array{id: int, nama: string}>
+     */
+    private function daftarPembuat(): Collection
+    {
+        $adaQuiz = Quiz::query()
+            ->terbit()
+            ->whereNotNull('dibuat_oleh')
+            ->select('dibuat_oleh')
+            ->distinct()
+            ->pluck('dibuat_oleh')
+            ->map(fn ($id) => (int) $id)
+            ->all();
+
+        if ($adaQuiz === []) {
+            return new Collection;
+        }
+
+        return User::query()
+            ->whereKey($adaQuiz)
+            ->orderBy('nama')
+            ->get(['id', 'nama'])
+            ->map(fn (User $pengguna) => ['id' => (int) $pengguna->getKey(), 'nama' => $pengguna->nama]);
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    private function pilihanUrut(): array
+    {
         return [
-            'baris' => TinjauanQuiz::petakan($hal->items()),
-            'hal' => $hal,
+            'terbaru' => 'Terbaru',
+            'terlama' => 'Terlama',
         ];
     }
 
     /**
-     * Berapa quiz yang ada di tiap status, untuk angka di tiap tab.
+     * Urutan dari query string; nilai tak dikenal jatuh ke "terbaru".
      *
-     * Satu query untuk semua status supaya tab tidak butuh N query.
-     *
-     * @return array<string, int>
+     * Tanpa penjaga ini "?urut=ngawur" akan membuat halaman kosong tanpa
+     * penjelasan, jadi nilainya dipetikan ke urutan bawaan.
      */
-    private function jumlahStatus(): array
+    private function urutanTerpilih(mixed $nilai): string
     {
-        $jumlah = Quiz::query()
-            ->selectRaw('status, COUNT(*) as jumlah')
-            ->groupBy('status')
-            ->pluck('jumlah', 'status');
-
-        return collect(TinjauanQuiz::pilihanStatus())
-            ->map(fn (string $label, string $status): int => (int) ($jumlah[$status] ?? 0))
-            ->all();
-    }
-
-    /**
-     * Status dari query string, diabaikan kalau tidak dikenal.
-     *
-     * Tanpa penjaga ini ?status=ngawur akan membuat halaman kosong tanpa
-     * penjelasan, jadi nilainya dipaksa ke salah satu status yang nyata.
-     */
-    private function statusTerpilih(mixed $nilai): string
-    {
-        return array_key_exists((string) $nilai, TinjauanQuiz::pilihanStatus())
+        return array_key_exists((string) $nilai, self::urutan())
             ? (string) $nilai
-            : Quiz::STATUS_PENDING;
+            : 'terbaru';
     }
 }

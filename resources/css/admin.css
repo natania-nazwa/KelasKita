@@ -3282,11 +3282,17 @@ body.tubuh-admin {
 }
 
 /* ================================================================
-   MATERI (halaman "Materi" di admin)
+   DAFTAR KONTEN (halaman "Materi" dan "Quiz" di admin)
 
-   Modifier .ad-hero--materi dan semua kelas di bawahnya hanya dipakai
-   halaman tersebut. Sengaja dipisah dari kelas umum supaya hero ringkas
-   ini tidak pernah ikut mengubah hero halaman lain yang memakainya.
+   Hero ringkas + grid kartu yang dipakai kedua halaman daftar di admin.
+   Satu blok untuk keduanya, bukan dua versi: bentuk, jarak, dan gradasinya
+   sengaja sama persis, jadi admin berpindah antara Materi dan Quiz tidak
+   merasa sedang berpindah aplikasi. Yang berbeda hanya isi kartu dan
+   gambarnya (lihat components/admin/materi-kartu dan
+   components/admin/quiz-kartu).
+
+   Modifier .ad-hero--konten tetap dipisah dari .ad-hero supaya hero
+   ringkas ini tidak pernah ikut mengubah hero halaman lain yang memakainya.
    ================================================================ */
 
 /*
@@ -3296,11 +3302,11 @@ body.tubuh-admin {
  * menempel pada kolom cari tepat di bawahnya.
  *
  * Lapisan paling atas pada latar ditambahkan khusus untuk halaman ini:
- * sebuah cahaya putih di sisi kanan, tepat di belakang gambar buku. Tanpa
+ * sebuah cahaya putih di sisi kanan, tepat di belakang gambar. Tanpa
  * itu gambar terlihat melayang di atas banner, bukan duduk di atas
  * sesuatu.
  */
-.ad-hero--materi {
+.ad-hero--konten {
     display: flex;
     min-height: 9.5rem;
     align-items: center;
@@ -3312,20 +3318,20 @@ body.tubuh-admin {
 }
 
 @media (min-width: 768px) {
-    .ad-hero--materi {
+    .ad-hero--konten {
         min-height: 10rem;
         padding: 1.5rem 1.75rem;
     }
 }
 
 @media (min-width: 1024px) {
-    .ad-hero--materi {
+    .ad-hero--konten {
         min-height: 10.5rem;
         padding: 1.75rem 2.25rem;
     }
 }
 
-.ad-hero-materi__susun {
+.ad-hero-konten__susun {
     position: relative;
     z-index: 1;
     display: flex;
@@ -3336,18 +3342,17 @@ body.tubuh-admin {
     gap: 1.25rem;
 }
 
-.ad-hero-materi__teks {
+.ad-hero-konten__teks {
     min-width: 0;
 }
 
 /*
- * Ilustrasi buku di sisi kanan hero.
+ * Ilustrasi di sisi kanan hero.
  *
  * Diletakkan sebagai <img> dengan lebar DAN tinggi dikunci plus
- * object-fit: contain. Berkasnya bujur sangkar (552x552), jadi tanpa
- * penguncian dua sisi ini gambar akan ikut meninggi dan mendorong judul ke
- * luar container di layar sempit. flex-shrink: 0 supaya tidak bisa tertekan
- * oleh teks yang panjang.
+ * object-fit. Tanpa penguncian dua sisi, gambar akan ikut meninggi dan
+ * mendorong judul ke luar container di layar sempit. flex-shrink: 0 supaya
+ * tidak bisa tertekan oleh teks yang panjang.
  *
  * Tingginya sengaja dibiarkan lebih besar dari tinggi hero. .ad-hero
  * memakai align-items: center dengan min-height, jadi kalau gambar lebih
@@ -3356,33 +3361,52 @@ body.tubuh-admin {
  * layar kecil, bukan plafon.
  *
  * Murni dekoratif, jadi alt-nya kosong di markup.
+ *
+ * object-fit-nya ada dua, karena dua ilustrasinya berbeda ukuran:
+ *
+ *   - contain (bawaan) untuk gambar bujur sangkar. buku.png 552x552, jadi
+ *     persis mengisi kotak dan tidak ada yang terpotong.
+ *   - --penuh untuk gambar yang lebih lebar dari kotaknya. cover.png
+ *     828x552 (3:2) di kotak bujur sangkar akan mengecil hanya jadi 2/3
+ *     tinggi kotaknya, dan hero-nya jadi terlihat kosong di kanan. Dengan
+ *     cover, gambarnya mengisi kotak persis seperti buku.png, jadi bobot
+ *     visual kedua halaman sama. Sisi yang terpotong adalah bagian
+ *     ilustrasi yang paling pinggir — pada cover.png, buku-buku di kiri dan
+ *     tanaman di kanan — sedangkan subjeknya di tengah tetap utuh.
+ *
+ * Tinggi kotaknya tetap terkunci di modifier ini, jadi alasan utama
+ * penguncian itu — gambar tidak boleh mendorong judul — tetap berlaku.
  */
-.ad-hero-materi__gambar {
+.ad-hero-konten__gambar {
     width: 5rem;
     height: 5rem;
     flex-shrink: 0;
     object-fit: contain;
 }
 
+.ad-hero-konten__gambar--penuh {
+    object-fit: cover;
+}
+
 @media (min-width: 640px) {
-    .ad-hero-materi__gambar {
+    .ad-hero-konten__gambar {
         width: 6.75rem;
         height: 6.75rem;
     }
 }
 
 @media (min-width: 1024px) {
-    .ad-hero-materi__gambar {
+    .ad-hero-konten__gambar {
         width: 9rem;
         height: 9rem;
     }
 }
 
 /*
- * Dipakai juga di halaman Edit Materi sebagai kotak ikon di samping judul,
- * jadi kelas ini tidak ikut terhapus bersama ilustrasi hero.
+ * Dipakai juga di halaman Edit Materi dan Edit Quiz sebagai kotak ikon di
+ * samping judul, jadi kelas ini tidak ikut terhapus bersama ilustrasi hero.
  */
-.ad-hero-materi__ikon {
+.ad-hero-konten__ikon {
     display: flex;
     width: 3.25rem;
     height: 3.25rem;
@@ -3395,7 +3419,7 @@ body.tubuh-admin {
     color: var(--ad-primary);
 }
 
-.ad-hero-materi__judul {
+.ad-hero-konten__judul {
     font-size: clamp(1.5rem, 4.6vw, 1.95rem);
     font-weight: 800;
     line-height: 1.15;
@@ -3403,7 +3427,7 @@ body.tubuh-admin {
     color: var(--ad-primary-dark);
 }
 
-.ad-hero-materi__sub {
+.ad-hero-konten__sub {
     margin-top: 0.5rem;
     max-width: 34rem;
     font-size: 0.8125rem;
@@ -3544,7 +3568,7 @@ body.tubuh-admin {
 }
 
 /*
- * Pembungkus satu select di baris filter halaman Materi.
+ * Pembungkus satu select di baris filter halaman Materi dan Quiz.
  *
  * Wrapper di dalamnya sudah flex (lihat .ad-pilih__bungkus), jadi select
  * terisi kolomnya dan panahnya menempel di pil. Kelas ini hanya menjaga
@@ -3659,13 +3683,13 @@ body.tubuh-admin {
     pointer-events: none;
 }
 
-/* ---------- Kartu materi ----------
- * Bentuknya mengikuti kartu materi milik pengguna: gambar di atas, isi di
- * bawah. Kolomnya juga sama — 2 di ponsel, 2 di tablet, 4 di desktop —
- * supaya berpindah antara halaman Materi user dan admin tidak terasa
- * seperti dua aplikasi berbeda.
+/* ---------- Kartu di daftar ----------
+ * Bentuknya mengikuti kartu milik pengguna: gambar di atas, isi di bawah.
+ * Kolomnya juga sama — 2 di ponsel, 2 di tablet, 4 di desktop — supaya
+ * berpindah antara halaman daftar user dan admin tidak terasa seperti dua
+ * aplikasi berbeda.
  */
-.ad-materi__daftar {
+.ad-daftar-kartu {
     display: grid;
     min-width: 0;
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -3673,18 +3697,31 @@ body.tubuh-admin {
 }
 
 @media (min-width: 640px) {
-    .ad-materi__daftar {
+    .ad-daftar-kartu {
         gap: 1.25rem;
     }
 }
 
 @media (min-width: 1024px) {
-    .ad-materi__daftar {
+    .ad-daftar-kartu {
         grid-template-columns: repeat(4, minmax(0, 1fr));
     }
 }
 
-.ad-materi-kartu {
+/*
+ * Empty statestretched penuh satu baris.
+ *
+ * Pesan "belum ada data" bukan kartu di dalam daftar, jadi ia tidak boleh
+ * ikut jadi sel grid. Tanpa aturan ini ia hanya mengisi satu kolom — pada
+ * grid empat kolom desktopitu cuma sekitar 218px — dan terbaca sebagai
+ * kartu yang sempit, bukan sebagai "Daftar ini memang kosong". Kotaknya jadi
+ * setinggi halaman, persis seperti pesan kosong di halaman lain.
+ */
+.ad-daftar-kartu > .ad-kosong {
+    grid-column: 1 / -1;
+}
+
+.ad-kartu-daftar {
     display: flex;
     min-width: 0;
     flex-direction: column;
@@ -3695,7 +3732,7 @@ body.tubuh-admin {
      * Menu tiga titik diposisikan absolute di dalam kartu, jadi overflow
      * akan memotongnya tepat di tepi kartu — menu nya tidak pernah terlihat
      * dan tombolnya ikut terlihat terpotong. Pembulatan sudut kartu pada
-     * blok gambar ditangani .ad-materi-kartu__gambar sendiri, jadi tidak
+     * blok gambar ditangani .ad-kartu-daftar__gambar sendiri, jadi tidak
      * ada yang perlu dipotong di level kartu.
      */
     border-radius: 1.1rem;
@@ -3708,8 +3745,8 @@ body.tubuh-admin {
         transform 0.2s ease;
 }
 
-.ad-materi-kartu:hover,
-.ad-materi-kartu:focus-within {
+.ad-kartu-daftar:hover,
+.ad-kartu-daftar:focus-within {
     position: relative;
 
     /*
@@ -3725,18 +3762,18 @@ body.tubuh-admin {
 }
 
 /*
- * Blok gambar. Selalu berisi sesuatu: kalau materinya tidak punya
- * thumbnail, gradasi warna kategori + ikon mapel menggantikannya. Tinggi
- * dikunci lewat aspect-ratio supaya semua kartu dalam satu baris punya
+ * Blok gambar. Selalu berisi sesuatu: kalau materinya atau quiznya tidak
+ * punya thumbnail, gradasi warna kategori + ikon mapel menggantikannya.
+ * Tinggi dikunci lewat aspect-ratio supaya semua kartu dalam satu baris punya
  * tinggi yang sama, bukan ikut panjangnya judul.
  *
  * Sudut atasnya sendiri yang membulat — bukan kartu yang dipotong — supaya
  * kartu boleh melepaskan menu tiga titiknya ke luar.
  *
  * --k dan --k-gelap diset inline dari warna kategori, sama seperti kartu
- * materi milik pengguna.
+ * milik pengguna.
  */
-.ad-materi-kartu__gambar {
+.ad-kartu-daftar__gambar {
     position: relative;
     display: flex;
     aspect-ratio: 16 / 9;
@@ -3753,7 +3790,7 @@ body.tubuh-admin {
  * seperti bidang cetak, dan sisi bawah yang sedikit lebih gelap supaya
  * blok gambar terasa punya bobot dan menyambung ke isi kartu.
  */
-.ad-materi-kartu__gambar::after {
+.ad-kartu-daftar__gambar::after {
     content: '';
     position: absolute;
     inset: 0;
@@ -3763,7 +3800,7 @@ body.tubuh-admin {
     pointer-events: none;
 }
 
-.ad-materi-kartu__foto {
+.ad-kartu-daftar__foto {
     position: relative;
     z-index: 1;
     display: block;
@@ -3775,12 +3812,12 @@ body.tubuh-admin {
 
 /* Sedikit zoom saat kartu di-hover; cukup untuk terasa hidup, tidak
  * sampai keluar dari bingkai. */
-.ad-materi-kartu:hover .ad-materi-kartu__foto,
-.ad-materi-kartu:focus-within .ad-materi-kartu__foto {
+.ad-kartu-daftar:hover .ad-kartu-daftar__foto,
+.ad-kartu-daftar:focus-within .ad-kartu-daftar__foto {
     transform: scale(1.04);
 }
 
-.ad-materi-kartu__ikon {
+.ad-kartu-daftar__ikon {
     position: relative;
     z-index: 1;
     font-size: 2.25rem;
@@ -3790,8 +3827,8 @@ body.tubuh-admin {
 
 /* Tingkat kesulitan melayang di pojok kiri, di atas gradasi. Warnanya
  * mengikuti palet yang sama dengan lencana kesulitan di halaman detail
- * materi, jadi "Sulit" selalu merah di kedua halaman. */
-.ad-materi-kartu__kesulitan {
+ * materi dan quiz, jadi "Sulit" selalu merah di semua halaman. */
+.ad-kartu-daftar__kesulitan {
     position: absolute;
     top: 0.45rem;
     left: 0.45rem;
@@ -3805,11 +3842,11 @@ body.tubuh-admin {
     color: var(--ad-teks-2);
 }
 
-.ad-materi-kartu__kesulitan--mudah { color: #15803d; }
-.ad-materi-kartu__kesulitan--sedang { color: #b45309; }
-.ad-materi-kartu__kesulitan--sulit { color: #b91c1c; }
+.ad-kartu-daftar__kesulitan--mudah { color: #15803d; }
+.ad-kartu-daftar__kesulitan--sedang { color: #b45309; }
+.ad-kartu-daftar__kesulitan--sulit { color: #b91c1c; }
 
-.ad-materi-kartu__badan {
+.ad-kartu-daftar__badan {
     display: flex;
     min-width: 0;
     flex: 1;
@@ -3818,7 +3855,7 @@ body.tubuh-admin {
 }
 
 /* Garis aksen di atas isi, menyambung ke blok gambar seperti di kartu user. */
-.ad-materi-kartu__aksen {
+.ad-kartu-daftar__aksen {
     display: block;
     width: 2.5rem;
     height: 3px;
@@ -3834,7 +3871,7 @@ body.tubuh-admin {
  * kartunya lebih tinggi dan seluruh baris jadi tidak rata, padahal yang
  * di halaman daftar hanya perlu dibaca sekilas.
  */
-.ad-materi-kartu__judul {
+.ad-kartu-daftar__judul {
     display: -webkit-box;
     min-width: 0;
     overflow: hidden;
@@ -3848,9 +3885,9 @@ body.tubuh-admin {
     -webkit-box-orient: vertical;
 }
 
-.ad-materi-kartu__pembuat,
-.ad-materi-kartu__meta,
-.ad-materi-kartu__tanggal {
+.ad-kartu-daftar__pembuat,
+.ad-kartu-daftar__meta,
+.ad-kartu-daftar__tanggal {
     display: flex;
     min-width: 0;
     align-items: baseline;
@@ -3861,33 +3898,33 @@ body.tubuh-admin {
     color: var(--ad-teks-2);
 }
 
-.ad-materi-kartu__pembuat {
+.ad-kartu-daftar__pembuat {
     font-weight: 600;
     color: color-mix(in oklab, var(--ad-teks) 82%, transparent);
 }
 
-.ad-materi-kartu__pembuat > span:first-child {
+.ad-kartu-daftar__pembuat > span:first-child {
     flex-shrink: 0;
 }
 
 /* Nama yang panjang dipotong satu baris, bukan menambah tinggi kartu. */
-.ad-materi-kartu__truncate {
+.ad-kartu-daftar__truncate {
     min-width: 0;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
 }
 
-/* Kategori dan jumlah bab adalah informasi kedua paling penting di kartu
- * ini, jadi sedikit lebih tegas dari tanggal. */
-.ad-materi-kartu__meta {
+/* Kategori dan jumlah bab (materi) atau jumlah soal (quiz) adalah informasi
+ * kedua paling penting di kartu ini, jadi sedikit lebih tegas dari tanggal. */
+.ad-kartu-daftar__meta {
     font-weight: 600;
     color: color-mix(in oklab, var(--ad-teks) 68%, transparent);
 }
 
 /* Tanggal paling mutakhir, jadi paling redup. Angka jamnya dibuat
  * tabular supaya tidak bergeser antar kartu. */
-.ad-materi-kartu__tanggal {
+.ad-kartu-daftar__tanggal {
     font-weight: 500;
     font-variant-numeric: tabular-nums;
     color: color-mix(in oklab, var(--ad-teks) 48%, transparent);
@@ -3909,7 +3946,7 @@ body.tubuh-admin {
  * margin-top: auto yang mendorong kaki ke bawah, jadi baris status dan
  * tombolnya sejajar di semua kartu walaupun judulnya beda panjang.
  */
-.ad-materi-kartu__kaki {
+.ad-kartu-daftar__kaki {
     display: flex;
     min-width: 0;
     flex-wrap: wrap;
@@ -3922,7 +3959,7 @@ body.tubuh-admin {
 
 /* Tombolnya tidak boleh diremas: ukurannya tetap, yang turun baris kalau
  * sempit. */
-.ad-materi-kartu__aksi {
+.ad-kartu-daftar__aksi {
     display: flex;
     flex-shrink: 0;
     align-items: center;

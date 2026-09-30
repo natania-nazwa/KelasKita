@@ -33,7 +33,7 @@
         ========================== --}}
         <div class="flex flex-wrap items-start justify-between gap-4">
             <div class="flex min-w-0 items-start gap-4">
-                <span class="ad-hero-materi__ikon mt-0.5" aria-hidden="true">
+                <span class="ad-hero-konten__ikon mt-0.5" aria-hidden="true">
                     <x-admin.ikon nama="pena" ukuran="w-6 h-6" />
                 </span>
 

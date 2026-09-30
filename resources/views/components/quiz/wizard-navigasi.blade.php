@@ -10,7 +10,18 @@
     nonaktif, supaya tidak ada tombol mati yang menyisakan ruang kosong
     di bawah kartu. Aksi memproses langkah sebelumnya ditangani
     resources/js/quiz-tambah.js lewat data-wizard-kembali.
+
+    Prop $batal menentukan tujuan tombol Batal. Nilai bakanya adalah
+    "Karya Saya", tempat pulang form milik pemilik; form admin
+    (admin.quiz-edit) mengoper route ke daftar Quiz-nya sendiri supaya
+    tombolnya     tidak melempar admin ke halaman yang bukan miliknya.
 --}}
+
+@props([
+    // Tujuan tombol Batal. Null = form milik pemilik, yang pulang ke Karya
+    // Saya. Form admin mengoper route daftarnya sendiri.
+    'batal' => null,
+])
 
 <nav class="wizard-navigasi" aria-label="Navigasi wizard">
     {{-- Kembali ke langkah sebelumnya; hanya muncul dari langkah kedua. --}}
@@ -22,7 +33,7 @@
         Kembali
     </button>
 
-    <a href="{{ route('user.karya-saya', ['tab' => 'quiz']) }}" class="tombol-garis" data-wizard-batal>Batal</a>
+    <a href="{{ $batal ?? route('user.karya-saya', ['tab' => 'quiz']) }}" class="tombol-garis" data-wizard-batal>Batal</a>
 
     <span class="wizard-navigasi__spacer"></span>
 

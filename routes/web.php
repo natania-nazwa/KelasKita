@@ -532,15 +532,37 @@ Route::middleware(['auth', 'admin'])
         Route::post('/materi/{materi}/tolak', [Admin\MateriTinjauController::class, 'tolak'])->name('materi.tolak');
 
         /*
-         * Tinjau Quiz: sama seperti Tinjau Materi, tapi untuk quiz mode
-         * publik. Quiz mode kode tidak pernah masuk daftar ini: yang berbasis
-         * kode tidak tayang untuk semua pengguna, jadi tidak ada yang perlu
-         * disetujui admin.
+         * =============================================================
+         * QUIZ
+         * =============================================================
+         * Batas dan bentuk halaman ini sengaja sama persis dengan halaman
+         * Materi di atas: hanya konten yang sudah terbit, tanpa tab status,
+         * tanpa setujui/tolak, dengan hero, kartu filter, grid kartu, dan
+         * paginasi yang sama. Quiz yang masih menunggu keputusan ditinjau di
+         * menu Verifikasi — persis seperti materi — dan yang ditolak atau
+         * masih draft dikelola pemiliknya di "Karya Saya".
          *
-         * Dua aksi memakai id quiz, sama dengan halaman detail quiz, dan
-         * hanya berlaku untuk quiz yang statusnya masih "menunggu".
+         * Karena itu halaman ini tidak lagi menjadi tempat memutuskan
+         * persetujuan; dua route setujui/tolak di bawah tetap ada karena
+         * dipakai halaman Verifikasi.
+         *
+         * Detail, edit, dan hapus adalah pasangan dari route milik pengguna
+         * (user.quiz.detail / .edit / .destroy) yang menolak admin dengan
+         * 403.(parameternya id quiz, bukan slug, sama seperti route detail
+         * quiz milik pengguna)
          */
         Route::get('/quiz', Admin\QuizController::class)->name('quiz');
+        Route::get('/quiz/{quiz}', Admin\QuizDetailController::class)->name('quiz.show');
+        Route::get('/quiz/{quiz}/edit', [Admin\QuizKelolaController::class, 'edit'])->name('quiz.edit');
+        Route::put('/quiz/{quiz}', [Admin\QuizKelolaController::class, 'update'])->name('quiz.update');
+        Route::delete('/quiz/{quiz}', [Admin\QuizKelolaController::class, 'destroy'])->name('quiz.destroy');
+
+        /*
+         * Dua aksi di bawah memakai id quiz dan hanya berlaku untuk quiz yang
+         * statusnya masih "menunggu": controller mengembalikan 404 untuk
+         * status lain. Route tetap dipakai halaman Verifikasi, yang mengirim
+         * field "kembali" supaya admin kembali ke sana setelah memutuskan.
+         */
         Route::post('/quiz/{quiz}/setujui', [Admin\QuizTinjauController::class, 'setujui'])->name('quiz.setujui');
         Route::post('/quiz/{quiz}/tolak', [Admin\QuizTinjauController::class, 'tolak'])->name('quiz.tolak');
 
