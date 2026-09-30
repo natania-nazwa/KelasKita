@@ -811,15 +811,27 @@ body.tubuh-admin {
  * grid meregangkan baris. Dua baris dashboard (Perlu Ditinjau + Menu
  * Cepat) masing-masing berisi dua kartu dengan jumlah isi berbeda, dan
  * tanpa kolom flex tepi bawah kedua kartu tidak akan rata.
+ *
+ * Permukaannya sekarang gradien putih ke putih-kebiruan sangat tipis,
+ * bukan putih rata. Putih rata membuat sekumpulan card terlihat seperti
+ * kotak-kotak yang ditempel. Gradasinya yang halus, ditambah bayangan
+ * berlapis, membuatnya terasa seperti kartu yang sedikit terangkat
+ * tanpa perlu border yang tebal.
+ *
+ * Padding, radius, dan struktur tidak diubah dari nilai aslinya --
+ * perubahan ini murni warna, bayangan, dan tekstur permukaan.
  */
 .ad-kartu {
     display: flex;
     min-width: 0;
     flex-direction: column;
-    border-radius: 1.35rem;
-    border: 1px solid var(--ad-garis);
+    border-radius: 1.4rem;
+    border: 1px solid color-mix(in oklab, var(--ad-primary) 9%, var(--ad-garis));
     background-color: var(--ad-white);
-    box-shadow: var(--ad-bayangan);
+    background-image: linear-gradient(180deg, #ffffff 0%, #fdfcff 62%, #fbfaff 100%);
+    box-shadow:
+        0 1px 2px rgba(41, 36, 92, 0.035),
+        0 10px 24px -20px rgba(76, 47, 179, 0.22);
 }
 
 .ad-kartu--naik {
@@ -841,7 +853,17 @@ body.tubuh-admin {
     flex-wrap: wrap;
     align-items: center;
     gap: 0.75rem 1rem;
-    border-bottom: 1px solid var(--ad-garis);
+    border-bottom: 1px solid color-mix(in oklab, var(--ad-primary) 8%, var(--ad-garis));
+
+    /*
+     * Cucian lavender tipis di kepala card.
+     *
+     * Kepala card adalah satu-satunya bidang yang selalu kosong di bagian
+     * atas setiap kartu, jadi di situlah warna paling cepat terlihat tanpa
+     * menyentuh isi card. Gradiennya meredup ke bawah supaya garis pemisah
+     * di bagian bawah kepala tetap terbaca dan badan card tetap putih.
+     */
+    background-image: linear-gradient(180deg, rgba(237, 231, 255, 0.6) 0%, rgba(250, 248, 255, 0.35) 100%);
     padding: 1.1rem 1.25rem;
 }
 
@@ -859,9 +881,10 @@ body.tubuh-admin {
     text-overflow: ellipsis;
     white-space: nowrap;
     font-size: 1.0625rem;
-    font-weight: 700;
-    letter-spacing: -0.01em;
-    color: var(--ad-teks);
+    font-weight: 800;
+    line-height: 1.35;
+    letter-spacing: -0.015em;
+    color: var(--ad-primary-dark);
 }
 
 /* Keterangan di bawah judul kartu, misalnya "7 hari terakhir". */
@@ -871,6 +894,8 @@ body.tubuh-admin {
     text-overflow: ellipsis;
     white-space: nowrap;
     font-size: 0.75rem;
+    font-weight: 500;
+    letter-spacing: 0.005em;
     color: var(--ad-teks-2);
 }
 
@@ -1291,16 +1316,33 @@ body.tubuh-admin {
  * keempatnya terlihat lurus dari atas sampai bawah.
  */
 .ad-stat {
+    /*
+     * --ad-nada adalah satu-satunya sumber warna kartu ini.
+     *
+     * Semua warna lain diturunkan dari var ini lewat color-mix: latar
+     * kartu, border, bulatan sudut, ikon, angka besar, dan pil keterangan.
+     * Jadi menambah atau menukar warna cukup mengubah satu baris di
+     * bawah, bukan menulis ulang empat blok warna terpisah.
+     */
+    --ad-nada: #6d4aff;
+
     position: relative;
     display: flex;
     min-width: 0;
     flex-direction: column;
     gap: 0.75rem;
     overflow: hidden;
-    border-radius: 1.35rem;
-    border: 1px solid var(--ad-garis);
+    border-radius: 1.4rem;
+    border: 1px solid color-mix(in oklab, var(--ad-nada) 20%, var(--ad-garis));
     background-color: var(--ad-white);
-    box-shadow: var(--ad-bayangan);
+    background-image: linear-gradient(
+        165deg,
+        color-mix(in oklab, var(--ad-nada) 6%, #ffffff) 0%,
+        color-mix(in oklab, var(--ad-nada) 13%, #ffffff) 100%
+    );
+    box-shadow:
+        0 1px 2px rgba(41, 36, 92, 0.035),
+        0 10px 24px -20px color-mix(in oklab, var(--ad-nada) 60%, transparent);
     padding: 1.15rem 1.15rem 1rem;
     transition:
         transform 0.2s ease,
@@ -1325,18 +1367,80 @@ body.tubuh-admin {
 
 .ad-stat:hover {
     transform: translateY(-3px);
-    border-color: color-mix(in oklab, var(--ad-primary) 35%, var(--ad-garis));
-    box-shadow: var(--ad-bayangan-naik);
+    border-color: color-mix(in oklab, var(--ad-nada) 45%, var(--ad-garis));
+    box-shadow:
+        0 2px 4px rgba(41, 36, 92, 0.04),
+        0 20px 38px -26px color-mix(in oklab, var(--ad-nada) 75%, transparent);
 }
 
 /*
- * Warna lembut di sudut kanan atas tiap kartu.
+ * Kartu kuning (Materi) diberi penekanan tipografi tambahan.
  *
- * Dipakai radial-gradient, bukan gambar dekoratif, supaya tidak ada berkas
- * tambahan dan warnanya bisa ikut mengikuti nada kartu. Ditumpuk di atas
- * warna putih lewat background-image, jadi warna gelap teks di atasnya
- * tetap terbaca.
+ * Latar kuning soft itu sendiri sudah cukup menarik, tapi angka di
+ * dalamnya tetap harus menjadi titik baca pertama kalau ada yang memindai
+ * halaman. Karena itu label dibuat uppercase dengan spasi lebih renggang,
+ * angka dibuat sedikit lebih besar, dan pil keterangan dibuat lebih pekat
+ * dan sedikit lebih besar. Semua perubahan ini hanya soal ukuran,
+ * ketebalan, dan warna huruf -- tinggi kartu, jarak, dan urutan isi tetap
+ * sama seperti kartu lain.
  */
+.ad-stat--kuning .ad-stat__label {
+    font-size: 0.6875rem;
+    font-weight: 800;
+    letter-spacing: 0.075em;
+    text-transform: uppercase;
+    color: color-mix(in oklab, var(--ad-nada) 75%, var(--ad-teks-2));
+}
+
+.ad-stat--kuning .ad-stat__nilai {
+    font-size: 1.9375rem;
+    font-weight: 850;
+    letter-spacing: -0.035em;
+}
+
+.ad-stat--kuning .ad-stat__ket {
+    padding: 0.34rem 0.65rem;
+    background-color: color-mix(in oklab, var(--ad-nada) 18%, #ffffff);
+    border: 1px solid color-mix(in oklab, var(--ad-nada) 28%, transparent);
+    font-size: 0.71875rem;
+    font-weight: 700;
+    color: color-mix(in oklab, var(--ad-nada) 85%, var(--ad-teks));
+}
+/*
+ * Lima nada kartu statistik: biru, hijau, kuning, merah, dan ungu.
+ *
+ * Masing-masing cuma menimpa --ad-nada. Seluruh tampilan kartu -- latar
+ * bergradasi, border, bulatan sudut kanan atas, warna ikon, warna angka,
+ * pil keterangan, dan bayangan -- mengikuti var itu secara otomatis.
+ *
+ * Warna nadanya sengaja gelap dan pekat, bukan kuning atau merah muda
+ * seperti nama "--kuning" dan "--merah" itu menyiratkan. Alasannya:
+ * kartu ini harus tetap bisa dibaca teks gelapnya, dan warna terang
+ * membuat teks sulit dibaca. Yang tampil lembut adalah campurannya
+ * dengan putih di latar, bukan warna nadanya sendiri.
+ */
+
+.ad-stat--info {
+    --ad-nada: #3a6fd0;
+}
+
+.ad-stat--sukses {
+    --ad-nada: #1f8f5c;
+}
+
+.ad-stat--peringatan {
+    --ad-nada: #b8720f;
+}
+
+/* Kuning: dipakai kartu Materi. Nadanya amber gelap, bukan kuning murni. */
+.ad-stat--kuning {
+    --ad-nada: #b8720f;
+}
+
+/* Merah: dipakai kartu Menunggu Verifikasi. */
+.ad-stat--merah {
+    --ad-nada: #d0453f;
+}
 .ad-stat::before {
     content: '';
     position: absolute;
@@ -1345,23 +1449,37 @@ body.tubuh-admin {
     width: 8rem;
     height: 8rem;
     border-radius: 9999px;
-    background-image: radial-gradient(circle, rgba(109, 74, 255, 0.14), transparent 70%);
+    background-image: radial-gradient(
+        circle,
+        color-mix(in oklab, var(--ad-nada) 20%, transparent),
+        transparent 70%
+    );
     pointer-events: none;
 }
 
-.ad-stat--info::before {
-    background-image: radial-gradient(circle, rgba(91, 141, 239, 0.18), transparent 70%);
+/*
+ * Garis aksen tipis di tepi atas kartu.
+ *
+ * Ini satu-satunya warna pekat di kartu, dan sengaja cuma setebal
+ * 3px di batas atas. Fungsinya memberi batas warna yang tegas supaya
+ * keempat kartu terbaca sebagai empat kartu berbeda, bukan empat
+ * kotak putih dengan isian serupa. Letaknya absolute di dalam
+ * mana. Letaknya absolute di dalam kartu yang sudah overflow hidden,
+ * jadi sudutnya ikut terpotong radius dan tidak menggeser isi.
+ */
+.ad-stat::after {
+    content: '';
+    position: absolute;
+    inset: 0 0 auto;
+    height: 3px;
+    background-image: linear-gradient(
+        90deg,
+        var(--ad-nada),
+        color-mix(in oklab, var(--ad-nada) 22%, #ffffff)
+    );
+    pointer-events: none;
 }
 
-.ad-stat--sukses::before {
-    background-image: radial-gradient(circle, rgba(53, 183, 121, 0.18), transparent 70%);
-}
-
-.ad-stat--peringatan::before {
-    background-image: radial-gradient(circle, rgba(244, 163, 64, 0.2), transparent 70%);
-}
-
-/* Isi kartu duduk di atas bulatan warna itu. */
 .ad-stat__ikon,
 .ad-stat__isi {
     position: relative;
@@ -1375,9 +1493,9 @@ body.tubuh-admin {
     align-items: center;
     justify-content: center;
     border-radius: 0.95rem;
-    background-color: var(--ad-primary-light);
-    color: var(--ad-primary);
-    box-shadow: inset 0 0 0 1px rgba(109, 74, 255, 0.12);
+    background-color: color-mix(in oklab, var(--ad-nada) 14%, #ffffff);
+    color: var(--ad-nada);
+    box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--ad-nada) 20%, transparent);
     transition:
         transform 0.2s ease,
         background-color 0.2s ease,
@@ -1386,21 +1504,6 @@ body.tubuh-admin {
 
 .ad-stat:hover .ad-stat__ikon {
     transform: scale(1.06);
-}
-
-.ad-stat__ikon--sukses {
-    background-color: rgba(53, 183, 121, 0.14);
-    color: #1f8f5c;
-}
-
-.ad-stat__ikon--peringatan {
-    background-color: rgba(244, 163, 64, 0.16);
-    color: #b8720f;
-}
-
-.ad-stat__ikon--info {
-    background-color: rgba(91, 141, 239, 0.14);
-    color: #3a6fd0;
 }
 
 .ad-stat__isi {
@@ -1421,19 +1524,29 @@ body.tubuh-admin {
     line-height: 1.1;
     letter-spacing: -0.02em;
     font-variant-numeric: tabular-nums;
-    color: var(--ad-teks);
+    color: var(--ad-nada);
 }
 
 .ad-stat__ket {
     position: relative;
-    /* Baris ini selalu menempel di dasar kartu, jadi keempat kartu yang
-     * tingginya sama punya baris keterangan yang juga lurus. */
+
+    /*
+     * Baris ini selalu menempel di dasar kartu, jadi keempat kartu yang
+     * tingginya sama punya baris keterangan yang juga lurus.
+     *
+     * Garis putus-putus diganti pil berlatar lembut: putus-putus terlihat
+     * seperti garis carna. Pil bulat dengan isian lembut terlihat lebih
+     * ramah, dan warnanya bisa mengikuti nada kartu lewat --ad-nada.
+     */
     margin-top: auto;
-    padding-top: 0.65rem;
-    border-top: 1px dashed #eeebfa;
+    margin-bottom: -0.25rem;
+    padding: 0.3rem 0.55rem;
+    border-radius: 9999px;
+    background-color: color-mix(in oklab, var(--ad-nada, #6d4aff) 10%, transparent);
     font-size: 0.6875rem;
-    line-height: 1.5;
-    color: var(--ad-teks-2);
+    line-height: 1.45;
+    font-weight: 600;
+    color: color-mix(in oklab, var(--ad-nada, var(--ad-primary)) 70%, var(--ad-teks));
 }
 
 .ad-stat__naik {
@@ -2090,9 +2203,9 @@ body.tubuh-admin {
     align-items: center;
     gap: 0.85rem;
     min-width: 0;
-    border-radius: 1rem;
-    border: 1px solid var(--ad-garis);
-    background-color: var(--ad-white);
+    border-radius: 1.05rem;
+    border: 1px solid color-mix(in oklab, var(--ad-primary) 7%, var(--ad-garis));
+    background-color: #fdfcff;
     padding: 0.9rem 1rem;
     transition:
         transform 0.2s ease,
@@ -2376,11 +2489,11 @@ body.tubuh-admin {
 }
 
 .ad-aktivitas__baris + .ad-aktivitas__baris {
-    border-top: 1px solid var(--ad-garis);
+    border-top: 1px solid color-mix(in oklab, var(--ad-primary) 7%, var(--ad-garis));
 }
 
 .ad-aktivitas__baris:hover {
-    background-color: color-mix(in oklab, var(--ad-primary-light) 45%, transparent);
+    background-color: color-mix(in oklab, var(--ad-primary-light) 55%, transparent);
 }
 
 .ad-aktivitas__isi {

@@ -58,20 +58,21 @@
     </section>
 
     {{-- ==================== STATISTIK UTAMA ==================== --}}
+    {{-- Nada kartu: hijau (Pengguna), kuning (Materi), ungu (Quiz), merah (Menunggu). --}}
     <section class="ad-seksi ad-grid ad-grid--statistik" aria-label="Ringkasan platform">
-        <x-admin.statistik ikon="grup" label="Pengguna" :nilai="$ringkasan['pengguna']" nada="info"
+        <x-admin.statistik ikon="grup" label="Pengguna" :nilai="$ringkasan['pengguna']" nada="sukses"
             :naik="$persen['pengguna']" :keterangan="$persen['pengguna'] ? null : $keterangan['pengguna']"
             :href="route('admin.pengguna')" />
 
-        <x-admin.statistik ikon="buku" label="Materi" :nilai="$ringkasan['materi']"
+        <x-admin.statistik ikon="buku" label="Materi" :nilai="$ringkasan['materi']" nada="kuning"
             :naik="$persen['materi']" :keterangan="$persen['materi'] ? null : $keterangan['materi']"
             :href="route('admin.materi')" />
 
-        <x-admin.statistik ikon="soal" label="Quiz" :nilai="$ringkasan['quiz']" nada="sukses"
+        <x-admin.statistik ikon="soal" label="Quiz" :nilai="$ringkasan['quiz']"
             :naik="$persen['quiz']" :keterangan="$persen['quiz'] ? null : $keterangan['quiz']"
             :href="route('admin.quiz')" />
 
-        <x-admin.statistik ikon="jam" label="Menunggu Verifikasi" :nilai="$totalMenunggu" nada="peringatan"
+        <x-admin.statistik ikon="jam" label="Menunggu Verifikasi" :nilai="$totalMenunggu" nada="merah"
             :keterangan="$ringkasan['materi_menunggu'].' materi · '.$ringkasan['quiz_menunggu'].' quiz'"
             :href="route('admin.verifikasi')" />
     </section>
