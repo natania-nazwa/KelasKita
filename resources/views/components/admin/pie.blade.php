@@ -8,15 +8,44 @@
      */
     'data' => [],
     'labelNilai' => 'dikerjakan',
+    /**
+     * Posisi legenda: 'samping' (default, dipakai halaman Statistik) atau
+     * 'atas' (dipakai kartu analytics dashboard).
+     *
+     * Opsi ini ada karena kartu "Pelajaran yang Disukai" hanya punya satu
+     * atau dua pelajaran: kalau legenda tetap di samping, hanya satu baris
+     * pendek yang mengambang di tengah-tengah card. Dipindah ke atas,
+     * barisnya jadi lebar penuh di paling atas card dan donat turun ke
+     * bawahnya.
+     */
+    'legenda' => 'samping',
 ])
 
 {{--
-    Pie chart (native SVG, tanpa pustaka chart).
+    Donut chart (native SVG, tanpa pustaka chart).
 
-    Cara gambar busurnya sama dengan donat di halaman Hasil milik user:
-    tiap iringan digambar sebagai lingkaran penuh (pie, bukan donat) yang
-    dipotong dua busur. Sudut selalu mulai dari jam 12 dan bertambah
-    searah jarum jam, jadi urutannya mengikuti urutan $data.
+    Bentuknya donat: cincin tebal dengan lubang di tengah, dan angka
+    total berdiri di dalam lubang itu.
+
+    Cara gambar iringannya: tiap iringan adalah satu lingkaran penuh
+    (bukan busur) yang dipotong dengan stroke-dasharray, lalu digeser
+    dengan stroke-dashoffset sebesar panjang iringan-iringan sebelumnya.
+    Offset itulah yang membuat tiap iringan mulai tepat setelah iringan
+    sebelumnya selesai, bukan semua menumpuk di jam 12. Sudut selalu mulai
+    dari jam 12 dan bertambah searah jarum jam, jadi urutannya mengikuti
+    urutan $data.
+
+    Celah antar iringan dibuat konstan, bukan sisa pembagian, supaya
+    jaraknya antar iringan sama rata dan donat tidak terlihat bergerigi.
+    Iringan yang porsinya lebih kecil dari celah dilewati: memaksakan
+    iringan sebesar celah akan membuat kategori kecil terlihat lebih besar
+    dari porsi aslinya.
+
+    Ukuran cincin menjaga diri supaya tidak pernah terpotong viewBox:
+    viewBox 120x120 berarti jari terluar yang aman adalah 60, dan jari
+    terluar cincin = jari + setengah tebal. 46 + 11 = 57, jadi masih ada
+    3 unit sisa di keempat sisi. Kalau jari dan tebalnya dibuat lebih
+    besar, cincin keluar dari kanvas dan sisi kiri-kanasnya terpotong.
 
     Deret kosong, atau semua nilainya nol, tidak menggambar apa pun dan
     menampilkan teks di tengah: kartu jadi terbaca "belum ada data",
@@ -26,57 +55,91 @@
 @php
     $jumlah = count($data);
     $total = $jumlah > 0 ? (float) array_sum(array_column($data, 'nilai')) : 0.0;
-    $jari = 54;
+
+    $jari = 46;
+    $tebal = 22;
     $keliling = 2 * M_PI * $jari;
+    $celah = 4;
+
+    // Panjang busur tiap iringan, dihitung dari total, lalu digeser satu
+    // per satu supaya tidak ada yang menumpuk.
+    $iringan = [];
+    $sudah = 0.0;
+
+    if ($total > 0) {
+        foreach ($data as $butir) {
+            $porsi = ((float) $butir['nilai']) / $total * $keliling;
+            $panjang = $porsi - $celah;
+
+            if ($panjang > 0.6) {
+                $porsen = round(((float) $butir['nilai']) / $total * 100, 1);
+                $porsenTampil = rtrim(rtrim(number_format($porsen, 1, ',', ''), '0'), ',');
+
+                $iringan[] = [
+                    'warna' => $butir['warna'],
+                    'panjang' => round($panjang, 2),
+                    'ruang' => round($keliling - $panjang, 2),
+                    'geser' => round(-$sudah, 2),
+                    'tooltip' => $butir['label'].': '.$butir['nilai'].' '.$labelNilai.' ('.$porsenTampil.'%)',
+                    'label' => $butir['label'],
+                    'nilai' => $butir['nilai'],
+                    'porsen' => $porsenTampil,
+                ];
+            }
+
+            $sudah += $porsi;
+        }
+    }
 @endphp
 
 <div {{ $attributes->class(['ad-grafik']) }}>
-    <div class="flex flex-col items-center gap-4 sm:flex-row sm:items-center">
-        <div class="relative h-40 w-40 shrink-0">
+    <div @class([
+        'ad-donat__susun',
+        'ad-donat__susun--atas' => $legenda === 'atas',
+    ])>
+        <div class="ad-donat__lingkaran">
             <svg viewBox="0 0 120 120" class="h-full w-full -rotate-90" role="img"
-                aria-label="Pie chart {{ $labelNilai }}">
+                aria-label="Donat chart {{ $labelNilai }}">
 
-                @if ($total > 0)
-                    @foreach ($data as $butir)
-                        @php
-                            $porsi = ((float) $butir['nilai']) / $total * $keliling;
-                            $panjang = $porsi >= $keliling - 0.01 ? $keliling : round($porsi, 2);
-                            $ruang = round(max(0.0, $keliling - $porsi - 1.5), 2);
-                        @endphp
+                {{-- Cincin latar: membuat celah antar iringan terlihat
+                     disengaja, bukan sekadar ruang kosong. --}}
+                <circle cx="60" cy="60" r="{{ $jari }}" fill="none" stroke="#F1EEFF"
+                    stroke-width="{{ $tebal }}" />
 
-                        <circle cx="60" cy="60" r="{{ $jari }}" fill="none" stroke="{{ $butir['warna'] }}"
-                            stroke-width="26"
-                            stroke-dasharray="{{ $panjang }} {{ $ruang }}" />
-                    @endforeach
-                @else
-                    <circle cx="60" cy="60" r="{{ $jari }}" fill="none" stroke="#E8E4F5" stroke-width="26" />
-                @endif
+                @foreach ($iringan as $iring)
+                    {{-- <title> memberi tooltip bawaan browser: nama,
+                         jumlah, dan porsinya, tanpa pustaka JavaScript. --}}
+                    <circle class="ad-donat__iris" cx="60" cy="60" r="{{ $jari }}" fill="none"
+                        stroke="{{ $iring['warna'] }}" stroke-width="{{ $tebal }}"
+                        stroke-dasharray="{{ $iring['panjang'] }} {{ $iring['ruang'] }}"
+                        stroke-dashoffset="{{ $iring['geser'] }}">
+                        <title>{{ $iring['tooltip'] }}</title>
+                    </circle>
+                @endforeach
             </svg>
 
-            <span class="ad-pie__tengah">
-                <span class="ad-pie__angka">{{ (int) $total }}</span>
-                <span class="ad-pie__label">{{ $labelNilai }}</span>
+            <span class="ad-donat__tengah">
+                <span class="ad-donat__angka">{{ (int) $total }}</span>
+                <span class="ad-donat__label">{{ $labelNilai }}</span>
             </span>
         </div>
 
         {{-- Legenda. Warna di sini memakai nilai yang sama persis dengan
-             warna busurnya, jadi tidak ada warna yang bolong di tabel. --}}
-        <ul class="ad-pie__legenda">
-            @forelse ($data as $butir)
-                @php
-                    $porsen = $total > 0 ? round(((float) $butir['nilai']) / $total * 100, 1) : 0;
-                @endphp
+             warna busurnya, jadi tidak ada warna yang bolong di tabel, dan
+             tiap baris diberi semburat warna sendiri supaya tabelnya tidak
+             abu-abu. --}}
+        <ul class="ad-donat__legenda">
+            @forelse ($iringan as $iring)
+                <li class="ad-donat__baris" style="--ad-donat: {{ $iring['warna'] }};">
+                    <span class="ad-donat__titik" aria-hidden="true"></span>
 
-                <li class="ad-pie__baris">
-                    <span class="ad-pie__titik" style="background-color: {{ $butir['warna'] }}" aria-hidden="true"></span>
+                    <span class="ad-donat__nama">{{ $iring['label'] }}</span>
 
-                    <span class="ad-pie__nama">{{ $butir['label'] }}</span>
-
-                    <span class="ad-pie__angka-kecil">{{ $butir['nilai'] }}</span>
-                    <span class="ad-pie__porsen">{{ rtrim(rtrim(number_format($porsen, 1, ',', ''), '0'), ',') }}%</span>
+                    <span class="ad-donat__angka-kecil">{{ $iring['nilai'] }}</span>
+                    <span class="ad-donat__porsen">{{ $iring['porsen'] }}%</span>
                 </li>
             @empty
-                <li class="text-xs text-[#77739A]">Belum ada pelajaran yang dikerjakan.</li>
+                <li class="ad-donat__kosong">Belum ada {{ $labelNilai }}.</li>
             @endforelse
         </ul>
     </div>

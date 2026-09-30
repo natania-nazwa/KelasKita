@@ -13,6 +13,12 @@ use DateTimeInterface;
  * tidak tahu-menahu soal Eloquent. Perbedaannya: di sini isi materi juga
  * ikut dipecah jadi seksi + blok (lewat IsiMateri) supaya komponen
  * tinggal menampilkan, tidak perlu parses markup.
+ *
+ * Halaman detail materi di area admin memakai kelas ini juga, bukan bentuk
+ * array sendiri. Admin membuka materi dengan tampilan yang sama persis
+ * dengan yang dibaca pengguna, jadi sumber datanya harus sama; yang berbeda
+ * hanya tujuan tombolnya, dan itu dikembalikan lewat $tautanDaftar /
+ * $tautanLatihan.
  */
 final class DetailMateri
 {
@@ -31,6 +37,15 @@ final class DetailMateri
      * @param  bool  $tersimpan  status "materi ini sudah disimpan" untuk
      *                           pengguna yang sedang login, dipakai tombol
      *                           Simpan di kepala materi.
+     * @param  string|null  $tautanDaftar  tujuan tombol "Kembali" dan
+     *                                     "Lihat semua". Null = daftar materi
+     *                                     milik pengguna. Area admin
+     *                                     mengoper route-nya sendiri supaya
+     *                                     satu komponen ini bisa dipakai
+     *                                     kedua sisi tanpa membuat salinan.
+     * @param  string|null  $tautanLatihan  tujuan kartu latihan di dalam
+     *                                      seksi. Null = daftar quiz milik
+     *                                      pengguna.
      * @return array{
      *     judul: string,
      *     slug: string,
@@ -49,8 +64,12 @@ final class DetailMateri
      *     tautan_latihan: string
      * }
      */
-    public static function petikan(Materi $materi, bool $tersimpan = false): array
-    {
+    public static function petikan(
+        Materi $materi,
+        bool $tersimpan = false,
+        ?string $tautanDaftar = null,
+        ?string $tautanLatihan = null,
+    ): array {
         $pelajaran = $materi->pelajaran;
         $kategori = Pelajaran::warna($pelajaran?->slug ?? '', $pelajaran?->nama ?? 'Umum');
         $pembuat = $materi->pembuat;
@@ -82,8 +101,8 @@ final class DetailMateri
                 'warna_gelap' => $pembuat->warnaAvatar()['warna_gelap'],
             ] : null,
             'seksi' => IsiMateri::seksi($materi->isi, $materi->nama),
-            'tautan_daftar' => route('user.materi'),
-            'tautan_latihan' => route('user.quiz'),
+            'tautan_daftar' => $tautanDaftar ?? route('user.materi'),
+            'tautan_latihan' => $tautanLatihan ?? route('user.quiz'),
         ];
     }
 

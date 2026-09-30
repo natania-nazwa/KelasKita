@@ -406,23 +406,24 @@ body.tubuh-admin {
 .ad-sisi__jumlah {
     flex-shrink: 0;
     border-radius: 9999px;
-    background-color: rgba(255, 255, 255, 0.2);
-    padding: 0.05rem 0.45rem;
+    background-color: #f47fa5;
+    padding: 0.05rem 0.5rem;
     font-size: 0.6875rem;
     font-weight: 700;
     font-variant-numeric: tabular-nums;
     color: #fff;
+    box-shadow: 0 2px 6px rgba(244, 127, 165, 0.45);
 }
 
 .ad-sisi__tautan:hover .ad-sisi__jumlah {
-    background-color: rgba(255, 255, 255, 0.3);
+    background-color: #ef6f97;
 }
 
-/* Badge ikut latar menu aktif: pil putih transparan di atas ungu soft masih
- * terbaca, tapi ditajamkan sedikit supaya angkanya tidak ikut larut. */
+/* Badge tetap coral di menu aktif supaya penanda "ada yang menunggu" tidak
+ * hilang saat admin sedang membuka halaman Verifikasi itu sendiri. */
 .ad-sisi__tautan--aktif .ad-sisi__jumlah,
 .ad-sisi__tautan--aktif:hover .ad-sisi__jumlah {
-    background-color: rgba(255, 255, 255, 0.28);
+    background-color: #ef6f97;
     color: #fff;
 }
 
@@ -805,9 +806,17 @@ body.tubuh-admin {
 }
 
 /* ---------- Kartu ---------- */
+/*
+ * Kartu jadi kolom flex supaya isinya bisa mengisi tinggi kartu ketika
+ * grid meregangkan baris. Dua baris dashboard (Perlu Ditinjau + Menu
+ * Cepat) masing-masing berisi dua kartu dengan jumlah isi berbeda, dan
+ * tanpa kolom flex tepi bawah kedua kartu tidak akan rata.
+ */
 .ad-kartu {
+    display: flex;
     min-width: 0;
-    border-radius: 1.25rem;
+    flex-direction: column;
+    border-radius: 1.35rem;
     border: 1px solid var(--ad-garis);
     background-color: var(--ad-white);
     box-shadow: var(--ad-bayangan);
@@ -866,12 +875,72 @@ body.tubuh-admin {
 }
 
 .ad-kartu__badan {
+    flex: 1;
     padding: 1.1rem 1.25rem 1.25rem;
+}
+
+/*
+ * Varian untuk daftar yang baris-barisnya sudah punya jarak sendiri
+ * (baris aktivitas). Paddingnya dikecilkan di sisi atas supaya kartu tidak
+ * terlihat seperti dua kartu bertumpuk di dalam kartu.
+ */
+.ad-kartu__badan--padat {
+    padding: 0.35rem 0.6rem 0.6rem;
+}
+
+/*
+ * Varian untuk badan card yang isinya sudah hemat tinggi (menu cepat).
+ * Paddingnya dikecilkan supaya card tidak terasa lapang di sekeliling
+ * empat kartu kecilnya.
+ */
+.ad-kartu__badan--rapat {
+    padding: 0.8rem 0.85rem 0.85rem;
 }
 
 .ad-kartu__kaki {
     border-top: 1px solid var(--ad-garis);
     padding: 0.9rem 1.25rem;
+}
+
+/*
+ * Variant kaki kartu yang isinya_notes kiri dan angka kanan.
+ *
+ * Sengaja modifier terpisah, bukan menimpa .ad-kartu__kaki, karena kaki
+ * kartu yang sama sudah dipakai halaman Pengaturan untuk satu tombol
+ * "Simpan Perubahan". Mengubah .ad-kartu__kaki jadi flex akan mengubah
+ * perataan tombol di halaman itu juga, dan halaman itu di luar lingkup
+ * redesign dashboard.
+ */
+.ad-kartu__kaki--total {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+}
+
+/*
+ * Keterangan di kaki kartu analytics.
+ *
+ * Dipakai untuk kalimat yang menjelaskan dari mana angka di atasnya
+ * berasal ("Data berdasarkan aktivitas pembelajaran pengguna") dan untuk
+ * Rekap login mingguan. Teksnya sengaja kecil dan redup: ini catatan,
+ * bukan judul, dan tidak boleh bersaing dengan angka di badan kartu.
+ */
+.ad-kartu__catatan {
+    min-width: 0;
+    font-size: 0.6875rem;
+    line-height: 1.5;
+    color: var(--ad-teks-2);
+}
+
+.ad-kartu__catatan-angka {
+    flex-shrink: 0;
+    font-size: 1.125rem;
+    font-weight: 800;
+    line-height: 1;
+    letter-spacing: -0.02em;
+    font-variant-numeric: tabular-nums;
+    color: var(--ad-primary-dark);
 }
 
 /* ---------- Kepala halaman ---------- */
@@ -1041,40 +1110,280 @@ body.tubuh-admin {
     height: auto;
 }
 
+/* ---------- Banner dashboard ---------- */
+/*
+ * Banner dashboard memakai kelas sendiri, bukan .ad-hero. Class .ad-hero
+ * juga dipakai banner halaman Kelola Materi, dan banner itu memang
+ * sengaja dibuat tinggi dengan tombol besar; banner dashboard justru
+ * harus pendek (±190px) supaya empat baris analytics di bawahnya tidak
+ * terdorong jauh ke bawah. Kelas terpisah membuat perubahan di sini
+ * mustahil ikut mengubah halaman lain.
+ */
+.ad-banner {
+    position: relative;
+    overflow: hidden;
+    border-radius: 1.25rem;
+    border: 1px solid var(--ad-garis);
+    background-image:
+        radial-gradient(26rem 14rem at 86% -25%, rgba(139, 108, 255, 0.24), transparent 70%),
+        linear-gradient(135deg, #f6f3ff 0%, #ede7ff 55%, #e6dfff 100%);
+    padding: 1.4rem 1.25rem;
+}
+
+@media (min-width: 640px) {
+    .ad-banner {
+        padding: 1.6rem 1.75rem;
+    }
+}
+
+@media (min-width: 1024px) {
+    .ad-banner {
+        border-radius: 1.5rem;
+        padding: 1.5rem 2rem;
+    }
+}
+
+/* Pola titik tipis, sama seperti hero, supaya bidang ungu muda tidak
+ * terasa polos. */
+.ad-banner::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image: radial-gradient(rgba(109, 74, 255, 0.16) 1px, transparent 1px);
+    background-size: 18px 18px;
+    opacity: 0.55;
+    pointer-events: none;
+}
+
+.ad-banner__susun {
+    position: relative;
+    z-index: 1;
+}
+
+.ad-banner__teks {
+    min-width: 0;
+}
+
+.ad-banner__lencana {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    border-radius: 9999px;
+    background-color: rgba(255, 255, 255, 0.75);
+    padding: 0.3rem 0.75rem;
+    font-size: 0.6875rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--ad-primary-dark);
+    box-shadow: inset 0 0 0 1px rgba(109, 74, 255, 0.2);
+}
+
+.ad-banner__lencana svg {
+    width: 0.85rem;
+    height: 0.85rem;
+}
+
+.ad-banner__judul {
+    margin-top: 0.7rem;
+    font-size: clamp(1.375rem, 3.4vw, 1.75rem);
+    font-weight: 800;
+    line-height: 1.2;
+    letter-spacing: -0.02em;
+    color: var(--ad-primary-dark);
+}
+
+.ad-banner__sub {
+    margin-top: 0.4rem;
+    max-width: 32rem;
+    font-size: 0.875rem;
+    line-height: 1.65;
+    color: color-mix(in oklab, var(--ad-teks) 72%, transparent);
+}
+
+.ad-banner__aksi {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.6rem;
+    margin-top: 1rem;
+}
+
+/* Tombol banner dibuat sedikit lebih kecil dari tombol halaman lain:
+ * banner-nya pendek, tombol sebesar biasanya akan membuat baris tombol
+ * melompati batas bawah banner. */
+.ad-banner__aksi .ad-tombol {
+    min-height: 2.35rem;
+    padding: 0.45rem 0.95rem;
+    font-size: 0.8125rem;
+}
+
+/* Di layar kecil ilustrasi turun ke bawah teks, bukan menyamping di
+ * kolom sempit yang cuma muat separuh. Lebarnya dikunci supaya
+ * ilustrasi tidak pernah mendorong container dan keluar layar. */
+.ad-banner__ilustrasi {
+    position: relative;
+    width: 100%;
+    max-width: 15rem;
+    margin: 0.85rem auto 0;
+}
+
+/* Ilustrasi PNG. Alt-nya sudah menjelaskan gambarnya, jadi dihias dengan
+ * filter atau outline hanya menambah pekerjaan browser tanpa menambah
+ * informasi. Yang penting hanya tidak boleh gepeng dan tidak boleh
+ * menabrak teks. */
+.ad-banner__ilustrasi img {
+    display: block;
+    width: 100%;
+    height: auto;
+    margin-inline: auto;
+    /* PNG-nya 828x552 (rasio 1,5); rasio ini dikunci supaya layout tidak
+     * bergeser saat gambar belum selesai dimuat. */
+    aspect-ratio: 828 / 552;
+    object-fit: contain;
+    filter: drop-shadow(0 18px 26px rgba(76, 47, 179, 0.16));
+}
+
+@media (min-width: 1024px) {
+    /* Di desktop ilustrasi melayang di kanan, keluar dari alur teks, dan
+     * divektoralkan terhadap tinggi banner. min-height menjaga banner
+     * tetap terisi walau teksnya nanti hanya satu baris. */
+    .ad-banner__susun {
+        min-height: 8.75rem;
+    }
+
+    .ad-banner__teks {
+        max-width: 58%;
+    }
+
+    .ad-banner__ilustrasi {
+        position: absolute;
+        top: 50%;
+        right: -0.5rem;
+        width: 17rem;
+        max-width: 34%;
+        margin: 0;
+        transform: translateY(-50%);
+    }
+}
+
 .ad-kilau {
     width: 1rem;
     height: 1rem;
     color: var(--ad-primary);
 }
 
+/*
+ * Kartu "Aktivitas Terbaru": tinggi mengikuti isi, bukan mengikuti kartu
+ * "Menu Cepat" di sebelahnya.
+ *
+ * Dua hal yang membuat kartu ini dulu terlalu tinggi, dan keduanya ditutup
+ * di sini tanpa menyentuh kartu lain:
+ *
+ *   1. Grid meregangkan seluruh item-nya sama tinggi secara bawaan
+ *      (align-items: stretch), jadi kartu ini ikut setinggi "Menu Cepat".
+ *      align-self: start menimpa stretch itu khusus untuk kartu ini saja:
+ *      lebar, kolom, gap, dan posisinya tidak berubah.
+ *
+ *   2. .ad-kartu__badan memakai flex: 1 supaya badannya mengisi sisa
+ *      tinggi kartu. Setelah kartu tidak lagi teregang, flex: 1 tidak
+ *      perlu, dan kalau dibiarkan badanlah yang jadi penerima ruang
+ *      kosong. flex: 0 0 auto membuat badan setinggi isinya saja.
+ *
+ * Padding, font, warna, dan isi kartu tidak disentuh.
+ */
+.ad-kartu--ringkas {
+    align-self: start;
+    height: auto;
+}
+
+.ad-kartu--ringkas .ad-kartu__badan {
+    flex: 0 0 auto;
+}
+
 /* ---------- Kartu statistik ---------- */
+/*
+ * Kartu selalu dua baris: baris atas (ikon + judul + angka) dan baris
+ * bawah (persentase atau keterangan) yang berdiri sendiri selebar kartu.
+ *
+ * margin-top: auto pada baris bawahnya yang membuat baris itu selalu
+ * menempel di dasar kartu. Karena tinggi kartu di dalam grid sudah sama,
+ * keempatnya terlihat lurus dari atas sampai bawah.
+ */
 .ad-stat {
+    position: relative;
     display: flex;
     min-width: 0;
-    align-items: flex-start;
-    gap: 0.85rem;
-    border-radius: 1.25rem;
+    flex-direction: column;
+    gap: 0.75rem;
+    overflow: hidden;
+    border-radius: 1.35rem;
     border: 1px solid var(--ad-garis);
     background-color: var(--ad-white);
     box-shadow: var(--ad-bayangan);
-    padding: 1.15rem;
+    padding: 1.15rem 1.15rem 1rem;
     transition:
         transform 0.2s ease,
         border-color 0.2s ease,
         box-shadow 0.2s ease;
 }
 
+@media (min-width: 640px) {
+    .ad-stat {
+        padding: 1.25rem 1.25rem 1.1rem;
+    }
+}
+
+/* Baris atas: ikon di kiri, teks di kanan. */
+.ad-stat__atas {
+    position: relative;
+    display: flex;
+    min-width: 0;
+    align-items: center;
+    gap: 0.8rem;
+}
+
 .ad-stat:hover {
-    transform: translateY(-2px);
+    transform: translateY(-3px);
     border-color: color-mix(in oklab, var(--ad-primary) 35%, var(--ad-garis));
     box-shadow: var(--ad-bayangan-naik);
 }
 
-@media (min-width: 640px) {
-    .ad-stat {
-        flex-direction: column;
-        padding: 1.25rem 1.25rem 1.15rem;
-    }
+/*
+ * Warna lembut di sudut kanan atas tiap kartu.
+ *
+ * Dipakai radial-gradient, bukan gambar dekoratif, supaya tidak ada berkas
+ * tambahan dan warnanya bisa ikut mengikuti nada kartu. Ditumpuk di atas
+ * warna putih lewat background-image, jadi warna gelap teks di atasnya
+ * tetap terbaca.
+ */
+.ad-stat::before {
+    content: '';
+    position: absolute;
+    top: -2.75rem;
+    right: -2.75rem;
+    width: 8rem;
+    height: 8rem;
+    border-radius: 9999px;
+    background-image: radial-gradient(circle, rgba(109, 74, 255, 0.14), transparent 70%);
+    pointer-events: none;
+}
+
+.ad-stat--info::before {
+    background-image: radial-gradient(circle, rgba(91, 141, 239, 0.18), transparent 70%);
+}
+
+.ad-stat--sukses::before {
+    background-image: radial-gradient(circle, rgba(53, 183, 121, 0.18), transparent 70%);
+}
+
+.ad-stat--peringatan::before {
+    background-image: radial-gradient(circle, rgba(244, 163, 64, 0.2), transparent 70%);
+}
+
+/* Isi kartu duduk di atas bulatan warna itu. */
+.ad-stat__ikon,
+.ad-stat__isi {
+    position: relative;
 }
 
 .ad-stat__ikon {
@@ -1087,7 +1396,11 @@ body.tubuh-admin {
     border-radius: 0.95rem;
     background-color: var(--ad-primary-light);
     color: var(--ad-primary);
-    transition: transform 0.2s ease;
+    box-shadow: inset 0 0 0 1px rgba(109, 74, 255, 0.12);
+    transition:
+        transform 0.2s ease,
+        background-color 0.2s ease,
+        color 0.2s ease;
 }
 
 .ad-stat:hover .ad-stat__ikon {
@@ -1131,7 +1444,12 @@ body.tubuh-admin {
 }
 
 .ad-stat__ket {
-    margin-top: 0.2rem;
+    position: relative;
+    /* Baris ini selalu menempel di dasar kartu, jadi keempat kartu yang
+     * tingginya sama punya baris keterangan yang juga lurus. */
+    margin-top: auto;
+    padding-top: 0.65rem;
+    border-top: 1px dashed #eeebfa;
     font-size: 0.6875rem;
     line-height: 1.5;
     color: var(--ad-teks-2);
@@ -1197,6 +1515,142 @@ body.tubuh-admin {
     .ad-grid--seri {
         grid-template-columns: repeat(2, minmax(0, 1fr));
     }
+}
+
+/* ---------- Grid khusus dashboard ---------- */
+
+/*
+ * Baris "Perlu Ditinjau + kartu kutipan" memakai .ad-grid--dua biasa,
+ * jadi kedua kolomnya sama tinggi (grid meregangkan baris secara bawaan)
+ * dan bagian bawahnya terlihat lurus. .ad-kartu dan .ad-kutip jadi kolom
+ * flex supaya isinya bisa mengisi tinggi itu dari atas.
+ *
+ * Sengaja tidak memakai align-items: start di sini: kalau kartu kutipan
+ * tidak ikut meninggi, tepi bawahnya akan melayang jauh di atas tepi bawah
+ * kartu sebelahnya dan barisnya terlihat patah.
+ */
+
+/*
+ * Baris analytics paling bawah: donat di kiri, grafik garis di kanan.
+ *
+ * Dua kolomnya sengaja tidak sama. Donat sudah punya bulatan di dalam
+ * kartunya, sedangkan grafik mingguan butuh ruang untuk enam label minggu
+ * yang dua baris; kolom kanan dibuat 1,5 kali lebih lebar supaya labelnya
+ * tidak saling tumpang tindih.
+ */
+.ad-grid--analitik {
+    grid-template-columns: minmax(0, 1fr);
+}
+
+@media (min-width: 1024px) {
+    .ad-grid--analitik {
+        grid-template-columns: minmax(0, 1fr) minmax(0, 1.5fr);
+    }
+}
+
+/*
+ * Kartu analytics: judulnya boleh turun dua baris. Judul defaultnya
+ * dipotong satu baris dengan ellipsis, tapi "Aktivitas Login Mingguan"
+ * tidak muat di kartu sempit dan memotong judul lebih buruk daripada
+ * membungkusnya.
+ */
+.ad-analitik .ad-kartu__kepala-judul,
+.ad-analitik .ad-kartu__subjudul {
+    overflow: visible;
+    text-overflow: clip;
+    white-space: normal;
+}
+
+/*
+ * Daftar "Menu Cepat": 1 kolom di HP, 2x2 di layar sedang ke atas.
+ *
+ * Menu cepat tidak memakai .ad-grid--statistik karena jumlah kolomnya
+ * berbeda (4 di layar sangat lebar, sedangkan statistik 4 hanya di
+ * >=1280px) dan jarak antar kartunya lebih rapat supaya empat kartu
+ * muat di setengah halaman.
+ */
+/*
+ * Daftar "Menu Cepat": 1 kolom di HP, 2 kolom di layar sedang, 4 kolom
+ * sekalian di desktop. Empat kolom sekaligus (bukan 2x2) dipakai karena
+ * ruang di baris "Menu Cepat + Aktivitas Terbaru" memang cukup, dan menu
+ * cepat lebih enak dibaca mendatar.
+ */
+.ad-daftar-cepat {
+    display: grid;
+    gap: 0.6rem;
+    grid-template-columns: minmax(0, 1fr);
+}
+
+@media (min-width: 560px) {
+    .ad-daftar-cepat {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (min-width: 1024px) {
+    .ad-daftar-cepat {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+}
+
+/*
+ * Kartu menu cepat yang duduk DI DALAM kartu "Menu Cepat".
+ *
+ * Latarnya dibuat sangat lembut, bukan putih, supaya empat kartu kecil
+ * ini terlihat sebagai isi kartu dan bukan sebagai kartu yang menumpuk
+ * kartu. Di halaman lain yang memakai .ad-cepat tanpa pembungkus seperti
+ * ini, warnanya tetap putih seperti sebelumnya.
+ */
+.ad-daftar-cepat .ad-cepat {
+    gap: 0.55rem;
+    border-radius: 0.85rem;
+    border-color: #ece8fb;
+    background-color: #faf9ff;
+    padding: 0.7rem 0.7rem 1.35rem;
+}
+
+/*
+ * Ikon, judul, dan keterangan diperkecil khusus di dalam daftar menu cepat.
+ *
+ * .ad-cepat itu juga dipakai kartu menu cepat di halaman lain dengan
+ * ukuran penuh, jadi pengurangan ini hanya dipasang di bawah
+ * .ad-daftar-cepat. Padding bawahnya sengaja lebih besar dari padding atas:
+ * panah diposisikan absolut di sudut kanan bawah, jadi kalau padding bawah
+ * ikut diperkecil, panahnya akan menindih teks.
+ */
+.ad-daftar-cepat .ad-cepat__ikon {
+    width: 2rem;
+    height: 2rem;
+    border-radius: 0.65rem;
+}
+
+.ad-daftar-cepat .ad-cepat__judul {
+    font-size: 0.8125rem;
+    line-height: 1.3;
+}
+
+.ad-daftar-cepat .ad-cepat__keterangan {
+    margin-top: 0.1rem;
+    font-size: 0.625rem;
+    line-height: 1.45;
+
+    /* Keterangan dipangkas maksimal dua baris supaya keempat kartu tetap
+     * sama tinggi walau teksnya panjang. */
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.ad-daftar-cepat .ad-cepat__panah {
+    right: 0.6rem;
+    bottom: 0.6rem;
+    width: 0.9rem;
+    height: 0.9rem;
+}
+
+.ad-daftar-cepat .ad-cepat:hover {
+    background-color: var(--ad-white);
 }
 
 /* Baris progress tipis, dipakai untuk daftar peringkat pelajaran
@@ -1657,16 +2111,12 @@ body.tubuh-admin {
     min-width: 0;
     flex-direction: column;
     overflow: hidden;
-    border-radius: 1.25rem;
-    border: 1px solid var(--ad-garis);
-    background-image: linear-gradient(160deg, #f2eeff 0%, #e9e3ff 60%, #e2dbff 100%);
-    padding: 1.5rem 1.25rem 0;
-}
-
-@media (min-width: 1024px) {
-    .ad-kutip {
-        height: 100%;
-    }
+    border-radius: 1.5rem;
+    border: 1px solid #e2dbff;
+    background-image:
+        radial-gradient(12rem 8rem at 110% -10%, rgba(255, 255, 255, 0.85), transparent 70%),
+        linear-gradient(160deg, #f6f2ff 0%, #ece5ff 55%, #e6deff 100%);
+    padding: 1.5rem 1.35rem 0;
 }
 
 .ad-kutip::before {
@@ -1677,7 +2127,7 @@ body.tubuh-admin {
     width: 10rem;
     height: 10rem;
     border-radius: 9999px;
-    background: radial-gradient(circle, rgba(255, 255, 255, 0.75), transparent 70%);
+    background: radial-gradient(circle, rgba(255, 255, 255, 0.55), transparent 70%);
     pointer-events: none;
 }
 
@@ -1703,16 +2153,24 @@ body.tubuh-admin {
 .ad-kutip__ilustrasi {
     position: relative;
     z-index: 1;
+    display: flex;
+    justify-content: center;
+    /* Gambar duduk di dasar kartu, jadi saat kartu ikut meninggi baris
+     * sejajar dengan "Perlu Ditinjau", bagian bawahnya tetap rata dan
+     * tidak ada ruang kosong menggantung. */
     margin-top: auto;
-    padding-top: 0.5rem;
+    padding-top: 0.75rem;
 }
 
-.ad-kutip__ilustrasi svg {
+.ad-kutip__ilustrasi img {
     display: block;
     width: 100%;
-    max-width: 15rem;
+    max-width: 13rem;
     height: auto;
-    margin-inline: auto;
+    /* buku.png 552x552 (rasio 1:1). */
+    aspect-ratio: 1 / 1;
+    object-fit: contain;
+    filter: drop-shadow(0 16px 22px rgba(76, 47, 179, 0.14));
 }
 
 /* ---------- Aktivitas ---------- */
@@ -1833,6 +2291,38 @@ body.tubuh-admin {
     background-color: var(--ad-primary);
     color: #fff;
     transform: scale(1.06);
+}
+
+/*
+ * Varian warna untuk chip ikon.
+ *
+ * Dipakai di kepala kartu analytics supaya dua kartu yang berdampingan
+ * bisa dibedakan sekilas dari warnanya, bukan hanya dari judulnya. Warna
+ * ikut kembali ke bentuk semula saat hover, konsisten dengan
+ * .ad-cepat__ikon di atas.
+ */
+.ad-cepat__ikon--pink {
+    background-color: #fde4f3;
+    color: #d94da8;
+    box-shadow: inset 0 0 0 1px rgba(217, 77, 168, 0.14);
+}
+
+.ad-cepat__ikon--hijau {
+    background-color: #dcf5e9;
+    color: #1f8f5c;
+    box-shadow: inset 0 0 0 1px rgba(31, 143, 92, 0.14);
+}
+
+.ad-cepat__ikon--biru {
+    background-color: #e2eefd;
+    color: #3a6fd0;
+    box-shadow: inset 0 0 0 1px rgba(58, 111, 208, 0.14);
+}
+
+.ad-cepat__ikon--kuning {
+    background-color: #fdf0d9;
+    color: #b8720f;
+    box-shadow: inset 0 0 0 1px rgba(184, 114, 15, 0.14);
 }
 
 .ad-cepat__teks {
@@ -2139,14 +2629,29 @@ body.tubuh-admin {
 }
 
 .ad-grafik__kisi {
-    stroke: var(--ad-garis);
+    stroke: #ece9f8;
     stroke-width: 1;
+    stroke-dasharray: 3 5;
 }
 
 .ad-grafik__label {
     font-size: 10px;
     font-weight: 600;
-    fill: var(--ad-teks-2);
+    fill: #9a95b8;
+}
+
+/*
+ * Titik data pada grafik garis membesar sedikit saat kursor di atasnya.
+ * Angka minggunya sendiri dibaca dari <title> di dalam lingkaran itu,
+ * jadi tidak perlu pustaka JavaScript untuk tooltip. Browser yang
+ * tidak mengenal properti geometri "r" hanya mengabaikan aturan ini.
+ */
+.ad-grafik__titik {
+    transition: r 0.15s ease;
+}
+
+.ad-grafik__titik:hover {
+    r: 6.5;
 }
 
 .ad-legenda {
@@ -2182,7 +2687,75 @@ body.tubuh-admin {
  * Angka total dan legenda ditulis sebagai kelas, bukan utility Tailwind
  * dengan warna hex, supaya satu perubahan palet cukup di satu tempat.
  */
-.ad-pie__tengah {
+/* ---------- Donat chart ---------- */
+.ad-donat__susun {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1.35rem;
+}
+
+@media (min-width: 520px) {
+    .ad-donat__susun {
+        flex-direction: row;
+        align-items: center;
+        gap: 1.75rem;
+    }
+}
+
+/*
+ * Legenda di atas donat.
+ *
+ * Dipakai kartu "Pelajaran yang Disukai", yang datanya cuma satu atau dua
+ * pelajaran: legenda di samping akan jadi satu baris pendek yang
+ * mengambang di tengah card. Di atas, barisnya jadi lebar penuh di
+ * puncak card dan donat turun ke bawahnya.
+ *
+ * order: -1 menukar urutan legenda dan donat tanpa memindahkan blok di
+ * markup, jadi urutan yang dibaca pembaca layar tetap donat lalu legenda.
+ * Penentuannya diletakkan setelah aturan media query di atas dan
+ * specificity-nya lebih tinggi, supaya di layar lebar pun posisinya tetap
+ * atas.
+ */
+.ad-donat__susun--atas {
+    flex-direction: column;
+    gap: 1.1rem;
+}
+
+.ad-donat__susun--atas .ad-donat__legenda {
+    order: -1;
+    width: 100%;
+}
+
+.ad-donat__lingkaran {
+    position: relative;
+    width: 10.5rem;
+    height: 10.5rem;
+    flex-shrink: 0;
+}
+
+.ad-donat__lingkaran svg {
+    display: block;
+    width: 100%;
+    height: 100%;
+}
+
+/*
+ * Iringan membesar sedikit saat kursor di atasnya, jadi mata langsung tahu
+ * iringan mana yang sedang dibaca. Angka dan porsinya dibaca dari <title>
+ * di dalam lingkaran itu, tanpa pustaka JavaScript. Browser yang tidak
+ * mengenal properti geometri "stroke-width" hanya mengabaikan aturan ini.
+ */
+.ad-donat__iris {
+    transition: stroke-width 0.18s ease;
+}
+
+.ad-donat__iris:hover {
+    stroke-width: 27;
+}
+
+/* Angka total di tengah lubang donat. */
+.ad-donat__tengah {
     position: absolute;
     inset: 0;
     display: flex;
@@ -2193,66 +2766,95 @@ body.tubuh-admin {
     pointer-events: none;
 }
 
-.ad-pie__angka {
-    font-size: 1.5rem;
+.ad-donat__angka {
+    font-size: 1.6rem;
     font-weight: 800;
     line-height: 1;
     letter-spacing: -0.02em;
     font-variant-numeric: tabular-nums;
-    color: var(--ad-teks);
+    color: var(--ad-primary-dark);
 }
 
-.ad-pie__label {
-    margin-top: 0.2rem;
+.ad-donat__label {
+    margin-top: 0.25rem;
     font-size: 0.6875rem;
     font-weight: 600;
+    line-height: 1.3;
     color: var(--ad-teks-2);
 }
 
-.ad-pie__legenda {
+/*
+ * Legenda.
+ *
+ * Setiap baris memakai --ad-donat, yaitu warna iringannya sendiri, lalu
+ * warna itu dipakai lagi untuk titik dan untuk semburat latar baris. Satu
+ * variabel untuk satu warna, jadi tabel dan cincin tidak mungkin berbeda
+ * warna hanya karena salah ketik.
+ */
+.ad-donat__legenda {
     min-width: 0;
-    flex: 1;
+    width: 100%;
     display: flex;
     flex-direction: column;
-    gap: 0.375rem;
+    gap: 0.3rem;
+    margin: 0;
+    padding: 0;
+    list-style: none;
 }
 
-.ad-pie__baris {
+.ad-donat__baris {
     display: flex;
     align-items: center;
     gap: 0.6rem;
+    border-radius: 0.7rem;
+    background-color: color-mix(in oklab, var(--ad-donat) 9%, transparent);
+    padding: 0.4rem 0.6rem;
     font-size: 0.75rem;
-    color: var(--ad-teks-2);
+    transition: background-color 0.18s ease;
 }
 
-.ad-pie__titik {
-    width: 0.625rem;
-    height: 0.625rem;
+.ad-donat__baris:hover {
+    background-color: color-mix(in oklab, var(--ad-donat) 16%, transparent);
+}
+
+.ad-donat__titik {
+    width: 0.6rem;
+    height: 0.6rem;
     flex-shrink: 0;
     border-radius: 9999px;
+    background-color: var(--ad-donat);
+    box-shadow: 0 0 0 3px color-mix(in oklab, var(--ad-donat) 22%, transparent);
 }
 
-.ad-pie__nama {
+.ad-donat__nama {
     min-width: 0;
     flex: 1;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+    font-weight: 600;
     color: var(--ad-teks);
 }
 
-.ad-pie__angka-kecil {
+.ad-donat__angka-kecil {
     flex-shrink: 0;
     font-weight: 700;
     font-variant-numeric: tabular-nums;
     color: var(--ad-teks);
 }
 
-.ad-pie__porsen {
-    width: 2.75rem;
+.ad-donat__porsen {
+    min-width: 2.6rem;
     flex-shrink: 0;
     text-align: right;
+    font-weight: 700;
     font-variant-numeric: tabular-nums;
+    color: var(--ad-donat);
+}
+
+.ad-donat__kosong {
+    font-size: 0.75rem;
+    color: var(--ad-teks-2);
 }
 
 /* ---------- Form ---------- */
@@ -2392,6 +2994,474 @@ body.tubuh-admin {
     color: var(--ad-teks-2);
 }
 
+/* ================================================================
+   MATERI (halaman "Materi" di admin)
+
+   Modifier .ad-hero--materi dan semua kelas di bawahnya hanya dipakai
+   halaman tersebut. Sengaja dipisah dari kelas umum supaya hero ringkas
+   ini tidak pernah ikut mengubah hero halaman lain yang memakainya.
+   ================================================================ */
+
+/*
+ * Hero halaman ini memakai kelas .ad-seksi juga (lihat markup-nya), supaya
+ * jarak ke kartu filter di bawahnya datang dari aturan
+ * .ad-seksi + .ad-seksi. Tanpa itu hero menempel pada kartu filter, dan
+ * subjudul hero terlihat seperti menempel pada kolom cari tepat di
+ * bawahnya.
+ */
+.ad-hero--materi {
+    display: flex;
+    min-height: 9.5rem;
+    align-items: center;
+    padding: 1.25rem;
+}
+
+@media (min-width: 768px) {
+    .ad-hero--materi {
+        min-height: 10rem;
+        padding: 1.5rem 1.75rem;
+    }
+}
+
+@media (min-width: 1024px) {
+    .ad-hero--materi {
+        min-height: 10.5rem;
+        padding: 1.75rem 2.25rem;
+    }
+}
+
+.ad-hero-materi__susun {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    min-width: 0;
+    width: 100%;
+    align-items: center;
+    gap: 1.25rem;
+}
+
+.ad-hero-materi__kiri {
+    display: flex;
+    min-width: 0;
+    flex: 1;
+    align-items: center;
+    gap: 0.9rem;
+}
+
+.ad-hero-materi__ikon {
+    display: flex;
+    width: 3.25rem;
+    height: 3.25rem;
+    flex-shrink: 0;
+    align-items: center;
+    justify-content: center;
+    border-radius: 1.1rem;
+    background-color: rgba(255, 255, 255, 0.85);
+    box-shadow: 0 12px 26px -18px rgba(76, 47, 179, 0.9);
+    color: var(--ad-primary);
+}
+
+.ad-hero-materi__judul {
+    font-size: clamp(1.5rem, 4.6vw, 1.95rem);
+    font-weight: 800;
+    line-height: 1.15;
+    letter-spacing: -0.02em;
+    color: var(--ad-primary-dark);
+}
+
+.ad-hero-materi__sub {
+    margin-top: 0.5rem;
+    max-width: 34rem;
+    font-size: 0.8125rem;
+    line-height: 1.7;
+    color: color-mix(in oklab, var(--ad-teks) 72%, transparent);
+}
+
+.ad-hero-materi__kanan {
+    display: none;
+    flex-shrink: 0;
+    align-items: center;
+    gap: 1rem;
+}
+
+@media (min-width: 640px) {
+    .ad-hero-materi__kanan {
+        display: flex;
+    }
+}
+
+.ad-hero-materi__kutip {
+    max-width: 8.5rem;
+    font-family: var(--font-display);
+    font-size: 0.875rem;
+    font-weight: 600;
+    font-style: italic;
+    line-height: 1.5;
+    color: var(--ad-primary-dark);
+}
+
+/* Lebarnya dikunci supaya ilustrasi tidak pernah mendorong container dan
+ * menutupi judul di sebelah kirinya. */
+.ad-hero-materi__ilustrasi {
+    width: 8.5rem;
+    max-width: 34%;
+}
+
+@media (min-width: 1024px) {
+    .ad-hero-materi__ilustrasi {
+        width: 10.5rem;
+    }
+}
+
+.ad-hero-materi__ilustrasi svg {
+    display: block;
+    width: 100%;
+    height: auto;
+}
+
+/* ---------- Panel saring (kartu putih di bawah hero) ---------- */
+.ad-saring {
+    position: relative;
+    flex-shrink: 0;
+}
+
+.ad-saring__tombol,
+.ad-titik__tombol {
+    display: inline-flex;
+    min-height: 2.5rem;
+    align-items: center;
+    justify-content: center;
+    gap: 0.45rem;
+    border-radius: 9999px;
+    border: 1px solid var(--ad-garis);
+    background-color: var(--ad-white);
+    padding: 0.55rem 1rem;
+    font-size: 0.8125rem;
+    font-weight: 700;
+    color: var(--ad-teks);
+    cursor: pointer;
+    list-style: none;
+    transition:
+        background-color 0.18s ease,
+        border-color 0.18s ease,
+        color 0.18s ease;
+}
+
+.ad-saring__tombol::-webkit-details-marker,
+.ad-titik__tombol::-webkit-details-marker {
+    display: none;
+}
+
+/* Penanda "ada filter aktif": tombolnya jadi ungu muda seperti tab aktif,
+ * bukan tombol netral, supaya halaman ini selalu terlihat sudah disaring. */
+.ad-saring[open] .ad-saring__tombol,
+.ad-saring__tombol--ada {
+    border-color: transparent;
+    background-color: var(--ad-primary-light);
+    color: var(--ad-primary-dark);
+}
+
+.ad-saring__tombol:hover {
+    border-color: color-mix(in oklab, var(--ad-primary) 45%, var(--ad-garis));
+    color: var(--ad-primary);
+}
+
+.ad-saring__panel {
+    position: absolute;
+    z-index: 40;
+    top: calc(100% + 0.5rem);
+    left: 0;
+    width: min(20rem, calc(100vw - 2rem));
+    border-radius: 1.1rem;
+    border: 1px solid var(--ad-garis);
+    background-color: var(--ad-white);
+    box-shadow: var(--ad-bayangan-naik);
+    padding: 1rem;
+}
+
+.ad-saring__grup + .ad-saring__grup {
+    margin-top: 0.9rem;
+    padding-top: 0.9rem;
+    border-top: 1px solid var(--ad-garis);
+}
+
+.ad-saring__label {
+    display: block;
+    margin-bottom: 0.4rem;
+    font-size: 0.6875rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--ad-teks-2);
+}
+
+/* ---------- Menu tiga titik ---------- */
+.ad-titik {
+    position: relative;
+    flex-shrink: 0;
+}
+
+.ad-titik__tombol {
+    min-height: 2.15rem;
+    width: 2.15rem;
+    padding: 0;
+    font-size: 1rem;
+    line-height: 1;
+}
+
+.ad-titik[open] .ad-titik__tombol {
+    border-color: transparent;
+    background-color: var(--ad-primary-light);
+    color: var(--ad-primary-dark);
+}
+
+.ad-titik__menu {
+    position: absolute;
+    z-index: 40;
+    top: calc(100% + 0.4rem);
+    right: 0;
+    width: 10.5rem;
+    border-radius: 0.9rem;
+    border: 1px solid var(--ad-garis);
+    background-color: var(--ad-white);
+    box-shadow: var(--ad-bayangan-naik);
+    padding: 0.3rem;
+}
+
+.ad-titik__item {
+    display: flex;
+    width: 100%;
+    align-items: center;
+    gap: 0.5rem;
+    border-radius: 0.65rem;
+    padding: 0.5rem 0.65rem;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    color: var(--ad-teks);
+    text-align: left;
+    transition:
+        background-color 0.15s ease,
+        color 0.15s ease;
+}
+
+.ad-titik__item:hover {
+    background-color: var(--ad-latar);
+}
+
+.ad-titik__item svg {
+    width: 0.95rem;
+    height: 0.95rem;
+    flex-shrink: 0;
+    color: var(--ad-teks-2);
+}
+
+.ad-titik__item--bahaya {
+    color: #c2455f;
+}
+
+.ad-titik__item--bahaya:hover {
+    background-color: rgba(233, 107, 131, 0.1);
+}
+
+.ad-titik__item--bahaya svg {
+    color: var(--ad-bahaya);
+}
+
+/* ---------- Kartu filter + pencarian ----------
+ * Hanya ruang dalam kartunya yang ditambah. .ad-alat (yang dipakai halaman
+ * admin lain) tidak diubah, jadi toolbar halaman lain tidak ikut bergeser. */
+.ad-alat-kotak {
+    padding: 0.7rem 0.75rem;
+}
+
+@media (min-width: 640px) {
+    .ad-alat-kotak {
+        padding: 0.8rem 0.9rem;
+    }
+}
+
+@media (min-width: 1024px) {
+    .ad-alat-kotak {
+        padding: 0.85rem 1rem;
+    }
+}
+
+/* ---------- Paginasi ----------
+ * Satu baris di dalam kartu putih: jumlah data di kiri, tombol halaman di
+ * kanan. Lebarnya sama dengan daftar di atasnya. */
+.ad-paginasi {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    padding: 0.85rem 1.1rem;
+}
+
+.ad-paginasi__info {
+    font-size: 0.8125rem;
+    font-variant-numeric: tabular-nums;
+    color: var(--ad-teks-2);
+}
+
+/*
+ * View pagination::tailwind membawa margin-top sendiri (mt-8) karena biasanya
+ * dipakai sendirian di halaman panjang. Di dalam kartu ini margin itu cuma
+ * jadi jarak yang aneh, jadi dinetralkan di sini — bukan dengan mengubah
+ * view bersama yang dipakai semua halaman.
+ */
+.ad-paginasi nav[role="navigation"] {
+    margin-top: 0;
+}
+
+/* ---------- Kartu materi ----------
+ * Satu kolom selebar penuh: status dan tanggal duduk di kolom kanan,
+ * sementara judul, pembuat, dan kategori mengisi kolom kiri. */
+.ad-materi-kartu {
+    position: relative;
+    display: flex;
+    min-width: 0;
+    align-items: flex-start;
+    gap: 0.9rem;
+    border-radius: 1.1rem;
+    border: 1px solid var(--ad-garis);
+    background-color: var(--ad-white);
+    box-shadow: var(--ad-bayangan);
+    padding: 0.95rem 1.1rem;
+    transition:
+        border-color 0.18s ease,
+        box-shadow 0.18s ease;
+}
+
+.ad-materi-kartu:hover,
+.ad-materi-kartu:focus-within {
+    border-color: color-mix(in oklab, var(--ad-primary) 40%, var(--ad-garis));
+    box-shadow: var(--ad-bayangan-naik);
+}
+
+/* Wadah daftar: satu kolom, jarak antar kartu seragam. */
+.ad-materi__daftar {
+    display: flex;
+    min-width: 0;
+    flex-direction: column;
+    gap: 0.6rem;
+}
+
+.ad-materi-kartu__ikon {
+    display: flex;
+    width: 2.6rem;
+    height: 2.6rem;
+    flex-shrink: 0;
+    align-items: center;
+    justify-content: center;
+    border-radius: 0.95rem;
+    background-color: var(--ad-primary-light);
+    color: var(--ad-primary);
+}
+
+.ad-materi-kartu__isi {
+    min-width: 0;
+    flex: 1;
+}
+
+.ad-materi-kartu__kepala {
+    display: flex;
+    min-width: 0;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.35rem 0.5rem;
+}
+
+.ad-materi-kartu__tipe {
+    flex-shrink: 0;
+    border-radius: 9999px;
+    background-color: var(--ad-primary-light);
+    padding: 0.15rem 0.55rem;
+    font-size: 0.625rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--ad-primary-dark);
+}
+
+.ad-materi-kartu__judul {
+    min-width: 0;
+    font-size: 0.9375rem;
+    font-weight: 700;
+    line-height: 1.35;
+    letter-spacing: -0.01em;
+    color: var(--ad-teks);
+    overflow-wrap: anywhere;
+}
+
+.ad-materi-kartu__pembuat {
+    display: flex;
+    min-width: 0;
+    align-items: center;
+    gap: 0.4rem;
+    margin-top: 0.5rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: color-mix(in oklab, var(--ad-teks) 78%, transparent);
+}
+
+.ad-materi-kartu__pembuat span:last-child {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.ad-materi-kartu__avatar {
+    display: flex;
+    width: 1.15rem;
+    height: 1.15rem;
+    flex-shrink: 0;
+    align-items: center;
+    justify-content: center;
+    border-radius: 9999px;
+    background-image: linear-gradient(135deg, var(--a, var(--ad-primary)), var(--a-gelap, var(--ad-primary-dark)));
+    color: #fff;
+    font-size: 0.5rem;
+    font-weight: 700;
+    line-height: 1;
+}
+
+.ad-materi-kartu__meta,
+.ad-materi-kartu__tanggal {
+    margin-top: 0.3rem;
+    font-size: 0.75rem;
+    color: var(--ad-teks-2);
+}
+
+.ad-materi-kartu__kanan {
+    display: flex;
+    flex-shrink: 0;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 0.5rem;
+}
+
+/* Di layar sempit kolom kanan turun ke baris sendiri supaya tidak ada teks
+ * yang terpotong dan tombol tidak keluar dari kartu. */
+@media (max-width: 639px) {
+    .ad-materi-kartu {
+        flex-wrap: wrap;
+    }
+
+    .ad-materi-kartu__kanan {
+        width: 100%;
+        flex-direction: row;
+        align-items: center;
+        justify-content: space-between;
+    }
+}
+
+.ad-materi-kartu__aksi {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+}
+
 /* ---------- Konten ---------- */
 .ad-isi-materi {
     max-height: 24rem;
@@ -2429,6 +3499,1448 @@ body.tubuh-admin {
     color: var(--ad-primary);
 }
 
+/* ============================================================
+ * HALAMAN VERIFIKASI (admin/verifikasi)
+ *
+ * Hero, baris filter, daftar konten di kiri, dan panel review di
+ * kanan. Semua awalan memakai "ad-vf-" supaya tidak menabrak
+ * komponen lain yang sudah ada.
+ * ============================================================ */
+
+.ad-vf {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+/* ---------- Hero ---------- */
+
+.ad-vf-hero {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1.5rem;
+    min-height: 160px;
+    overflow: hidden;
+    padding: 1.5rem 1.75rem;
+    border: 1px solid #ddd2ff;
+    border-radius: 20px;
+    background:
+        radial-gradient(circle at 88% 18%, rgba(255, 255, 255, 0.35), transparent 42%),
+        linear-gradient(118deg, #6d4aff 0%, #7a5bff 46%, #9d8bff 100%);
+    color: #fff;
+    box-shadow: 0 14px 30px -22px rgba(76, 47, 179, 0.9);
+}
+
+.ad-vf-hero__teks {
+    position: relative;
+    z-index: 2;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    min-width: 0;
+}
+
+.ad-vf-hero__ikon {
+    display: grid;
+    place-items: center;
+    flex-shrink: 0;
+    width: 3.1rem;
+    height: 3.1rem;
+    border: 1px solid rgba(255, 255, 255, 0.4);
+    border-radius: 16px;
+    background-color: rgba(255, 255, 255, 0.18);
+    color: #fff;
+}
+
+.ad-vf-hero__lencana {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: #e4dbff;
+}
+
+.ad-vf-hero__judul {
+    margin-top: 0.2rem;
+    font-size: clamp(1.45rem, 2.3vw, 1.95rem);
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    line-height: 1.15;
+}
+
+.ad-vf-hero__sub {
+    margin-top: 0.35rem;
+    max-width: 46ch;
+    font-size: 0.875rem;
+    line-height: 1.55;
+    color: rgba(255, 255, 255, 0.88);
+}
+
+.ad-vf-hero__kanan {
+    position: relative;
+    z-index: 2;
+    display: flex;
+    align-items: center;
+    gap: 1.25rem;
+    flex-shrink: 0;
+}
+
+/* Cover di sisi kanan hero: gambar polos, sengaja tanpa bingkai atau
+ * bayangan supaya tidak terbaca sebagai kartu terpisah. */
+.ad-vf-hero__ilustrasi {
+    flex-shrink: 0;
+    width: 235px;
+}
+
+.ad-vf-hero__ilustrasi img {
+    display: block;
+    width: 100%;
+    height: auto;
+}
+
+/* ---------- Baris filter ---------- */
+
+.ad-vf-alat {
+    display: flex;
+    flex-direction: column;
+    gap: 0.9rem;
+    padding: 1rem 1.1rem;
+    border: 1px solid var(--ad-garis);
+    border-radius: 18px;
+    background-color: #fff;
+    box-shadow: 0 8px 24px -24px rgba(41, 36, 92, 0.7);
+}
+
+.ad-vf-alat__baris {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.9rem;
+}
+
+.ad-vf-alat__jenis {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem;
+    min-width: 0;
+}
+
+.ad-vf-alat__aksi {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-left: auto;
+}
+
+.ad-vf-alat__tombol {
+    position: relative;
+    display: inline-grid;
+    place-items: center;
+    width: 2.3rem;
+    height: 2.3rem;
+    border: 1px solid var(--ad-garis);
+    border-radius: 11px;
+    background-color: #fff;
+    color: var(--ad-teks-2);
+    cursor: pointer;
+    transition: 0.18s ease;
+}
+
+.ad-vf-alat__tombol:hover {
+    border-color: #cfc4ff;
+    background-color: var(--ad-primary-light);
+    color: var(--ad-primary);
+}
+
+.ad-vf-alat__tombol[aria-expanded="true"] {
+    border-color: var(--ad-primary);
+    background-color: var(--ad-primary);
+    color: #fff;
+}
+
+.ad-vf-alat__titik {
+    position: absolute;
+    top: 0.3rem;
+    right: 0.35rem;
+    width: 0.42rem;
+    height: 0.42rem;
+    border-radius: 9999px;
+    background-color: var(--ad-peringatan);
+    box-shadow: 0 0 0 2px #fff;
+}
+
+.ad-vf-status {
+    display: flex;
+    align-items: center;
+    gap: 0.55rem;
+    min-width: 0;
+}
+
+.ad-vf-status__label {
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--ad-teks-2);
+}
+
+.ad-vf-status__pil {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+}
+
+.ad-vf-pil {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.35rem 0.75rem;
+    border: 1px solid var(--ad-garis);
+    border-radius: 9999px;
+    background-color: #fff;
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--ad-teks-2);
+    cursor: pointer;
+    transition: 0.18s ease;
+}
+
+.ad-vf-pil b {
+    font-size: 0.72rem;
+    font-variant-numeric: tabular-nums;
+    padding: 0 0.3rem;
+    border-radius: 9999px;
+    background-color: #f1eefc;
+    color: var(--ad-teks);
+}
+
+.ad-vf-pil:hover {
+    transform: translateY(-1px);
+    border-color: #cfc4ff;
+    color: var(--ad-primary);
+}
+
+/* "Menunggu" sengaja dibuat soft: kuning muda yang tenang, bukan kuning
+ * solid, supaya baris dan pil tidak teriak dibanding status lain. */
+.ad-vf-pil--menunggu {
+    border-color: #f7e6d0;
+    background-color: #fffaf3;
+    color: #a1721f;
+}
+
+.ad-vf-pil--menunggu b {
+    background-color: #f7ecdd;
+    color: #a1721f;
+}
+
+.ad-vf-pil--disetujui {
+    border-color: #bfe6d5;
+    background-color: #f0faf5;
+    color: #1d7f57;
+}
+
+.ad-vf-pil--disetujui b {
+    background-color: #d8f2e7;
+    color: #1d7f57;
+}
+
+.ad-vf-pil--ditolak {
+    border-color: #f4c7d0;
+    background-color: #fdf1f4;
+    color: #b3405a;
+}
+
+.ad-vf-pil--ditolak b {
+    background-color: #fbe1e7;
+    color: #b3405a;
+}
+
+.ad-vf-pil--aktif {
+    border-color: transparent;
+    box-shadow: 0 4px 12px -6px rgba(41, 36, 92, 0.5);
+}
+
+/* Status aktif "Menunggu": isian soft, bukan blok kuning pekat. */
+.ad-vf-pil--menunggu.ad-vf-pil--aktif {
+    border-color: #f2cf9d;
+    background-color: #ffefd6;
+    color: #8f6010;
+    box-shadow: 0 4px 12px -6px rgba(244, 163, 64, 0.75);
+}
+
+.ad-vf-pil--menunggu.ad-vf-pil--aktif b,
+.ad-vf-pil--disetujui.ad-vf-pil--aktif b,
+.ad-vf-pil--ditolak.ad-vf-pil--aktif b {
+    background-color: rgba(255, 255, 255, 0.28);
+    color: #fff;
+}
+
+/* Urutan penting: setelah aturan gabungan di atas, supaya angka di dalam
+ * pil "Menunggu" aktif tetap gelap di atas isian soft-nya. */
+.ad-vf-pil--menunggu.ad-vf-pil--aktif b {
+    background-color: #fbe1b8;
+    color: #8f6010;
+}
+
+.ad-vf-pil--disetujui.ad-vf-pil--aktif {
+    background-color: var(--ad-sukses);
+    color: #fff;
+}
+
+.ad-vf-pil--ditolak.ad-vf-pil--aktif {
+    background-color: var(--ad-bahaya);
+    color: #fff;
+}
+
+/* Filter tambahan: judul, pencarian, kategori. */
+
+.ad-vf-saring:not([hidden]) {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+    gap: 0.85rem;
+    padding-top: 0.9rem;
+    border-top: 1px dashed var(--ad-garis);
+}
+
+.ad-vf-saring__field {
+    min-width: 0;
+}
+
+.ad-vf-saring__cari {
+    margin-top: 0.4rem;
+    width: 100%;
+}
+
+.ad-vf-saring .ad-pilih__bungkus {
+    width: 100%;
+}
+
+.ad-vf-saring .ad-pilih {
+    width: 100%;
+    margin-top: 0.4rem;
+}
+
+.ad-vf-saring__aksi {
+    display: flex;
+    align-items: flex-end;
+    gap: 0.6rem;
+    grid-column: 1 / -1;
+}
+
+/* ---------- Grid daftar + panel ---------- */
+
+.ad-vf-konten {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 1.25rem;
+    align-items: start;
+}
+
+/* ---------- Kolom kiri: daftar ---------- */
+
+.ad-vf-daftar {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    overflow: hidden;
+    border: 1px solid var(--ad-garis);
+    border-radius: 18px;
+    background-color: #fff;
+    box-shadow: 0 10px 26px -26px rgba(41, 36, 92, 0.8);
+}
+
+.ad-vf-daftar__kepala {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 1rem 1.15rem;
+    border-bottom: 1px solid var(--ad-garis);
+    background-color: #fbfaff;
+}
+
+.ad-vf-daftar__judul {
+    font-size: 1rem;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    color: var(--ad-teks);
+}
+
+.ad-vf-daftar__sub {
+    margin-top: 0.15rem;
+    font-size: 0.78rem;
+    color: var(--ad-teks-2);
+}
+
+.ad-vf-daftar__badan {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+.ad-vf-daftar__badan .ad-kosong {
+    padding: 2.5rem 1.25rem;
+}
+
+.ad-vf-daftar__kaki {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    padding: 0.85rem 1.15rem;
+    border-top: 1px solid var(--ad-garis);
+    background-color: #fbfaff;
+}
+
+.ad-vf-daftar__kaki nav {
+    margin-top: 0;
+}
+
+.ad-vf-daftar__hitung {
+    font-size: 0.78rem;
+    color: var(--ad-teks-2);
+    font-variant-numeric: tabular-nums;
+}
+
+/* Satu baris konten. */
+
+.ad-vf-item {
+    display: flex;
+    align-items: center;
+    gap: 0.9rem;
+    min-width: 0;
+    padding: 0.9rem 1.15rem;
+    border-bottom: 1px solid var(--ad-garis);
+    background-color: #fff;
+    text-decoration: none;
+    color: inherit;
+    cursor: pointer;
+    transition:
+        background-color 0.18s ease,
+        box-shadow 0.18s ease;
+}
+
+.ad-vf-item:last-child {
+    border-bottom: 0;
+}
+
+.ad-vf-item:hover {
+    background-color: #faf9ff;
+}
+
+.ad-vf-item--aktif {
+    background-color: var(--ad-primary-light);
+    box-shadow: inset 3px 0 0 var(--ad-primary);
+}
+
+.ad-vf-item:focus-visible {
+    outline: 2px solid var(--ad-primary);
+    outline-offset: -2px;
+}
+
+.ad-vf-item__ikon {
+    display: grid;
+    place-items: center;
+    flex-shrink: 0;
+    width: 2.5rem;
+    height: 2.5rem;
+    border-radius: 13px;
+}
+
+.ad-vf-item__ikon--materi {
+    background-color: #ede7ff;
+    color: var(--ad-primary);
+}
+
+.ad-vf-item__ikon--quiz {
+    background-color: #e4f6ee;
+    color: #25916a;
+}
+
+.ad-vf-item__isi {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    min-width: 0;
+    flex: 1;
+}
+
+.ad-vf-item__baris {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0.5rem;
+    min-width: 0;
+}
+
+.ad-vf-item__jenis {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.1rem 0.45rem;
+    border-radius: 9999px;
+    font-size: 0.65rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+}
+
+.ad-vf-item__jenis--materi {
+    background-color: #ede7ff;
+    color: var(--ad-primary);
+}
+
+.ad-vf-item__jenis--quiz {
+    background-color: #e4f6ee;
+    color: #25916a;
+}
+
+.ad-vf-item__judul {
+    min-width: 0;
+    font-size: 0.94rem;
+    font-weight: 650;
+    line-height: 1.35;
+    color: var(--ad-teks);
+}
+
+.ad-vf-item__meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem 0.85rem;
+    min-width: 0;
+}
+
+.ad-vf-item__meta-butir {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    font-size: 0.75rem;
+    color: var(--ad-teks-2);
+}
+
+.ad-vf-item__meta-butir b {
+    font-weight: 600;
+    color: var(--ad-teks);
+}
+
+.ad-vf-item__kanan {
+    display: flex;
+    align-items: center;
+    gap: 0.7rem;
+    flex-shrink: 0;
+}
+
+/* ---------- Kolom kanan: panel review ---------- */
+
+/* Panel review hanya muncul setelah ada baris yang dipilih: sebelum itu
+ * daftar konten memakai lebar penuh. */
+.ad-vf-panel {
+    display: none;
+    min-width: 0;
+}
+
+.ad-vf--dengan-panel .ad-vf-panel {
+    display: block;
+}
+
+/* Kartu panel masuk dari kanan, dan memudar saat ditutup. Animasi masuk
+ * dikunci ke kartu berisi (id terisi) supaya kartu kosong tidak ikut
+ * menyala saat kolom panel baru dibuka. */
+.ad-vf--dengan-panel .ad-vf-panel__kartu:not([data-vf-id=""]) {
+    animation: ad-vf-panel-masuk 0.34s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.ad-vf--keluar .ad-vf-panel__kartu {
+    animation: ad-vf-panel-keluar 0.34s ease-in both;
+}
+
+@keyframes ad-vf-panel-masuk {
+    from {
+        opacity: 0;
+        transform: translateX(18px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+@keyframes ad-vf-panel-keluar {
+    from {
+        opacity: 1;
+        transform: translateX(0);
+    }
+
+    to {
+        opacity: 0;
+        transform: translateX(18px);
+    }
+}
+
+.ad-vf-panel__kartu {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    overflow: hidden;
+    border: 1px solid var(--ad-garis);
+    border-radius: 18px;
+    background-color: #fff;
+    box-shadow: 0 10px 26px -26px rgba(41, 36, 92, 0.8);
+}
+
+.ad-vf-panel__kartu--kosong {
+    background-color: #fcfbff;
+}
+
+.ad-vf-panel__kepala {
+    display: flex;
+    align-items: center;
+    gap: 0.7rem;
+    padding: 0.95rem 1.1rem;
+    border-bottom: 1px solid var(--ad-garis);
+    background-color: #fbfaff;
+}
+
+.ad-vf-panel__panah,
+.ad-vf-panel__tutup {
+    display: inline-grid;
+    place-items: center;
+    flex-shrink: 0;
+    width: 2rem;
+    height: 2rem;
+    border: 1px solid var(--ad-garis);
+    border-radius: 10px;
+    background-color: #fff;
+    color: var(--ad-teks-2);
+    cursor: pointer;
+    transition: 0.18s ease;
+}
+
+.ad-vf-panel__panah:hover,
+.ad-vf-panel__tutup:hover {
+    border-color: #cfc4ff;
+    background-color: var(--ad-primary-light);
+    color: var(--ad-primary);
+}
+
+.ad-vf-panel__panah {
+    display: none;
+}
+
+.ad-vf-panel__kepala-teks {
+    min-width: 0;
+    flex: 1;
+}
+
+.ad-vf-panel__kepala-jenis {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--ad-primary);
+}
+
+.ad-vf-panel__kepala-judul {
+    margin-top: 0.15rem;
+    font-size: 1.02rem;
+    font-weight: 700;
+    line-height: 1.3;
+    color: var(--ad-teks);
+    overflow-wrap: anywhere;
+}
+
+.ad-vf-panel__tanda {
+    margin-left: auto;
+    flex-shrink: 0;
+}
+
+.ad-vf-panel__badan {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    min-width: 0;
+    padding: 1.05rem 1.1rem;
+}
+
+.ad-vf-panel__badan .ad-kosong {
+    padding: 1.75rem 0.5rem;
+}
+
+.ad-vf-panel__identitas {
+    display: flex;
+    gap: 0.8rem;
+    min-width: 0;
+}
+
+.ad-vf-panel__identitas-ikon {
+    display: grid;
+    place-items: center;
+    flex-shrink: 0;
+    width: 2.75rem;
+    height: 2.75rem;
+    border-radius: 14px;
+    color: #fff;
+}
+
+.ad-vf-panel__identitas-teks {
+    min-width: 0;
+}
+
+.ad-vf-panel__identitas-judul {
+    font-size: 1rem;
+    font-weight: 700;
+    line-height: 1.35;
+    color: var(--ad-teks);
+    overflow-wrap: anywhere;
+}
+
+.ad-vf-panel__chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem;
+    margin-top: 0.45rem;
+}
+
+.ad-vf-panel__chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.28rem;
+    padding: 0.18rem 0.5rem;
+    border: 1px solid var(--ad-garis);
+    border-radius: 9999px;
+    background-color: #f6f4ff;
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: var(--ad-teks-2);
+}
+
+.ad-vf-panel__chip svg {
+    color: var(--ad-primary);
+}
+
+/* Tab Pratinjau / Info Detail. */
+
+.ad-vf-tab {
+    display: inline-flex;
+    gap: 0.25rem;
+    align-self: flex-start;
+    padding: 0.25rem;
+    border: 1px solid var(--ad-garis);
+    border-radius: 9999px;
+    background-color: #f4f1fe;
+}
+
+.ad-vf-tab__tombol {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.35rem 0.8rem;
+    border: 0;
+    border-radius: 9999px;
+    background-color: transparent;
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--ad-teks-2);
+    cursor: pointer;
+    transition: 0.18s ease;
+}
+
+.ad-vf-tab__tombol:hover {
+    color: var(--ad-primary);
+}
+
+.ad-vf-tab__tombol--aktif {
+    background-color: #fff;
+    color: var(--ad-primary);
+    box-shadow: 0 3px 10px -6px rgba(41, 36, 92, 0.7);
+}
+
+.ad-vf-panel__isi {
+    display: flex;
+    flex-direction: column;
+    gap: 0.9rem;
+    min-width: 0;
+}
+
+/* Ganti tab (Pratinjau / Info Detail) tidak langsung terbit: sedikit
+ * naik + memudar supaya mata mengikuti perpindahannya. */
+.ad-vf-panel__isi:not([hidden]) {
+    animation: ad-vf-isi-masuk 0.24s ease both;
+}
+
+@keyframes ad-vf-isi-masuk {
+    from {
+        opacity: 0;
+        transform: translateY(6px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Pratinjau materi. */
+
+.ad-vf-seksi {
+    min-width: 0;
+}
+
+.ad-vf-seksi__judul {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.88rem;
+    font-weight: 700;
+    line-height: 1.4;
+    color: var(--ad-teks);
+    overflow-wrap: anywhere;
+}
+
+.ad-vf-seksi__nomor {
+    display: grid;
+    place-items: center;
+    flex-shrink: 0;
+    width: 1.4rem;
+    height: 1.4rem;
+    border-radius: 9999px;
+    background-color: var(--ad-primary);
+    font-size: 0.68rem;
+    font-weight: 700;
+    color: #fff;
+    font-variant-numeric: tabular-nums;
+}
+
+.ad-vf-seksi__isi {
+    margin-top: 0.5rem;
+    padding-left: 1.9rem;
+    min-width: 0;
+}
+
+.ad-vf-seksi__isi > * + * {
+    margin-top: 0.6rem;
+}
+
+.ad-vf-seksi__kosong {
+    margin-top: 0.5rem;
+    padding: 0.65rem 0.8rem;
+    border: 1px dashed var(--ad-garis);
+    border-radius: 10px;
+    background-color: #fbfaff;
+    font-size: 0.78rem;
+    color: var(--ad-teks-2);
+}
+
+/* Blok kode dengan nomor baris. */
+
+.ad-vf-kode {
+    display: flex;
+    min-width: 0;
+    overflow: hidden;
+    border: 1px solid #333a4e;
+    border-radius: 12px;
+    background-color: #252b3a;
+}
+
+.ad-vf-kode__nomor {
+    flex-shrink: 0;
+    margin: 0;
+    padding: 0.75rem 0.5rem;
+    background-color: #1e2330;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 0.76rem;
+    line-height: 1.65;
+    text-align: right;
+    color: #79839f;
+    user-select: none;
+    overflow: hidden;
+}
+
+.ad-vf-kode__isi {
+    flex: 1;
+    min-width: 0;
+    margin: 0;
+    padding: 0.75rem 0.9rem;
+    overflow-x: auto;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 0.76rem;
+    line-height: 1.65;
+    color: #ddd6fe;
+    tab-size: 4;
+}
+
+.ad-vf-kode__isi code {
+    font: inherit;
+    white-space: pre;
+}
+
+/* Pratinjau quiz. */
+
+.ad-vf-soal {
+    display: flex;
+    flex-direction: column;
+    gap: 0.7rem;
+    min-width: 0;
+}
+
+.ad-vf-soal__item {
+    padding: 0.75rem 0.85rem;
+    border: 1px solid var(--ad-garis);
+    border-radius: 13px;
+    background-color: #fbfaff;
+    min-width: 0;
+}
+
+.ad-vf-soal__kepala {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    min-width: 0;
+}
+
+.ad-vf-soal__nomor {
+    display: grid;
+    place-items: center;
+    flex-shrink: 0;
+    width: 1.35rem;
+    height: 1.35rem;
+    border-radius: 9999px;
+    background-color: var(--ad-primary-light);
+    font-size: 0.68rem;
+    font-weight: 700;
+    color: var(--ad-primary);
+    font-variant-numeric: tabular-nums;
+}
+
+.ad-vf-soal__tipe {
+    padding: 0.1rem 0.45rem;
+    border-radius: 9999px;
+    background-color: #eef1ff;
+    font-size: 0.64rem;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: #4a5bb8;
+}
+
+.ad-vf-soal__teks {
+    margin-top: 0.5rem;
+    font-size: 0.85rem;
+    line-height: 1.6;
+    color: var(--ad-teks);
+    overflow-wrap: anywhere;
+}
+
+.ad-vf-soal__kunci {
+    margin-top: 0.55rem;
+    padding: 0.5rem 0.65rem;
+    border: 1px dashed #bfe6d5;
+    border-radius: 10px;
+    background-color: #f0faf5;
+    font-size: 0.8rem;
+    color: #1d7f57;
+    overflow-wrap: anywhere;
+}
+
+.ad-vf-soal__kunci-label {
+    display: block;
+    margin-bottom: 0.15rem;
+    font-size: 0.64rem;
+    font-weight: 700;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+}
+
+.ad-vf-pilihan {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    margin-top: 0.55rem;
+}
+
+.ad-vf-pilihan__item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    min-width: 0;
+    padding: 0.4rem 0.55rem;
+    border: 1px solid var(--ad-garis);
+    border-radius: 10px;
+    background-color: #fff;
+    font-size: 0.8rem;
+    color: var(--ad-teks);
+}
+
+.ad-vf-pilihan__item--benar {
+    border-color: #9ad9bf;
+    background-color: #eafaf3;
+    color: #14684a;
+    font-weight: 600;
+}
+
+.ad-vf-pilihan__huruf {
+    display: grid;
+    place-items: center;
+    flex-shrink: 0;
+    width: 1.3rem;
+    height: 1.3rem;
+    border-radius: 9999px;
+    background-color: #f1eefc;
+    font-size: 0.68rem;
+    font-weight: 700;
+    color: var(--ad-teks-2);
+}
+
+.ad-vf-pilihan__item--benar .ad-vf-pilihan__huruf {
+    background-color: var(--ad-sukses);
+    color: #fff;
+}
+
+.ad-vf-pilihan__teks {
+    min-width: 0;
+    overflow-wrap: anywhere;
+}
+
+.ad-vf-pilihan__centang {
+    margin-left: auto;
+    flex-shrink: 0;
+    color: var(--ad-sukses);
+}
+
+/* Tab Info Detail. */
+
+.ad-vf-info {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    border: 1px solid var(--ad-garis);
+    border-radius: 13px;
+    overflow: hidden;
+}
+
+.ad-vf-info__baris {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.35fr);
+    gap: 0.6rem;
+    padding: 0.55rem 0.8rem;
+    border-bottom: 1px solid var(--ad-garis);
+    font-size: 0.8rem;
+}
+
+.ad-vf-info__baris:last-child {
+    border-bottom: 0;
+}
+
+.ad-vf-info__baris dt {
+    color: var(--ad-teks-2);
+}
+
+.ad-vf-info__baris dd {
+    margin: 0;
+    font-weight: 600;
+    color: var(--ad-teks);
+    overflow-wrap: anywhere;
+}
+
+.ad-vf-catatan {
+    padding: 0.7rem 0.8rem;
+    border: 1px solid var(--ad-garis);
+    border-left-width: 3px;
+    border-radius: 12px;
+    background-color: #fbfaff;
+}
+
+.ad-vf-catatan__judul {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+    color: var(--ad-teks-2);
+}
+
+.ad-vf-catatan__isi {
+    margin-top: 0.35rem;
+    font-size: 0.82rem;
+    line-height: 1.6;
+    color: var(--ad-teks);
+    white-space: pre-line;
+    overflow-wrap: anywhere;
+}
+
+.ad-vf-catatan--netral {
+    border-left-color: var(--ad-info);
+    background-color: #f4f7ff;
+}
+
+.ad-vf-catatan--netral .ad-vf-catatan__judul {
+    color: #3f6bc4;
+}
+
+.ad-vf-catatan--pengajuan {
+    border-left-color: var(--ad-peringatan);
+    background-color: #fff8ef;
+}
+
+.ad-vf-catatan--pengajuan .ad-vf-catatan__judul {
+    color: #a86412;
+}
+
+.ad-vf-catatan--tolak {
+    border-left-color: var(--ad-bahaya);
+    background-color: #fdf2f5;
+}
+
+.ad-vf-catatan--tolak .ad-vf-catatan__judul {
+    color: #b3405a;
+}
+
+.ad-vf-petunjuk {
+    font-size: 0.78rem;
+    line-height: 1.6;
+    color: var(--ad-teks-2);
+}
+
+/* Kaki panel: tombol keputusan. */
+
+.ad-vf-panel__kaki {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.6rem;
+    padding: 0.9rem 1.1rem;
+    border-top: 1px solid var(--ad-garis);
+    background-color: #fbfaff;
+}
+
+.ad-vf-panel__kaki:empty {
+    display: none;
+    padding: 0;
+    border-top: 0;
+}
+
+.ad-vf-panel__kaki .ad-tombol {
+    flex: 1;
+    min-width: 7rem;
+    justify-content: center;
+}
+
+.ad-vf-panel__kaki-ket {
+    flex-basis: 100%;
+    font-size: 0.75rem;
+    color: var(--ad-teks-2);
+}
+
+/* ---------- Dialog keputusan ---------- */
+
+.ad-vf-dialog__ikon {
+    display: grid;
+    place-items: center;
+    flex-shrink: 0;
+    width: 2.5rem;
+    height: 2.5rem;
+    border-radius: 9999px;
+}
+
+.ad-vf-dialog__ikon--sukses {
+    background-color: #e4f6ee;
+    color: var(--ad-sukses);
+}
+
+.ad-vf-dialog__ikon--bahaya {
+    background-color: #fbe1e7;
+    color: var(--ad-bahaya);
+}
+
+.ad-vf-dialog-form {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-height: 0;
+}
+
+.ad-vf-dialog-form .ad-dialog__badan {
+    flex: 1;
+    overflow-y: auto;
+}
+
+/* ---------- Toast ---------- */
+
+.ad-vf-toast {
+    position: fixed;
+    right: 1.25rem;
+    bottom: 1.25rem;
+    z-index: 70;
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+    max-width: min(24rem, calc(100vw - 2.5rem));
+    padding: 0.8rem 0.9rem;
+    border: 1px solid #bfe6d5;
+    border-radius: 14px;
+    background-color: #f0faf5;
+    color: #14684a;
+    box-shadow: 0 18px 40px -24px rgba(20, 104, 74, 0.9);
+    animation: ad-vf-toast-masuk 0.32s ease;
+}
+
+@keyframes ad-vf-toast-masuk {
+    from {
+        transform: translateY(12px);
+        opacity: 0;
+    }
+
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+.ad-vf-toast__ikon {
+    display: grid;
+    place-items: center;
+    flex-shrink: 0;
+    width: 1.8rem;
+    height: 1.8rem;
+    border-radius: 9999px;
+    background-color: var(--ad-sukses);
+    color: #fff;
+}
+
+.ad-vf-toast__teks {
+    min-width: 0;
+    font-size: 0.82rem;
+    font-weight: 600;
+    line-height: 1.5;
+    overflow-wrap: anywhere;
+}
+
+.ad-vf-toast__tutup {
+    display: grid;
+    place-items: center;
+    flex-shrink: 0;
+    margin-left: auto;
+    width: 1.75rem;
+    height: 1.75rem;
+    border: 0;
+    border-radius: 9999px;
+    background-color: rgba(20, 104, 74, 0.12);
+    color: inherit;
+    cursor: pointer;
+}
+
+.ad-vf-toast__tutup:hover {
+    background-color: rgba(20, 104, 74, 0.22);
+}
+
+/* ---------- Layout lebar & tinggi ---------- */
+
+/*
+ * Dua bentuk grid:
+ *   tanpa panel  -> daftar tunggal selebar halaman, panel disembunyikan;
+ *   dengan panel -> daftar + panel review seperti kolom 68/32.
+ *
+ * Di layar lebar, track-nya didefinisikan sejak awal (walau panel 0fr) dan
+ * "gap"-nya diset nol saat tertutup, supaya keduanya bisa dianimasikan:
+ * lebar kolom jadi meleset halus, dan daftar benar-benar menyentuh tepi
+ * waktu tertutup. Tanpa itu perpindahannya terasa seperti lompatan.
+ */
+@media (min-width: 1200px) {
+    .ad-vf-konten {
+        grid-template-columns: minmax(0, 1fr) minmax(0, 0fr);
+        gap: 0;
+        transition:
+            grid-template-columns 0.36s cubic-bezier(0.22, 1, 0.36, 1),
+            gap 0.36s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+
+    .ad-vf--dengan-panel .ad-vf-konten {
+        grid-template-columns: minmax(0, 2.15fr) minmax(0, 1fr);
+        gap: 1.25rem;
+    }
+
+    /*
+     * Saat ditutup, kolom panel tetap ditampilkan sejenak supaya kartunya
+     * ikut terpotong pelan mengikuti track yang menyusut, bukan hilang
+     * seketika. Kelas "ad-vf--keluar" dilepas JS setelah transisi selesai.
+     */
+    .ad-vf--keluar .ad-vf-panel {
+        display: block;
+        overflow: hidden;
+    }
+
+    /* Gulir internal hanya saat daftar sedang berbagi ruang dengan panel. */
+    .ad-vf--dengan-panel .ad-vf-daftar__badan {
+        max-height: min(58vh, 620px);
+        overflow-y: auto;
+        overscroll-behavior: contain;
+    }
+
+    .ad-vf--dengan-panel .ad-vf-panel {
+        position: sticky;
+        top: 1rem;
+    }
+
+    .ad-vf-panel__kartu {
+        max-height: calc(100vh - 7.5rem);
+    }
+
+    .ad-vf-panel__badan {
+        flex: 1;
+        min-height: 0;
+        overflow-y: auto;
+        overscroll-behavior: contain;
+    }
+}
+
+/* Scrollbar tipis lavender untuk daftar, panel, dan blok kode. */
+.ad-vf-daftar__badan,
+.ad-vf-panel__badan,
+.ad-vf-kode__isi,
+.ad-vf-dialog-form .ad-dialog__badan {
+    scrollbar-width: thin;
+    scrollbar-color: #c9bcff transparent;
+}
+
+.ad-vf-daftar__badan::-webkit-scrollbar,
+.ad-vf-panel__badan::-webkit-scrollbar,
+.ad-vf-kode__isi::-webkit-scrollbar,
+.ad-vf-dialog-form .ad-dialog__badan::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+.ad-vf-daftar__badan::-webkit-scrollbar-thumb,
+.ad-vf-panel__badan::-webkit-scrollbar-thumb,
+.ad-vf-kode__isi::-webkit-scrollbar-thumb,
+.ad-vf-dialog-form .ad-dialog__badan::-webkit-scrollbar-thumb {
+    border-radius: 9999px;
+    background-color: #c9bcff;
+}
+
+/* ---------- Hero mengecil di layar sedang ---------- */
+
+@media (max-width: 960px) {
+    .ad-vf-hero__ilustrasi {
+        display: none;
+    }
+}
+
+/* ---------- Layar kecil ---------- */
+
+@media (max-width: 767px) {
+    .ad-vf-hero {
+        min-height: 0;
+        padding: 1.15rem 1.1rem;
+        border-radius: 16px;
+    }
+
+    .ad-vf-hero__teks {
+        gap: 0.75rem;
+    }
+
+    .ad-vf-hero__ikon {
+        width: 2.6rem;
+        height: 2.6rem;
+        border-radius: 13px;
+    }
+
+    .ad-vf-hero__sub {
+        font-size: 0.8rem;
+    }
+
+    .ad-vf-alat {
+        padding: 0.85rem 0.9rem;
+        border-radius: 16px;
+    }
+
+    .ad-vf-alat__baris {
+        gap: 0.65rem;
+    }
+
+    .ad-vf-alat__jenis {
+        width: 100%;
+        overflow-x: auto;
+        flex-wrap: nowrap;
+        padding-bottom: 0.15rem;
+    }
+
+    .ad-vf-alat__jenis .ad-tab__item {
+        flex-shrink: 0;
+    }
+
+    .ad-vf-status {
+        width: 100%;
+        align-items: flex-start;
+        flex-direction: column;
+        gap: 0.4rem;
+    }
+
+    .ad-vf-alat__aksi {
+        margin-left: 0;
+    }
+
+    .ad-vf-saring__aksi {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .ad-vf-item {
+        flex-wrap: wrap;
+        gap: 0.7rem;
+        padding: 0.85rem 0.95rem;
+    }
+
+    .ad-vf-item__isi {
+        flex-basis: calc(100% - 3.4rem);
+    }
+
+    .ad-vf-item__kanan {
+        width: 100%;
+        justify-content: space-between;
+        padding-left: 3.4rem;
+    }
+
+    .ad-vf-daftar__kaki {
+        justify-content: center;
+        text-align: center;
+    }
+
+    .ad-vf-panel__panah {
+        display: inline-grid;
+    }
+
+    .ad-vf-panel__kartu {
+        max-height: none;
+    }
+
+    .ad-vf-seksi__isi {
+        padding-left: 0;
+    }
+
+    .ad-vf-info__baris {
+        grid-template-columns: minmax(0, 1fr);
+        gap: 0.15rem;
+    }
+
+    .ad-vf-toast {
+        right: 0.85rem;
+        left: 0.85rem;
+        bottom: 0.85rem;
+        max-width: none;
+    }
+}
+
 @media (prefers-reduced-motion: reduce) {
     .ad-sisi,
     .ad-sisi__tirai,
@@ -2438,7 +4950,14 @@ body.tubuh-admin {
     .ad-cepat,
     .ad-tinjau__item,
     .ad-tautan,
-    .ad-tombol {
+    .ad-tombol,
+    .ad-vf-toast,
+    .ad-vf-konten,
+    .ad-vf-panel__kartu,
+    .ad-vf-panel__isi,
+    .ad-vf-item,
+    .ad-vf-pil {
         transition: none;
+        animation: none;
     }
 }

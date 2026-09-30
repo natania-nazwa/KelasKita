@@ -10,6 +10,17 @@
      * Simpan dilewati karena materi yang disusun belum punya slug.
      */
     'pratinjau' => false,
+    /*
+     * Tombol "Simpan".
+     *
+     * Dua tempat memanggil kepala ini tanpa tombol Simpan: tab Preview pada
+     * form Tambah Materi (materi yang sedang disusun belum punya slug, jadi
+     * belum bisa disimpan) dan halaman detail materi di area admin, yang
+     * menampilkan materi milik pengguna lain. Cara ini membuat halaman ini
+     * tetap sama dengan yang dibaca pengguna, tanpa menambahkan tombol
+     * milik pembaca.
+     */
+    'simpan' => true,
 ])
 
 @php
@@ -129,7 +140,7 @@
                     <span data-pratinjau-waktu>{{ $detail['waktu_baca'] }} menit baca</span>
                 </span>
 
-                @unless ($pratinjau)
+                @unless ($pratinjau || ! $simpan)
                     <button type="button" data-bookmark="{{ $detail['slug'] }}" aria-pressed="{{ $tersimpan ? 'true' : 'false' }}"
                         data-bookmark-teks="Simpan" class="tombol-simpan kartu-kepala__simpan">
                         <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="1.9" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">

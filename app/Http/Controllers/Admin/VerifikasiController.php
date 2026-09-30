@@ -4,9 +4,15 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Materi;
+use App\Models\Pelajaran;
 use App\Models\Quiz;
+use App\Models\Soal;
+use App\Support\IsiMateri;
 use App\Support\StatistikAdmin;
+use App\Support\TinjauanMateri;
+use App\Support\TinjauanQuiz;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
 use Illuminate\View\View;
@@ -63,19 +69,45 @@ class VerifikasiController extends Controller
         $jenis = $this->terpilih($request->query('jenis'), array_keys(self::JENIS), 'semua');
         $status = $this->terpilih($request->query('status'), array_keys(self::STATUS), 'menunggu');
         $kataKunci = trim((string) $request->query('q', ''));
+        $kategori = trim((string) $request->query('kategori', ''));
+        $pilih = trim((string) $request->query('pilih', ''));
 
-        $daftar = $this->gabungkan($request, $jenis, $status, $kataKunci);
+        $daftar = $this->gabungkan($request, $jenis, $status, $kataKunci, $kategori);
 
         return view('admin.verifikasi', [
             'daftar' => $daftar['baris'],
             'paginasi' => $daftar['hal'],
+            'rincian' => $this->rincianTerpilih($pilih, $daftar['baris']),
+            'pilih' => $pilih,
             'jenisAktif' => $jenis,
             'statusAktif' => $status,
             'kataKunci' => $kataKunci,
+            'kategoriAktif' => $kategori,
+            'daftarPelajaran' => Pelajaran::query()->aktif()->orderBy('nama')->get(),
             'pilihanJenis' => self::JENIS,
             'pilihanStatus' => self::STATUS,
-            'jumlahJenis' => $this->jumlahJenis($status),
-            'jumlahStatus' => $this->jumlahStatus($jenis),
+            'jumlahJenis' => $this->jumlahJenis($status, $kategori),
+            'jumlahStatus' => $this->jumlahStatus($jenis, $kategori),
+        ]);
+    }
+
+    /**
+     * Panel review untuk satu konten, sebagai fragment HTML.
+     *
+     * Dipanggil JavaScript saat admin memilih baris lain di daftar. Hanya
+     * mengembalikan isi panel, bukan seluruh halaman, supaya memilih baris
+     * tidak memuat ulang hero, filter, dan daftar yang sudah terbaca.
+     *
+     * Id yang tidak dikenal tidak dijawab 404: panel memang harus selalu
+     * punya isi, dan isi "belum ada yang dipilih" adalah jawaban yang benar
+     * untuk id yang tidak ada.
+     */
+    public function panel(Request $request): Response
+    {
+        $jenis = $this->terpilih($request->query('jenis'), ['materi', 'quiz'], 'materi');
+
+        return response()->view('admin.verifikasi-panel', [
+            'rincian' => $this->rincian($jenis, (int) $request->query('id', 0)),
         ]);
     }
 
@@ -91,19 +123,19 @@ class VerifikasiController extends Controller
      *
      * @return array{baris: array<int, array<string, mixed>>, hal: LengthAwarePaginator}
      */
-    private function gabungkan(Request $request, string $jenis, string $status, string $kataKunci): array
+    private function gabungkan(Request $request, string $jenis, string $status, string $kataKunci, string $kategori): array
     {
         $materi = $jenis === 'quiz'
             ? collect()
-            : $this->materi($status, $kataKunci)->map(
-                fn (Materi $item): array => StatistikAdmin::barisTinjauMateri($item)
-            );
+            : collect(
+                TinjauanMateri::petakan($this->materi($status, $kataKunci, $kategori))
+            )->map(fn (array $baris): array => $this->lengkapiBaris($baris, 'materi', 'Materi'));
 
         $quiz = $jenis === 'materi'
             ? collect()
-            : $this->quiz($status, $kataKunci)->map(
-                fn (Quiz $item): array => StatistikAdmin::barisTinjauQuiz($item)
-            );
+            : collect(
+                TinjauanQuiz::petakan($this->quiz($status, $kataKunci, $kategori))
+            )->map(fn (array $baris): array => $this->lengkapiBaris($baris, 'quiz', 'Quiz'));
 
         $semua = $materi
             ->concat($quiz)
@@ -130,34 +162,187 @@ class VerifikasiController extends Controller
     }
 
     /**
-     * Materi sesuai status (dari nilai status di model) dan pencarian.
+     * Materi sesuai status (dari nilai status di model), pencarian, dan
+     * kategori.
      *
      * @return Collection<int, Materi>
      */
-    private function materi(string $status, string $kataKunci): Collection
+    private function materi(string $status, string $kataKunci, string $kategori): Collection
     {
         return Materi::query()
             ->where('status', $this->statusMateri($status))
             ->with(['pelajaran', 'pembuat'])
+            ->kategori($kategori)
             ->cari($kataKunci)
             ->latest('created_at')
             ->get();
     }
 
     /**
-     * Quiz sesuai status dan pencarian.
+     * Quiz sesuai status, pencarian, dan kategori.
      *
      * @return Collection<int, Quiz>
      */
-    private function quiz(string $status, string $kataKunci): Collection
+    private function quiz(string $status, string $kataKunci, string $kategori): Collection
     {
-        return Quiz::query()
+        $quiz = Quiz::query()
             ->where('status', $this->statusQuiz($status))
             ->with(['pelajaran', 'pembuat'])
             ->withCount(['soal' => fn ($soal) => $soal->aktif()])
+            ->kategori($kategori)
             ->cari($kataKunci)
             ->latest('created_at')
             ->get();
+
+        /*
+         * Jumlah soal dipakai TinjauanQuiz lewat jumlahSoal(), yang membaca
+         * atribut "jumlah_soal_termuat". Tanpa pengisian ini tiap baris akan
+         * menghitung ulang soalnya sendiri, jadi delapan baris berarti
+         * delapan query tambahan yang isinya sama dengan soal_count ini.
+         */
+        return $quiz->each(
+            fn (Quiz $item): Quiz => $item->setRawAttributes(
+                $item->getAttributes() + ['jumlah_soal_termuat' => (int) $item->soal_count]
+            )
+        );
+    }
+
+    /**
+     * Melengkapi satu baris hasil petakan dengan apa yang hanya dipakai
+     * halaman Verifikasi: jenis kontennya dan ringkasan satu baris.
+     *
+     * Isinya dibuang karena daftar hanya butuh judul dan metadata, sedangkan
+     * isi lengkapnya sudah dirender di panel review.
+     *
+     * @param  array<string, mixed>  $baris
+     * @return array<string, mixed>
+     */
+    private function lengkapiBaris(array $baris, string $jenis, string $label): array
+    {
+        unset($baris['isi']);
+
+        $baris['jenis'] = $jenis;
+        $baris['label_jenis'] = $label;
+        $baris['rincian'] = $jenis === 'materi'
+            ? $baris['jumlah_bab'].' Bab · '.$baris['waktu_baca'].' Menit Baca'
+            : $baris['jumlah_soal'].' Soal · Mode '.($baris['pakai_kode'] ? 'Kode' : 'Publik');
+
+        return $baris;
+    }
+
+    /**
+     * Konten yang sedang dibuka di panel review.
+     *
+     * Urutannya: pilihan eksplisit dari query "pilih" lebih dulu, supaya
+     * tautan baris yang dibuka tanpa JavaScript tetap menunjuk konten yang
+     * sama. Kalau id itu tidak dikenal (mis. sudah dipindah ke halaman
+     * lain), panel jatuh ke baris pertama halaman yang sedang dilihat.
+     *
+     * @param  array<int, array<string, mixed>>  $baris
+     * @return array<string, mixed>|null
+     */
+    private function rincianTerpilih(string $pilih, array $baris): ?array
+    {
+        if (preg_match('/^(materi|quiz):(\d+)$/', $pilih, $cocok) === 1) {
+            $hasil = $this->rincian($cocok[1], (int) $cocok[2]);
+
+            if ($hasil !== null) {
+                return $hasil;
+            }
+        }
+
+        $pertama = $baris[0] ?? null;
+
+        return $pertama === null
+            ? null
+            : $this->rincian((string) $pertama['jenis'], (int) $pertama['id']);
+    }
+
+    /**
+     * Satu konten lengkap untuk panel review, atau null kalau id-nya tidak
+     * ada.
+     *
+     * Materi dibawa beserta isi yang sudah dipecah jadi seksi + blok,
+     * quiz dibawa beserta daftar soalnya (termasuk kunci jawaban, karena
+     * panel ini memang hanya untuk mata admin).
+     *
+     * @return array<string, mixed>|null
+     */
+    private function rincian(string $jenis, int $id): ?array
+    {
+        if ($id <= 0) {
+            return null;
+        }
+
+        if ($jenis === 'materi') {
+            $materi = Materi::query()->with(['pelajaran', 'pembuat'])->find($id);
+
+            if (! $materi instanceof Materi) {
+                return null;
+            }
+
+            $baris = TinjauanMateri::petakan([$materi])[0];
+
+            return $this->lengkapiBaris($baris, 'materi', 'Materi') + [
+                'seksi' => IsiMateri::seksi($materi->isi, $materi->nama),
+            ];
+        }
+
+        $quiz = $this->quizLengkap($id);
+
+        if (! $quiz instanceof Quiz) {
+            return null;
+        }
+
+        $baris = TinjauanQuiz::petakan([$quiz])[0];
+
+        return $this->lengkapiBaris($baris, 'quiz', 'Quiz') + [
+            'soal' => $this->daftarSoal($quiz),
+        ];
+    }
+
+    /**
+     * Satu quiz lengkap relasinya, untuk panel review.
+     */
+    private function quizLengkap(int $id): ?Quiz
+    {
+        $quiz = Quiz::query()
+            ->with(['pelajaran', 'pembuat'])
+            ->withCount(['soal' => fn ($soal) => $soal->aktif()])
+            ->find($id);
+
+        return $quiz instanceof Quiz
+            ? $quiz->setRawAttributes(
+                $quiz->getAttributes() + ['jumlah_soal_termuat' => (int) $quiz->soal_count]
+            )
+            : null;
+    }
+
+    /**
+     * Daftar soal aktif sebuah quiz, siap dirender jadi pratinjau.
+     *
+     * Kuncinya ikut dibawa: panel review adalah ruang admin, jadi yang
+     * diperiksa adalah apakah jawaban benarnya sudah tepat, bukan
+     * menyembunyikannya dari pemeriksa.
+     *
+     * @return array<int, array{teks: string, tipe: string, tipe_label: string, pilihan: array<string, string>, benar: array<int, string>, kunci: string}>
+     */
+    private function daftarSoal(Quiz $quiz): array
+    {
+        return $quiz->soal()
+            ->aktif()
+            ->terurut()
+            ->with('pilihanSoal')
+            ->get()
+            ->map(fn (Soal $soal): array => [
+                'teks' => (string) $soal->pertanyaan,
+                'tipe' => $soal->tipe(),
+                'tipe_label' => Soal::labelTipe($soal->tipe()),
+                'pilihan' => $soal->pilihan(),
+                'benar' => $soal->hurufBenar(),
+                'kunci' => $soal->tipeTeks() ? $soal->kunciTeks() : '',
+            ])
+            ->all();
     }
 
     /**
@@ -189,10 +374,17 @@ class VerifikasiController extends Controller
      *
      * @return array<string, int>
      */
-    private function jumlahJenis(string $status): array
+    private function jumlahJenis(string $status, string $kategori): array
     {
-        $materi = (int) Materi::query()->where('status', $this->statusMateri($status))->count();
-        $quiz = (int) Quiz::query()->where('status', $this->statusQuiz($status))->count();
+        $materi = (int) Materi::query()
+            ->where('status', $this->statusMateri($status))
+            ->kategori($kategori)
+            ->count();
+
+        $quiz = (int) Quiz::query()
+            ->where('status', $this->statusQuiz($status))
+            ->kategori($kategori)
+            ->count();
 
         return [
             'semua' => $materi + $quiz,
@@ -210,12 +402,12 @@ class VerifikasiController extends Controller
      *
      * @return array<string, int>
      */
-    private function jumlahStatus(string $jenis): array
+    private function jumlahStatus(string $jenis, string $kategori): array
     {
         $materi = $jenis === 'quiz'
             ? []
             : StatistikAdmin::jumlahPerStatus(
-                Materi::query(),
+                Materi::query()->kategori($kategori),
                 [
                     Materi::STATUS_PENDING => 'menunggu',
                     Materi::STATUS_PUBLISHED => 'disetujui',
@@ -226,7 +418,7 @@ class VerifikasiController extends Controller
         $quiz = $jenis === 'materi'
             ? []
             : StatistikAdmin::jumlahPerStatus(
-                Quiz::query(),
+                Quiz::query()->kategori($kategori),
                 [
                     Quiz::STATUS_PENDING => 'menunggu',
                     Quiz::STATUS_PUBLISHED => 'disetujui',

@@ -34,6 +34,16 @@ class DashboardController extends Controller
             'ringkasan' => StatistikAdmin::ringkasan(),
             'perluDitinjau' => StatistikAdmin::perluDitinjau(),
             'aktivitas' => $this->aktivitasTerbaru(),
+
+            /*
+             * Dua grafik paling bawah dashboard: pelajaran mana yang
+             * paling sering dikerjakan, dan berapa kali orang masuk per
+             * minggu. Keduanya dihitung di StatistikAdmin supaya halaman
+             * ini dan halaman "Hasil & Statistik" memakai angka yang sama
+             * persis.
+             */
+            'pelajaranDisukai' => StatistikAdmin::pelajaranTerpopuler(),
+            'loginMingguan' => StatistikAdmin::loginMingguan(),
         ]);
     }
 

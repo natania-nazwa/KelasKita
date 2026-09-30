@@ -15,7 +15,7 @@
 
 <a href="{{ $href }}" {{ $attributes->class(['ad-cepat']) }}>
     <span class="ad-cepat__ikon">
-        <x-admin.ikon :nama="$ikon" ukuran="w-5 h-5" />
+        <x-admin.ikon :nama="$ikon" ukuran="w-4.5 h-4.5" />
     </span>
 
     <span class="ad-cepat__teks">

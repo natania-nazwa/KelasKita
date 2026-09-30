@@ -4,283 +4,294 @@
 
 @section('content')
     {{--
-        Halaman "Materi": papan admin untuk seluruh materi, dari semua status.
+        Halaman "Materi": daftar materi yang sudah dipublikasikan.
 
-        Berbeda dengan halaman Verifikasi, di sini tidak ada tombol setujui
-        atau tolak. Fungsinya memantau: berapa materi tayang, menunggu,
-        ditolak, dan draft; lalu membuka isi materi apa pun lewat "Lihat".
+        Batas halaman ini disengaja dan tidak boleh kabur: yang tampil hanya
+        materi berstatus "published". Materi yang masih menunggu keputusan
+        ditinjau di menu Verifikasi, dan yang ditolak atau masih draft
+        dikelola pemiliknya di "Karya Saya". Karena itu halaman ini tidak punya
+        tombol Setujui/Tolak dan tidak punya tab status — dengan daftar yang
+        sudah published-only, tab seperti itu hanya mengulang daftar yang sama.
+
+        Isinya: cari, saring, pilih, baca detail, ubah, hapus. Panel di kanan
+        menampilkan ringkasan materi yang dipilih; tombol "Lihat Materi" dari
+        sana membuka halaman detail yang memakai komponen tampilan milik
+        pengguna, jadi yang dibaca admin persis sama dengan yang dibaca user.
     --}}
 
-    {{-- =====================
-         SPANDUK ATAS
-    ====================== --}}
-    <section class="ad-hero">
-        <div class="ad-hero__susun">
-            <div class="ad-hero__teks">
-                <span class="ad-hero__lencana">
-                    <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="{{ \App\Support\Ikon::path('daftar-cek') }}" />
-                    </svg>
+    @php
+        /*
+         * Query string yang sedang aktif, dipakai ulang untuk tautan kartu.
+         *
+         * 'page' sengaja dikosongkan: memilih materi lain harus kembali ke
+         * halaman pertama, karena materi yang dipilih belum tentu ada di
+         * nomor halaman yang sedang dibuka.
+         */
+        $parameter = array_filter([
+            'q' => $kataKunci,
+            'kategori' => $kategoriAktif,
+            'pembuat' => $pembuatAktif,
+            'urut' => $urutAktif === 'terbaru' ? null : $urutAktif,
+        ], fn ($nilai) => filled($nilai));
 
-                    Manajemen konten
+        /*
+         * Berapa saringan yang sedang aktif selain kata kunci. "urut" tidak
+         * ikut dihitung kalau masih bawaan, karena mengurutkan ulang daftar
+         * bukan hal yang perlu disorot sebagai filter aktif.
+         */
+        $jumlahFilter = count(array_filter([
+            'kategori' => $kategoriAktif,
+            'pembuat' => $pembuatAktif,
+            'urut' => $urutAktif === 'terbaru' ? null : $urutAktif,
+        ], fn ($nilai) => filled($nilai)));
+
+        $adaFilter = $jumlahFilter > 0;
+        $slugTerpilih = $terpilih['petikan']['slug'] ?? null;
+    @endphp
+
+    {{-- =====================
+         HERO BANNER
+    ====================== --}}
+    <section class="ad-hero ad-hero--materi">
+        <div class="ad-hero-materi__susun">
+            <div class="ad-hero-materi__kiri">
+                <span class="ad-hero-materi__ikon" aria-hidden="true">
+                    <x-admin.ikon nama="buku" ukuran="w-7 h-7" />
                 </span>
 
-                <h1 class="ad-hero__judul">Kelola Semua Materi</h1>
+                <div class="min-w-0">
+                    <h1 class="ad-hero-materi__judul">Materi</h1>
 
-                <p class="ad-hero__sub">
-                    Pantau semua materi dari satu tempat — mana yang sudah tayang,
-                    mana yang masih menunggu keputusanmu, dan bagi yang ditolak,
-                    pemiliknya perlu menyempurnakan ulang.
-                </p>
-
-                <div class="ad-hero__aksi">
-                    <a href="{{ route('admin.verifikasi') }}" class="ad-tombol ad-tombol--garis">
-                        <x-admin.ikon nama="daftar-cek" />
-
-                        Buka Verifikasi
-                    </a>
+                    <p class="ad-hero-materi__sub">
+                        Kelola materi pembelajaran yang telah dipublikasikan untuk pengguna KelasKita.
+                    </p>
                 </div>
             </div>
 
-            <x-admin.ilustrasi-buku class="ad-hero__ilustrasi" />
+            <div class="ad-hero-materi__kanan">
+                <p class="ad-hero-materi__kutip">
+                    &ldquo;Ilmu hari ini,<br>masa depan esok&rdquo;
+                </p>
+
+                <div class="ad-hero-materi__ilustrasi">
+                    <x-admin.ilustrasi-admin />
+                </div>
+            </div>
         </div>
     </section>
 
     {{-- =====================
-         RINGKASAN JUMLAH
+         PESAN
     ====================== --}}
-    <div class="ad-seksi ad-grid ad-grid--statistik">
-        <x-admin.statistik ikon="buku" label="Total Materi"
-            nilai="{{ array_sum($jumlahStatus) }}"
-            keterangan="semua status"
-            href="{{ route('admin.materi') }}" />
+    @if (session('sukses'))
+        <div class="ad-seksi ad-alert ad-alert--sukses" role="status">
+            <span class="ad-alert__ikon" aria-hidden="true">
+                <x-admin.ikon nama="tanda-centang" ukuran="w-3.5 h-3.5" :tebal="2.6" />
+            </span>
 
-        <x-admin.statistik ikon="jam" label="Menunggu Verifikasi"
-            nilai="{{ $jumlahStatus['pending'] ?? 0 }}"
-            nada="peringatan"
-            keterangan="perlu keputusanmu"
-            href="{{ route('admin.materi', ['status' => 'pending']) }}" />
-
-        <x-admin.statistik ikon="perisai" label="Dipublikasikan"
-            nilai="{{ $jumlahStatus['published'] ?? 0 }}"
-            nada="sukses"
-            keterangan="materi yang tayang"
-            href="{{ route('admin.materi', ['status' => 'published']) }}" />
-
-        <x-admin.statistik ikon="silang-polos" label="Ditolak"
-            nilai="{{ $jumlahStatus['rejected'] ?? 0 }}"
-            keterangan="perlu diperbaiki pemilik"
-            href="{{ route('admin.materi', ['status' => 'rejected']) }}" />
-    </div>
+            <p class="min-w-0 font-medium">{{ session('sukses') }}</p>
+        </div>
+    @endif
 
     {{-- =====================
-         CARI + FILTER
-    ======================
-         Filter memakai form GET supaya hasilnya bisa dibagikan lewat tautan.
-         Field q dipakai juga oleh kolom pencarian di bagian atas layout. --}}
-    <form method="GET" action="{{ route('admin.materi') }}" class="ad-seksi ad-alat">
-        <div class="ad-alat__kiri">
-            <label for="q" class="sr-only">Cari materi</label>
+         FILTER + PENCARIAN
 
-            <div class="ad-cari">
-                <x-admin.ikon nama="cari" class="ad-cari__ikon" />
+         Satu form GET untuk filter dan pencarian sekaligus, supaya mengetik
+         kata kunci tidak mematikan saringan yang sedang aktif, dan sebaliknya.
 
-                <input id="q" name="q" type="search" value="{{ $kataKunci }}"
-                    placeholder="Cari judul, isi, atau pembuat..." autocomplete="off">
-            </div>
-        </div>
-
-        <div class="ad-alat__kanan">
-            <label for="status" class="sr-only">Filter status</label>
-
-            <div class="ad-pilih__bungkus">
-                <select id="status" name="status" class="ad-pilih">
-                    <option value="">Semua Status</option>
-
-                    @foreach ($pilihanStatus as $nilai => $label)
-                        <option value="{{ $nilai }}" @selected($statusAktif === $nilai)>{{ $label }}</option>
-                    @endforeach
-                </select>
-
-                <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="{{ \App\Support\Ikon::path('panah-bawah') }}" />
-                </svg>
-            </div>
-
-            <label for="pelajaran" class="sr-only">Filter pelajaran</label>
-
-            <div class="ad-pilih__bungkus">
-                <select id="pelajaran" name="pelajaran" class="ad-pilih">
-                    <option value="">Semua Pelajaran</option>
-
-                    @foreach ($daftarPelajaran as $pelajaran)
-                        <option value="{{ $pelajaran->slug }}" @selected($pelajaranAktif === $pelajaran->slug)>{{ $pelajaran->nama }}</option>
-                    @endforeach
-                </select>
-
-                <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="{{ \App\Support\Ikon::path('panah-bawah') }}" />
-                </svg>
-            </div>
-
-            <button type="submit" class="ad-tombol ad-tombol--utama">Terapkan</button>
-
-            @if ($kataKunci !== '' || $statusAktif !== '' || $pelajaranAktif !== '')
-                <a href="{{ route('admin.materi') }}" class="ad-tombol ad-tombol--garis">Reset</a>
-            @endif
-        </div>
-    </form>
-
-    {{-- =====================
-         DAFTAR MATERI
+         Panel filter memakai <details>: buka/tutup-nya dari browser, jadi
+         filter tetap bisa dipakai tanpa JavaScript. admin.js hanya menambah
+         satu hal: menutupnya dari luar dan dari tombol Escape.
     ====================== --}}
-    @if ($daftar === [])
-        <div class="ad-seksi">
-            @if ($kataKunci !== '' || $statusAktif !== '' || $pelajaranAktif !== '')
-                <x-admin.kosong ikon="cari" judul="Tidak ada materi yang cocok"
-                    teks="Coba kata kunci atau filter lain, atau reset filtrernya untuk melihat semua materi." />
-            @else
-                <x-admin.kosong judul="Belum ada materi"
-                    teks="Materi yang dibuat pengguna akan muncul di sini begitu diajukan." />
-            @endif
-        </div>
-    @else
-        <div class="ad-seksi ad-tabel__bungkus hidden md:block">
-            <table class="ad-tabel">
-                <thead>
-                    <tr>
-                        <th>No</th>
-                        <th>Materi</th>
-                        <th>Pelajaran</th>
-                        <th>Dibuat oleh</th>
-                        <th>Status</th>
-                        <th>Tanggal</th>
-                        <th class="text-right">Aksi</th>
-                    </tr>
-                </thead>
+    <div class="ad-seksi ad-kartu">
+        <form method="GET" action="{{ route('admin.materi') }}" class="ad-alat">
+            <div class="ad-alat__kiri">
+                <details class="ad-saring" data-tutup-luar @if ($adaFilter) open @endif>
+                    <summary @class(['ad-saring__tombol', 'ad-saring__tombol--ada' => $adaFilter])>
+                        <x-admin.ikon nama="kotak" ukuran="w-4 h-4" />
 
-                <tbody>
-                    @foreach ($daftar as $materi)
-                        <tr>
-                            <td>{{ $loop->iteration }}</td>
+                        Filter
 
-                            <td>
-                                <div class="ad-tabel__nama">
-                                    <span
-                                        class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-base font-extrabold text-white"
-                                        style="background-color: {{ $materi['kategori']['warna'] }}"
-                                        aria-hidden="true">
-                                        {{ $materi['kategori']['ikon'] }}
-                                    </span>
+                        @if ($adaFilter)
+                            <span class="ad-lencana ad-lencana--ungu">{{ $jumlahFilter }}</span>
+                        @endif
+                    </summary>
 
-                                    <div class="ad-tabel__nama-teks">
-                                        <p class="ad-tabel__judul">{{ $materi['judul'] }}</p>
+                    <div class="ad-saring__panel">
+                        <div class="ad-saring__grup">
+                            <label class="ad-saring__label" for="saring-kategori">Kategori</label>
 
-                                        <p class="ad-tabel__sub">
-                                            {{ $materi['tingkat_kesulitan'] }} &middot;
-                                            {{ $materi['jumlah_bab'] }} Bab &middot;
-                                            {{ $materi['waktu_baca'] }} menit baca
-                                        </p>
-                                    </div>
-                                </div>
-                            </td>
+                            <div class="ad-pilih__bungkus">
+                                <select id="saring-kategori" name="kategori" class="ad-pilih">
+                                    <option value="">Semua kategori ({{ $totalMateri }})</option>
 
-                            <td>
-                                <span class="inline-flex items-center gap-2">
-                                    <span class="h-2.5 w-2.5 shrink-0 rounded-full"
-                                        style="background-color: {{ $materi['kategori']['warna'] }}" aria-hidden="true"></span>
+                                    @foreach ($daftarKategori as $kategori)
+                                        <option value="{{ $kategori['slug'] }}" @selected($kategoriAktif === $kategori['slug'])>
+                                            {{ $kategori['nama'] }} ({{ $kategori['jumlah'] }})
+                                        </option>
+                                    @endforeach
+                                </select>
 
-                                    {{ $materi['kategori']['nama'] }}
-                                </span>
-                            </td>
-
-                            <td>
-                                <span class="inline-flex items-center gap-2">
-                                    <x-admin.avatar :inisial="$materi['pembuat']['inisial']" :warna="$materi['pembuat']['warna']"
-                                        :warnaGelap="$materi['pembuat']['warna_gelap']" />
-
-                                    {{ $materi['pembuat']['nama'] }}
-                                </span>
-                            </td>
-
-                            <td>
-                                <x-admin.lencana-materi :status="$materi['status']" :label="$materi['status_label']" />
-                            </td>
-
-                            <td>
-                                <span class="whitespace-nowrap">{{ $materi['tanggal_label'] }}</span>
-                            </td>
-
-                            <td>
-                                <div class="ad-tabel__aksi">
-                                    <a href="{{ $materi['tautan_detail'] }}" class="ad-tombol ad-tombol--halus">
-                                        <x-admin.ikon nama="mata" />
-
-                                        Lihat
-                                    </a>
-                                </div>
-                            </td>
-                        </tr>
-                    @endforeach
-                </tbody>
-            </table>
-        </div>
-
-        {{-- Kartu bertumpuk untuk layar kecil. --}}
-        <div class="ad-seksi md:hidden space-y-4">
-            @foreach ($daftar as $materi)
-                <article class="rounded-2xl border border-lavender bg-white p-4">
-                    <div class="flex items-start justify-between gap-3">
-                        <div class="flex min-w-0 items-center gap-2.5">
-                            <span
-                                class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-lg font-extrabold text-white"
-                                style="background-color: {{ $materi['kategori']['warna'] }}"
-                                aria-hidden="true">
-                                {{ $materi['kategori']['ikon'] }}
-                            </span>
-
-                            <div class="min-w-0">
-                                <p class="text-xs font-bold text-dark/50">{{ $materi['kategori']['nama'] }}</p>
-
-                                <p class="truncate text-base font-extrabold text-dark">{{ $materi['judul'] }}</p>
+                                <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="{{ \App\Support\Ikon::path('panah-bawah') }}" />
+                                </svg>
                             </div>
                         </div>
 
-                        <x-admin.lencana-materi :status="$materi['status']" :label="$materi['status_label']" />
+                        <div class="ad-saring__grup">
+                            <label class="ad-saring__label" for="saring-pembuat">Pembuat</label>
+
+                            <div class="ad-pilih__bungkus">
+                                <select id="saring-pembuat" name="pembuat" class="ad-pilih">
+                                    <option value="">Semua pembuat</option>
+
+                                    @foreach ($daftarPembuat as $pembuat)
+                                        <option value="{{ $pembuat['id'] }}" @selected($pembuatAktif === (string) $pembuat['id'])>
+                                            {{ $pembuat['nama'] }}
+                                        </option>
+                                    @endforeach
+                                </select>
+
+                                <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="{{ \App\Support\Ikon::path('panah-bawah') }}" />
+                                </svg>
+                            </div>
+                        </div>
+
+                        <div class="ad-saring__grup">
+                            <label class="ad-saring__label" for="saring-urut">Urutkan</label>
+
+                            <div class="ad-pilih__bungkus">
+                                <select id="saring-urut" name="urut" class="ad-pilih">
+                                    @foreach ($pilihanUrut as $nilai => $label)
+                                        <option value="{{ $nilai }}" @selected($urutAktif === $nilai)>{{ $label }}</option>
+                                    @endforeach
+                                </select>
+
+                                <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="{{ \App\Support\Ikon::path('panah-bawah') }}" />
+                                </svg>
+                            </div>
+                        </div>
+
+                        <div class="ad-saring__grup flex flex-wrap gap-2">
+                            <button type="submit" class="ad-tombol ad-tombol--utama ad-tombol--kecil">Terapkan</button>
+
+                            @if ($adaFilter || $kataKunci !== '')
+                                <a href="{{ route('admin.materi') }}" class="ad-tombol ad-tombol--garis ad-tombol--kecil">Reset</a>
+                            @endif
+                        </div>
                     </div>
+                </details>
+            </div>
 
-                    <p class="mt-2 text-xs font-semibold text-dark/50">
-                        {{ $materi['tingkat_kesulitan'] }} &middot;
-                        {{ $materi['jumlah_bab'] }} Bab
-                    </p>
+            <div class="ad-alat__kanan">
+                <div class="ad-cari">
+                    <x-admin.ikon nama="cari" class="ad-cari__ikon" />
 
-                    <div class="mt-3 flex items-center justify-between gap-2 border-t border-dark/5 pt-3">
-                        <span class="inline-flex min-w-0 items-center gap-2 text-xs font-semibold text-dark/60">
-                            <x-admin.avatar :inisial="$materi['pembuat']['inisial']" :warna="$materi['pembuat']['warna']"
-                                :warnaGelap="$materi['pembuat']['warna_gelap']" />
+                    <label class="sr-only" for="q">Cari materi</label>
 
-                            <span class="truncate">{{ $materi['pembuat']['nama'] }}</span>
-                        </span>
+                    <input id="q" name="q" type="search" value="{{ $kataKunci }}"
+                        placeholder="Cari materi..." autocomplete="off">
+                </div>
 
-                        <span class="shrink-0 text-xs text-dark/50">{{ $materi['tanggal_label'] }}</span>
-                    </div>
+                <button type="submit" class="ad-tombol ad-tombol--garis shrink-0">Cari</button>
+            </div>
+        </form>
+    </div>
 
-                    <a href="{{ $materi['tautan_detail'] }}" class="ad-tombol ad-tombol--halus mt-4 w-full">
-                        <x-admin.ikon nama="mata" />
-
-                        Lihat Detail
-                    </a>
-                </article>
-            @endforeach
+    {{-- =====================
+         DAFTAR + PANEL DETAIL
+    ====================== --}}
+    <div class="ad-seksi ad-materi">
+        <div class="ad-materi__daftar">
+            @if ($daftar === [])
+                @if ($kataKunci !== '' || $adaFilter)
+                    <x-admin.kosong ikon="cari" judul="Materi tidak ditemukan"
+                        teks="Coba gunakan kata kunci yang berbeda." />
+                @else
+                    <x-admin.kosong ikon="buku" judul="Belum ada materi"
+                        teks="Materi yang telah disetujui akan muncul di sini." />
+                @endif
+            @else
+                @foreach ($daftar as $materi)
+                    <x-admin.materi-kartu :materi="$materi" :terpilih="$slugTerpilih" :parameter="$parameter" />
+                @endforeach
+            @endif
         </div>
 
+        <div class="ad-materi__panel">
+            <x-admin.materi-panel :terpilih="$terpilih" />
+        </div>
+    </div>
+
+    {{-- =====================
+         PAGINASI
+    ====================== --}}
+    @if ($daftar !== [])
         <div class="ad-seksi flex flex-col items-center gap-3 sm:flex-row sm:items-center sm:justify-between">
             <p class="text-sm text-dark/60">
                 Menampilkan {{ $paginasi->firstItem() ?? 0 }}–{{ $paginasi->lastItem() ?? 0 }}
-                dari {{ $paginasi->total() }} materi
+                dari {{ $paginasi->total() }} data
             </p>
 
             {{ $paginasi->links() }}
         </div>
     @endif
+
+    {{--
+        =====================
+             DIALOG HAPUS MATERI
+
+        Satu dialog untuk semua kartu, diisi dari data-* tombol yang ditekan
+        oleh admin.js, jadi daftar panjang tetap hanya punya satu kotak
+        konfirmasi.
+
+        Form-nya memakai @method('DELETE') ke admin.materi.destroy, sama
+        seperti form hapus milik pengguna. Tidak ada form yang langsung
+        terkirim: materinya baru dihapus setelah tombol "Hapus Materi" ditekan.
+    ====================== --}}
+    <div class="ad-dialog" data-dialog-hapus role="dialog" aria-modal="true" aria-hidden="true"
+        aria-labelledby="dialog-hapus-judul">
+        <div class="ad-dialog__kartu">
+            <header class="ad-dialog__kepala">
+                <div class="min-w-0 flex-1">
+                    <h2 class="ad-dialog__judul" id="dialog-hapus-judul" data-hapus-judul>Hapus Materi?</h2>
+
+                    <p class="ad-teks-2 mt-0.5 !text-xs" data-hapus-meta></p>
+                </div>
+
+                <button type="button" class="ad-dialog__tutup" data-hapus-tutup aria-label="Tutup">
+                    <x-admin.ikon nama="silang-polos" ukuran="w-4 h-4" />
+                </button>
+            </header>
+
+            <div class="ad-dialog__badan">
+                <p class="text-sm leading-relaxed text-dark/70">
+                    Materi ini akan dihapus dan tidak lagi tersedia untuk pengguna.
+                    Tindakan ini tidak dapat dibatalkan.
+                </p>
+            </div>
+
+            <footer class="ad-dialog__kaki">
+                <button type="button" class="ad-tombol ad-tombol--garis" data-hapus-tutup>Batal</button>
+
+                <button type="submit" class="ad-tombol ad-tombol--bahaya" form="form-hapus-materi">
+                    <x-admin.ikon nama="sampah" />
+
+                    Hapus Materi
+                </button>
+            </footer>
+
+            {{--
+                Form tidak terlihat, tapi tetap ada di DOM supaya tombolnya
+                bisa memakai atribut form=.
+            --}}
+            <form method="POST" action="" id="form-hapus-materi" data-hapus-form hidden>
+                @csrf
+
+                @method('DELETE')
+            </form>
+        </div>
+    </div>
 @endsection

@@ -103,7 +103,31 @@ class VerifikasiHalamanTest extends TestCase
         $this->actingAs($admin)
             ->get(route('admin.verifikasi'))
             ->assertOk()
-            ->assertSee('Tidak ada konten yang menunggu verifikasi.');
+            ->assertSee('Semua sudah diperiksa')
+            ->assertSee('Pilih konten untuk ditinjau');
+    }
+
+    public function test_panel_review_mengembalikan_isi_satu_konten(): void
+    {
+        $admin = $this->buatAdmin();
+        $materi = $this->buatMateri($this->buatPengguna(), Materi::STATUS_PENDING, 'Materi Panel');
+
+        $this->actingAs($admin)
+            ->get(route('admin.verifikasi.panel', ['jenis' => 'materi', 'id' => $materi->id]))
+            ->assertOk()
+            ->assertSee('Materi Panel')
+            ->assertSee('Menunggu Verifikasi')
+            ->assertSee('data-vf-buka-setujui', false);
+    }
+
+    public function test_panel_review_kosong_bila_id_tidak_dikenal(): void
+    {
+        $admin = $this->buatAdmin();
+
+        $this->actingAs($admin)
+            ->get(route('admin.verifikasi.panel', ['jenis' => 'materi', 'id' => 999]))
+            ->assertOk()
+            ->assertSee('Pilih konten untuk ditinjau');
     }
 
     public function test_menu_verifikasi_tidak_tampil_badge_saat_tidak_ada_yang_menunggu(): void

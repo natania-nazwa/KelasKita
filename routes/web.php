@@ -469,16 +469,51 @@ Route::middleware(['auth', 'admin'])
         Route::get('/verifikasi', Admin\VerifikasiController::class)->name('verifikasi');
 
         /*
-         * Kelola Materi: papan admin untuk semua materi dari semua status,
-         * dengan ringkasan jumlah, filter status dan pelajaran, dan pencarian
-         * yang menjangkau nama pembuat. Tidak ada keputusan setujui/tolak di
-         * sini — hal itu tetap hanya ada di halaman Verifikasi.
+         * Panel review di kolom kanan halaman Verifikasi. Endpoint ini hanya
+         * mengembalikan HTML satu konten (bukan halaman utuh), dipakai saat
+         * admin memilih baris lain supaya hero, filter, dan daftar tidak ikut
+         * dimuat ulang. Tanpa JavaScript, tautan tiap baris tetap membuka
+         * halaman utuh dengan query "pilih".
+         */
+        Route::get('/verifikasi/panel', [Admin\VerifikasiController::class, 'panel'])->name('verifikasi.panel');
+
+        /*
+         * =============================================================
+         * MATERI
+         * =============================================================
+         * Halaman ini hanya mengelola materi yang sudah terbit: yang masih
+         * menunggu keputusan ditinjau di Verifikasi, dan yang ditolak atau
+         * masih draft dikelola pemiliknya di "Karya Saya". Jadi isinya bukan
+         * papan semua status seperti sebelumnya, melainkan daftar published
+         * saja dengan pencarian, filter, dan panel detail.
          *
-         * Halaman detail memakai slug, tanpa penjaga status apa pun, supaya
-         * admin bisa membuka materi yang masih draft maupun yang ditolak.
+         * Halaman detail memakai slug, tanpa penjaga status, supaya admin
+         * tetap bisa membuka materi dari status mana pun lewat URL — Verifikasi
+         * dan Karya Saya tidak berubah karena daftar di sini published-only.
+         *
+         * Isi detail dirender dengan komponen yang sama dengan halaman detail
+         * milik pengguna (resources/views/components/materi), jadi admin
+         * membaca materi persis seperti membacanya pengguna.
          */
         Route::get('/materi', Admin\MateriController::class)->name('materi');
         Route::get('/materi/{materi}', Admin\MateriDetailController::class)->name('materi.show');
+
+        /*
+         * Edit dan hapus dari menu tiga titik kartu.
+         *
+         * Belum ada route ini sebelumnya: user.materi.edit dan
+         * user.materi.destroy milik pemilik dan menolak admin dengan 403.
+         * Form edit-nya memakai komponen form yang sama dengan halaman Tambah
+         * Materi milik pengguna (x-materi.informasi / .bab / .editor), hanya
+         * judul, penjelas, dan tujuan simpan yang mengikuti bahasa admin.
+         *
+         * Berbeda dari pemilik, admin tidak perlu mengulang review: materi
+         * yang sudah terbit tetap terbit setelah diperbarui, karena admin
+         * adalah pihak yang menyetujui konten.
+         */
+        Route::get('/materi/{materi}/edit', [Admin\MateriKelolaController::class, 'edit'])->name('materi.edit');
+        Route::put('/materi/{materi}', [Admin\MateriKelolaController::class, 'update'])->name('materi.update');
+        Route::delete('/materi/{materi}', [Admin\MateriKelolaController::class, 'destroy'])->name('materi.destroy');
 
         /*
          * Dua aksi di bawah memakai slug materi dan hanya berlaku untuk materi

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Models\RiwayatLogin;
 use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -39,6 +40,15 @@ class AuthenticatedSessionController extends Controller
         $request->session()->regenerate();
 
         $user = Auth::user();
+
+        /*
+         * Catat login-nya di sini, setelah kredensial diterima dan sebelum
+         * pengguna diarahkan ke dashboard. Baris ini hanya dibaca grafik
+         * "Aktivitas Login Mingguan" di dashboard admin; seluruh aturan
+         * masuk tetap sama seperti sebelumnya, tidak ada satu pun
+         * pemeriksaan yang digeser.
+         */
+        RiwayatLogin::catat($user);
 
         $dashboard = $user->isAdmin()
             ? route('admin.dashboard')

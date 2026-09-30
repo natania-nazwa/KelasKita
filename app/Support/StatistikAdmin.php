@@ -153,6 +153,86 @@ final class StatistikAdmin
     }
 
     /**
+     * Berapa minggu yang dipakai untuk grafik "Aktivitas Login Mingguan".
+     */
+    public static function mingguLogin(): int
+    {
+        return 6;
+    }
+
+    /**
+     * Jumlah login per minggu untuk N minggu terakhir, termasuk minggu
+     * yang sedang berjalan.
+     *
+     * Yang dihitung adalah JUMLAH login, bukan jumlah orang: satu
+     * pengguna yang masuk lima kali dihitung lima. Hitungan orang unik
+     * sudah ada di tempat lain (StatistikAdmin::penggunaAktif) dan tidak
+     * boleh dipakai di sini, karena dua angka itu menjawab pertanyaan
+     * yang berbeda.
+     *
+     * Sumbernya tabel "tb_riwayat_login", satu baris per login berhasil.
+     * Tabel "sessions" sengaja tidak dipakai: kolomnya hanya
+     * last_activity, sehingga satu sesi yang berumur beberapa hari selalu
+     * terhitung di minggu terakhir aktivitasnya dan jumlah login
+     * aslinya hilang.
+     *
+     * Minggu dihitung sebagai rentang Senin-Minggu, dan minggu ini ikut
+     * ditampilkan walau belum selesai: grafik yang melompati minggu
+     * berjalan akan terlihat seperti activity-nya berhenti.
+     *
+     * Labelnya dihitung dari tanggal, tidak pernah ditulis manual, dan
+     * dibentuk dua bagian supaya label panjang tidak menabrak label
+     * sebelahnya di sumbu X:
+     *
+     *   "label"   baris pertama sumbu X ("1–7" atau "29 Sep")
+     *   "bulan"   baris kedua ("Sep" atau "5 Okt")
+     *   "rentang" teks lengkap untuk tooltip dan pembaca layar
+     *   "mulai"   tanggal ISO ("2026-09-27") untuk pembaca lain yang perlu
+     *              membandingkan tanggal, bukan membacanya
+     *   "selesai" tanggal ISO akhir minggu
+     *
+     * Setiap minggu dihitung dengan satu COUNT sendiri, bukan satu
+     * GROUP BY, supaya query-nya tidak butuh dialek SQL khusus database
+     * dan tetap jalan di database pengujian (SQLite) maupun di
+     * PostgreSQL. Enam kolom terindeks dibaca, jadi biayanya kecil.
+     *
+     * @return array<int, array{label: string, bulan: string, rentang: string, mulai: string, selesai: string, nilai: int}>
+     */
+    public static function loginMingguan(int $minggu = 0): array
+    {
+        $minggu = $minggu > 0 ? $minggu : self::mingguLogin();
+        $awalMingguIni = now()->startOfWeek();
+
+        $hasil = [];
+
+        for ($mundur = $minggu - 1; $mundur >= 0; $mundur--) {
+            $mulai = $awalMingguIni->copy()->subWeeks($mundur);
+            $selesai = $mulai->copy()->endOfWeek();
+
+            $samaBulan = $mulai->isSameMonth($selesai) && $mulai->isSameYear($selesai);
+
+            $hasil[] = [
+                'label' => $samaBulan
+                    ? $mulai->format('j').'–'.$selesai->format('j')
+                    : $mulai->translatedFormat('j M'),
+                'bulan' => $samaBulan
+                    ? $mulai->translatedFormat('M')
+                    : $selesai->translatedFormat('j M'),
+                'rentang' => $samaBulan
+                    ? $mulai->translatedFormat('j').'–'.$selesai->translatedFormat('j M Y')
+                    : $mulai->translatedFormat('j M').'–'.$selesai->translatedFormat('j M Y'),
+                'mulai' => $mulai->toDateString(),
+                'selesai' => $selesai->toDateString(),
+                'nilai' => (int) DB::table('tb_riwayat_login')
+                    ->whereBetween('created_at', [$mulai, $selesai])
+                    ->count(),
+            ];
+        }
+
+        return $hasil;
+    }
+
+    /**
      * Deret tren pengguna baru, pengguna unik yang login, dan quiz
      * yang dikerjakan untuk N hari terakhir.
      *

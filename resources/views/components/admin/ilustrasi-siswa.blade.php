@@ -1,3 +1,14 @@
+@props([
+    /**
+     * Tampilkan bunga kecil di sekeliling ilustrasi.
+     *
+     * Sengaja opsional dan mati secara bawaan: ilustrasi ini dipakai
+     * dua banner (dashboard dan Kelola Materi), dan bunga hanya bagian
+     * dari desain banner dashboard.
+     */
+    'bunga' => false,
+])
+
 {{--
     Ilustrasi hero: seorang admin/siswa perempuan sedang memakai laptop.
 
@@ -124,4 +135,37 @@
         <path d="M44 208h9l-4.5 9z" fill="#F7DFC0" />
         <path d="M46.6 213.4h3.8l-1.9 3.6z" fill="#2B2350" />
     </g>
+
+    {{-- Bunga kecil: dekorasi tambahan untuk banner dashboard. --}}
+    @if ($bunga)
+        <g aria-hidden="true">
+            <g transform="translate(30 104)">
+                <g fill="#FFC7DE">
+                    <circle cx="0" cy="-6.5" r="4.4" />
+                    <circle cx="6.1" cy="-2" r="4.4" />
+                    <circle cx="3.8" cy="5.3" r="4.4" />
+                    <circle cx="-3.8" cy="5.3" r="4.4" />
+                    <circle cx="-6.1" cy="-2" r="4.4" />
+                </g>
+                <circle cx="0" cy="0" r="3.1" fill="#F4A340" />
+            </g>
+
+            <g transform="translate(288 92) scale(0.82)">
+                <g fill="#D6CCFF">
+                    <circle cx="0" cy="-6.5" r="4.4" />
+                    <circle cx="6.1" cy="-2" r="4.4" />
+                    <circle cx="3.8" cy="5.3" r="4.4" />
+                    <circle cx="-3.8" cy="5.3" r="4.4" />
+                    <circle cx="-6.1" cy="-2" r="4.4" />
+                </g>
+                <circle cx="0" cy="0" r="3.1" fill="#FFFFFF" />
+            </g>
+
+            <g fill="#B9A6FF" opacity="0.75">
+                <circle cx="46" cy="86" r="2.6" />
+                <circle cx="272" cy="76" r="2.2" />
+                <circle cx="20" cy="124" r="2" />
+            </g>
+        </g>
+    @endif
 </svg>

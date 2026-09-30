@@ -7,11 +7,15 @@
     {{--
         Dashboard admin.
 
-        Susunan dari atas: hero, empat kartu statistik, dua kolom
-        (Perlu Ditinjau + kartu branding, Aktivitas Terbaru), lalu Menu
-        Cepat. Semua angka datang dari $ringkasan, yang dihitung di
-        App\Support\StatistikAdmin, jadi tidak ada angka yang dikarang
-        di markup.
+        Susunan dari atas: banner sapaan, empat kartu statistik, dua kolom
+        (Perlu Ditinjau + kartu kutipan), dua kolom (Menu Cepat + Aktivitas
+        Terbaru), lalu dua kartu analytics (donat pelajaran + garis login).
+
+        Semua angka datang dari server: $ringkasan, $perluDitinjau,
+        $aktivitas, $pelajaranDisukai, dan $loginMingguan dihitung di
+        App\Support\StatistikAdmin. Tidak ada angka yang dikarang di markup,
+        dan setiap daftar punya empty state supaya dashboard tidak pernah
+        menampilkan angka nol yang disamar jadi data.
     --}}
 
     @php
@@ -21,8 +25,9 @@
          * Persentase naik hanya boleh ditulis kalau pembandingnya ada.
          * Kalau bulan lalu masih nol, persentasenya tidak dihitung di
          * server, dan yang ditampilkan adalah jumlah baru bulan ini.
-         * Menampilkan "0% dari bulan lalu" di situation itu akan memberi
-         * kesan ada yang turun padahal memang belum ada pembanding.
+         * Menampilkan "0% dari bulan lalu" pada situation seperti itu
+         * memberi kesan ada yang turun padahal memang belum ada
+         * pembanding.
          */
         $keterangan = [
             'pengguna' => $ringkasan['perubahan']['pengguna']['bulan_ini'].' bergabung bulan ini',
@@ -38,49 +43,10 @@
         $totalMenunggu = $ringkasan['materi_menunggu'] + $ringkasan['quiz_menunggu'];
     @endphp
 
-    {{-- ==================== HERO ==================== --}}
-    <section class="ad-seksi ad-hero">
-        <div class="ad-hero__susun">
-            <div class="ad-hero__teks">
-                <p class="ad-hero__lencana">
-                    <x-admin.ikon nama="kap" />
-                    Platform Belajar Siswa
-                </p>
+    {{-- ==================== BANNER SAPAAN ==================== --}}
+    <x-admin.banner :total-menunggu="$totalMenunggu" />
 
-                <h1 class="ad-hero__judul">Selamat datang, Admin &#128075;</h1>
-
-                <p class="ad-hero__sub">
-                    Kelola aktivitas belajar dan konten KelasKita dengan mudah.
-                </p>
-
-                <div class="ad-hero__aksi">
-                    @if ($totalMenunggu > 0)
-                        <a href="{{ route('admin.verifikasi') }}" class="ad-tombol ad-tombol--utama">
-                            <x-admin.ikon nama="daftar-cek" />
-
-                            Tinjau {{ $totalMenunggu }} konten
-                        </a>
-                    @else
-                        <a href="{{ route('admin.materi') }}" class="ad-tombol ad-tombol--utama">
-                            <x-admin.ikon nama="buku" />
-                            Kelola Materi
-                        </a>
-                    @endif
-
-                    <a href="{{ route('admin.statistik') }}" class="ad-tombol ad-tombol--halus">
-                        <x-admin.ikon nama="grafik" />
-                        Lihat statistik
-                    </a>
-                </div>
-            </div>
-
-            <div class="ad-hero__ilustrasi">
-                <x-admin.ilustrasi-siswa />
-            </div>
-        </div>
-    </section>
-
-    {{-- ==================== STATISTIK ==================== --}}
+    {{-- ==================== STATISTIK UTAMA ==================== --}}
     <section class="ad-seksi ad-grid ad-grid--statistik" aria-label="Ringkasan platform">
         <x-admin.statistik ikon="grup" label="Pengguna" :nilai="$ringkasan['pengguna']" nada="info"
             :naik="$persen['pengguna']" :keterangan="$persen['pengguna'] ? null : $keterangan['pengguna']"
@@ -99,14 +65,14 @@
             :href="route('admin.verifikasi')" />
     </section>
 
-    {{-- ==================== PERLU DITINJAU + BRANDING ==================== --}}
+    {{-- ==================== PERLU DITINJAU + KUTIPAN ==================== --}}
     <section class="ad-seksi ad-grid ad-grid--dua">
 
         {{-- Perlu Ditinjau --}}
         <div class="ad-kartu">
             <header class="ad-kartu__kepala">
                 <div class="ad-kartu__kepala-titik">
-                    <span class="ad-cepat__ikon" aria-hidden="true">
+                    <span class="ad-cepat__ikon ad-cepat__ikon--kuning" aria-hidden="true">
                         <x-admin.ikon nama="daftar-cek" ukuran="w-5 h-5" />
                     </span>
 
@@ -135,67 +101,83 @@
             </div>
         </div>
 
-        {{-- Kartu branding: dekoratif, bukan fitur. --}}
-        <div class="flex flex-col gap-5">
-            <div class="ad-kutip">
-                <p class="ad-kutip__teks">
-                    <span class="ad-kutip__tanda" aria-hidden="true">&ldquo;</span>
+        {{-- Kartu kutipan: dekoratif, bukan fitur. --}}
+        <x-admin.kutip />
+    </section>
 
-                    Konten berkualitas, untuk pembelajaran yang lebih baik.
-                </p>
+    {{-- ==================== MENU CEPAT + AKTIVITAS TERBARU ==================== --}}
+    <section class="ad-seksi ad-grid ad-grid--dua">
 
-                <div class="ad-kutip__ilustrasi">
-                    <x-admin.ilustrasi-buku />
+        {{-- Menu Cepat --}}
+        <div class="ad-kartu">
+            <header class="ad-kartu__kepala">
+                <div class="ad-kartu__kepala-titik">
+                    <span class="ad-cepat__ikon ad-cepat__ikon--biru" aria-hidden="true">
+                        <x-admin.ikon nama="petir" ukuran="w-5 h-5" />
+                    </span>
+
+                    <h2 class="ad-kartu__kepala-judul">Menu Cepat</h2>
+                </div>
+            </header>
+
+            <div class="ad-kartu__badan ad-kartu__badan--rapat">
+                <div class="ad-daftar-cepat">
+                    <x-admin.cepat ikon="buku" judul="Lihat Semua Materi"
+                        keterangan="Kelola materi yang tersedia di platform" :href="route('admin.materi')" />
+
+                    <x-admin.cepat ikon="soal" judul="Lihat Semua Quiz"
+                        keterangan="Kelola quiz yang sudah dibuat dan terbit" :href="route('admin.quiz')" />
+
+                    <x-admin.cepat ikon="grup" judul="Kelola Pengguna"
+                        keterangan="Lihat siapa saja yang memakai KelasKita" :href="route('admin.pengguna')" />
+
+                    <x-admin.cepat ikon="grafik" judul="Lihat Statistik"
+                        keterangan="Tren belajar, nilai, dan pelajaran terpopuler" :href="route('admin.statistik')" />
                 </div>
             </div>
+        </div>
 
-            {{-- Aktivitas Terbaru --}}
-            <div class="ad-kartu">
-                <header class="ad-kartu__kepala">
-                    <div class="ad-kartu__kepala-titik">
-                        <span class="ad-cepat__ikon" aria-hidden="true">
-                            <x-admin.ikon nama="kilau" ukuran="w-5 h-5" />
-                        </span>
+        {{-- Aktivitas Terbaru --}}
+        {{--
+            ad-kartu--ringkas: kartu ini tidak ikut diregangkan setinggi
+            "Menu Cepat" di sebelahnya, jadi ujungnya berhenti tepat di
+            bawah item terakhir. Tanpa class ini, grid meregangkan kedua
+            kartu sama tinggi dan ruang kosong muncul di bawah aktivitas.
+        --}}
+        <div class="ad-kartu ad-kartu--ringkas">
+            <header class="ad-kartu__kepala">
+                <div class="ad-kartu__kepala-titik">
+                    <span class="ad-cepat__ikon ad-cepat__ikon--pink" aria-hidden="true">
+                        <x-admin.ikon nama="kilau" ukuran="w-5 h-5" />
+                    </span>
 
-                        <h2 class="ad-kartu__kepala-judul">Aktivitas Terbaru</h2>
-                    </div>
+                    <h2 class="ad-kartu__kepala-judul">Aktivitas Terbaru</h2>
+                </div>
 
-                    <a href="{{ route('admin.materi') }}" class="ad-tautan">
-                        Lihat Semua
-                        <x-admin.ikon nama="panah-kanan" />
-                    </a>
-                </header>
+                <a href="{{ route('admin.materi') }}" class="ad-tautan">
+                    Lihat Semua
+                    <x-admin.ikon nama="panah-kanan" />
+                </a>
+            </header>
 
+            <div class="ad-kartu__badan ad-kartu__badan--padat">
                 @forelse ($aktivitas as $item)
                     <x-admin.aktivitas :inisial="$item['inisial']" :warna="$item['warna']"
                         :warna-gelap="$item['warna_gelap']" :judul="$item['judul']" :detail="$item['detail']"
                         :waktu="$item['waktu']" :ikon="$item['ikon']" />
                 @empty
-                    <div class="ad-kartu__badan">
-                        <p class="ad-teks-2 ad-teks-2--tengah">Belum ada materi atau quiz yang pernah dibuat.</p>
-                    </div>
+                    <x-admin.kosong ikon="jam" judul="Belum ada aktivitas"
+                        teks="Materi atau quiz yang dibuat pengguna akan muncul di sini." />
                 @endforelse
             </div>
         </div>
     </section>
 
-    {{-- ==================== MENU CEPAT ==================== --}}
-    <section class="ad-seksi">
-        <h2 class="ad-seksi__judul mb-4">Menu Cepat</h2>
+    {{-- ==================== ANALITIK ==================== --}}
+    <section class="ad-seksi ad-grid ad-grid--analitik" aria-label="Analitik dashboard">
+        <x-admin.disukai :data="$pelajaranDisukai" />
 
-        <div class="ad-grid sm:grid-cols-2 xl:grid-cols-4">
-            <x-admin.cepat ikon="buku" judul="Lihat Semua Materi"
-                keterangan="Kelola materi yang tersedia di platform" :href="route('admin.materi')" />
-
-            <x-admin.cepat ikon="soal" judul="Lihat Semua Quiz"
-                keterangan="Kelola quiz yang sudah dibuat dan terbit" :href="route('admin.quiz')" />
-
-            <x-admin.cepat ikon="grup" judul="Kelola Pengguna"
-                keterangan="Lihat siapa saja yang memakai KelasKita" :href="route('admin.pengguna')" />
-
-            <x-admin.cepat ikon="grafik" judul="Lihat Statistik"
-                keterangan="Tren belajar, nilai, dan pelajaran terpopuler" :href="route('admin.statistik')" />
-        </div>
+        <x-admin.login-mingguan :data="$loginMingguan" />
     </section>
 
 @endsection

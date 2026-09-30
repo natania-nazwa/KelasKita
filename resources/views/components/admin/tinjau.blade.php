@@ -44,7 +44,9 @@
             </span>
 
             @if (filled($kategori))
-                <span>{{ $kategori }}</span>
+                {{-- Label eksplisit supaya baris meta tidak jadi deretan
+                     kata tanpa konteks ("Dibuat oleh Rina • PPLG • 4 soal"). --}}
+                <span>Kategori: {{ $kategori }}</span>
             @endif
 
             @if (filled($rincian))
