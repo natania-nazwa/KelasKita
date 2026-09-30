@@ -459,17 +459,33 @@ Route::middleware(['auth', 'admin'])
         Route::get('/dashboard', Admin\DashboardController::class)->name('dashboard');
 
         /*
-         * Tinjau Materi: materi yang dibuat pengguna tidak tayang sampai
-         * admin menyetujuinya, jadi halaman ini tempat admin memutuskan.
+         * Verifikasi: satu halaman untuk semua konten yang menunggu
+         * persetujuan admin. Bukan halaman baru yang berisi logika tersendiri
+         * — ini daftar gabungan "Tinjau Materi" dan "Tinjau Quiz". Tombol
+         * keputusan di halaman ini tetap memakai route setujui/tolak milik
+         * halaman-halaman tersebut; formnya hanya mengirim field "kembali"
+         * supaya admin kembali ke sini setelah memutuskan.
+         */
+        Route::get('/verifikasi', Admin\VerifikasiController::class)->name('verifikasi');
+
+        /*
+         * Kelola Materi: papan admin untuk semua materi dari semua status,
+         * dengan ringkasan jumlah, filter status dan pelajaran, dan pencarian
+         * yang menjangkau nama pembuat. Tidak ada keputusan setujui/tolak di
+         * sini — hal itu tetap hanya ada di halaman Verifikasi.
          *
-         * Dua aksi di bawah memakai slug materi, sama seperti halaman detail
-         * materi, dan hanya berlaku untuk materi yang statusnya masih
-         * "menunggu": controller mengembalikan 404 untuk status lain.
-         *
-         * Field "status" ikut dikirim supaya setelah memutuskan, admin
-         * kembali ke tab yang tadi dibuka dan bukan selalu ke daftar tunggu.
+         * Halaman detail memakai slug, tanpa penjaga status apa pun, supaya
+         * admin bisa membuka materi yang masih draft maupun yang ditolak.
          */
         Route::get('/materi', Admin\MateriController::class)->name('materi');
+        Route::get('/materi/{materi}', Admin\MateriDetailController::class)->name('materi.show');
+
+        /*
+         * Dua aksi di bawah memakai slug materi dan hanya berlaku untuk materi
+         * yang statusnya masih "menunggu": controller mengembalikan 404 untuk
+         * status lain. Route tetap dipakai halaman Verifikasi, yang mengirim
+         * field "kembali" supaya admin kembali ke sana setelah memutuskan.
+         */
         Route::post('/materi/{materi}/setujui', [Admin\MateriTinjauController::class, 'setujui'])->name('materi.setujui');
         Route::post('/materi/{materi}/tolak', [Admin\MateriTinjauController::class, 'tolak'])->name('materi.tolak');
 
@@ -485,4 +501,44 @@ Route::middleware(['auth', 'admin'])
         Route::get('/quiz', Admin\QuizController::class)->name('quiz');
         Route::post('/quiz/{quiz}/setujui', [Admin\QuizTinjauController::class, 'setujui'])->name('quiz.setujui');
         Route::post('/quiz/{quiz}/tolak', [Admin\QuizTinjauController::class, 'tolak'])->name('quiz.tolak');
+
+        /*
+         * =============================================================
+         * HALAMAN ADMIN LAINNYA
+         * =============================================================
+         * Empat route di bawah semuanya hanya membaca (GET, tanpa
+         * parameter yang mengubah apa pun). Tujuannya satu: menu
+         * sidebar "Verifikasi", "Pengguna", "Hasil & Statistik", dan
+         * "Pengaturan" punya halaman sendiri dengan design system yang
+         * sama, tanpa mengubah satu pun aturan yang sudah berjalan.
+         *
+         * Yang tetap di tempatnya:
+         *   - materi dan quiz tidak pernah diubah dari sini;
+         *   - persetujuan tetap lewat admin.materi.setujui /
+         *     admin.materi.tolak dan padanannya untuk quiz;
+         *   - peran pengguna tidak bisa diubah dari halaman Pengguna;
+         *   - halaman Pengaturan tidak menyimpan apa pun, dan mengarahkan
+         *     ke /user/profil yang sudah menangani nama, email, dan
+         *     password beserta validasinya.
+         *
+         * Controller-nya diletakkan di app/Http/Controllers/Admin
+         * bersama controller admin yang sudah ada supaya tidak ada
+         * file baru di luar struktur yang sekarang.
+         */
+
+        // Daftar materi dan quiz yang menunggu keputusan, digabung dalam
+        // satu daftar dengan tab jenis dan tab status.
+        Route::get('/verifikasi', Admin\VerifikasiController::class)->name('verifikasi');
+
+        // Daftar seluruh akun. Hanya dibaca: tidak ada aksi yang
+        // mengaktifkan, menonaktifkan, mengubah peran, atau menghapus.
+        Route::get('/pengguna', Admin\PenggunaController::class)->name('pengguna');
+
+        // Rekap pembelajaran seluruh platform: tren pengguna, pelajaran
+        // terpopuler, dan sebaran isi per kategori.
+        Route::get('/statistik', Admin\StatistikController::class)->name('statistik');
+
+        // Akun admin yang sedang login, plus arah ke halaman Profil
+        // yang sudah menangani semua perubahannya.
+        Route::get('/pengaturan', Admin\PengaturanController::class)->name('pengaturan');
     });

@@ -4,102 +4,198 @@
 
 @section('content')
 
-<div>
-    <h1 class="text-2xl sm:text-3xl font-extrabold text-dark">Dashboard Admin</h1>
-    <p class="mt-1 text-dark/60">Kelola pengguna, materi, dan quiz KelasKita di sini.</p>
-</div>
+    {{--
+        Dashboard admin.
 
-<div class="mt-8 grid sm:grid-cols-2 xl:grid-cols-4 gap-5">
-    <div class="rounded-2xl bg-white border border-lavender p-6">
-        <span class="flex items-center justify-center w-11 h-11 rounded-xl bg-lavender text-primary">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M15 19.128a9.38 9.38 0 0 0 2.625.372 9.337 9.337 0 0 0 4.121-.952 4.125 4.125 0 0 0-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 0 1 8.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0 1 11.964-3.07M12 6.375a3.375 3.375 0 1 1-6.75 0 3.375 3.375 0 0 1 6.75 0Zm8.25 2.25a2.625 2.625 0 1 1-5.25 0 2.625 2.625 0 0 1 5.25 0Z"/>
-            </svg>
-        </span>
-        <p class="mt-5 text-3xl font-extrabold text-dark tabular-nums">{{ $jumlahPengguna }}</p>
-        <p class="mt-1 text-sm text-dark/60 font-medium">Total Pengguna</p>
-    </div>
+        Susunan dari atas: hero, empat kartu statistik, dua kolom
+        (Perlu Ditinjau + kartu branding, Aktivitas Terbaru), lalu Menu
+        Cepat. Semua angka datang dari $ringkasan, yang dihitung di
+        App\Support\StatistikAdmin, jadi tidak ada angka yang dikarang
+        di markup.
+    --}}
 
-    <div class="rounded-2xl bg-white border border-lavender p-6">
-        <span class="flex items-center justify-center w-11 h-11 rounded-xl bg-lavender text-primary">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.042A8.967 8.967 0 0 0 6 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 0 1 6 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 0 1 6-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0 0 18 18a8.967 8.967 0 0 0-6 2.292m0-14.25v14.25"/>
-            </svg>
-        </span>
-        <p class="mt-5 text-3xl font-extrabold text-dark tabular-nums">{{ $jumlahMateri }}</p>
-        <p class="mt-1 text-sm text-dark/60 font-medium">Total Materi</p>
-    </div>
+    @php
+        /*
+         * Keterangan kartu statistik.
+         *
+         * Persentase naik hanya boleh ditulis kalau pembandingnya ada.
+         * Kalau bulan lalu masih nol, persentasenya tidak dihitung di
+         * server, dan yang ditampilkan adalah jumlah baru bulan ini.
+         * Menampilkan "0% dari bulan lalu" di situation itu akan memberi
+         * kesan ada yang turun padahal memang belum ada pembanding.
+         */
+        $keterangan = [
+            'pengguna' => $ringkasan['perubahan']['pengguna']['bulan_ini'].' bergabung bulan ini',
+            'materi' => $ringkasan['perubahan']['materi']['bulan_ini'].' materi baru bulan ini',
+            'quiz' => $ringkasan['perubahan']['quiz']['bulan_ini'].' quiz baru bulan ini',
+        ];
 
-    <div class="rounded-2xl bg-white border border-lavender p-6">
-        <span class="flex items-center justify-center w-11 h-11 rounded-xl bg-lavender text-primary">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"/>
-            </svg>
-        </span>
-        <p class="mt-5 text-3xl font-extrabold text-dark tabular-nums">{{ $jumlahQuiz }}</p>
-        <p class="mt-1 text-sm text-dark/60 font-medium">Total Quiz</p>
-    </div>
+        $persen = collect($ringkasan['perubahan'])
+            ->map(fn (array $baris): ?string => $baris['persen'] === null
+                ? null
+                : rtrim(rtrim(number_format($baris['persen'], 1, ',', ''), '0'), ',').'%');
 
-    <div class="rounded-2xl bg-white border border-lavender p-6">
-        <span class="flex items-center justify-center w-11 h-11 rounded-xl bg-lavender text-primary">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"/>
-            </svg>
-        </span>
-        <p class="mt-5 text-3xl font-extrabold text-dark tabular-nums">{{ $jumlahMateriMenunggu + $jumlahQuizMenunggu }}</p>
-        <p class="mt-1 text-sm text-dark/60 font-medium">Menunggu Review</p>
-        <p class="mt-1 text-xs text-dark/50">{{ $jumlahMateriMenunggu }} materi &middot; {{ $jumlahQuizMenunggu }} quiz</p>
-        <div class="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1.5">
-            <a href="{{ route('admin.materi') }}"
-                class="inline-flex items-center gap-1.5 text-sm font-semibold text-primary hover:text-primary-dark">
-                Tinjau materi
-                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3" />
-                </svg>
-            </a>
+        $totalMenunggu = $ringkasan['materi_menunggu'] + $ringkasan['quiz_menunggu'];
+    @endphp
 
-            <a href="{{ route('admin.quiz') }}"
-                class="inline-flex items-center gap-1.5 text-sm font-semibold text-primary hover:text-primary-dark">
-                Tinjau quiz
-                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3" />
-                </svg>
-            </a>
-        </div>
-    </div>
-</div>
+    {{-- ==================== HERO ==================== --}}
+    <section class="ad-seksi ad-hero">
+        <div class="ad-hero__susun">
+            <div class="ad-hero__teks">
+                <p class="ad-hero__lencana">
+                    <x-admin.ikon nama="kap" />
+                    Platform Belajar Siswa
+                </p>
 
-<div class="mt-10">
-    <div class="flex items-center justify-between">
-        <h2 class="text-lg sm:text-xl font-bold text-dark">Aktivitas Terbaru</h2>
-        <a href="{{ route('admin.materi') }}" class="text-sm font-semibold text-primary hover:text-primary-dark">Lihat Semua</a>
-    </div>
+                <h1 class="ad-hero__judul">Selamat datang, Admin &#128075;</h1>
 
-    <div class="mt-5 rounded-2xl bg-white border border-lavender overflow-hidden">
-        <div class="hidden sm:flex items-center gap-4 px-6 py-3 bg-brand-bg text-xs font-bold text-dark/50 uppercase tracking-wide">
-            <span class="flex-1">Kegiatan</span>
-            <span class="w-32 text-right">Waktu</span>
-        </div>
+                <p class="ad-hero__sub">
+                    Kelola aktivitas belajar dan konten KelasKita dengan mudah.
+                </p>
 
-        <div class="divide-y divide-dark/5">
-            @forelse ($aktivitas as $item)
-                <div class="flex items-center gap-4 px-6 py-4">
-                    <span class="flex items-center justify-center w-9 h-9 rounded-lg bg-lavender text-primary shrink-0">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="{{ \App\Support\Ikon::path($item['ikon']) }}" />
-                        </svg>
-                    </span>
-                    <div class="flex-1 min-w-0">
-                        <p class="text-sm font-semibold text-dark truncate">{{ $item['judul'] }}</p>
-                        <p class="text-xs text-dark/50">{{ $item['keterangan'] }} &middot; {{ $item['status'] }}</p>
-                    </div>
-                    <span class="shrink-0 text-xs text-dark/50 w-32 text-right">{{ $item['waktu'] }}</span>
+                <div class="ad-hero__aksi">
+                    @if ($totalMenunggu > 0)
+                        <a href="{{ route('admin.verifikasi') }}" class="ad-tombol ad-tombol--utama">
+                            <x-admin.ikon nama="daftar-cek" />
+
+                            Tinjau {{ $totalMenunggu }} konten
+                        </a>
+                    @else
+                        <a href="{{ route('admin.materi') }}" class="ad-tombol ad-tombol--utama">
+                            <x-admin.ikon nama="buku" />
+                            Kelola Materi
+                        </a>
+                    @endif
+
+                    <a href="{{ route('admin.statistik') }}" class="ad-tombol ad-tombol--halus">
+                        <x-admin.ikon nama="grafik" />
+                        Lihat statistik
+                    </a>
                 </div>
-            @empty
-                <p class="px-6 py-8 text-center text-sm text-dark/50">Belum ada materi yang pernah dibuat.</p>
-            @endforelse
+            </div>
+
+            <div class="ad-hero__ilustrasi">
+                <x-admin.ilustrasi-siswa />
+            </div>
         </div>
-    </div>
-</div>
+    </section>
+
+    {{-- ==================== STATISTIK ==================== --}}
+    <section class="ad-seksi ad-grid ad-grid--statistik" aria-label="Ringkasan platform">
+        <x-admin.statistik ikon="grup" label="Pengguna" :nilai="$ringkasan['pengguna']" nada="info"
+            :naik="$persen['pengguna']" :keterangan="$persen['pengguna'] ? null : $keterangan['pengguna']"
+            :href="route('admin.pengguna')" />
+
+        <x-admin.statistik ikon="buku" label="Materi" :nilai="$ringkasan['materi']"
+            :naik="$persen['materi']" :keterangan="$persen['materi'] ? null : $keterangan['materi']"
+            :href="route('admin.materi')" />
+
+        <x-admin.statistik ikon="soal" label="Quiz" :nilai="$ringkasan['quiz']" nada="sukses"
+            :naik="$persen['quiz']" :keterangan="$persen['quiz'] ? null : $keterangan['quiz']"
+            :href="route('admin.quiz')" />
+
+        <x-admin.statistik ikon="jam" label="Menunggu Verifikasi" :nilai="$totalMenunggu" nada="peringatan"
+            :keterangan="$ringkasan['materi_menunggu'].' materi · '.$ringkasan['quiz_menunggu'].' quiz'"
+            :href="route('admin.verifikasi')" />
+    </section>
+
+    {{-- ==================== PERLU DITINJAU + BRANDING ==================== --}}
+    <section class="ad-seksi ad-grid ad-grid--dua">
+
+        {{-- Perlu Ditinjau --}}
+        <div class="ad-kartu">
+            <header class="ad-kartu__kepala">
+                <div class="ad-kartu__kepala-titik">
+                    <span class="ad-cepat__ikon" aria-hidden="true">
+                        <x-admin.ikon nama="daftar-cek" ukuran="w-5 h-5" />
+                    </span>
+
+                    <h2 class="ad-kartu__kepala-judul">Perlu Ditinjau</h2>
+                </div>
+
+                <a href="{{ route('admin.verifikasi') }}" class="ad-tautan">
+                    Lihat Semua
+                    <x-admin.ikon nama="panah-kanan" />
+                </a>
+            </header>
+
+            <div class="ad-kartu__badan">
+                <div class="ad-tinjau">
+                    @forelse ($perluDitinjau as $item)
+                        <x-admin.tinjau :jenis="$item['jenis']" :judul="$item['judul']" :pembuat="$item['pembuat']"
+                            :kategori="$item['kategori']" :kategori-warna="$item['kategori_warna']"
+                            :kategori-ikon="$item['kategori_ikon']" :rincian="$item['rincian']"
+                            :tanggal="$item['dibuat_pada']?->translatedFormat('d M Y')"
+                            :tautan="$item['tautan']" />
+                    @empty
+                        <x-admin.kosong ikon="tanda-centang" judul="Semua sudah ditinjau"
+                            teks="Tidak ada materi atau quiz yang menunggu persetujuan. Bagus, tidak ada yang tertunda." />
+                    @endforelse
+                </div>
+            </div>
+        </div>
+
+        {{-- Kartu branding: dekoratif, bukan fitur. --}}
+        <div class="flex flex-col gap-5">
+            <div class="ad-kutip">
+                <p class="ad-kutip__teks">
+                    <span class="ad-kutip__tanda" aria-hidden="true">&ldquo;</span>
+
+                    Konten berkualitas, untuk pembelajaran yang lebih baik.
+                </p>
+
+                <div class="ad-kutip__ilustrasi">
+                    <x-admin.ilustrasi-buku />
+                </div>
+            </div>
+
+            {{-- Aktivitas Terbaru --}}
+            <div class="ad-kartu">
+                <header class="ad-kartu__kepala">
+                    <div class="ad-kartu__kepala-titik">
+                        <span class="ad-cepat__ikon" aria-hidden="true">
+                            <x-admin.ikon nama="kilau" ukuran="w-5 h-5" />
+                        </span>
+
+                        <h2 class="ad-kartu__kepala-judul">Aktivitas Terbaru</h2>
+                    </div>
+
+                    <a href="{{ route('admin.materi') }}" class="ad-tautan">
+                        Lihat Semua
+                        <x-admin.ikon nama="panah-kanan" />
+                    </a>
+                </header>
+
+                @forelse ($aktivitas as $item)
+                    <x-admin.aktivitas :inisial="$item['inisial']" :warna="$item['warna']"
+                        :warna-gelap="$item['warna_gelap']" :judul="$item['judul']" :detail="$item['detail']"
+                        :waktu="$item['waktu']" :ikon="$item['ikon']" />
+                @empty
+                    <div class="ad-kartu__badan">
+                        <p class="ad-teks-2 ad-teks-2--tengah">Belum ada materi atau quiz yang pernah dibuat.</p>
+                    </div>
+                @endforelse
+            </div>
+        </div>
+    </section>
+
+    {{-- ==================== MENU CEPAT ==================== --}}
+    <section class="ad-seksi">
+        <h2 class="ad-seksi__judul mb-4">Menu Cepat</h2>
+
+        <div class="ad-grid sm:grid-cols-2 xl:grid-cols-4">
+            <x-admin.cepat ikon="buku" judul="Lihat Semua Materi"
+                keterangan="Kelola materi yang tersedia di platform" :href="route('admin.materi')" />
+
+            <x-admin.cepat ikon="soal" judul="Lihat Semua Quiz"
+                keterangan="Kelola quiz yang sudah dibuat dan terbit" :href="route('admin.quiz')" />
+
+            <x-admin.cepat ikon="grup" judul="Kelola Pengguna"
+                keterangan="Lihat siapa saja yang memakai KelasKita" :href="route('admin.pengguna')" />
+
+            <x-admin.cepat ikon="grafik" judul="Lihat Statistik"
+                keterangan="Tren belajar, nilai, dan pelajaran terpopuler" :href="route('admin.statistik')" />
+        </div>
+    </section>
 
 @endsection

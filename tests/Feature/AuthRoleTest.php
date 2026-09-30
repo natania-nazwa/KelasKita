@@ -124,6 +124,65 @@ class AuthRoleTest extends TestCase
         ])->assertRedirect('/user/dashboard');
     }
 
+    public function test_admin_tidak_ikut_url_intended_dari_halaman_user(): void
+    {
+        $this->buatPengguna([
+            'nama' => 'Pemilik',
+            'email' => 'admin@example.com',
+            'peran' => 'admin',
+        ]);
+
+        // Tamu membuka /user/dashboard, lalu middleware auth mengisi
+        // "url.intended" dengan URL itu sebelum melempar ke /login.
+        $this->get('/user/dashboard')->assertRedirect('/login');
+
+        $this->post('/login', [
+            'email' => 'admin@example.com',
+            'password' => 'rahasia123',
+        ])->assertRedirect('/admin/dashboard');
+    }
+
+    public function test_user_tidak_ikut_url_intended_dari_halaman_admin(): void
+    {
+        $this->buatPengguna();
+
+        $this->get('/admin/dashboard')->assertRedirect('/login');
+
+        $this->post('/login', [
+            'email' => 'budi@example.com',
+            'password' => 'rahasia123',
+        ])->assertRedirect('/user/dashboard');
+    }
+
+    public function test_url_intended_dalam_area_yang_sama_tetap_dipakai(): void
+    {
+        $this->buatPengguna([
+            'nama' => 'Pemilik',
+            'email' => 'admin@example.com',
+            'peran' => 'admin',
+        ]);
+
+        // Admin yang memang sedangottekan /admin/materi harus kembali
+        // ke halaman itu, bukan dipaksa ke dashboard.
+        $this->get('/admin/materi')->assertRedirect('/login');
+
+        $this->post('/login', [
+            'email' => 'admin@example.com',
+            'password' => 'rahasia123',
+        ])->assertRedirect('/admin/materi');
+    }
+
+    public function test_url_intended_luar_domain_diperlakukan_sebagai_tamu(): void
+    {
+        $this->buatPengguna();
+
+        $this->withSession(['url.intended' => 'https://penyerang.test/user/materi'])
+            ->post('/login', [
+                'email' => 'budi@example.com',
+                'password' => 'rahasia123',
+            ])->assertRedirect('/user/dashboard');
+    }
+
     public function test_halaman_auth_tetap_terbuka_walau_sudah_login(): void
     {
         $user = $this->buatPengguna();

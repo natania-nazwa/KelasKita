@@ -37,7 +37,6 @@ return new class extends Migration
             $table->timestamps();
         });
 
-
         // ==========================================
         // PASSWORD RESET TOKENS
         // ==========================================
@@ -49,7 +48,6 @@ return new class extends Migration
 
             $table->timestamp('created_at')->nullable();
         });
-
 
         // ==========================================
         // SESSIONS
@@ -74,7 +72,6 @@ return new class extends Migration
                 ->index();
         });
 
-
         // ==========================================
         // PELAJARAN / KATEGORI
         // ==========================================
@@ -98,7 +95,6 @@ return new class extends Migration
 
             $table->timestamps();
         });
-
 
         // ==========================================
         // MATERI
@@ -138,10 +134,9 @@ return new class extends Migration
 
             $table->index([
                 'pelajaran_id',
-                'slug'
+                'slug',
             ]);
         });
-
 
         // ==========================================
         // QUIZ
@@ -204,15 +199,14 @@ return new class extends Migration
 
             $table->index([
                 'dibuat_oleh',
-                'status'
+                'status',
             ]);
 
             $table->index([
                 'pelajaran_id',
-                'status'
+                'status',
             ]);
         });
-
 
         // ==========================================
         // SOAL
@@ -256,10 +250,9 @@ return new class extends Migration
 
             $table->index([
                 'quiz_id',
-                'urutan'
+                'urutan',
             ]);
         });
-
 
         // ==========================================
         // PENGERJAAN QUIZ
@@ -304,10 +297,9 @@ return new class extends Migration
 
             $table->index([
                 'pengguna_id',
-                'quiz_id'
+                'quiz_id',
             ]);
         });
-
 
         // ==========================================
         // JAWABAN QUIZ
@@ -345,11 +337,10 @@ return new class extends Migration
             // dalam satu pengerjaan quiz
             $table->unique([
                 'pengerjaan_quiz_id',
-                'soal_id'
+                'soal_id',
             ]);
         });
     }
-
 
     public function down(): void
     {

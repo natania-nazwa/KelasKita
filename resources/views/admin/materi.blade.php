@@ -1,236 +1,285 @@
 @extends('layouts.admin')
 
-@section('title', 'Tinjau Materi | KelasKita')
+@section('title', 'Materi | KelasKita')
 
 @section('content')
     {{--
-        Halaman "Tinjau Materi": tempat admin menyetujui atau menolak materi
-        yang diajukan pengguna.
+        Halaman "Materi": papan admin untuk seluruh materi, dari semua status.
 
-        Halaman dibuka ke tab "Menunggu Persetujuan" supaya pekerjaan yang
-        perlu dikerjakan selalu yang pertama terlihat. Setiap baris punya
-        tombol Setujui, dan penolakan selalu lewat isian alasan karena alasan
-        itu dibaca pemilik di "Karya Saya".
+        Berbeda dengan halaman Verifikasi, di sini tidak ada tombol setujui
+        atau tolak. Fungsinya memantau: berapa materi tayang, menunggu,
+        ditolak, dan draft; lalu membuka isi materi apa pun lewat "Lihat".
     --}}
 
-    <div>
-        <h1 class="text-2xl sm:text-3xl font-extrabold text-dark">Tinjau Materi</h1>
+    {{-- =====================
+         SPANDUK ATAS
+    ====================== --}}
+    <section class="ad-hero">
+        <div class="ad-hero__susun">
+            <div class="ad-hero__teks">
+                <span class="ad-hero__lencana">
+                    <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="{{ \App\Support\Ikon::path('daftar-cek') }}" />
+                    </svg>
 
-        <p class="mt-1 text-dark/60">
-            Materi yang dibuat pengguna hanya tayang setelah kamu menyetujuinya.
-        </p>
+                    Manajemen konten
+                </span>
+
+                <h1 class="ad-hero__judul">Kelola Semua Materi</h1>
+
+                <p class="ad-hero__sub">
+                    Pantau semua materi dari satu tempat — mana yang sudah tayang,
+                    mana yang masih menunggu keputusanmu, dan bagi yang ditolak,
+                    pemiliknya perlu menyempurnakan ulang.
+                </p>
+
+                <div class="ad-hero__aksi">
+                    <a href="{{ route('admin.verifikasi') }}" class="ad-tombol ad-tombol--garis">
+                        <x-admin.ikon nama="daftar-cek" />
+
+                        Buka Verifikasi
+                    </a>
+                </div>
+            </div>
+
+            <x-admin.ilustrasi-buku class="ad-hero__ilustrasi" />
+        </div>
+    </section>
+
+    {{-- =====================
+         RINGKASAN JUMLAH
+    ====================== --}}
+    <div class="ad-seksi ad-grid ad-grid--statistik">
+        <x-admin.statistik ikon="buku" label="Total Materi"
+            nilai="{{ array_sum($jumlahStatus) }}"
+            keterangan="semua status"
+            href="{{ route('admin.materi') }}" />
+
+        <x-admin.statistik ikon="jam" label="Menunggu Verifikasi"
+            nilai="{{ $jumlahStatus['pending'] ?? 0 }}"
+            nada="peringatan"
+            keterangan="perlu keputusanmu"
+            href="{{ route('admin.materi', ['status' => 'pending']) }}" />
+
+        <x-admin.statistik ikon="perisai" label="Dipublikasikan"
+            nilai="{{ $jumlahStatus['published'] ?? 0 }}"
+            nada="sukses"
+            keterangan="materi yang tayang"
+            href="{{ route('admin.materi', ['status' => 'published']) }}" />
+
+        <x-admin.statistik ikon="silang-polos" label="Ditolak"
+            nilai="{{ $jumlahStatus['rejected'] ?? 0 }}"
+            keterangan="perlu diperbaiki pemilik"
+            href="{{ route('admin.materi', ['status' => 'rejected']) }}" />
     </div>
 
-    @if (session('sukses'))
-        <div class="mt-6 flex items-start gap-3 rounded-2xl border border-lavender bg-white px-4 py-3 text-sm text-dark">
-            <span class="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary"
-                aria-hidden="true">
-                <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" stroke-width="2.4" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="m4.5 12.75 6 6 9-13.5" />
-                </svg>
-            </span>
-
-            <p class="min-w-0 font-medium">{{ session('sukses') }}</p>
-        </div>
-    @endif
-
-    @if ($errors->any())
-        <div role="alert"
-            class="mt-6 rounded-2xl border border-[#f4c7cd] bg-white px-4 py-3 text-sm text-[#a33a46]">
-            <p class="font-semibold">Belum bisa diputuskan:</p>
-
-            <ul class="mt-1 list-disc space-y-0.5 pl-5">
-                @foreach ($errors->all() as $pesan)
-                    <li>{{ $pesan }}</li>
-                @endforeach
-            </ul>
-        </div>
-    @endif
-
-    {{-- =========================
-         TAB STATUS + PENCARIAN
-    ========================== --}}
-    <div class="mt-6 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-        <nav aria-label="Filter status materi" class="flex flex-wrap gap-2">
-            @foreach ($pilihanStatus as $nilai => $label)
-                @php $jumlah = $jumlahStatus[$nilai] ?? 0; @endphp
-
-                <a href="{{ route('admin.materi', ['status' => $nilai, 'q' => $kataKunci]) }}"
-                    class="inline-flex items-center gap-2 rounded-full px-3.5 py-1.5 text-xs font-bold transition
-                        {{ $statusAktif === $nilai
-                            ? 'bg-primary text-white'
-                            : 'bg-white text-dark/70 border border-lavender hover:border-primary' }}">
-                    {{ $label }}
-
-                    <span class="tabular-nums {{ $statusAktif === $nilai ? 'text-white/75' : 'text-dark/45' }}">
-                        {{ $jumlah }}
-                    </span>
-                </a>
-            @endforeach
-        </nav>
-
-        <form method="GET" action="{{ route('admin.materi') }}" class="flex gap-2">
-            <input type="hidden" name="status" value="{{ $statusAktif }}">
-
+    {{-- =====================
+         CARI + FILTER
+    ======================
+         Filter memakai form GET supaya hasilnya bisa dibagikan lewat tautan.
+         Field q dipakai juga oleh kolom pencarian di bagian atas layout. --}}
+    <form method="GET" action="{{ route('admin.materi') }}" class="ad-seksi ad-alat">
+        <div class="ad-alat__kiri">
             <label for="q" class="sr-only">Cari materi</label>
 
-            <input id="q" name="q" type="search" value="{{ $kataKunci }}"
-                placeholder="Cari judul atau isi materi..."
-                class="w-full rounded-lg border border-lavender bg-white px-3.5 py-2 text-sm text-dark sm:w-72">
+            <div class="ad-cari">
+                <x-admin.ikon nama="cari" class="ad-cari__ikon" />
 
-            <button type="submit"
-                class="shrink-0 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white hover:bg-primary-dark">
-                Cari
-            </button>
-        </form>
-    </div>
+                <input id="q" name="q" type="search" value="{{ $kataKunci }}"
+                    placeholder="Cari judul, isi, atau pembuat..." autocomplete="off">
+            </div>
+        </div>
 
-    {{-- =========================
+        <div class="ad-alat__kanan">
+            <label for="status" class="sr-only">Filter status</label>
+
+            <div class="ad-pilih__bungkus">
+                <select id="status" name="status" class="ad-pilih">
+                    <option value="">Semua Status</option>
+
+                    @foreach ($pilihanStatus as $nilai => $label)
+                        <option value="{{ $nilai }}" @selected($statusAktif === $nilai)>{{ $label }}</option>
+                    @endforeach
+                </select>
+
+                <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="{{ \App\Support\Ikon::path('panah-bawah') }}" />
+                </svg>
+            </div>
+
+            <label for="pelajaran" class="sr-only">Filter pelajaran</label>
+
+            <div class="ad-pilih__bungkus">
+                <select id="pelajaran" name="pelajaran" class="ad-pilih">
+                    <option value="">Semua Pelajaran</option>
+
+                    @foreach ($daftarPelajaran as $pelajaran)
+                        <option value="{{ $pelajaran->slug }}" @selected($pelajaranAktif === $pelajaran->slug)>{{ $pelajaran->nama }}</option>
+                    @endforeach
+                </select>
+
+                <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="{{ \App\Support\Ikon::path('panah-bawah') }}" />
+                </svg>
+            </div>
+
+            <button type="submit" class="ad-tombol ad-tombol--utama">Terapkan</button>
+
+            @if ($kataKunci !== '' || $statusAktif !== '' || $pelajaranAktif !== '')
+                <a href="{{ route('admin.materi') }}" class="ad-tombol ad-tombol--garis">Reset</a>
+            @endif
+        </div>
+    </form>
+
+    {{-- =====================
          DAFTAR MATERI
-    ==========================
-         Isian alasan yang gagal divalidasi hanya dikembalikan ke baris
-         pertama, supaya satu teks tidak ikut terisi di semua textarea. --}}
+    ====================== --}}
     @if ($daftar === [])
-        <div class="mt-6 rounded-2xl border border-lavender bg-white px-6 py-12 text-center">
-            <p class="text-base font-bold text-dark">
-                @if ($kataKunci !== '')
-                    Tidak ada materi "{{ $kataKunci }}" di tab ini.
-                @elseif ($statusAktif === \App\Models\Materi::STATUS_PENDING)
-                    Tidak ada materi yang menunggu persetujuan.
-                @else
-                    Belum ada materi dengan status ini.
-                @endif
-            </p>
-
-            <p class="mt-1 text-sm text-dark/60">
-                Materi yang diajukan pengguna akan muncul di sini.
-            </p>
+        <div class="ad-seksi">
+            @if ($kataKunci !== '' || $statusAktif !== '' || $pelajaranAktif !== '')
+                <x-admin.kosong ikon="cari" judul="Tidak ada materi yang cocok"
+                    teks="Coba kata kunci atau filter lain, atau reset filtrernya untuk melihat semua materi." />
+            @else
+                <x-admin.kosong judul="Belum ada materi"
+                    teks="Materi yang dibuat pengguna akan muncul di sini begitu diajukan." />
+            @endif
         </div>
     @else
-        <div class="mt-6 space-y-5">
-            @foreach ($daftar as $materi)
-                <article class="rounded-2xl bg-white border border-lavender overflow-hidden">
+        <div class="ad-seksi ad-tabel__bungkus hidden md:block">
+            <table class="ad-tabel">
+                <thead>
+                    <tr>
+                        <th>No</th>
+                        <th>Materi</th>
+                        <th>Pelajaran</th>
+                        <th>Dibuat oleh</th>
+                        <th>Status</th>
+                        <th>Tanggal</th>
+                        <th class="text-right">Aksi</th>
+                    </tr>
+                </thead>
 
-                    {{-- A. Kepala: judul, status, dan pembuat. --}}
-                    <div class="flex flex-wrap items-start gap-4 px-6 py-5">
-                        <span class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl text-lg font-extrabold text-white"
-                            style="background-color: {{ $materi['kategori']['warna'] }}"
-                            aria-hidden="true">
-                            {{ $materi['kategori']['ikon'] }}
-                        </span>
+                <tbody>
+                    @foreach ($daftar as $materi)
+                        <tr>
+                            <td>{{ $loop->iteration }}</td>
 
-                        <div class="min-w-0 flex-1">
-                            <div class="flex flex-wrap items-center gap-2">
-                                <h2 class="text-base font-extrabold text-dark">{{ $materi['judul'] }}</h2>
+                            <td>
+                                <div class="ad-tabel__nama">
+                                    <span
+                                        class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-base font-extrabold text-white"
+                                        style="background-color: {{ $materi['kategori']['warna'] }}"
+                                        aria-hidden="true">
+                                        {{ $materi['kategori']['ikon'] }}
+                                    </span>
 
-                                <span
-                                    class="karya-status karya-status--{{ $materi['warna_status'] }}">
-                                    <span class="karya-status__titik" aria-hidden="true"></span>
+                                    <div class="ad-tabel__nama-teks">
+                                        <p class="ad-tabel__judul">{{ $materi['judul'] }}</p>
 
-                                    {{ $materi['status_label'] }}
+                                        <p class="ad-tabel__sub">
+                                            {{ $materi['tingkat_kesulitan'] }} &middot;
+                                            {{ $materi['jumlah_bab'] }} Bab &middot;
+                                            {{ $materi['waktu_baca'] }} menit baca
+                                        </p>
+                                    </div>
+                                </div>
+                            </td>
+
+                            <td>
+                                <span class="inline-flex items-center gap-2">
+                                    <span class="h-2.5 w-2.5 shrink-0 rounded-full"
+                                        style="background-color: {{ $materi['kategori']['warna'] }}" aria-hidden="true"></span>
+
+                                    {{ $materi['kategori']['nama'] }}
                                 </span>
+                            </td>
+
+                            <td>
+                                <span class="inline-flex items-center gap-2">
+                                    <x-admin.avatar :inisial="$materi['pembuat']['inisial']" :warna="$materi['pembuat']['warna']"
+                                        :warnaGelap="$materi['pembuat']['warna_gelap']" />
+
+                                    {{ $materi['pembuat']['nama'] }}
+                                </span>
+                            </td>
+
+                            <td>
+                                <x-admin.lencana-materi :status="$materi['status']" :label="$materi['status_label']" />
+                            </td>
+
+                            <td>
+                                <span class="whitespace-nowrap">{{ $materi['tanggal_label'] }}</span>
+                            </td>
+
+                            <td>
+                                <div class="ad-tabel__aksi">
+                                    <a href="{{ $materi['tautan_detail'] }}" class="ad-tombol ad-tombol--halus">
+                                        <x-admin.ikon nama="mata" />
+
+                                        Lihat
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                    @endforeach
+                </tbody>
+            </table>
+        </div>
+
+        {{-- Kartu bertumpuk untuk layar kecil. --}}
+        <div class="ad-seksi md:hidden space-y-4">
+            @foreach ($daftar as $materi)
+                <article class="rounded-2xl border border-lavender bg-white p-4">
+                    <div class="flex items-start justify-between gap-3">
+                        <div class="flex min-w-0 items-center gap-2.5">
+                            <span
+                                class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl text-lg font-extrabold text-white"
+                                style="background-color: {{ $materi['kategori']['warna'] }}"
+                                aria-hidden="true">
+                                {{ $materi['kategori']['ikon'] }}
+                            </span>
+
+                            <div class="min-w-0">
+                                <p class="text-xs font-bold text-dark/50">{{ $materi['kategori']['nama'] }}</p>
+
+                                <p class="truncate text-base font-extrabold text-dark">{{ $materi['judul'] }}</p>
                             </div>
-
-                            <p class="mt-1 text-xs font-semibold text-dark/50">
-                                {{ $materi['kategori']['nama'] }} &middot;
-                                {{ $materi['tingkat_kesulitan'] }} &middot;
-                                {{ $materi['jumlah_bab'] }} Bab &middot;
-                                {{ $materi['waktu_baca'] }} menit baca
-                            </p>
-
-                            <p class="mt-2 text-sm leading-relaxed text-dark/70">
-                                {{ $materi['deskripsi'] ?: 'Tanpa deskripsi.' }}
-                            </p>
-
-                            <p class="mt-2 text-xs text-dark/50">
-                                Oleh {{ $materi['pembuat']['nama'] }} &middot;
-                                {{ $materi['dibuat_pada']?->translatedFormat('d M Y') }}
-
-                                @if ($materi['jumlah_ditolak'] > 0)
-                                    &middot; sudah {{ $materi['jumlah_ditolak'] }}x ditolak
-                                    (sisa pengajuan {{ $materi['sisa_pengajuan'] }}x)
-                                @endif
-                            </p>
                         </div>
+
+                        <x-admin.lencana-materi :status="$materi['status']" :label="$materi['status_label']" />
                     </div>
 
-                    {{-- B. Isi materi, bisa dibuka admin untuk menilai. --}}
-                    <details class="group border-t border-dark/5">
-                        <summary
-                            class="cursor-pointer list-none px-6 py-3 text-xs font-bold text-primary hover:text-primary-dark">
-                            Lihat isi materi
-                        </summary>
+                    <p class="mt-2 text-xs font-semibold text-dark/50">
+                        {{ $materi['tingkat_kesulitan'] }} &middot;
+                        {{ $materi['jumlah_bab'] }} Bab
+                    </p>
 
-                        <div class="border-t border-dark/5 px-6 py-4">
-                            <pre class="max-h-96 overflow-auto whitespace-pre-wrap rounded-xl bg-brand-bg p-4 text-xs leading-relaxed text-dark/80">{{ $materi['isi'] }}</pre>
-                        </div>
-                    </details>
+                    <div class="mt-3 flex items-center justify-between gap-2 border-t border-dark/5 pt-3">
+                        <span class="inline-flex min-w-0 items-center gap-2 text-xs font-semibold text-dark/60">
+                            <x-admin.avatar :inisial="$materi['pembuat']['inisial']" :warna="$materi['pembuat']['warna']"
+                                :warnaGelap="$materi['pembuat']['warna_gelap']" />
 
-                    {{-- C. Catatan pengajuan ulang dari pemilik. --}}
-                    @if (filled($materi['catatan_pengajuan']))
-                        <div class="border-t border-dark/5 px-6 py-4">
-                            <p class="text-xs font-bold text-dark/50">Catatan pengajuan ulang dari pemilik</p>
+                            <span class="truncate">{{ $materi['pembuat']['nama'] }}</span>
+                        </span>
 
-                            <p class="mt-1 text-sm leading-relaxed text-dark/80">{{ $materi['catatan_pengajuan'] }}</p>
-                        </div>
-                    @endif
+                        <span class="shrink-0 text-xs text-dark/50">{{ $materi['tanggal_label'] }}</span>
+                    </div>
 
-                    {{-- D. Alasan penolakan sebelumnya. --}}
-                    @if (filled($materi['catatan_admin']))
-                        <div class="border-t border-dark/5 bg-[#fdecee] px-6 py-4">
-                            <p class="text-xs font-bold text-[#a8323c]">Alasan ditolak sebelumnya</p>
+                    <a href="{{ $materi['tautan_detail'] }}" class="ad-tombol ad-tombol--halus mt-4 w-full">
+                        <x-admin.ikon nama="mata" />
 
-                            <p class="mt-1 text-sm leading-relaxed text-[#a8323c]">{{ $materi['catatan_admin'] }}</p>
-                        </div>
-                    @endif
-
-                    {{-- E. Keputusan admin: setujui atau tolak. --}}
-                    @if ($statusAktif === \App\Models\Materi::STATUS_PENDING)
-                        <div class="flex flex-col gap-4 border-t border-dark/5 px-6 py-5 lg:flex-row lg:items-start lg:justify-between">
-                            <form method="POST" action="{{ $materi['tautan_setujui'] }}"
-                                class="shrink-0">
-                                @csrf
-
-                                <input type="hidden" name="status" value="{{ $statusAktif }}">
-
-                                <button type="submit"
-                                    class="inline-flex w-full items-center justify-center gap-2 rounded-full bg-primary px-5 py-2.5 text-sm font-bold text-white transition hover:bg-primary-dark lg:w-auto">
-                                    <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-                                        <path stroke-linecap="round" stroke-linejoin="round" d="m4.5 12.75 6 6 9-13.5" />
-                                    </svg>
-
-                                    Setujui &amp; Terbitkan
-                                </button>
-                            </form>
-
-                            <form method="POST" action="{{ $materi['tautan_tolak'] }}"
-                                class="min-w-0 flex-1">
-                                @csrf
-
-                                <input type="hidden" name="status" value="{{ $statusAktif }}">
-
-                                <label for="alasan-{{ $materi['id'] }}"
-                                    class="block text-xs font-bold text-dark/60">
-                                    Alasan penolakan (dibaca pemilik)
-                                </label>
-
-                                <textarea id="alasan-{{ $materi['id'] }}" name="alasan" rows="2" required
-                                    maxlength="500"
-                                    placeholder="Contoh: Materi ini belum lengkap, tolong tambahkan contoh kode pada setiap bab."
-                                    class="mt-1.5 w-full rounded-xl border border-lavender bg-white px-3.5 py-2.5 text-sm text-dark placeholder:text-dark/35">{{ $loop->first ? old('alasan') : '' }}</textarea>
-
-                                <button type="submit"
-                                    class="mt-2.5 inline-flex w-full items-center justify-center gap-2 rounded-full bg-[#d9535f] px-5 py-2.5 text-sm font-bold text-white transition hover:bg-[#c2414a] lg:w-auto">
-                                    Tolak Materi
-                                </button>
-                            </form>
-                        </div>
-                    @endif
+                        Lihat Detail
+                    </a>
                 </article>
             @endforeach
         </div>
 
-        <div class="mt-8">
+        <div class="ad-seksi flex flex-col items-center gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <p class="text-sm text-dark/60">
+                Menampilkan {{ $paginasi->firstItem() ?? 0 }}–{{ $paginasi->lastItem() ?? 0 }}
+                dari {{ $paginasi->total() }} materi
+            </p>
+
             {{ $paginasi->links() }}
         </div>
     @endif

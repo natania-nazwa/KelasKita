@@ -311,19 +311,21 @@ class MateriPersetujuanTest extends TestCase
         }
     }
 
-    public function test_halaman_tinjau_membuka_di_tab_menunggu(): void
+    public function test_halaman_kelola_menampilkan_semua_status(): void
     {
         $admin = $this->buatAdmin();
         $pemilik = $this->buatPengguna();
         $this->buatMateri($pemilik, Materi::STATUS_PENDING, 'Materi Menunggu');
         $this->buatMateri($pemilik, Materi::STATUS_PUBLISHED, 'Materi Terbit');
 
+        // Halaman kelola membuka ke semua status, bukan ke satu tab tunggu.
         $this->actingAs($admin)
             ->get('/admin/materi')
             ->assertOk()
             ->assertSee('Materi Menunggu')
-            ->assertDontSee('Materi Terbit');
+            ->assertSee('Materi Terbit');
 
+        // Filter status tetap mengerucutkan daftar.
         $this->actingAs($admin)
             ->get(route('admin.materi', ['status' => Materi::STATUS_PUBLISHED]))
             ->assertOk()

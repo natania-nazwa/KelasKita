@@ -7,109 +7,287 @@
     <title>@yield('title', 'Dashboard Admin | KelasKita')</title>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
-<body class="bg-brand-bg font-sans text-dark antialiased">
+{{--
+    Layout area admin KelasKita.
 
-    <div class="lg:flex min-h-screen">
+    Struktur: sidebar di kiri (fixed, jadi jadi drawer di bawah 1024px)
+    dan kolom konten di kanan yang berisi topbar lalu halaman.
 
-        <aside class="hidden lg:flex lg:flex-col lg:w-64 lg:fixed lg:inset-y-0 bg-white text-dark border-r border-dark/10">
-            <div class="flex items-center gap-3 px-6 h-16 border-b border-dark/10">
-                <a href="{{ url('/admin/dashboard') }}" class="flex items-center gap-3">
+    Nilai variabel di bawah dipakai sidebar dan topbar supaya menu aktif,
+    jumlah konten yang menunggu, dan nama akun hanya ditulis satu kali.
+--}}
+@php
+    $admin = auth()->user();
+
+    /*
+     * Jumlah konten yang menunggu keputusan. Nilainya dibagikan oleh
+     * view composer di App\Providers\AppServiceProvider supaya sidebar
+     * tidak menjalankan query yang sama dengan kartu statistik di
+     * dashboard. Nilai bawaan dipakai kalau halaman ini dirender
+     * tanpa composer (mis. saat view diuji langsung).
+     */
+    $jumlahVerifikasi = $jumlahVerifikasi
+        ?? (\App\Models\Materi::query()->menunggu()->count() + \App\Models\Quiz::query()->menunggu()->count());
+
+    /*
+     * Menu admin. "jumlah" dipakai untuk menampilkan angka konten yang
+     * menunggu keputusan di sebelah menu Verifikasi.
+     *
+     * Pengecualian yang disengaja: "Materi" dan "Quiz" memakai routes
+     * yang sudah ada (admin.materi dan admin.quiz) tanpa prefix
+     * "verifikasi", jadi URL lama tidak berubah dan tidak ada route
+     * yang bentrok. Label UI tetap "Verifikasi" supaya urutannya
+     * mengikuti yang diminta.
+     */
+    $menuUtama = [
+        [
+            'label' => 'Dashboard',
+            'ikon' => 'papan',
+            'href' => route('admin.dashboard'),
+            'aktif' => request()->routeIs('admin.dashboard'),
+        ],
+        [
+            'label' => 'Verifikasi',
+            'ikon' => 'buku-centang',
+            'href' => route('admin.verifikasi'),
+            'aktif' => request()->routeIs('admin.verifikasi'),
+            'jumlah' => $jumlahVerifikasi,
+        ],
+        [
+            'label' => 'Materi',
+            'ikon' => 'buku',
+            'href' => route('admin.materi'),
+            'aktif' => request()->routeIs('admin.materi*'),
+        ],
+        [
+            /*
+             * Ikon Quiz sengaja sama persis dengan menu Quiz di sidebar user
+             * (lingkaran centang, "centang" di App\Support\Ikon): menu dengan
+             * label yang sama harus punya lambang yang sama supaya berpindah
+             * antara dua sidebar tidak terasa seperti dua aplikasi berbeda.
+             */
+            'label' => 'Quiz',
+            'ikon' => 'centang',
+            'href' => route('admin.quiz'),
+            'aktif' => request()->routeIs('admin.quiz'),
+        ],
+        [
+            'label' => 'Pengguna',
+            'ikon' => 'grup',
+            'href' => route('admin.pengguna'),
+            'aktif' => request()->routeIs('admin.pengguna'),
+        ],
+        [
+            'label' => 'Hasil & Statistik',
+            'ikon' => 'grafik',
+            'href' => route('admin.statistik'),
+            'aktif' => request()->routeIs('admin.statistik'),
+        ],
+    ];
+
+    $menuBawah = [
+        [
+            'label' => 'Pengaturan',
+            'ikon' => 'roda',
+            'href' => route('admin.pengaturan'),
+            'aktif' => request()->routeIs('admin.pengaturan'),
+        ],
+    ];
+@endphp
+
+<body class="tubuh-admin antialiased">
+
+<div class="ad-rangka">
+
+    {{-- ---------- SIDEBAR ---------- --}}
+    <aside class="ad-sisi" id="sisi-admin" aria-label="Menu admin">
+
+        {{-- Merek --}}
+        <div class="ad-sisi__kepala">
+            <a href="{{ route('admin.dashboard') }}" class="ad-sisi__merek">
+                {{--
+                    Logo: public/images/logo.png, sama dengan yang dipakai
+                    halaman user dan landing page. Sengaja tanpa kartu atau
+                    lempeng di belakangnya; yang membuat logonya tetap
+                    terbaca di atas sidebar ungu diatur .ad-sisi__logo di
+                    admin.css.
+                --}}
+                <span class="ad-sisi__logo">
                     <img
                         src="{{ asset('images/logo.png') }}"
                         alt="Logo KelasKita"
-                        class="w-9 h-9 object-contain"
+                        class="w-full h-full object-contain"
                     />
-                    <span class="text-lg font-semibold text-primary">KelasKita</span>
-                </a>
-            </div>
+                </span>
 
-            <nav class="flex-1 px-4 py-6 space-y-1">
-                <a href="{{ url('/admin/dashboard') }}" class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium bg-primary text-white">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="m2.25 12 8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25"/>
-                    </svg>
-                    Dashboard
-                </a>
-                <a href="#" class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium text-primary/80 hover:bg-lavender hover:text-primary-dark">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M15 19.128a9.38 9.38 0 0 0 2.625.372 9.337 9.337 0 0 0 4.121-.952 4.125 4.125 0 0 0-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 0 1 8.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0 1 11.964-3.07M12 6.375a3.375 3.375 0 1 1-6.75 0 3.375 3.375 0 0 1 6.75 0Zm8.25 2.25a2.625 2.625 0 1 1-5.25 0 2.625 2.625 0 0 1 5.25 0Z"/>
-                    </svg>
-                    Pengguna
-                </a>
-                <a href="#" class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium text-primary/80 hover:bg-lavender hover:text-primary-dark">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M4.26 10.147a60.438 60.438 0 0 0-.491 6.347A48.62 48.62 0 0 1 12 20.904a48.62 48.62 0 0 1 8.232-4.41 60.46 60.46 0 0 0-.491-6.347m-15.482 0a50.636 50.636 0 0 0-2.658-.813A59.906 59.906 0 0 1 12 3.493a59.903 59.903 0 0 1 10.399 5.84c-.896.248-1.783.52-2.658.814m-15.482 0A50.717 50.717 0 0 1 12 13.489a50.702 50.702 0 0 1 7.74-3.342M6.75 15a.75.75 0 1 0 0-1.5.75.75 0 0 0 0 1.5Zm0 0v-3.675A55.378 55.378 0 0 1 12 8.443m-7.007 11.55A5.981 5.981 0 0 0 6.75 15.75v-1.5"/>
-                    </svg>
-                    Pelajaran
-                </a>
-                <a href="{{ route('admin.materi') }}" @class([
-                    'flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium',
-                    'bg-primary text-white' => request()->routeIs('admin.materi*'),
-                    'text-primary/80 hover:bg-lavender hover:text-primary-dark' => ! request()->routeIs('admin.materi*'),
-                ])>
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.042A8.967 8.967 0 0 0 6 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 0 1 6 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 0 1 6-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0 0 18 18a8.967 8.967 0 0 0-6 2.292m0-14.25v14.25" />
-                    </svg>
-                    Materi
-                </a>
-                <a href="{{ route('admin.quiz') }}" @class([
-                    'flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium',
-                    'bg-primary text-white' => request()->routeIs('admin.quiz'),
-                    'text-primary/80 hover:bg-lavender hover:text-primary-dark' => ! request()->routeIs('admin.quiz'),
-                ])>
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"/>
-                    </svg>
-                    Quiz
-                </a>
-                <a href="#" class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium text-primary/80 hover:bg-lavender hover:text-primary-dark">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M10.343 3.94c.09-.542.56-.94 1.11-.94h1.093c.55 0 1.02.398 1.11.94l.149.894c.07.424.384.764.78.93.398.164.855.142 1.205-.108l.737-.527a1.125 1.125 0 0 1 1.45.12l.773.774c.39.389.44 1.002.12 1.45l-.527.737c-.25.35-.272.806-.107 1.204.165.397.505.71.93.78l.893.15c.543.09.94.56.94 1.109v1.094c0 .55-.397 1.02-.94 1.11l-.893.149c-.425.07-.765.383-.93.78-.165.398-.143.854.107 1.204l.527.738c.32.447.269 1.06-.12 1.45l-.774.773a1.125 1.125 0 0 1-1.449.12l-.738-.527c-.35-.25-.806-.272-1.203-.107-.397.165-.71.505-.781.929l-.149.894c-.09.542-.56.94-1.11.94h-1.094c-.55 0-1.019-.398-1.11-.94l-.148-.894c-.071-.424-.384-.764-.781-.93-.398-.164-.854-.142-1.204.108l-.738.527c-.447.32-1.06.269-1.45-.12l-.773-.774a1.125 1.125 0 0 1-.12-1.45l.527-.737c.25-.35.273-.806.108-1.204-.165-.397-.505-.71-.93-.78l-.894-.15c-.542-.09-.94-.56-.94-1.109v-1.094c0-.55.398-1.02.94-1.11l.894-.149c.424-.07.765-.383.93-.78.165-.398.143-.854-.108-1.204l-.526-.738a1.125 1.125 0 0 1 .12-1.45l.773-.773a1.125 1.125 0 0 1 1.45-.12l.737.527c.35.25.807.272 1.204.107.397-.165.71-.505.78-.929l.149-.894Z"/>
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"/>
-                    </svg>
-                    Pengaturan
-                </a>
-            </nav>
+                <span class="ad-sisi__merek-teks">
+                    <span class="ad-sisi__nama">KelasKita</span>
+                    <span class="ad-sisi__sapaan">Admin Panel</span>
+                </span>
+            </a>
 
-            <div class="p-4">
-                <a href="{{ url('/') }}" class="flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-sm font-semibold text-primary bg-lavender hover:bg-primary hover:text-white">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0 0 13.5 3h-6a2.25 2.25 0 0 0-2.25 2.25v13.5A2.25 2.25 0 0 0 7.5 21h6a2.25 2.25 0 0 0 2.25-2.25V15m3 0 3-3m0 0-3-3m3 3H9"/>
-                    </svg>
-                    Keluar
-                </a>
-            </div>
-        </aside>
-
-        <div class="flex-1 lg:ml-64">
-
-            <header class="lg:hidden sticky top-0 z-20 bg-white text-dark border-b border-dark/10">
-                <div class="flex items-center justify-between h-16 px-4">
-                    <span class="flex items-center gap-2.5">
-                        <img
-                            src="{{ asset('images/logo.png') }}"
-                            alt="Logo KelasKita"
-                            class="w-8 h-8 object-contain"
-                        />
-                        <span class="text-base font-semibold text-primary">KelasKita</span>
-                    </span>
-                    <a href="{{ url('/') }}" class="text-sm text-primary hover:text-primary-dark">Keluar</a>
-                </div>
-                <nav class="flex gap-1 px-3 pb-3 overflow-x-auto">
-                    <a href="{{ url('/admin/dashboard') }}" class="shrink-0 px-3 py-1.5 rounded-lg text-xs font-semibold bg-primary text-white">Dashboard</a>
-                    <a href="#" class="shrink-0 px-3 py-1.5 rounded-lg text-xs font-medium text-primary/80">Pengguna</a>
-                    <a href="#" class="shrink-0 px-3 py-1.5 rounded-lg text-xs font-medium text-primary/80">Pelajaran</a>
-                    <a href="{{ route('admin.materi') }}" class="shrink-0 px-3 py-1.5 rounded-lg text-xs font-medium text-primary/80">Materi</a>
-                    <a href="{{ route('admin.quiz') }}" class="shrink-0 px-3 py-1.5 rounded-lg text-xs font-medium text-primary/80">Quiz</a>
-                    <a href="#" class="shrink-0 px-3 py-1.5 rounded-lg text-xs font-medium text-primary/80">Pengaturan</a>
-                </nav>
-            </header>
-
-            <main class="p-6 lg:p-10">
-                @yield('content')
-            </main>
+            <button type="button" class="ad-sisi__tutup" data-sisi-tutup aria-label="Tutup menu">
+                <x-admin.ikon nama="silang-polos" ukuran="w-5 h-5" />
+            </button>
         </div>
+
+        {{-- Menu --}}
+        <nav class="ad-sisi__nav">
+            @foreach ($menuUtama as $menu)
+                <a href="{{ $menu['href'] }}"
+                    @class([
+                        'ad-sisi__tautan',
+                        'ad-sisi__tautan--aktif' => $menu['aktif'],
+                    ]) @if ($menu['aktif']) aria-current="page" @endif>
+
+                    <span class="ad-sisi__ikon">
+                        <x-admin.ikon :nama="$menu['ikon']" />
+                    </span>
+
+                    <span class="ad-sisi__label">{{ $menu['label'] }}</span>
+
+                    @if (($menu['jumlah'] ?? 0) > 0)
+                        <span class="ad-sisi__jumlah">{{ $menu['jumlah'] }}</span>
+                    @endif
+                </a>
+            @endforeach
+
+            <div class="ad-sisi__pisah" role="presentation"></div>
+
+            @foreach ($menuBawah as $menu)
+                <a href="{{ $menu['href'] }}"
+                    @class([
+                        'ad-sisi__tautan',
+                        'ad-sisi__tautan--aktif' => $menu['aktif'],
+                    ]) @if ($menu['aktif']) aria-current="page" @endif>
+
+                    <span class="ad-sisi__ikon">
+                        <x-admin.ikon :nama="$menu['ikon']" />
+                    </span>
+
+                    <span class="ad-sisi__label">{{ $menu['label'] }}</span>
+                </a>
+            @endforeach
+        </nav>
+
+        {{-- Akun + keluar --}}
+        <div class="ad-sisi__kaki">
+            <div class="ad-sisi__akun">
+                <x-admin.avatar :inisial="$admin?->inisial() ?? 'A'" ukuran="sedang" />
+
+                <span class="ad-sisi__akun-teks">
+                    <span class="ad-sisi__akun-nama">{{ $admin?->nama ?? 'Admin' }}</span>
+                    <span class="ad-sisi__akun-email">{{ $admin?->email ?? 'admin@kelaskita.com' }}</span>
+                </span>
+            </div>
+
+            {{--
+                Keluar memakai form POST ke route "logout" yang sudah ada.
+                Sebelumnya tombolnya hanya tautan ke "/" sehingga tidak
+                benar-benar mengeluarkan akun.
+            --}}
+            <form method="POST" action="{{ route('logout') }}">
+                @csrf
+
+                <button type="submit" class="ad-sisi__keluar">
+                    <x-admin.ikon nama="pintu-keluar" ukuran="w-4 h-4" />
+
+                    Keluar
+                </button>
+            </form>
+        </div>
+    </aside>
+
+    {{-- Tirai di belakang drawer. --}}
+    <div class="ad-sisi__tirai" data-sisi-tutup aria-hidden="true"></div>
+
+    {{-- ---------- KOLOM KONTEN ---------- --}}
+    <div class="ad-utama">
+
+        {{-- ---------- TOPBAR ---------- --}}
+        <header class="ad-atas">
+            <div class="ad-atas__baris">
+
+                <button type="button" class="ad-atas__buka" data-sisi-buka aria-controls="sisi-admin"
+                    aria-expanded="false" aria-label="Buka menu">
+                    <x-admin.ikon nama="menu" ukuran="w-5 h-5" />
+                </button>
+
+                {{--
+                    Pencarian topbar. Aplikasi belum punya pencarian
+                    global, jadi form ini mengirim "q" ke halaman Kelola
+                    Materi yang memang sudah punya kolom pencarian: kotak
+                    ini benar-benar bekerja, bukan hanya hiasan.
+                --}}
+                <form class="ad-atas__cari" method="GET" action="{{ route('admin.materi') }}" role="search">
+                    <label for="cari-ad">Cari materi, quiz, pengguna</label>
+
+                    <x-admin.ikon nama="cari" class="ad-atas__cari-ikon" />
+
+                    <input id="cari-ad" name="q" type="search"
+                        value="{{ request('q') }}" placeholder="Cari materi, quiz, pengguna..."
+                        autocomplete="off">
+                </form>
+
+                <div class="ad-atas__kanan">
+                    {{--
+                        Lonceng notifikasi. Aplikasi belum punya tabel
+                        notifikasi, jadi tombolnya sengaja type="button"
+                        dan tidak mengirim apa pun: penandanya dekoratif.
+                    --}}
+                    <button type="button" class="ad-atas__notif" aria-label="Notifikasi">
+                        <x-admin.ikon nama="lonceng" ukuran="w-5 h-5" />
+
+                        <span class="ad-atas__titik" aria-hidden="true"></span>
+                    </button>
+
+                    {{-- Akun + dropdown --}}
+                    <div class="ad-atas__akun">
+                        <button type="button" class="ad-atas__akun-tombol" data-akun-tombol aria-expanded="false"
+                            aria-controls="akun-menu">
+                            <x-admin.avatar :inisial="$admin?->inisial() ?? 'A'" ukuran="kecil" />
+
+                            <span class="ad-atas__akun-teks">
+                                <span class="ad-atas__akun-nama">{{ $admin?->nama ?? 'Admin' }}</span>
+                                <span class="ad-atas__akun-peran">Admin</span>
+                            </span>
+
+                            <x-admin.ikon nama="panah-bawah" class="ad-atas__akun-panah" />
+                        </button>
+
+                        <div class="ad-atas__akun-menu" id="akun-menu" data-akun-menu>
+                            <div class="ad-atas__akun-menu-kepala">
+                                <x-admin.avatar :inisial="$admin?->inisial() ?? 'A'" ukuran="sedang" />
+
+                                <span class="min-w-0">
+                                    <span class="ad-atas__akun-menu-nama">{{ $admin?->nama ?? 'Admin' }}</span>
+                                    <span class="ad-atas__akun-menu-email">{{ $admin?->email ?? 'admin@kelaskita.com' }}</span>
+                                </span>
+                            </div>
+
+                            <a href="{{ route('admin.pengaturan') }}" class="ad-atas__akun-menu-aksi">
+                                Pengaturan
+                            </a>
+
+                            <form method="POST" action="{{ route('logout') }}" class="ad-atas__akun-menu-kaki">
+                                @csrf
+
+                                <button type="submit" class="ad-atas__akun-menu-aksi">
+                                    Keluar
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        {{-- ---------- KONTEN ---------- --}}
+        <main class="ad-isi">
+            @yield('content')
+        </main>
     </div>
+</div>
 
 </body>
 </html>

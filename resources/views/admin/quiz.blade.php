@@ -1,36 +1,48 @@
 @extends('layouts.admin')
 
-@section('title', 'Tinjau Quiz | KelasKita')
+@section('title', 'Quiz | KelasKita')
 
 @section('content')
+
     {{--
-        Halaman "Tinjau Quiz": tempat admin menyetujui atau menolak quiz mode
-        publik yang diajukan pengguna.
+        Halaman "Quiz": tempat admin melihat seluruh quiz yang ada,
+        dan menyetujui atau menolak yang masih menunggu.
 
-        Halaman dibuka ke tab "Menunggu Persetujuan" supaya pekerjaan yang
-        perlu dikerjakan selalu yang pertama terlihat. Setiap baris punya
-        tombol Setujui, dan penolakan selalu lewat isian alasan karena alasan
-        itu dibaca pemilik di "Karya Saya" dan jadi dasar pengajuan ulang.
+        Halaman dibuka ke tab "Menunggu Persetujuan" supaya pekerjaan
+        yang perlu dikerjakan selalu yang pertama terlihat. Penolakan
+        selalu lewat isian alasan karena alasan itu dibaca pemilik di
+        "Karya Saya" dan jadi dasar pengajuan ulang.
 
-        Quiz mode kode tidak masuk halaman ini: quiz seperti itu tidak pernah
-        tayang untuk semua pengguna, jadi tidak ada yang perlu disetujui.
+        Quiz mode kode tidak pernah minta persetujuan: kode seperti itu
+        dibuat langsung berstatus draft dan tidak pernah berstatus
+        menunggu, jadi tidak pernah muncul di tab "Menunggu
+        Persetujuan". Quiz seperti itu tetap bisa terlihat di tab Draft,
+        dan di sana lencana mode-nya membuat jelas bahwa tidak ada yang
+        perlu diputuskan.
+
+        Yang tidak berubah dari sebelumnya: query, tab status, URL, dan
+        route yang dipakai tombol keputusan.
     --}}
 
-    <div>
-        <h1 class="text-2xl sm:text-3xl font-extrabold text-dark">Tinjau Quiz</h1>
+    @php
+        $tabStatus = collect($pilihanStatus)
+            ->map(fn (string $label, string $nilai): array => [
+                'label' => $label,
+                'nilai' => $nilai,
+                'jumlah' => $jumlahStatus[$nilai] ?? 0,
+                'href' => route('admin.quiz', ['status' => $nilai, 'q' => $kataKunci]),
+            ])
+            ->all();
+    @endphp
 
-        <p class="mt-1 text-dark/60">
-            Quiz publik yang dibuat pengguna hanya tayang setelah kamu menyetujuinya.
-        </p>
-    </div>
+    <x-admin.kepala judul="Quiz"
+        subjudul="Kelola quiz yang dibuat dan dipublikasikan oleh pengguna." />
 
+    {{-- ==================== PESAN ==================== --}}
     @if (session('sukses'))
-        <div class="mt-6 flex items-start gap-3 rounded-2xl border border-lavender bg-white px-4 py-3 text-sm text-dark">
-            <span class="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary"
-                aria-hidden="true">
-                <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" stroke-width="2.4" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="m4.5 12.75 6 6 9-13.5" />
-                </svg>
+        <div class="ad-seksi ad-alert ad-alert--sukses" role="status">
+            <span class="ad-alert__ikon" aria-hidden="true">
+                <x-admin.ikon nama="tanda-centang" ukuran="w-3.5 h-3.5" :tebal="2.6" />
             </span>
 
             <p class="min-w-0 font-medium">{{ session('sukses') }}</p>
@@ -38,191 +50,242 @@
     @endif
 
     @if ($errors->any())
-        <div role="alert"
-            class="mt-6 rounded-2xl border border-[#f4c7cd] bg-white px-4 py-3 text-sm text-[#a33a46]">
-            <p class="font-semibold">Belum bisa diputuskan:</p>
+        <div class="ad-seksi ad-alert ad-alert--bahaya" role="alert">
+            <span class="ad-alert__ikon" aria-hidden="true">
+                <x-admin.ikon nama="silang-polos" ukuran="w-3.5 h-3.5" :tebal="2.6" />
+            </span>
 
-            <ul class="mt-1 list-disc space-y-0.5 pl-5">
-                @foreach ($errors->all() as $pesan)
-                    <li>{{ $pesan }}</li>
-                @endforeach
-            </ul>
+            <div class="min-w-0">
+                <p class="font-semibold">Belum bisa diputuskan:</p>
+
+                <ul class="mt-1 list-disc space-y-0.5 pl-5">
+                    @foreach ($errors->all() as $pesan)
+                        <li>{{ $pesan }}</li>
+                    @endforeach
+                </ul>
+            </div>
         </div>
     @endif
 
-    {{-- =========================
-         TAB STATUS + PENCARIAN
-    ========================== --}}
-    <div class="mt-6 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-        <nav aria-label="Filter status quiz" class="flex flex-wrap gap-2">
-            @foreach ($pilihanStatus as $nilai => $label)
-                @php $jumlah = $jumlahStatus[$nilai] ?? 0; @endphp
+    {{-- ==================== TAB + PENCARIAN ==================== --}}
+    <div class="ad-seksi ad-alat">
+        <x-admin.tab :tab="$tabStatus" :aktif="$statusAktif" label="Filter status quiz" />
 
-                <a href="{{ route('admin.quiz', ['status' => $nilai, 'q' => $kataKunci]) }}"
-                    class="inline-flex items-center gap-2 rounded-full px-3.5 py-1.5 text-xs font-bold transition
-                        {{ $statusAktif === $nilai
-                            ? 'bg-primary text-white'
-                            : 'bg-white text-dark/70 border border-lavender hover:border-primary' }}">
-                    {{ $label }}
-
-                    <span class="tabular-nums {{ $statusAktif === $nilai ? 'text-white/75' : 'text-dark/45' }}">
-                        {{ $jumlah }}
-                    </span>
-                </a>
-            @endforeach
-        </nav>
-
-        <form method="GET" action="{{ route('admin.quiz') }}" class="flex gap-2">
+        <form method="GET" action="{{ route('admin.quiz') }}" class="ad-alat__kanan">
             <input type="hidden" name="status" value="{{ $statusAktif }}">
 
-            <label for="q" class="sr-only">Cari quiz</label>
+            <div class="ad-cari">
+                <label for="q-quiz" class="sr-only">Cari quiz</label>
 
-            <input id="q" name="q" type="search" value="{{ $kataKunci }}"
-                placeholder="Cari judul atau kategori quiz..."
-                class="w-full rounded-lg border border-lavender bg-white px-3.5 py-2 text-sm text-dark sm:w-72">
+                <x-admin.ikon nama="cari" class="ad-cari__ikon" />
 
-            <button type="submit"
-                class="shrink-0 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white hover:bg-primary-dark">
-                Cari
-            </button>
+                <input id="q-quiz" name="q" type="search" value="{{ $kataKunci }}"
+                    placeholder="Cari judul atau kategori quiz..." autocomplete="off">
+            </div>
+
+            <button type="submit" class="ad-tombol ad-tombol--garis shrink-0">Cari</button>
         </form>
     </div>
 
-    {{-- =========================
-         DAFTAR QUIZ
-    ==========================
-         Isian alasan yang gagal divalidasi hanya dikembalikan ke baris
-         pertama, supaya satu teks tidak ikut terisi di semua textarea. --}}
+    {{-- ==================== DAFTAR QUIZ ==================== --}}
     @if ($daftar === [])
-        <div class="mt-6 rounded-2xl border border-lavender bg-white px-6 py-12 text-center">
-            <p class="text-base font-bold text-dark">
-                @if ($kataKunci !== '')
-                    Tidak ada quiz "{{ $kataKunci }}" di tab ini.
-                @elseif ($statusAktif === \App\Models\Quiz::STATUS_PENDING)
-                    Tidak ada quiz yang menunggu persetujuan.
-                @else
-                    Belum ada quiz dengan status ini.
-                @endif
-            </p>
-
-            <p class="mt-1 text-sm text-dark/60">
-                Quiz publik yang diajukan pengguna akan muncul di sini.
-            </p>
+        <div class="ad-seksi">
+            <x-admin.kosong ikon="soal"
+                :judul="$kataKunci !== ''
+                    ? 'Tidak ada quiz “'.$kataKunci.'” di tab ini.'
+                    : ($statusAktif === \App\Models\Quiz::STATUS_PENDING
+                        ? 'Tidak ada quiz yang menunggu persetujuan.'
+                        : 'Belum ada quiz dengan status ini.')"
+                teks="Quiz publik yang diajukan pengguna akan muncul di sini." />
         </div>
     @else
-        <div class="mt-6 space-y-5">
-            @foreach ($daftar as $quiz)
-                <article class="rounded-2xl bg-white border border-lavender overflow-hidden">
+        <div class="ad-seksi ad-tabel__bungkus">
+            <table class="ad-tabel">
+                <thead>
+                    <tr>
+                        <th scope="col">No</th>
+                        <th scope="col">Judul Quiz</th>
+                        <th scope="col">Mode</th>
+                        <th scope="col">Soal</th>
+                        <th scope="col">Status</th>
+                        <th scope="col">Pembuat</th>
+                        <th scope="col">Tanggal</th>
+                        <th scope="col">Aksi</th>
+                    </tr>
+                </thead>
 
-                    {{-- A. Kepala: judul, status, dan pembuat. --}}
-                    <div class="flex flex-wrap items-start gap-4 px-6 py-5">
-                        <span class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl text-lg font-extrabold text-white"
-                            style="background-color: {{ $quiz['kategori']['warna'] }}"
-                            aria-hidden="true">
-                            {{ $quiz['kategori']['ikon'] }}
-                        </span>
+                <tbody>
+                    @foreach ($daftar as $quiz)
+                        @php
+                            /*
+                             * Hanya quiz publik yang bisa menunggu
+                             * persetujuan. Quiz mode kode dibuat langsung
+                             * berstatus draft dan tidak pernah punya
+                             * status menunggu, jadi kondisi kedua ini
+                             * hanya jaga-jaga kalau datanya berubah
+                             * lewat jalur lain.
+                             */
+                            $bisaPutuskan = $quiz['status'] === \App\Models\Quiz::STATUS_PENDING
+                                && ! $quiz['pakai_kode'];
+                        @endphp
 
-                        <div class="min-w-0 flex-1">
-                            <div class="flex flex-wrap items-center gap-2">
-                                <h2 class="text-base font-extrabold text-dark">{{ $quiz['judul'] }}</h2>
+                        <tr>
+                            <td class="ad-tabel__nomor" data-label="No">
+                                {{ $paginasi->firstItem() + $loop->index }}
+                            </td>
 
-                                <span
-                                    class="karya-status karya-status--{{ $quiz['warna_status'] }}">
-                                    <span class="karya-status__titik" aria-hidden="true"></span>
+                            <td data-label="Judul Quiz">
+                                <div class="ad-tabel__nama">
+                                    <span class="ad-tinjau__ikon" style="background-color: {{ $quiz['kategori']['warna'] }};"
+                                        aria-hidden="true">
+                                        {{ $quiz['kategori']['ikon'] }}
+                                    </span>
 
-                                    {{ $quiz['status_label'] }}
-                                </span>
-                            </div>
+                                    <span class="ad-tabel__nama-teks">
+                                        <span class="ad-tabel__judul">{{ $quiz['judul'] }}</span>
+                                        <span class="ad-tabel__sub">
+                                            {{ $quiz['kategori']['nama'] }} ·
+                                            {{ $quiz['durasi'] > 0 ? '± '.$quiz['durasi'].' menit' : 'Tanpa batas waktu' }}
+                                        </span>
+                                    </span>
+                                </div>
+                            </td>
 
-                            <p class="mt-1 text-xs font-semibold text-dark/50">
-                                {{ $quiz['kategori']['nama'] }} &middot;
-                                {{ $quiz['tingkat_kesulitan'] }} &middot;
-                                {{ $quiz['jumlah_soal'] }} soal &middot;
-                                {{ $quiz['durasi'] > 0 ? '± '.$quiz['durasi'].' menit' : 'Tanpa batas waktu' }}
-                            </p>
+                            <td data-label="Mode">
+                                <x-admin.mode :publik="! $quiz['pakai_kode']" />
+                            </td>
 
-                            <p class="mt-2 text-sm leading-relaxed text-dark/70">
-                                {{ $quiz['deskripsi'] ?: 'Tanpa deskripsi.' }}
-                            </p>
+                            <td data-label="Soal">
+                                <span class="tabular-nums">{{ $quiz['jumlah_soal'] }}</span>
+                            </td>
 
-                            <p class="mt-2 text-xs text-dark/50">
-                                Oleh {{ $quiz['pembuat']['nama'] }} &middot;
-                                {{ $quiz['dibuat_pada']?->translatedFormat('d M Y') }}
+                            <td data-label="Status">
+                                <x-admin.lencana :status="$quiz['status']" :label="$quiz['status_label']" />
+                            </td>
 
-                                @if ($quiz['jumlah_ditolak'] > 0)
-                                    &middot; sudah {{ $quiz['jumlah_ditolak'] }}x ditolak
-                                    (sisa pengajuan {{ $quiz['sisa_pengajuan'] }}x)
-                                @endif
-                            </p>
-                        </div>
-                    </div>
+                            <td data-label="Pembuat">{{ $quiz['pembuat']['nama'] }}</td>
 
-                    {{-- C. Catatan pengajuan ulang dari pemilik. --}}
-                    @if (filled($quiz['catatan_pengajuan']))
-                        <div class="border-t border-dark/5 px-6 py-4">
-                            <p class="text-xs font-bold text-dark/50">Catatan pengajuan ulang dari pemilik</p>
+                            <td data-label="Tanggal">
+                                <span class="tabular-nums">{{ $quiz['dibuat_pada']?->translatedFormat('d M Y') }}</span>
+                            </td>
 
-                            <p class="mt-1 text-sm leading-relaxed text-dark/80">{{ $quiz['catatan_pengajuan'] }}</p>
-                        </div>
-                    @endif
+                            <td data-label="">
+                                <div class="ad-tabel__aksi">
+                                    <button type="button" class="ad-tombol ad-tombol--kecil {{ $bisaPutuskan ? 'ad-tombol--utama' : 'ad-tombol--garis' }}"
+                                        data-dialog-buka
+                                        data-dialog-judul="Quiz: {{ $quiz['judul'] }}"
+                                        data-dialog-meta="{{ $quiz['kategori']['nama'] }} · {{ $quiz['jumlah_soal'] }} soal · {{ $quiz['pakai_kode'] ? 'Mode kode' : 'Mode publik' }} · oleh {{ $quiz['pembuat']['nama'] }} ({{ $quiz['dibuat_pada']?->translatedFormat('d M Y') }})"
+                                        data-dialog-isi="{{ $quiz['deskripsi'] ?: 'Tanpa deskripsi.' }}"
+                                        data-dialog-setujui="{{ $bisaPutuskan ? $quiz['tautan_setujui'] : '' }}"
+                                        data-dialog-tolak="{{ $bisaPutuskan ? $quiz['tautan_tolak'] : '' }}">
+                                        <x-admin.ikon nama="mata" ukuran="w-3.5 h-3.5" />
+                                        {{ $bisaPutuskan ? 'Tinjau' : 'Lihat' }}
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
 
-                    {{-- D. Alasan penolakan sebelumnya. --}}
-                    @if (filled($quiz['catatan_admin']))
-                        <div class="border-t border-dark/5 bg-[#fdecee] px-6 py-4">
-                            <p class="text-xs font-bold text-[#a8323c]">Alasan ditolak sebelumnya</p>
+                        @if (filled($quiz['catatan_pengajuan']) || filled($quiz['catatan_admin']))
+                            <tr>
+                                <td colspan="8" class="!py-3">
+                                    @if (filled($quiz['catatan_admin']))
+                                        <p class="ad-alert ad-alert--bahaya !px-3 !py-2.5">
+                                            <span class="ad-alert__ikon" aria-hidden="true">
+                                                <x-admin.ikon nama="silang" ukuran="w-3 h-3" :tebal="2.6" />
+                                            </span>
 
-                            <p class="mt-1 text-sm leading-relaxed text-[#a8323c]">{{ $quiz['catatan_admin'] }}</p>
-                        </div>
-                    @endif
+                                            <span class="min-w-0">
+                                                <strong>Alasan ditolak admin:</strong>
+                                                {{ $quiz['catatan_admin'] }}
+                                            </span>
+                                        </p>
+                                    @endif
 
-                    {{-- E. Keputusan admin: setujui atau tolak. --}}
-                    @if ($statusAktif === \App\Models\Quiz::STATUS_PENDING)
-                        <div class="flex flex-col gap-4 border-t border-dark/5 px-6 py-5 lg:flex-row lg:items-start lg:justify-between">
-                            <form method="POST" action="{{ $quiz['tautan_setujui'] }}"
-                                class="shrink-0">
-                                @csrf
+                                    @if (filled($quiz['catatan_pengajuan']))
+                                        <p class="ad-teks-2 mt-2 !text-xs">
+                                            <strong class="text-[#29245C]">Catatan pengajuan ulang:</strong>
+                                            {{ $quiz['catatan_pengajuan'] }}
+                                        </p>
+                                    @endif
 
-                                <input type="hidden" name="status" value="{{ $statusAktif }}">
-
-                                <button type="submit"
-                                    class="inline-flex w-full items-center justify-center gap-2 rounded-full bg-primary px-5 py-2.5 text-sm font-bold text-white transition hover:bg-primary-dark lg:w-auto">
-                                    <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-                                        <path stroke-linecap="round" stroke-linejoin="round" d="m4.5 12.75 6 6 9-13.5" />
-                                    </svg>
-
-                                    Setujui &amp; Terbitkan
-                                </button>
-                            </form>
-
-                            <form method="POST" action="{{ $quiz['tautan_tolak'] }}"
-                                class="min-w-0 flex-1">
-                                @csrf
-
-                                <input type="hidden" name="status" value="{{ $statusAktif }}">
-
-                                <label for="alasan-{{ $quiz['id'] }}"
-                                    class="block text-xs font-bold text-dark/60">
-                                    Alasan penolakan (dibaca pemilik)
-                                </label>
-
-                                <textarea id="alasan-{{ $quiz['id'] }}" name="alasan" rows="2" required
-                                    maxlength="500"
-                                    placeholder="Contoh: Soal nomor 4 dan 5 punya kunci jawaban yang sama, tolong periksa kembali."
-                                    class="mt-1.5 w-full rounded-xl border border-lavender bg-white px-3.5 py-2.5 text-sm text-dark placeholder:text-dark/35">{{ $loop->first ? old('alasan') : '' }}</textarea>
-
-                                <button type="submit"
-                                    class="mt-2.5 inline-flex w-full items-center justify-center gap-2 rounded-full bg-[#d9535f] px-5 py-2.5 text-sm font-bold text-white transition hover:bg-[#c2414a] lg:w-auto">
-                                    Tolak Quiz
-                                </button>
-                            </form>
-                        </div>
-                    @endif
-                </article>
-            @endforeach
+                                    @if ($quiz['jumlah_ditolak'] > 0)
+                                        <p class="ad-teks-2 mt-1 !text-xs">
+                                            Sudah {{ $quiz['jumlah_ditolak'] }}x ditolak
+                                            (sisa pengajuan {{ $quiz['sisa_pengajuan'] }}x).
+                                        </p>
+                                    @endif
+                                </td>
+                            </tr>
+                        @endif
+                    @endforeach
+                </tbody>
+            </table>
         </div>
 
-        <div class="mt-8">
+        <div class="ad-seksi">
             {{ $paginasi->links() }}
         </div>
     @endif
+
+    {{-- ==================== DIALOG TINJAU ==================== --}}
+    <div class="ad-dialog" data-dialog role="dialog" aria-modal="true" aria-hidden="true"
+        aria-labelledby="dialog-quiz-judul">
+        <div class="ad-dialog__kartu">
+
+            <header class="ad-dialog__kepala">
+                <div class="min-w-0 flex-1">
+                    <h2 class="ad-dialog__judul" id="dialog-quiz-judul" data-dialog-judul></h2>
+
+                    <p class="ad-teks-2 mt-0.5 !text-xs" data-dialog-meta></p>
+                </div>
+
+                <button type="button" class="ad-dialog__tutup" data-dialog-tutup aria-label="Tutup">
+                    <x-admin.ikon nama="silang-polos" ukuran="w-4 h-4" />
+                </button>
+            </header>
+
+            <div class="ad-dialog__badan">
+                <p class="ad-field__label">Deskripsi quiz</p>
+
+                <div class="ad-isi-materi mt-2" data-dialog-isi></div>
+
+                <div class="mt-4" data-dialog-bagian-tolak hidden>
+                    <form method="POST" action="" id="form-tolak-quiz" data-dialog-form-tolak>
+                        @csrf
+
+                        <input type="hidden" name="status" value="{{ $statusAktif }}">
+
+                        <label class="ad-field__label" for="alasan-quiz">Alasan penolakan (dibaca pemilik)</label>
+
+                        <textarea class="ad-area mt-1.5" id="alasan-quiz" name="alasan" rows="3" required
+                            maxlength="500" data-dialog-alasan data-awal="{{ old('alasan') }}"
+                            placeholder="Contoh: Soal nomor 4 dan 5 punya kunci jawaban yang sama, tolong periksa kembali."></textarea>
+                    </form>
+                </div>
+            </div>
+
+            <footer class="ad-dialog__kaki">
+                <button type="button" class="ad-tombol ad-tombol--garis" data-dialog-tutup>Batal</button>
+
+                <button type="submit" class="ad-tombol ad-tombol--bahaya" form="form-tolak-quiz"
+                    data-dialog-tolak-tombol>
+                    <x-admin.ikon nama="silang" ukuran="w-4 h-4" />
+                    Tolak Quiz
+                </button>
+
+                <button type="submit" class="ad-tombol ad-tombol--sukses" form="form-setujui-quiz"
+                    data-dialog-setujui>
+                    <x-admin.ikon nama="centang" ukuran="w-4 h-4" />
+                    Setujui &amp; Terbitkan
+                </button>
+            </footer>
+
+            <form method="POST" action="" id="form-setujui-quiz" data-dialog-form-setujui hidden>
+                @csrf
+
+                <input type="hidden" name="status" value="{{ $statusAktif }}">
+            </form>
+        </div>
+    </div>
+
 @endsection

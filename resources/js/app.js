@@ -32,6 +32,15 @@ import "./quiz-lobby.js";
 // Halaman Profil (dialog, lihat password, pilih foto, mode terang/gelap).
 import "./profil.js";
 
+/*
+ * Area admin KelasKita (drawer sidebar, dropdown akun, dialog tinjau).
+ *
+ * Diimpor terakhir karena modul ini hanya mencari elemen yang ada di
+ * halaman admin, dan tidak ada halaman user yang punya elemen-elemen
+ * itu.
+ */
+import "./admin.js";
+
 const reducedMotion = window.matchMedia(
     "(prefers-reduced-motion: reduce)",
 ).matches;

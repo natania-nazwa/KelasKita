@@ -47,11 +47,16 @@ final class TinjauanQuiz
      *
      * Bentuk array per baris:
      *   id, judul, deskripsi, tingkat_kesulitan, durasi, jumlah_soal,
-     *   status, warna_status, status_label, catatan_admin,
-     *   catatan_pengajuan, jumlah_ditolak, sisa_pengajuan, dibuat_pada,
-     *   tautan_setujui, tautan_tolak,
+     *   visibilitas, pakai_kode, status, warna_status, status_label,
+     *   catatan_admin, catatan_pengajuan, jumlah_ditolak,
+     *   sisa_pengajuan, dibuat_pada, tautan_setujui, tautan_tolak,
      *   kategori => [nama, ikon, warna, warna_gelap],
      *   pembuat  => [nama, inisial, warna, warna_gelap]
+     *
+     * "visibilitas" dan "pakai_kode" dipakai untuk lencana mode di
+     * halaman admin: quiz mode kode tidak pernah butuh persetujuan
+     * admin, jadi tampilan harus bisa membedakan keduanya tanpa
+     * membuat admin mengira quiz mode kode juga sedang menunggu.
      *
      * @param  iterable<int, Quiz>  $quiz
      * @return array<int, array<string, mixed>>
@@ -73,6 +78,8 @@ final class TinjauanQuiz
                 'tingkat_kesulitan' => (string) $item->tingkat_kesulitan,
                 'durasi' => (int) ($item->durasi ?? 0),
                 'jumlah_soal' => $item->jumlahSoal(),
+                'visibilitas' => (string) $item->visibilitas,
+                'pakai_kode' => $item->pakaiKode(),
                 'status' => (string) $item->status,
                 'warna_status' => $item->warnaStatus(),
                 'status_label' => $item->labelStatus(),

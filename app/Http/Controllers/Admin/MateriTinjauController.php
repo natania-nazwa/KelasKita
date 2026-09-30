@@ -65,6 +65,11 @@ class MateriTinjauController extends Controller
     /**
      * Kembali ke tab status yang tadi dibuka, atau ke daftar tunggu kalau
      * form ditolak dari tab lain.
+     *
+     * Field "kembali" opsional: dipakai halaman "Verifikasi" yang meminjam
+     * route ini untuk tombol keputusannya. Kalau diisi dan berupa daftar
+     * putih yang dikenal, admin dikembalikan ke halaman itu. Tanpa field ini
+     * perilakunya sama persis seperti sebelumnya.
      */
     private function kembaliKeTinjauan(Request $request, string $pesan): RedirectResponse
     {
@@ -73,6 +78,12 @@ class MateriTinjauController extends Controller
         $params = array_key_exists($status, TinjauanMateri::pilihanStatus())
             ? ['status' => $status]
             : [];
+
+        $kembali = (string) $request->input('kembali', '');
+
+        if (in_array($kembali, ['admin.verifikasi'], true)) {
+            return redirect()->route($kembali)->with('sukses', $pesan);
+        }
 
         return redirect()
             ->route('admin.materi', $params)
