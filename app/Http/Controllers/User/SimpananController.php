@@ -145,6 +145,14 @@ class SimpananController extends Controller
     /**
      * Materi terbit yang disimpan pengguna, siap jadi kartu.
      *
+     * Urutannya created_at lalu id, bukan created_at saja. created_at bisa
+     * bernilai sama untuk banyak materi — misalnya saat pengimpor berjalan,
+     * atau pada data yang dibuat dalam satu transaksi — dan tanpa pemutus
+     * tie-breaker database bebas mengembalikan baris dengan created_at sama
+     * dalam urutan apa pun. Akibatnya satu materi bisa melompat antara
+     * halaman 1 dan 2 lalu balik lagi, jadi "Muat lagi" ikut mengulang atau
+     * melewatkan kartu.
+     *
      * @return array{kartu: array<int, array<string, mixed>>, hal: LengthAwarePaginator}
      */
     private function daftarMateri(?int $idPengguna, string $kataKunci): array
@@ -155,6 +163,7 @@ class SimpananController extends Controller
             ->with(['pelajaran', 'pembuat'])
             ->cari($kataKunci)
             ->latest()
+            ->orderByDesc('id')
             ->paginate($this->perHalaman())
             ->withQueryString();
 
@@ -167,6 +176,9 @@ class SimpananController extends Controller
     /**
      * Quiz terbit yang disimpan pengguna, siap jadi kartu.
      *
+     * Pemutus tie-breaker id-nya sama seperti daftarMateri() di atas, dengan
+     * alasan yang sama.
+     *
      * @return array{kartu: array<int, array<string, mixed>>, hal: LengthAwarePaginator}
      */
     private function daftarQuiz(?int $idPengguna, string $kataKunci): array
@@ -178,6 +190,7 @@ class SimpananController extends Controller
             ->withCount(['soal' => fn ($soal) => $soal->where('aktif', true)])
             ->cari($kataKunci)
             ->latest()
+            ->orderByDesc('id')
             ->paginate($this->perHalaman())
             ->withQueryString();
 

@@ -503,6 +503,13 @@ Route::middleware(['auth', 'admin'])
          *
          * Belum ada route ini sebelumnya: user.materi.edit dan
          * user.materi.destroy milik pemilik dan menolak admin dengan 403.
+         *
+         * Edit hanya berlaku untuk materi yang dibuat admin sendiri — itu
+         * satu-satunya alasan tombolnya muncul di menu, dan controller
+         * menegakkannya lagi supaya URL yang diketik manual tidak melewati
+         * aturan yang sama. Hapus tidak dibatasi: materi yang sudah tayang
+         * memang harus bisa ditarik admin, siapa pun yang membuatnya.
+         *
          * Form edit-nya memakai komponen form yang sama dengan halaman Tambah
          * Materi milik pengguna (x-materi.informasi / .bab / .editor), hanya
          * judul, penjelas, dan tujuan simpan yang mengikuti bahasa admin.

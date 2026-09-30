@@ -1,64 +1,83 @@
 @props([
-    // Satu baris dari App\Support\DaftarMateriAdmin::petakan().
+    // Satu baris dari App\Support\DaftarMateriAdmin::petikan().
     'materi',
-    // Slug materi yang sedang dipreview di panel kanan.
-    'terpilih' => null,
-    // Query string halaman yang sedang aktif, supaya memilih kartu lain tidak
-    // mematikan pencarian atau filter yang sedang berjalan.
-    'parameter' => [],
 ])
 
 @php
     /*
-     * Kartu materi di daftar kiri halaman "Materi" (admin).
+     * Kartu materi di daftar halaman "Materi" (admin).
+     *
+     * Bentuknya mengikuti kartu materi milik pengguna
+     * (resources/views/components/materi/kartu.blade.php): gambar di atas,
+     * isi di bawah, pembatas aksen, lalu baris informasi. Bukan kartu
+     * horizontal, supaya satu baris kartu tidak hanya berisi empat baris
+     * teks yang saling salting.
+     *
+     * Yang berbeda hanya isi bodynya. Kartu user memuat deskripsi materi;
+     * kartu admin tidak membutuhkannya — admin sudah tahu isinya dari
+     * detail, dan yang perlu dilihat di sini justru siapa yang menulis dan
+     * kategorinya. Jadi baris yang di kartu user dipakai deskripsi, di sini
+     * dipakai kategori dan jumlah bab.
      *
      * Bentuk array per kartu datang dari App\Support\DaftarMateriAdmin, jadi
-     * komponen ini tidak terikat Eloquent. Yang dipakai di sini:
-     *   judul, jumlah_bab, tanggal_label, tanggal_jam, status, status_label,
+     * komponen ini tidak terikat Eloquent:
+     *   judul, thumbnail, tingkat_kesulitan, jumlah_bab, tanggal_label,
+     *   tanggal_jam, status, status_label, boleh_edit,
      *   kategori => [nama, ikon, warna, warna_gelap],
      *   pembuat  => [nama, inisial, warna, warna_gelap],
      *   tautan_detail, tautan_edit, tautan_hapus
      *
-     * Klik di mana saja pada kartu memilih materi itu untuk panel kanan,
-     * sedangkan "Lihat" dan menu tiga titik tetap jadi tautan/form sendiri.
-     * Itu dicapai tanpa <a> di dalam <a>: judulnya adalah satu-satunya tautan
-     * di dalam kartu, dan ::after-nya (lihat .ad-materi-kartu__pilih di
-     * admin.css) yang jadi area klik seluruh kartu. Tombol di dalam kartu
-     * diberi z-index di atasnya, jadi tidak pernah tertimpa.
+     * Kartu tidak bisa diklik seluruhnya. Dulu ada pola "stretched link" di
+     * sini supaya sekali klik bisa mengisi panel detail; panel itu sudah
+     * dihapus, jadi satu-satunya jalan ke materi adalah tombol Lihat.
+     * Membuatkan tautan besar di sini juga tidak menguntungkan: menu tiga
+     * titik lalu ikut jadi bagian dari area klik yang sama.
      */
-    $dipilih = $terpilih === $materi['slug'];
-    $pilih = route('admin.materi', array_merge($parameter, ['materi' => $materi['slug'], 'page' => null]));
+
+    $kategori = $materi['kategori'];
+    $kesulitan = strtolower((string) $materi['tingkat_kesulitan']);
 @endphp
 
-<article @class(['ad-materi-kartu', 'ad-materi-kartu--dipilih' => $dipilih])>
-    <span class="ad-materi-kartu__ikon" aria-hidden="true">
-        <x-admin.ikon nama="buku" ukuran="w-5 h-5" />
-    </span>
+<article class="ad-materi-kartu"
+    style="--k: {{ $kategori['warna'] }}; --k-gelap: {{ $kategori['warna_gelap'] }};">
 
-    <div class="ad-materi-kartu__isi">
-        <div class="ad-materi-kartu__kepala">
-            <span class="ad-materi-kartu__tipe">Materi</span>
+    {{--
+        A. Blok gambar. Selalu berisi sesuatu: kalau materinya tidak punya
+        thumbnail, gradasi warna kategori + ikon mapel menggantikannya —
+        persis seperti kartu materi milik pengguna, bukan kotak kosong.
+    --}}
+    <div class="ad-materi-kartu__gambar">
+        @if (filled($materi['thumbnail']))
+            <img class="ad-materi-kartu__foto" src="{{ $materi['thumbnail'] }}"
+                alt="Thumbnail materi {{ $materi['judul'] }}" loading="lazy">
+        @else
+            <span class="ad-materi-kartu__ikon" aria-hidden="true">{{ $kategori['ikon'] }}</span>
+        @endif
 
-            <h3 class="ad-materi-kartu__judul">
-                {{-- aria-current="true" supaya pembaca layar tahu kartu ini
-                     yang sedang jadi isi panel kanan. --}}
-                <a class="ad-materi-kartu__pilih" href="{{ $pilih }}"
-                    @if ($dipilih) aria-current="true" @endif>
-                    {{ $materi['judul'] }}
-                </a>
-            </h3>
-        </div>
+        {{--
+            Tingkat kesulitan melayang di pojok kiri. Di kartu admin ini satu
+           -satunya tempat informasi tentang tingkat kesulitan, dan tidak
+            beradu dengan kategori yang sudah tampil di baris meta.
+        --}}
+        @if (filled($materi['tingkat_kesulitan']))
+            <span class="ad-materi-kartu__kesulitan capitalize">{{ $materi['tingkat_kesulitan'] }}</span>
+        @endif
+    </div>
+
+    {{-- B. Isi kartu. --}}
+    <div class="ad-materi-kartu__badan">
+        <span class="ad-materi-kartu__aksen" aria-hidden="true"></span>
+
+        <h3 class="ad-materi-kartu__judul">{{ $materi['judul'] }}</h3>
 
         <p class="ad-materi-kartu__pembuat">
-            <span class="ad-materi-kartu__avatar"
-                style="--a: {{ $materi['pembuat']['warna'] }}; --a-gelap: {{ $materi['pembuat']['warna_gelap'] }};"
-                aria-hidden="true">{{ $materi['pembuat']['inisial'] }}</span>
+            <span>Dibuat oleh:</span>
 
-            <span>Dibuat oleh: {{ $materi['pembuat']['nama'] }}</span>
+            <span class="ad-materi-kartu__truncate">{{ $materi['pembuat']['nama'] }}</span>
         </p>
 
         <p class="ad-materi-kartu__meta">
-            {{ $materi['kategori']['nama'] }} &middot; {{ $materi['jumlah_bab'] }} Bab
+            {{ $kategori['nama'] }} &middot; {{ $materi['jumlah_bab'] }} Bab
         </p>
 
         <p class="ad-materi-kartu__tanggal">
@@ -67,56 +86,67 @@
                 &middot; {{ $materi['tanggal_jam'] }}
             @endif
         </p>
-    </div>
 
-    <div class="ad-materi-kartu__kanan">
-        <x-admin.lencana-materi :status="$materi['status']" :label="$materi['status_label']" />
+        {{--
+            Status + aksi. Tombolnya terdorong ke bawah kartu lewat
+            margin-top: auto pada .ad-materi-kartu__kaki, jadi semua kartu
+            dalam satu baris tetap sejajar walaupun judulnya beda panjang.
+        --}}
+        <div class="ad-materi-kartu__kaki">
+            <x-admin.lencana-materi :status="$materi['status']" :label="$materi['status_label']" />
 
-        <div class="ad-materi-kartu__aksi">
-            <a href="{{ $materi['tautan_detail'] }}" class="ad-tombol ad-tombol--halus ad-tombol--kecil">
-                <x-admin.ikon nama="mata" ukuran="w-3.5 h-3.5" />
+            <div class="ad-materi-kartu__aksi">
+                <a href="{{ $materi['tautan_detail'] }}" class="ad-tombol ad-tombol--halus ad-tombol--kecil">
+                    <x-admin.ikon nama="mata" ukuran="w-3.5 h-3.5" />
 
-                Lihat
-            </a>
+                    Lihat
+                </a>
 
-            {{--
-                Menu tiga titik memakai <details>, bukan tombol + <div>:
-                buka/tutup-nya dari browser, jadi tetap jalan tanpa JavaScript
-                dan tidak perlu satu blok IntersectionObserver cuma untuk
-                menutup menu yang lagi terbuka.
+                {{--
+                    Menu tiga titik memakai <details>, bukan tombol + <div>:
+                    buka/tutup-nya dari browser, jadi tetap jalan tanpa
+                    JavaScript.
 
-                Isinya hanya aksi yang memang ada di aplikasi: Lihat, Edit,
-                dan Hapus. Tidak ada "Arsipkan" karena tidak ada status arsip
-                di database — menampilkan opsi yang pasti ditolak server
-                hanya menambah satu klik sia-sia.
-            --}}
-            <details class="ad-titik" data-tutup-luar>
-                <summary class="ad-titik__tombol" aria-label="Opsi lain untuk {{ $materi['judul'] }}">&vellip;</summary>
+                    Isinya hanya aksi yang memang ada di aplikasi: Lihat,
+                    Edit, dan Hapus. Tidak ada "Arsipkan" karena tidak ada
+                    status arsip di database.
 
-                <div class="ad-titik__menu" role="menu">
-                    <a class="ad-titik__item" role="menuitem" href="{{ $materi['tautan_detail'] }}">
-                        <x-admin.ikon nama="mata" />
+                    Edit hanya untuk materi yang dibuat admin yang sedang
+                    login (boleh_edit). Materi buatan pengguna lain tetap
+                    punya Lihat dan Hapus; isinya bukan hak admin untuk
+                    diubah, dan Admin\MateriKelolaController akan menolak
+                    403 kalau URL-nya diketik manual.
+                --}}
+                <details class="ad-titik" data-tutup-luar>
+                    <summary class="ad-titik__tombol" aria-label="Opsi lain untuk {{ $materi['judul'] }}">&vellip;</summary>
 
-                        Lihat
-                    </a>
+                    <div class="ad-titik__menu" role="menu">
+                        <a class="ad-titik__item" role="menuitem" href="{{ $materi['tautan_detail'] }}">
+                            <x-admin.ikon nama="mata" />
 
-                    <a class="ad-titik__item" role="menuitem" href="{{ $materi['tautan_edit'] }}">
-                        <x-admin.ikon nama="pena" />
+                            Lihat
+                        </a>
 
-                        Edit
-                    </a>
+                        @if ($materi['boleh_edit'])
+                            <a class="ad-titik__item" role="menuitem" href="{{ $materi['tautan_edit'] }}">
+                                <x-admin.ikon nama="pena" />
 
-                    <button type="button" class="ad-titik__item ad-titik__item--bahaya" role="menuitem"
-                        data-hapus-buka
-                        data-hapus-judul="Hapus Materi?"
-                        data-hapus-meta="{{ $materi['kategori']['nama'] }} &middot; {{ $materi['jumlah_bab'] }} Bab &middot; oleh {{ $materi['pembuat']['nama'] }}"
-                        data-hapus-aksi="{{ $materi['tautan_hapus'] }}">
-                        <x-admin.ikon nama="sampah" />
+                                Edit
+                            </a>
+                        @endif
 
-                        Hapus
-                    </button>
-                </div>
-            </details>
+                        <button type="button" class="ad-titik__item ad-titik__item--bahaya" role="menuitem"
+                            data-hapus-buka
+                            data-hapus-judul="Hapus Materi?"
+                            data-hapus-meta="{{ $kategori['nama'] }} &middot; {{ $materi['jumlah_bab'] }} Bab &middot; oleh {{ $materi['pembuat']['nama'] }}"
+                            data-hapus-aksi="{{ $materi['tautan_hapus'] }}">
+                            <x-admin.ikon nama="sampah" />
+
+                            Hapus
+                        </button>
+                    </div>
+                </details>
+            </div>
         </div>
     </div>
 </article>

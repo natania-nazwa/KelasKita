@@ -8,17 +8,6 @@
      */
     'data' => [],
     'labelNilai' => 'dikerjakan',
-    /**
-     * Posisi legenda: 'samping' (default, dipakai halaman Statistik) atau
-     * 'atas' (dipakai kartu analytics dashboard).
-     *
-     * Opsi ini ada karena kartu "Pelajaran yang Disukai" hanya punya satu
-     * atau dua pelajaran: kalau legenda tetap di samping, hanya satu baris
-     * pendek yang mengambang di tengah-tengah card. Dipindah ke atas,
-     * barisnya jadi lebar penuh di paling atas card dan donat turun ke
-     * bawahnya.
-     */
-    'legenda' => 'samping',
 ])
 
 {{--
@@ -93,10 +82,7 @@
 @endphp
 
 <div {{ $attributes->class(['ad-grafik']) }}>
-    <div @class([
-        'ad-donat__susun',
-        'ad-donat__susun--atas' => $legenda === 'atas',
-    ])>
+    <div class="ad-donat__susun">
         <div class="ad-donat__lingkaran">
             <svg viewBox="0 0 120 120" class="h-full w-full -rotate-90" role="img"
                 aria-label="Donat chart {{ $labelNilai }}">

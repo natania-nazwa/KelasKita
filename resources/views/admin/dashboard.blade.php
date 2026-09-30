@@ -7,9 +7,11 @@
     {{--
         Dashboard admin.
 
-        Susunan dari atas: banner sapaan, empat kartu statistik, dua kolom
-        (Perlu Ditinjau + kartu kutipan), dua kolom (Menu Cepat + Aktivitas
-        Terbaru), lalu dua kartu analytics (donat pelajaran + garis login).
+        Susunan dari atas: banner sapaan, empat kartu statistik, lalu satu
+        baris dua kolom. Kolom kiri: "Perlu Ditinjau" dengan "Menu Cepat"
+        tepat di bawahnya. Kolom kanan: kartu kutipan dengan "Aktivitas
+        Terbaru" tepat di bawahnya. Terakhir, dua kartu analytics (donat
+        pelajaran + garis login).
 
         Semua angka datang dari server: $ringkasan, $perluDitinjau,
         $aktivitas, $pelajaranDisukai, dan $loginMingguan dihitung di
@@ -27,8 +29,7 @@
          * server, dan yang ditampilkan adalah jumlah baru bulan ini.
          * Menampilkan "0% dari bulan lalu" pada situation seperti itu
          * memberi kesan ada yang turun padahal memang belum ada
-         * pembanding.
-         */
+         * pembanding.         */
         $keterangan = [
             'pengguna' => $ringkasan['perubahan']['pengguna']['bulan_ini'].' bergabung bulan ini',
             'materi' => $ringkasan['perubahan']['materi']['bulan_ini'].' materi baru bulan ini',
@@ -65,110 +66,135 @@
             :href="route('admin.verifikasi')" />
     </section>
 
-    {{-- ==================== PERLU DITINJAU + KUTIPAN ==================== --}}
+    {{-- ==================== DUA KOLOM: TINJAU + CEPAT | KUTIPAN + AKTIVITAS ==================== --}}
     <section class="ad-seksi ad-grid ad-grid--dua">
 
-        {{-- Perlu Ditinjau --}}
-        <div class="ad-kartu">
-            <header class="ad-kartu__kepala">
-                <div class="ad-kartu__kepala-titik">
-                    <span class="ad-cepat__ikon ad-cepat__ikon--kuning" aria-hidden="true">
-                        <x-admin.ikon nama="daftar-cek" ukuran="w-5 h-5" />
-                    </span>
+        {{--
+            Kolom kiri: "Perlu Ditinjau" di atas, "Menu Cepat" tepat di
+            bawahnya.
 
-                    <h2 class="ad-kartu__kepala-judul">Perlu Ditinjau</h2>
+            Dulu "Menu Cepat" berdiri sebagai baris sendiri di bawah baris
+            ini, jadi posisinya ditentukan oleh kolom kanan yang paling
+            tinggi (kartu kutipan + "Aktivitas Terbaru"). Akibatnya "Menu
+            Cepat" turun jauh dan tidak menempel di bawah "Perlu Ditinjau".
+            Sekarang keduanya satu kolom, jadi jaraknya hanya 1rem.
+
+            Lebar "Menu Cepat" tidak berubah: kolom ini tetap kolom 1,65fr
+            milik .ad-grid--dua, sama seperti saat card-nya berdiri sendiri
+            sebagai grid item. Ukuran, padding, empat shortcut, dan empat
+            kolomnya juga tidak disentuh.
+        --}}
+        <div class="ad-sisi-kolom">
+            <div class="ad-kartu">
+                <header class="ad-kartu__kepala">
+                    <div class="ad-kartu__kepala-titik">
+                        <span class="ad-cepat__ikon ad-cepat__ikon--kuning" aria-hidden="true">
+                            <x-admin.ikon nama="daftar-cek" ukuran="w-5 h-5" />
+                        </span>
+
+                        <h2 class="ad-kartu__kepala-judul">Perlu Ditinjau</h2>
+                    </div>
+
+                    <a href="{{ route('admin.verifikasi') }}" class="ad-tautan">
+                        Lihat Semua
+                        <x-admin.ikon nama="panah-kanan" />
+                    </a>
+                </header>
+
+                <div class="ad-kartu__badan ad-kartu__badan--luas">
+                    {{--
+                        ad-tinjau--besar: tiap baris tinjau dibuat lebih tinggi
+                        dan lebih lega, supaya empat antrean terbaru muat
+                        dengan nyaman. Kelas .ad-tinjau__* yang sama dipakai
+                        halaman Verifikasi, jadi pembesarannya dikurung di
+                        bawah class baru ini supaya halaman itu tidak ikut
+                        berubah.
+                    --}}
+                    <div class="ad-tinjau ad-tinjau--besar">
+                        @forelse ($perluDitinjau as $item)
+                            <x-admin.tinjau :jenis="$item['jenis']" :judul="$item['judul']" :pembuat="$item['pembuat']"
+                                :kategori="$item['kategori']" :kategori-warna="$item['kategori_warna']"
+                                :kategori-ikon="$item['kategori_ikon']" :rincian="$item['rincian']"
+                                :tanggal="$item['dibuat_pada']?->translatedFormat('d M Y')"
+                                :tautan="$item['tautan']" />
+                        @empty
+                            <x-admin.kosong ikon="tanda-centang" judul="Semua sudah ditinjau"
+                                teks="Tidak ada materi atau quiz yang menunggu persetujuan. Bagus, tidak ada yang tertunda." />
+                        @endforelse
+                    </div>
                 </div>
+            </div>
 
-                <a href="{{ route('admin.verifikasi') }}" class="ad-tautan">
-                    Lihat Semua
-                    <x-admin.ikon nama="panah-kanan" />
-                </a>
-            </header>
+            <div class="ad-kartu">
+                <header class="ad-kartu__kepala">
+                    <div class="ad-kartu__kepala-titik">
+                        <span class="ad-cepat__ikon ad-cepat__ikon--biru" aria-hidden="true">
+                            <x-admin.ikon nama="petir" ukuran="w-5 h-5" />
+                        </span>
 
-            <div class="ad-kartu__badan">
-                <div class="ad-tinjau">
-                    @forelse ($perluDitinjau as $item)
-                        <x-admin.tinjau :jenis="$item['jenis']" :judul="$item['judul']" :pembuat="$item['pembuat']"
-                            :kategori="$item['kategori']" :kategori-warna="$item['kategori_warna']"
-                            :kategori-ikon="$item['kategori_ikon']" :rincian="$item['rincian']"
-                            :tanggal="$item['dibuat_pada']?->translatedFormat('d M Y')"
-                            :tautan="$item['tautan']" />
+                        <h2 class="ad-kartu__kepala-judul">Menu Cepat</h2>
+                    </div>
+                </header>
+
+                <div class="ad-kartu__badan ad-kartu__badan--rapat">
+                    <div class="ad-daftar-cepat">
+                        <x-admin.cepat ikon="buku" judul="Lihat Semua Materi"
+                            keterangan="Kelola materi yang tersedia di platform" :href="route('admin.materi')" />
+
+                        <x-admin.cepat ikon="soal" judul="Lihat Semua Quiz"
+                            keterangan="Kelola quiz yang sudah dibuat dan terbit" :href="route('admin.quiz')" />
+
+                        <x-admin.cepat ikon="grup" judul="Kelola Pengguna"
+                            keterangan="Lihat siapa saja yang memakai KelasKita" :href="route('admin.pengguna')" />
+
+                        <x-admin.cepat ikon="grafik" judul="Lihat Statistik"
+                            keterangan="Tren belajar, nilai, dan pelajaran terpopuler" :href="route('admin.statistik')" />
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {{--
+            Kolom kanan: kartu kutipan di atas, "Aktivitas Terbaru" tepat
+            di bawahnya.
+
+            Dulu "Aktivitas Terbaru" berdiri sebagai baris sendiri di
+            bawah "Perlu Ditinjau", sedangkan kartu kutipan di sebelah
+            kanannya cuma setinggi isinya. Selisih tinggi itu jadi ruang
+            kosong sehingga "Aktivitas Terbaru" terlihat melayang jauh.
+            Menumpuknya di satu kolom menghilangkan ruang kosong itu: kolom
+            kanannya terisi dari atas sampai bawah, dan "Aktivitas Terbaru"
+            menempel tepat di bawah teks kutipan.
+        --}}
+        <div class="ad-sisi-kolom">
+            <x-admin.kutip />
+
+            <div class="ad-kartu">
+                <header class="ad-kartu__kepala">
+                    <div class="ad-kartu__kepala-titik">
+                        <span class="ad-cepat__ikon ad-cepat__ikon--pink" aria-hidden="true">
+                            <x-admin.ikon nama="kilau" ukuran="w-5 h-5" />
+                        </span>
+
+                        <h2 class="ad-kartu__kepala-judul">Aktivitas Terbaru</h2>
+                    </div>
+
+                    <a href="{{ route('admin.materi') }}" class="ad-tautan">
+                        Lihat Semua
+                        <x-admin.ikon nama="panah-kanan" />
+                    </a>
+                </header>
+
+                <div class="ad-kartu__badan ad-kartu__badan--padat">
+                    @forelse ($aktivitas as $item)
+                        <x-admin.aktivitas :inisial="$item['inisial']" :warna="$item['warna']"
+                            :warna-gelap="$item['warna_gelap']" :judul="$item['judul']" :detail="$item['detail']"
+                            :waktu="$item['waktu']" :ikon="$item['ikon']" />
                     @empty
-                        <x-admin.kosong ikon="tanda-centang" judul="Semua sudah ditinjau"
-                            teks="Tidak ada materi atau quiz yang menunggu persetujuan. Bagus, tidak ada yang tertunda." />
+                        <x-admin.kosong ikon="jam" judul="Belum ada aktivitas"
+                            teks="Materi atau quiz yang dibuat pengguna akan muncul di sini." />
                     @endforelse
                 </div>
-            </div>
-        </div>
-
-        {{-- Kartu kutipan: dekoratif, bukan fitur. --}}
-        <x-admin.kutip />
-    </section>
-
-    {{-- ==================== MENU CEPAT + AKTIVITAS TERBARU ==================== --}}
-    <section class="ad-seksi ad-grid ad-grid--dua">
-
-        {{-- Menu Cepat --}}
-        <div class="ad-kartu">
-            <header class="ad-kartu__kepala">
-                <div class="ad-kartu__kepala-titik">
-                    <span class="ad-cepat__ikon ad-cepat__ikon--biru" aria-hidden="true">
-                        <x-admin.ikon nama="petir" ukuran="w-5 h-5" />
-                    </span>
-
-                    <h2 class="ad-kartu__kepala-judul">Menu Cepat</h2>
-                </div>
-            </header>
-
-            <div class="ad-kartu__badan ad-kartu__badan--rapat">
-                <div class="ad-daftar-cepat">
-                    <x-admin.cepat ikon="buku" judul="Lihat Semua Materi"
-                        keterangan="Kelola materi yang tersedia di platform" :href="route('admin.materi')" />
-
-                    <x-admin.cepat ikon="soal" judul="Lihat Semua Quiz"
-                        keterangan="Kelola quiz yang sudah dibuat dan terbit" :href="route('admin.quiz')" />
-
-                    <x-admin.cepat ikon="grup" judul="Kelola Pengguna"
-                        keterangan="Lihat siapa saja yang memakai KelasKita" :href="route('admin.pengguna')" />
-
-                    <x-admin.cepat ikon="grafik" judul="Lihat Statistik"
-                        keterangan="Tren belajar, nilai, dan pelajaran terpopuler" :href="route('admin.statistik')" />
-                </div>
-            </div>
-        </div>
-
-        {{-- Aktivitas Terbaru --}}
-        {{--
-            ad-kartu--ringkas: kartu ini tidak ikut diregangkan setinggi
-            "Menu Cepat" di sebelahnya, jadi ujungnya berhenti tepat di
-            bawah item terakhir. Tanpa class ini, grid meregangkan kedua
-            kartu sama tinggi dan ruang kosong muncul di bawah aktivitas.
-        --}}
-        <div class="ad-kartu ad-kartu--ringkas">
-            <header class="ad-kartu__kepala">
-                <div class="ad-kartu__kepala-titik">
-                    <span class="ad-cepat__ikon ad-cepat__ikon--pink" aria-hidden="true">
-                        <x-admin.ikon nama="kilau" ukuran="w-5 h-5" />
-                    </span>
-
-                    <h2 class="ad-kartu__kepala-judul">Aktivitas Terbaru</h2>
-                </div>
-
-                <a href="{{ route('admin.materi') }}" class="ad-tautan">
-                    Lihat Semua
-                    <x-admin.ikon nama="panah-kanan" />
-                </a>
-            </header>
-
-            <div class="ad-kartu__badan ad-kartu__badan--padat">
-                @forelse ($aktivitas as $item)
-                    <x-admin.aktivitas :inisial="$item['inisial']" :warna="$item['warna']"
-                        :warna-gelap="$item['warna_gelap']" :judul="$item['judul']" :detail="$item['detail']"
-                        :waktu="$item['waktu']" :ikon="$item['ikon']" />
-                @empty
-                    <x-admin.kosong ikon="jam" judul="Belum ada aktivitas"
-                        teks="Materi atau quiz yang dibuat pengguna akan muncul di sini." />
-                @endforelse
             </div>
         </div>
     </section>

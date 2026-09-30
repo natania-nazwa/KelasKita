@@ -6,6 +6,8 @@ use App\Models\Materi;
 use App\Models\Pelajaran;
 use App\Models\SimpananMateri;
 use App\Models\User;
+use App\Support\DaftarMateri;
+use App\Support\DaftarMateriAdmin;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -141,8 +143,7 @@ class MateriKelolaHalamanTest extends TestCase
         $this->actingAs($admin)
             ->get('/admin/materi')
             ->assertOk()
-            ->assertSee('Kelola materi pembelajaran yang telah dipublikasikan')
-            ->assertSee('Ilmu hari ini');
+            ->assertSee('Kelola materi pembelajaran yang telah dipublikasikan');
     }
 
     /*
@@ -254,6 +255,335 @@ class MateriKelolaHalamanTest extends TestCase
 
     /*
      * =============================================================
+     * FILTER TAMPIL LANGSUNG
+     * =============================================================
+     */
+
+    public function test_pencarian_dan_ketiga_filter_tampil_tanpa_hanya_dukungan_javascript(): void
+    {
+        $admin = $this->buatAdmin();
+        $this->buatTerbit($this->buatPengguna());
+
+        $html = $this->actingAs($admin)
+            ->get('/admin/materi')
+            ->assertOk()
+            ->getContent();
+
+        // Tiga select, ketiganya di dalam satu form GET tanpa popover.
+        $this->assertStringContainsString('name="kategori"', $html);
+        $this->assertStringContainsString('name="urut"', $html);
+        $this->assertStringContainsString('name="pembuat"', $html);
+        $this->assertStringContainsString('Semua kategori', $html);
+        $this->assertStringContainsString('Semua pembuat', $html);
+
+        // Dua tombol aksi.
+        $this->assertStringContainsString('>Terapkan<', $html);
+        $this->assertStringContainsString('Hapus filter', $html);
+
+        // Tidak ada lagi tombol/popover yang menyembunyikan filter.
+        $this->assertStringNotContainsString('ad-saring', $html);
+    }
+
+    /*
+     * =============================================================
+     * KOLOM CARI DI HALAMAN INI SUDAH DIHAPUS
+     * =============================================================
+     */
+
+    public function test_halaman_tidak_lagi_menampilkan_kolom_cari(): void
+    {
+        $admin = $this->buatAdmin();
+        $this->buatTerbit($this->buatPengguna(), 'Dasar HTML');
+
+        $html = $this->actingAs($admin)
+            ->get('/admin/materi')
+            ->assertOk()
+            ->getContent();
+
+        $this->assertStringNotContainsString('ad-alat-baris__cari', $html);
+        $this->assertStringNotContainsString('placeholder="Cari materi..."', $html);
+    }
+
+    public function test_pencarian_tetap_bisa_dipakai_lewat_kotak_di_topbar(): void
+    {
+        /*
+         * Kolom cari dihapus dari halaman, jadi kotak pencarian di topbar
+         * sekarang satu-satunya jalannya. Form-nya harus tetap mengarah ke
+         * halaman ini dan tetap mengirim "q" — kalau salah satu berubah,
+         * pencarian mati total tanpa ada satu pun tombol yang gagal terlihat.
+         */
+        $admin = $this->buatAdmin();
+        $pemilik = $this->buatPengguna();
+        $this->buatTerbit($pemilik, 'Materi Katakana');
+        $this->buatTerbit($pemilik, 'Materi Lain');
+
+        $html = $this->actingAs($admin)
+            ->get('/admin/materi')
+            ->assertOk()
+            ->getContent();
+
+        $this->assertStringContainsString('action="'.route('admin.materi').'"', $html);
+        $this->assertStringContainsString('id="cari-ad"', $html);
+        $this->assertStringContainsString('name="q"', $html);
+
+        // Dan form GET di halaman ini tetap Apply kata kunci yang masuk dari
+        // topbar, walau tidak ada lagi kolomnya.
+        $this->actingAs($admin)
+            ->get(route('admin.materi', ['q' => 'Katakana']))
+            ->assertOk()
+            ->assertSee('Materi Katakana')
+            ->assertDontSee('Materi Lain');
+    }
+
+    public function test_kata_kunci_aktif_tetap_ikut_dibawa_saat_menyaring(): void
+    {
+        $admin = $this->buatAdmin();
+        $pemilik = $this->buatPengguna();
+        $this->buatPelajaran('Matematika', 'matematika');
+        $this->buatTerbit($pemilik, 'Materi Katakana', $this->buatPelajaran('Teknologi', 'teknologi'));
+
+        // Menyaring kategori tidak boleh menghapus kata kunci yang sedang aktif.
+        $this->actingAs($admin)
+            ->get(route('admin.materi', ['q' => 'Katakana', 'kategori' => 'teknologi']))
+            ->assertOk()
+            ->assertSee('Materi Katakana');
+    }
+
+    /*
+     * =============================================================
+     * HERO: TEKS DI KIRI, GAMBAR BUKU DI KANAN
+     * =============================================================
+     */
+
+    public function test_hero_memakai_teks_dan_gambar_buku_saja(): void
+    {
+        $admin = $this->buatAdmin();
+        $this->buatTerbit($this->buatPengguna());
+
+        $html = $this->actingAs($admin)
+            ->get('/admin/materi')
+            ->assertOk()
+            ->getContent();
+
+        // Teks di kolom kiri.
+        $this->assertStringContainsString('ad-hero-materi__teks', $html);
+        $this->assertStringContainsString('ad-hero-materi__judul', $html);
+        $this->assertStringContainsString('Kelola materi pembelajaran yang telah dipublikasikan', $html);
+
+        // Gambar buku di kolom kanan.
+        $this->assertStringContainsString('ad-hero-materi__gambar', $html);
+        $this->assertStringContainsString(asset('images/buku.png'), $html);
+        $this->assertLessThan(
+            strpos($html, 'ad-hero-materi__gambar'),
+            strpos($html, 'Kelola materi pembelajaran'),
+            'Gambar harus di sebelah kanan teks, bukan di atas atau di kiri.',
+        );
+
+        // Murni dekoratif: alt kosong, disembunyikan dari pembaca layar.
+        $this->assertSame(
+            1,
+            preg_match('/<img[^>]*ad-hero-materi__gambar[^>]*>/', $html, $tag),
+        );
+        $this->assertStringContainsString('alt=""', $tag[0]);
+        $this->assertStringContainsString('aria-hidden="true"', $tag[0]);
+
+        // Yang tetap dihapus: kutipan, ikon, dan ilustrasi SVG lama.
+        $this->assertStringNotContainsString('Ilmu hari ini', $html);
+        $this->assertStringNotContainsString('ad-hero-materi__kutip', $html);
+        $this->assertStringNotContainsString('ad-hero-materi__ilustrasi', $html);
+        $this->assertStringNotContainsString('ad-hero-materi__kiri', $html);
+        $this->assertStringNotContainsString('ad-hero-materi__kanan', $html);
+        $this->assertStringNotContainsString('ad-hero-materi__ikon', $html);
+    }
+
+    public function test_gambar_hero_terkunci_dari_dua_sisi_agar_tidak_mendorong_judul(): void
+    {
+        // Berkasnya bujur sangkar. Tanpa width + height + object-fit yang
+        // dikunci, gambar ikut meninggi dan mendorong judul keluar container
+        // di layar sempit.
+        $css = file_get_contents(resource_path('css/admin.css'));
+
+        $this->assertSame(1, preg_match('/\.ad-hero-materi__gambar\s*\{([^}]*)\}/', $css, $cocok));
+
+        $aturan = $this->tanpaKomentar($cocok[1]);
+
+        $this->assertMatchesRegularExpression('/width:\s*[\d.]+rem/', $aturan);
+        $this->assertMatchesRegularExpression('/height:\s*[\d.]+rem/', $aturan);
+        $this->assertStringContainsString('object-fit: contain', $aturan);
+        $this->assertStringContainsString('flex-shrink: 0', $aturan);
+    }
+
+    public function test_teks_hero_dan_gambarnya_berdampingan(): void
+    {
+        $css = file_get_contents(resource_path('css/admin.css'));
+
+        $this->assertSame(1, preg_match('/\.ad-hero-materi__susun\s*\{([^}]*)\}/', $css, $cocok));
+
+        $aturan = $this->tanpaKomentar($cocok[1]);
+
+        $this->assertStringContainsString('display: flex', $aturan);
+        $this->assertStringContainsString('justify-content: space-between', $aturan);
+    }
+
+    public function test_hapus_filter_aktif_khwa_saring_tidak_ada(): void
+    {
+        $admin = $this->buatAdmin();
+        $this->buatTerbit($this->buatPengguna(), 'Materi Satu');
+
+        $dimatikan = $this->actingAs($admin)->get('/admin/materi')->assertOk()->getContent();
+        $menyala = $this->actingAs($admin)
+            ->get(route('admin.materi', ['kategori' => 'matematika']))
+            ->assertOk()
+            ->getContent();
+
+        // Tanpa saringan, tombolnya tampil redup dan tidak bisa diklik.
+        $this->assertStringContainsString('aria-disabled="true"', $dimatikan);
+
+        // Ada saringan, tautan hapus filter-nya hidup lagi.
+        $this->assertStringNotContainsString('aria-disabled="true"', $menyala);
+    }
+
+    public function test_urutan_hanya_ada_terbaru_dan_terlama(): void
+    {
+        $admin = $this->buatAdmin();
+        $this->buatTerbit($this->buatPengguna());
+
+        $html = $this->actingAs($admin)->get('/admin/materi')->assertOk()->getContent();
+
+        $this->assertStringContainsString('value="terbaru"', $html);
+        $this->assertStringContainsString('value="terlama"', $html);
+        $this->assertStringNotContainsString('value="dilihat"', $html);
+    }
+
+    /*
+     * =============================================================
+     * PANAH DROPDOWN TEPAT DI PILNYA
+     * =============================================================
+     *
+     * Bug ini sudah pernah dua kali lolos dari test markup: markup ketiga
+     * select memang identik, jadi tidak ada yang bisa diperiksa dari HTML.
+     * Yang rusak murni CSS, jadi penjaganya juga di CSS.
+     *
+     * Akar masalahnya: .ad-pilih__bungkus tidak display: flex, sehingga
+     * <select> di dalamnya memakai lebar teks opsi terpanjangnya, bukan
+     * lebar kolom — sementara panahnya diposisikan ke tepi wrapper. Diukur
+     * di Chrome, pil "Terbaru" hanya 101px di dalam kolom 202px dan panahnya
+     * melayang 88px di kanan pil itu.
+     */
+    public function test_pembungkus_select_adalah_flex_container(): void
+    {
+        $css = file_get_contents(resource_path('css/admin.css'));
+
+        $this->assertSame(
+            1,
+            preg_match('/\.ad-pilih__bungkus\s*\{([^}]*)\}/', $css, $cocok),
+            'Aturan .ad-pilih__bungkus tidak ditemukan di admin.css.'
+        );
+
+        $this->assertMatchesRegularExpression(
+            '/(?:^|;|\s)display\s*:\s*flex\s*(?:;|$)/m',
+            $cocok[1],
+            '.ad-pilih__bungkus wajib display: flex, kalau tidak <select> tidak '
+            .'mengisi kolomnya dan panah dropdown terlihat lepas dari pilnya.'
+        );
+    }
+
+    public function test_kaki_kartu_boleh_membungkus_jangan_meluber(): void
+    {
+        /*
+         * Pada grid empat kolom satu kartu cuma ~218px, sedangkan kaki
+         * kartunya perlu ~222px (lencana "Dipublikasikan" 105px + tombol
+         * Lihat + tombol tiga titik 117px). Selagi kartu memakai
+         * overflow: hidden, kelebihan itu terpotong — dan itulah yang
+         * membuat tombol tiga titik terlihat "ketimpa card". Setelah
+         * overflow-nya dihapus (supaya menu bisa keluar), kelebihan yang
+         * sama akan meluber keluar halaman.
+         *
+         * Jadi flex-wrap di kaki kartu wajib: saat kolomnya sempit, tombolnya
+         * turun ke baris sendiri di bawah lencana.
+         */
+        $css = file_get_contents(resource_path('css/admin.css'));
+
+        $this->assertSame(1, preg_match('/\.ad-materi-kartu__kaki\s*\{([^}]*)\}/', $css, $cocok));
+
+        $aturan = $this->tanpaKomentar($cocok[1]);
+
+        $this->assertStringContainsString('flex-wrap: wrap', $aturan);
+        $this->assertStringContainsString('min-width: 0', $aturan);
+
+        // Tombolnya boleh turun baris tapi tidak boleh diremas.
+        $this->assertSame(1, preg_match('/\.ad-materi-kartu__aksi\s*\{([^}]*)\}/', $css, $aksi));
+        $this->assertStringContainsString('flex-shrink: 0', $this->tanpaKomentar($aksi[1]));
+    }
+
+    public function test_kartu_tidak_memotong_menu_tiga_titik(): void
+    {
+        /*
+         * Menu tiga titik diposisikan absolute DI DALAM kartu, jadi
+         * overflow: hidden pada .ad-materi-kartu akan memotongnya persis di
+         * tepi kartu — menunya tidak pernah terlihat dan tombolnya ikut
+         * terlihat terpotong. Pembulatan sudut ada di blok gambar, bukan di
+         * kartu, jadi kartu tidak butuh overflow sama sekali.
+         *
+         * Kartu juga harus melayang di atas kartu berikutnya saat di-hover,
+         * supaya menunya tidak ketimpa kartu yang tidak sedang di-hover.
+         */
+        $css = file_get_contents(resource_path('css/admin.css'));
+
+        $this->assertSame(1, preg_match('/\.ad-materi-kartu\s*\{([^}]*)\}/', $css, $kartu));
+        $this->assertStringNotContainsString('overflow', $this->tanpaKomentar($kartu[1]));
+
+        // Blok gambar yang memotong, dan hanya sudut atasnya yang dibulatkan.
+        $this->assertSame(1, preg_match('/\.ad-materi-kartu__gambar\s*\{([^}]*)\}/', $css, $gambar));
+        $this->assertStringContainsString('overflow: hidden', $this->tanpaKomentar($gambar[1]));
+        $this->assertMatchesRegularExpression('/border-radius:\s*[\d.]+rem\s+[\d.]+rem\s+0\s+0/', $gambar[1]);
+
+        // Kartu yang di-hover dapat z-index supaya menunya tidak ketimpa.
+        $this->assertSame(
+            1,
+            preg_match('/\.ad-materi-kartu:hover,\s*\.ad-materi-kartu:focus-within\s*\{([^}]*)\}/', $css, $hover),
+        );
+        $this->assertStringContainsString('z-index', $hover[1]);
+    }
+
+    /**
+     * Buang komentar CSS dari satu blok aturan.
+     *
+     * Diperlukan karena penjelasan DI DALAM aturan ikut menyebut nama
+     * properti yang sedang diperiksa — misalnya komentar "sengaja TIDAK
+     * overflow: hidden" di .ad-materi-kartu. Tanpa ini test-nya akan salah
+     * gagal justru karena penjelasannya sudah benar.
+     */
+    private function tanpaKomentar(string $aturan): string
+    {
+        return (string) preg_replace('#/\*.*?\*/#s', '', $aturan);
+    }
+
+    public function test_pembungkus_select_memakai_kelas_yang_sama(): void
+    {
+        $admin = $this->buatAdmin();
+        $this->buatTerbit($this->buatPengguna());
+
+        $html = $this->actingAs($admin)->get('/admin/materi')->assertOk()->getContent();
+
+        // Ketiganya harus dibungkus .ad-pilih__bungkus dan memakai .ad-pilih,
+        // tidak ada select yang dilepas dari pembungkusnya.
+        $this->assertSame(3, substr_count($html, 'class="ad-pilih__bungkus"'));
+        $this->assertSame(3, substr_count($html, 'class="ad-pilih"'));
+
+        // Tiap pembungkus harus punya tepat satu select dan satu svg panah.
+        preg_match_all('#<div class="ad-pilih__bungkus">(.*?)</div>#s', $html, $bungkus);
+
+        $this->assertCount(3, $bungkus[1]);
+
+        foreach ($bungkus[1] as $isi) {
+            $this->assertSame(1, substr_count($isi, '<select'));
+            $this->assertSame(1, substr_count($isi, '<svg'));
+        }
+    }
+
+    /*
+     * =============================================================
      * EMPTY STATE
      * =============================================================
      */
@@ -296,55 +626,144 @@ class MateriKelolaHalamanTest extends TestCase
 
     /*
      * =============================================================
-     * PANEL DETAIL DI SEBELAH KANAN
+     * PANEL DETAIL: SUDAH DIHAPUS
+     * =============================================================
+     * Panel "Detail Materi" di sebelah kanan dicabut, jadi daftar jadi satu
+     * kolom selebar penuh. Test di bawah hanya menjaga sisa jejak panel itu
+     * tidak ikut tinggal: tidak ada lagi parameter "?materi=" yang memilih
+     * materi, dan panel kosong tidak muncul sebagai elemen tersendiri.
+     */
+
+    public function test_halaman_tidak_lagi_memakai_parameter_materi(): void
+    {
+        $admin = $this->buatAdmin();
+        $materi = $this->buatTerbit($this->buatPengguna(), 'Dasar HTML');
+
+        $halaman = $this->actingAs($admin)
+            ->get(route('admin.materi', ['materi' => $materi->slug]))
+            ->assertOk()
+            ->getContent();
+
+        $this->assertStringNotContainsString('materi='.$materi->slug, $halaman);
+        $this->assertStringNotContainsString('ad-panel', $halaman);
+    }
+
+    public function test_daftar_menampilkan_kartu_dengan_aksi_lihat(): void
+    {
+        $admin = $this->buatAdmin();
+        $materi = $this->buatTerbit($this->buatPengguna(), 'Dasar HTML');
+
+        $halaman = $this->actingAs($admin)
+            ->get('/admin/materi')
+            ->assertOk()
+            ->getContent();
+
+        // Kartu materi, tombol Lihat, dan menu tiga titik.
+        $this->assertStringContainsString('ad-materi-kartu', $halaman);
+        $this->assertStringContainsString(route('admin.materi.show', $materi->slug), $halaman);
+        $this->assertStringContainsString('ad-titik__menu', $halaman);
+
+        // Lencana "Materi" di depan judul sudah dicabut: halaman ini hanya
+        // berisi materi, jadi lencana itu mengulang isi halaman.
+        $this->assertStringNotContainsString('ad-materi-kartu__tipe', $halaman);
+    }
+
+    /*
+     * =============================================================
+     * BENTUK KARTU: VERTIKAL, SEPERTI KARTU MILIK PENGGUNA
      * =============================================================
      */
 
-    public function test_panel_kanan_kosong_sampai_materi_dipilih(): void
+    public function test_kartu_vertikal_dengan_blok_gambar_di_atas(): void
     {
         $admin = $this->buatAdmin();
-        $this->buatTerbit($this->buatPengguna());
+        $this->buatTerbit($this->buatPengguna(), 'Dasar HTML');
 
-        $this->actingAs($admin)
-            ->get('/admin/materi')
-            ->assertOk()
-            ->assertSee('Detail Materi')
-            ->assertSee('Pilih materi untuk melihat detail dan preview')
-            ->assertSee('Pilih salah satu materi dari daftar untuk melihat detailnya.');
+        $html = $this->actingAs($admin)->get('/admin/materi')->assertOk()->getContent();
+
+        // Susunan vertikal: gambar dulu, baru badan. Kalau urutannya
+        // terbalik, kartu ini kembali jadi horizontal.
+        $gambar = strpos($html, 'ad-materi-kartu__gambar');
+        $badan = strpos($html, 'ad-materi-kartu__badan');
+
+        $this->assertIsInt($gambar);
+        $this->assertIsInt($badan);
+        $this->assertLessThan($badan, $gambar, 'Blok gambar harus di atas badan kartu.');
+
+        // Bagian yang tidak boleh ikut: kolom horizontal yang dulu dipakai,
+        // dan baris kosong yang menggantung di sebelah.
+        $this->assertStringNotContainsString('ad-materi-kartu__kanan', $html);
     }
 
-    public function test_panel_kanan_menampilkan_ringkasan_materi_yang_dipilih(): void
+    public function test_kartu_menampilkan_kategori_dan_tidak_menampilkan_deskripsi(): void
     {
         $admin = $this->buatAdmin();
-        $pemilik = $this->buatPengguna(['nama' => 'Natania', 'email' => 'natania@example.com']);
-        $materi = $this->buatTerbit(
-            $pemilik,
+        $this->buatTerbit(
+            $this->buatPengguna(['nama' => 'Natania', 'email' => 'natania@example.com']),
             'Dasar HTML',
-            null,
-            "# Bab Satu\n\nIsi bab satu.\n\n# Bab Dua\n\nIsi bab dua.",
+            $this->buatPelajaran('Teknologi', 'teknologi'),
         );
 
-        $this->actingAs($admin)
-            ->get(route('admin.materi', ['materi' => $materi->slug]))
-            ->assertOk()
-            ->assertSee('Dasar HTML')
-            ->assertSee('Natania')
-            ->assertSee('Bab Satu')
-            ->assertSee('Bab Dua')
-            ->assertSee('Lihat Materi');
+        $html = $this->actingAs($admin)->get('/admin/materi')->assertOk()->getContent();
+
+        // Baris yang di kartu user dipakai deskripsi, di sini kategori.
+        $this->assertStringContainsString('Teknologi', $html);
+        $this->assertStringContainsString('Dibuat oleh:', $html);
+        $this->assertStringContainsString('Natania', $html);
     }
 
-    public function test_materi_yang_belum_terbit_tidak_bisa_dipreview(): void
+    public function test_paginasi_tanpa_kartu_putih_dan_tanpa_jumlah_data(): void
     {
         $admin = $this->buatAdmin();
-        $menunggu = $this->buatMateri($this->buatPengguna(), Materi::STATUS_PENDING, 'Materi Menunggu');
+        $pemilik = $this->buatPengguna();
 
-        // Slug-nya diketik manual, jadi harus tetap jatuh ke panel kosong.
-        $this->actingAs($admin)
-            ->get(route('admin.materi', ['materi' => $menunggu->slug]))
+        for ($i = 1; $i <= 21; $i++) {
+            $this->buatTerbit($pemilik, 'Materi Paginasi '.$i);
+        }
+
+        $html = $this->actingAs($admin)->get('/admin/materi')->assertOk()->getContent();
+
+        // Baris rekap jumlah data dihapus.
+        $this->assertStringNotContainsString('Menampilkan', $html);
+
+        // Paginasi tetap ada, tapi tidak lagi memakai kartu putih.
+        $this->assertStringContainsString('ad-paginasi', $html);
+        $this->assertStringNotContainsString('ad-paginasi__info', $html);
+    }
+
+    /*
+     * =============================================================
+     * TOMBOL EDIT: HANYA UNTUK MATERI BUATAN ADMIN SENDIRI
+     * =============================================================
+     */
+
+    public function test_menu_edit_muncul_untuk_materi_yang_dibuat_admin(): void
+    {
+        $admin = $this->buatAdmin();
+        $materi = $this->buatTerbit($admin, 'Materi Buatan Admin');
+
+        $halaman = $this->actingAs($admin)
+            ->get('/admin/materi')
             ->assertOk()
-            ->assertSee('Pilih salah satu materi dari daftar untuk melihat detailnya.')
-            ->assertDontSee('Materi Menunggu');
+            ->getContent();
+
+        $this->assertStringContainsString(route('admin.materi.edit', $materi->slug), $halaman);
+    }
+
+    public function test_menu_edit_tidak_muncul_untuk_materi_buatan_pengguna(): void
+    {
+        $admin = $this->buatAdmin();
+        $materi = $this->buatTerbit($this->buatPengguna(), 'Materi Buatan Pengguna');
+
+        $halaman = $this->actingAs($admin)
+            ->get('/admin/materi')
+            ->assertOk()
+            ->getContent();
+
+        // Menu masih ada, tapi isinya hanya Lihat dan Hapus.
+        $this->assertStringNotContainsString(route('admin.materi.edit', $materi->slug), $halaman);
+        $this->assertStringContainsString(route('admin.materi.show', $materi->slug), $halaman);
+        $this->assertStringContainsString(route('admin.materi.destroy', $materi->slug), $halaman);
     }
 
     /*
@@ -353,27 +772,36 @@ class MateriKelolaHalamanTest extends TestCase
      * =============================================================
      */
 
-    public function test_daftar_dipaginasi_delapan_per_halaman(): void
+    public function test_daftar_dipaginasi_dua_puluh_per_halaman(): void
     {
         $admin = $this->buatAdmin();
         $pemilik = $this->buatPengguna();
 
-        for ($i = 1; $i <= 9; $i++) {
+        for ($i = 1; $i <= 21; $i++) {
             $this->buatTerbit($pemilik, 'Materi Paginasi '.$i);
         }
 
+        // Halaman pertama tepat 20 kartu; kartu ke-21 sudah di halaman dua.
         $this->actingAs($admin)
             ->get('/admin/materi')
             ->assertOk()
             ->assertSee('Materi Paginasi 1')
-            ->assertSee('Materi Paginasi 8')
-            ->assertDontSee('Materi Paginasi 9');
+            ->assertSee('Materi Paginasi 20')
+            ->assertDontSee('Materi Paginasi 21');
 
         $this->actingAs($admin)
             ->get(route('admin.materi', ['page' => 2]))
             ->assertOk()
-            ->assertSee('Materi Paginasi 9')
-            ->assertDontSee('Materi Paginasi 8');
+            ->assertSee('Materi Paginasi 21')
+            ->assertDontSee('Materi Paginasi 20');
+    }
+
+    public function test_jumlah_kartu_per_halaman_sama_dengan_halaman_pengguna(): void
+    {
+        // 20 = 5 baris penuh pada grid empat kolom, sama seperti
+        // DaftarMateri::perHalaman() di halaman Materi pengguna.
+        $this->assertSame(20, DaftarMateriAdmin::perHalaman());
+        $this->assertSame(DaftarMateri::perHalaman(), DaftarMateriAdmin::perHalaman());
     }
 
     /*
@@ -515,27 +943,48 @@ class MateriKelolaHalamanTest extends TestCase
      * =============================================================
      */
 
-    public function test_admin_bisa_membuka_form_edit_materi_milik_pengguna_lain(): void
+    public function test_admin_bisa_membuka_form_edit_materi_yang_dibuatnya_sendiri(): void
     {
         $admin = $this->buatAdmin();
-        $pemilik = $this->buatPengguna();
-        $materi = $this->buatTerbit($pemilik, 'Materi Milik Orang Lain');
+        $materi = $this->buatTerbit($admin, 'Materi Buatan Admin');
 
         $this->actingAs($admin)
             ->get(route('admin.materi.edit', $materi->slug))
             ->assertOk()
             ->assertSee('Edit Materi')
-            ->assertSee('Materi Milik Orang Lain')
+            ->assertSee('Materi Buatan Admin')
             // Form milik pemilik menyebut "Ajukan Persetujuan"; di sini tidak.
             ->assertDontSee('Ajukan Persetujuan');
+    }
+
+    public function test_admin_tidak_bisa_mengedit_materi_buatan_pengguna(): void
+    {
+        $admin = $this->buatAdmin();
+        $materi = $this->buatTerbit($this->buatPengguna(), 'Materi Buatan Pengguna');
+
+        // Menu-nya tidak menampilkan Edit, dan URL yang diketik manual
+        // ditolak dengan aturan yang sama.
+        $this->actingAs($admin)
+            ->get(route('admin.materi.edit', $materi->slug))
+            ->assertForbidden();
+
+        $this->actingAs($admin)
+            ->put(route('admin.materi.update', $materi->slug), [
+                'pelajaran_id' => $this->buatPelajaran()->id,
+                'nama' => 'Berhasil Diubah',
+                'isi' => 'Isi materi yang tidak seharusnya bisa diubah admin.',
+                'tingkat_kesulitan' => 'Mudah',
+            ])
+            ->assertForbidden();
+
+        $this->assertSame('Materi Buatan Pengguna', $materi->refresh()->nama);
     }
 
     public function test_admin_bisa_memperbarui_materi_dan_statusnya_tetap_terbit(): void
     {
         $admin = $this->buatAdmin();
-        $pemilik = $this->buatPengguna();
         $pelajaran = $this->buatPelajaran();
-        $materi = $this->buatTerbit($pemilik, 'Judul Lama');
+        $materi = $this->buatTerbit($admin, 'Judul Lama');
         $terbitPada = $materi->dipublish_pada;
 
         $this->actingAs($admin)
@@ -569,7 +1018,7 @@ class MateriKelolaHalamanTest extends TestCase
     public function test_update_menolak_isian_tidak_valid(): void
     {
         $admin = $this->buatAdmin();
-        $materi = $this->buatTerbit($this->buatPengguna(), 'Judul Lama');
+        $materi = $this->buatTerbit($admin, 'Judul Lama');
 
         $this->actingAs($admin)
             ->put(route('admin.materi.update', $materi->slug), [
@@ -583,7 +1032,7 @@ class MateriKelolaHalamanTest extends TestCase
         $this->assertSame('Judul Lama', $materi->refresh()->nama);
     }
 
-    public function test_admin_bisa_menghapus_materi(): void
+    public function test_admin_bisa_menghapus_materi_buatan_pengguna(): void
     {
         $admin = $this->buatAdmin();
         $materi = $this->buatTerbit($this->buatPengguna(), 'Materi Dihapus');
@@ -621,7 +1070,6 @@ class MateriKelolaHalamanTest extends TestCase
         $this->actingAs($admin)->get(route('admin.materi.edit', 'tidak-ada'))->assertNotFound();
         $this->actingAs($admin)->delete(route('admin.materi.destroy', 'tidak-ada'))->assertNotFound();
     }
-
     /*
      * =============================================================
      * AKSES

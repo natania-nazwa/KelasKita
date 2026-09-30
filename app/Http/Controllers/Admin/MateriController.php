@@ -37,9 +37,13 @@ class MateriController extends Controller
     /**
      * Urutan daftar yang bisa dipilih, dan Closure pengurutannya.
      *
+     * Hanya dua, dan keduanya dibaca dari tanggal terbit: urutan daftar di
+     * sini sama dengan urutan kemunculan materi di halaman pengguna, jadi
+     * tidak ada angka yang hanya ada di area admin.
+     *
      * Key dipakai sebagai nilai query string, jadi nilainya tidak boleh
      * berubah tanpa sengaja: tautan lama yang memakai "urut=..." akan ikut
-     * ke nilai yang sama.
+     * ke nilai yang sama, dan nilai yang tidak dikenal jatuh ke "terbaru".
      *
      * Sengaja method, bukan const: Closure adalah kode yang baru jalan saat
      * aplikasi dijalankan, sedangkan nilai const harus bisa dihitung saat
@@ -55,7 +59,6 @@ class MateriController extends Controller
         return [
             'terbaru' => fn (Builder $query) => $query->orderByDesc('dipublish_pada')->orderByDesc('created_at'),
             'terlama' => fn (Builder $query) => $query->orderBy('dipublish_pada')->orderBy('created_at'),
-            'dilihat' => fn (Builder $query) => $query->orderByDesc('jumlah_dilihat')->orderByDesc('dipublish_pada'),
         ];
     }
 
@@ -69,7 +72,7 @@ class MateriController extends Controller
         $daftar = $this->daftarMateri($kataKunci, $kategori, $pembuat, $urut);
 
         return view('admin.materi', [
-            'daftar' => DaftarMateriAdmin::petakan($daftar->items(), $request->user()?->getKey()),
+            'daftar' => DaftarMateriAdmin::petikan($daftar->items(), $request->user()?->getKey()),
             'paginasi' => $daftar,
             'kataKunci' => $kataKunci,
             'kategoriAktif' => $kategori,
@@ -195,9 +198,8 @@ class MateriController extends Controller
     private function pilihanUrut(): array
     {
         return [
-            'terbaru' => 'Terbaru diterbitkan',
-            'terlama' => 'Paling lama diterbitkan',
-            'dilihat' => 'Paling banyak dibaca',
+            'terbaru' => 'Terbaru',
+            'terlama' => 'Terlama',
         ];
     }
 
@@ -205,7 +207,7 @@ class MateriController extends Controller
      * Urutan dari query string; nilai tak dikenal jatuh ke "terbaru".
      *
      * Tanpa penjaga ini "?urut=ngawur" akan membuat halaman kosong tanpa
-     * penjelasan, jadi nilainya dipetakan ke urutan bawaan.
+     * penjelasan, jadi nilainya dipetikan ke urutan bawaan.
      */
     private function urutanTerpilih(mixed $nilai): string
     {

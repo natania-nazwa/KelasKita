@@ -294,12 +294,17 @@ final class StatistikAdmin
      * Materi dan quiz yang menunggu keputusan admin, digabung jadi satu
      * daftar untuk kartu "Perlu Ditinjau".
      *
-     * Batasnya 5: kartu itu ruang baca sekilas, dan kunci lengkapnya
-     * ada di halaman Verifikasi.
+     * Batasnya 4: kartu itu ruang baca sekilas, dan kunci lengkapnya
+     * ada di halaman Verifikasi. Empat baris juga pernah jadi tinggi
+     * minimum daftar itu, jadi batas ini yang menentukan tinggi card
+     * ketika antreannya penuh.
+     *
+     * Urutannya dari yang paling baru, jadi "N terbaru" di sini benar
+     * berarti N yang terakhir diajukan, bukan N pertama yang terambil.
      *
      * @return array<int, array<string, mixed>>
      */
-    public static function perluDitinjau(int $batas = 5): array
+    public static function perluDitinjau(int $batas = 4): array
     {
         $materi = Materi::query()
             ->menunggu()

@@ -1,5 +1,5 @@
 /* ================================================================
-   ADMIN KELASKITA — DESIGN SYSTEM
+   ADMIN KELASKITA â€” DESIGN SYSTEM
    Dipakai oleh resources/views/layouts/admin.blade.php dan semua view
    di resources/views/admin.
 
@@ -897,6 +897,15 @@ body.tubuh-admin {
     padding: 0.8rem 0.85rem 0.85rem;
 }
 
+/*
+ * Varian untuk badan card yang isinya sudah tinggi (daftar "Perlu
+ * Ditinjau" dengan lima antrean). Paddingnya ditambah sedikit supaya
+ * baris paling atas dan paling bawah tidak menempel tepi card.
+ */
+.ad-kartu__badan--luas {
+    padding: 1.15rem 1.35rem 1.35rem;
+}
+
 .ad-kartu__kaki {
     border-top: 1px solid var(--ad-garis);
     padding: 0.9rem 1.25rem;
@@ -1115,7 +1124,7 @@ body.tubuh-admin {
  * Banner dashboard memakai kelas sendiri, bukan .ad-hero. Class .ad-hero
  * juga dipakai banner halaman Kelola Materi, dan banner itu memang
  * sengaja dibuat tinggi dengan tombol besar; banner dashboard justru
- * harus pendek (±190px) supaya empat baris analytics di bawahnya tidak
+ * harus pendek (Â±190px) supaya empat baris analytics di bawahnya tidak
  * terdorong jauh ke bawah. Kelas terpisah membuat perubahan di sini
  * mustahil ikut mengubah halaman lain.
  */
@@ -1270,34 +1279,6 @@ body.tubuh-admin {
     width: 1rem;
     height: 1rem;
     color: var(--ad-primary);
-}
-
-/*
- * Kartu "Aktivitas Terbaru": tinggi mengikuti isi, bukan mengikuti kartu
- * "Menu Cepat" di sebelahnya.
- *
- * Dua hal yang membuat kartu ini dulu terlalu tinggi, dan keduanya ditutup
- * di sini tanpa menyentuh kartu lain:
- *
- *   1. Grid meregangkan seluruh item-nya sama tinggi secara bawaan
- *      (align-items: stretch), jadi kartu ini ikut setinggi "Menu Cepat".
- *      align-self: start menimpa stretch itu khusus untuk kartu ini saja:
- *      lebar, kolom, gap, dan posisinya tidak berubah.
- *
- *   2. .ad-kartu__badan memakai flex: 1 supaya badannya mengisi sisa
- *      tinggi kartu. Setelah kartu tidak lagi teregang, flex: 1 tidak
- *      perlu, dan kalau dibiarkan badanlah yang jadi penerima ruang
- *      kosong. flex: 0 0 auto membuat badan setinggi isinya saja.
- *
- * Padding, font, warna, dan isi kartu tidak disentuh.
- */
-.ad-kartu--ringkas {
-    align-self: start;
-    height: auto;
-}
-
-.ad-kartu--ringkas .ad-kartu__badan {
-    flex: 0 0 auto;
 }
 
 /* ---------- Kartu statistik ---------- */
@@ -1533,10 +1514,12 @@ body.tubuh-admin {
 /*
  * Baris analytics paling bawah: donat di kiri, grafik garis di kanan.
  *
- * Dua kolomnya sengaja tidak sama. Donat sudah punya bulatan di dalam
- * kartunya, sedangkan grafik mingguan butuh ruang untuk enam label minggu
- * yang dua baris; kolom kanan dibuat 1,5 kali lebih lebar supaya labelnya
- * tidak saling tumpang tindih.
+ * Dua kolomnya sama lebar. Dulu kolom kanan dibuat 1,5 kali lebih lebar
+ * supaya grafik mingguan muat, tapi itu membuat kedua card tampak
+ * berbeda ukuran berdampingan. Sekarang keduanya 1fr, dan grafik masih
+ * muat: viewBox-nya 576px dan di 1440px tiap kolom memberi sekitar 512px
+ * ke dalam card, jadi skalanya hanya 0,89 dan label sumbu X-nya tetap
+ * terbaca.
  */
 .ad-grid--analitik {
     grid-template-columns: minmax(0, 1fr);
@@ -1544,8 +1527,23 @@ body.tubuh-admin {
 
 @media (min-width: 1024px) {
     .ad-grid--analitik {
-        grid-template-columns: minmax(0, 1fr) minmax(0, 1.5fr);
+        grid-template-columns: repeat(2, minmax(0, 1fr));
     }
+}
+
+/*
+ * Kartu "Pelajaran yang Disukai" hanya setinggi isinya.
+ *
+ * Isinya satu donat, satu legenda, dan satu baris catatan, sementara
+ * "Aktivitas Login Mingguan" di sebelahnya memuat grafik setinggi 215px.
+ * Kalau keduanya diregangkan sama tinggi (cara bawaan grid), donat itu
+ * mengambang di tengah card dan separuh card jadi ruang kosong. Card ini
+ * jadi lebih pendek supaya isinya rapat.
+ *
+ * Lebarnya tetap sama dengan card sebelahnya karena kolomnya masih 1fr.
+ */
+.ad-analitik--ringkas {
+    align-self: start;
 }
 
 /*
@@ -1952,8 +1950,23 @@ body.tubuh-admin {
     box-shadow: 0 0 0 4px rgba(109, 74, 255, 0.14);
 }
 
+/*
+ * WAJIB display: flex.
+ *
+ * Rantai di dalamnya â€” .ad-pilih { flex: 1 } lalu panah di .ad-pilih__bungkus
+ * yang diposisikan ke tepi wrapper â€” hanya benar kalau wrapper-nya sendiri
+ * flex container. Tanpa itu <select> memakai lebar teks opsi terpanjangnya,
+ * bukan lebar kolom, sementara panahnya tetap menempel di tepi wrapper.
+ *
+ * Akibatnya persis yang terlihat: pil "Terbaru" cuma ~101px di dalam kolom
+ * 202px, dan panahnya melayang ~88px di kanan pil itu â€” terlihat lepas,
+ * sementara pil "Semua kategori" yang teksnya panjang hanya kebetulan menutupi
+ * masalah yang sama. Diperbaiki di sini, bukan per select, karena setiap
+ * .ad-pilih__bungkus di area admin punya masalah yang persis sama.
+ */
 .ad-pilih__bungkus {
     position: relative;
+    display: flex;
     min-width: 0;
     flex: 1;
 }
@@ -2091,17 +2104,75 @@ body.tubuh-admin {
     color: var(--ad-teks-2);
 }
 
-.ad-tinjau__meta strong {
-    font-weight: 700;
-    color: color-mix(in oklab, var(--ad-teks) 80%, transparent);
+/*
+ * Tampilan "Perlu Ditinjau" di dashboard admin.
+ *
+ * TINGGI DIKUNCI DI EMPAT BARIS.
+ *
+ * Card ini sengaja dikunci setinggi empat antrean, dan itu berlaku
+ * walau isinya cuma satu. Tujuannya: tinggi card tidak pernah bergeser
+ * setiap kali antreannya bertambah atau berkurang, jadi posisi card ini
+ * di layar selalu sama dan admin tidak perlu mencari ulang letaknya.
+ *
+ * Angkanya harus sama dengan isi TERBANYAK, yaitu empat baris, karena
+ * StatistikAdmin::perluDitinjau() mengembalikan paling banyak empat
+ * antrean. Dulu tinggi dikunci di 17,5rem yang hanya muat tiga baris,
+ * padahal isinya boleh empat, jadi begitu antrean penuh card diam-diam
+ * menyisakan ruang kosong -- persis masalah yang dikeluhkan. Sekarang
+ * yang dikunci justru jumlah baris maksimumnya: 4 x 5,22 + 3 x 0,85 =
+ * 23,43rem, dibulatkan jadi 23,5rem.
+ *
+ * Kalau nanti batas antreannya diubah di StatistikAdmin, angka di sini
+ * harus dihitung ulang. Kalau tidak, card akan menyisakan ruang kosong
+ * lagi tepat seperti dulu.
+ *
+ * Card ini juga tidak ikut diregangkan setinggi kolom kanannya (kartu
+ * kutipan di atas "Aktivitas Terbaru"), supaya sisa tinggi jadi ruang
+ * di luar card, bukan ruang putih di dalamnya.
+ *
+ * Baris tetap dibesarkan supaya empat antrean muat nyaman: padding,
+ * ikon, dan fontnya lebih lega dari .ad-tinjau__* bawaan.
+ *
+ * Sengaja dikurung di bawah .ad-tinjau--besar: kelas .ad-tinjau__* yang
+ * sama dipakai halaman Verifikasi, dan pengubahan di sini tidak boleh
+ * ikut mengubah halaman itu. Padding badan kartu memakai modifier sendiri
+ * (.ad-kartu__badan--luas) dengan alasan yang sama.
+ */
+.ad-tinjau--besar {
+    gap: 0.85rem;
+    min-height: 23.5rem;
 }
 
-.ad-tinjau__kanan {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 0.5rem 0.65rem;
-    margin-left: auto;
+/* Empty state ikut mengisi tinggi yang dikunci (flex: 1), lalu isinya
+ * dipusatkan supaya tidak menempel di atas kotak setinggi empat baris. */
+.ad-tinjau--besar > .ad-kosong {
+    flex: 1;
+    justify-content: center;
+    padding: 1.5rem 1.25rem;
+}
+
+.ad-tinjau--besar .ad-tinjau__item {
+    gap: 1rem;
+    border-radius: 1.1rem;
+    padding: 1.05rem 1.1rem;
+}
+
+.ad-tinjau--besar .ad-tinjau__ikon {
+    width: 3rem;
+    height: 3rem;
+    border-radius: 1rem;
+    font-size: 0.875rem;
+}
+
+.ad-tinjau--besar .ad-tinjau__judul {
+    font-size: 0.9375rem;
+    line-height: 1.4;
+}
+
+.ad-tinjau--besar .ad-tinjau__meta {
+    margin-top: 0.3rem;
+    font-size: 0.75rem;
+    gap: 0.25rem 0.8rem;
 }
 
 /* ---------- Kartu kutip (dekoratif) ---------- */
@@ -2116,7 +2187,28 @@ body.tubuh-admin {
     background-image:
         radial-gradient(12rem 8rem at 110% -10%, rgba(255, 255, 255, 0.85), transparent 70%),
         linear-gradient(160deg, #f6f2ff 0%, #ece5ff 55%, #e6deff 100%);
-    padding: 1.5rem 1.35rem 0;
+    padding: 1.75rem 1.6rem;
+}
+
+/*
+ * Kolom kanan pada baris "Perlu Ditinjau": kartu kutipan di atas,
+ * "Aktivitas Terbaru" tepat di bawahnya.
+ *
+ * Dua kartu ini ditumpuk dalam satu kolom flex, bukan dua grid item
+ * terpisah, karena tinggi keduanya memang berbeda jauh. Kalau jadi dua
+ * baris grid sendiri, selisih tinggi itu berubah jadi ruang kosong di
+ * tengah halaman dan "Aktivitas Terbaru" terlihat melayang jauh dari
+ * kartu kutipan di atasnya.
+ *
+ * Jaraknya 1rem, sama dengan jarak antar section di halaman ini, jadi
+ * jarak antara dua kartu dalam kolom ini tidak berbeda jauh dari jarak
+ * antar section.
+ */
+.ad-sisi-kolom {
+    display: flex;
+    min-width: 0;
+    flex-direction: column;
+    gap: 1rem;
 }
 
 .ad-kutip::before {
@@ -2134,9 +2226,9 @@ body.tubuh-admin {
 .ad-kutip__teks {
     position: relative;
     z-index: 1;
-    font-size: 1.0625rem;
+    font-size: 1.375rem;
     font-weight: 700;
-    line-height: 1.5;
+    line-height: 1.65;
     letter-spacing: -0.01em;
     color: var(--ad-primary-dark);
 }
@@ -2145,7 +2237,7 @@ body.tubuh-admin {
     display: block;
     margin-bottom: 0.35rem;
     font-family: var(--font-display);
-    font-size: 2rem;
+    font-size: 2.5rem;
     line-height: 1;
     color: rgba(109, 74, 255, 0.35);
 }
@@ -2153,24 +2245,85 @@ body.tubuh-admin {
 .ad-kutip__ilustrasi {
     position: relative;
     z-index: 1;
-    display: flex;
-    justify-content: center;
     /* Gambar duduk di dasar kartu, jadi saat kartu ikut meninggi baris
      * sejajar dengan "Perlu Ditinjau", bagian bawahnya tetap rata dan
      * tidak ada ruang kosong menggantung. */
     margin-top: auto;
     padding-top: 0.75rem;
+    text-align: center;
 }
 
+/*
+ * Ilustrasi kartu kutipan.
+ *
+ * Sengaja BUKAN display: flex di pembungkus dan BUKAN aspect-ratio di
+ * gambar. Paduan flex + height:auto + aspect-ratio bikin browser
+ * meregangkan tinggi gambar ke tinggi baris flex yangsendiri, dan
+ * hasilnyabisa nol sehingga gambar tidak terlihat sama sekali.
+ * Lebarnya ditulis langsung dan tinggi membiarkan atribut width/height
+ * pada <img> yang menentukan rasio, jadi tidak ada yang perlu ditebak.
+ */
 .ad-kutip__ilustrasi img {
     display: block;
-    width: 100%;
-    max-width: 13rem;
+    width: 14rem;
+    max-width: 100%;
     height: auto;
-    /* buku.png 552x552 (rasio 1:1). */
-    aspect-ratio: 1 / 1;
-    object-fit: contain;
+    margin-inline: auto;
     filter: drop-shadow(0 16px 22px rgba(76, 47, 179, 0.14));
+}
+
+/* Penutup kutipan. Lebih kecil dan lebih redup dari tanda pembuka supaya
+ * menutup kalimat tanpa bersaing dengan teksnya. */
+.ad-kutip__tutup {
+    display: inline-block;
+    margin-left: 0.1rem;
+    font-family: var(--font-display);
+    font-size: 2rem;
+    line-height: 0.8;
+    color: rgba(109, 74, 255, 0.35);
+    vertical-align: -0.1em;
+}
+
+/*
+ * Teks di kiri, ilustrasi di kanan.
+ *
+ * Baru berlaku di 1440px ke atas, bukan di 640px seperti biasa. Kartu
+ * ini berada di kolom KANAN .ad-grid--dua yang hanya 1fr dari 2,65fr,
+ * jadi di 1024px lebarnya cuma sekitar 249px. Kalau gambar (8,75rem)
+ * diletakkan di samping teks sedari 640px, ruang untuk teksnya tinggal
+ * sekitar 57px -- hanya muat dua huruf per baris. Dengan menumpuknya
+ * dulu di bawah 1440px, teksnya mendapat seluruh lebar kolom dan
+ * kutipannya terbaca normal; sideways baru dipakai kalau memang masih
+ * ada tempat.
+ */
+@media (min-width: 1440px) {
+    .ad-kutip {
+        flex-direction: row;
+        align-items: center;
+        gap: 0.75rem;
+
+        /* Padding bawah dikembalikan: di mode kolom, gambar menempel di
+         * dasar kartu jadi padding bawahnya 0. Di mode baris tidak ada
+         * gambar yang terdorong ke bawah, jadi kartu butuh napas
+         * bawahnya lagi. */
+        padding: 1.75rem 0.95rem 1.75rem 1.6rem;
+    }
+
+    .ad-kutip__teks {
+        min-width: 0;
+        flex: 1;
+    }
+
+    .ad-kutip__ilustrasi {
+        flex-shrink: 0;
+        margin-top: 0;
+        padding-top: 0;
+    }
+
+    /* Di samping teks, gambar tidak perlu sebesar di bawah teks. */
+    .ad-kutip__ilustrasi img {
+        width: 8.75rem;
+    }
 }
 
 /* ---------- Aktivitas ---------- */
@@ -2698,33 +2851,16 @@ body.tubuh-admin {
 @media (min-width: 520px) {
     .ad-donat__susun {
         flex-direction: row;
-        align-items: center;
+
+        /*
+         * Legenda menempel di ATAS, sejajar dengan puncak donat, bukan
+         * mengambang di tengah. align-items: center dulu membuat satu
+         * baris legendanya melayang setinggi donat di tengah card, dan
+         * kelihatan seperti meleset. Donat di kiri, teks di kanan atas.
+         */
+        align-items: flex-start;
         gap: 1.75rem;
     }
-}
-
-/*
- * Legenda di atas donat.
- *
- * Dipakai kartu "Pelajaran yang Disukai", yang datanya cuma satu atau dua
- * pelajaran: legenda di samping akan jadi satu baris pendek yang
- * mengambang di tengah card. Di atas, barisnya jadi lebar penuh di
- * puncak card dan donat turun ke bawahnya.
- *
- * order: -1 menukar urutan legenda dan donat tanpa memindahkan blok di
- * markup, jadi urutan yang dibaca pembaca layar tetap donat lalu legenda.
- * Penentuannya diletakkan setelah aturan media query di atas dan
- * specificity-nya lebih tinggi, supaya di layar lebar pun posisinya tetap
- * atas.
- */
-.ad-donat__susun--atas {
-    flex-direction: column;
-    gap: 1.1rem;
-}
-
-.ad-donat__susun--atas .ad-donat__legenda {
-    order: -1;
-    width: 100%;
 }
 
 .ad-donat__lingkaran {
@@ -2856,7 +2992,6 @@ body.tubuh-admin {
     font-size: 0.75rem;
     color: var(--ad-teks-2);
 }
-
 /* ---------- Form ---------- */
 .ad-field {
     display: block;
@@ -3003,17 +3138,25 @@ body.tubuh-admin {
    ================================================================ */
 
 /*
- * Hero halaman ini memakai kelas .ad-seksi juga (lihat markup-nya), supaya
- * jarak ke kartu filter di bawahnya datang dari aturan
- * .ad-seksi + .ad-seksi. Tanpa itu hero menempel pada kartu filter, dan
- * subjudul hero terlihat seperti menempel pada kolom cari tepat di
- * bawahnya.
+ * Hero memakai .ad-seksi juga (lihat markup-nya), supaya jarak ke kartu
+ * filter di bawahnya datang dari aturan .ad-seksi + .ad-seksi. Tanpa itu
+ * hero menempel pada kartu filter, dan subjudul hero terlihat seperti
+ * menempel pada kolom cari tepat di bawahnya.
+ *
+ * Lapisan paling atas pada latar ditambahkan khusus untuk halaman ini:
+ * sebuah cahaya putih di sisi kanan, tepat di belakang gambar buku. Tanpa
+ * itu gambar terlihat melayang di atas banner, bukan duduk di atas
+ * sesuatu.
  */
 .ad-hero--materi {
     display: flex;
     min-height: 9.5rem;
     align-items: center;
     padding: 1.25rem;
+    background-image:
+        radial-gradient(18rem 11rem at 88% 52%, rgba(255, 255, 255, 0.62), transparent 70%),
+        radial-gradient(30rem 16rem at 88% -20%, rgba(139, 108, 255, 0.22), transparent 70%),
+        linear-gradient(135deg, #f4f1ff 0%, #ede7ff 55%, #e6dfff 100%);
 }
 
 @media (min-width: 768px) {
@@ -3037,17 +3180,56 @@ body.tubuh-admin {
     min-width: 0;
     width: 100%;
     align-items: center;
+    justify-content: space-between;
     gap: 1.25rem;
 }
 
-.ad-hero-materi__kiri {
-    display: flex;
+.ad-hero-materi__teks {
     min-width: 0;
-    flex: 1;
-    align-items: center;
-    gap: 0.9rem;
 }
 
+/*
+ * Ilustrasi buku di sisi kanan hero.
+ *
+ * Diletakkan sebagai <img> dengan lebar DAN tinggi dikunci plus
+ * object-fit: contain. Berkasnya bujur sangkar (552x552), jadi tanpa
+ * penguncian dua sisi ini gambar akan ikut meninggi dan mendorong judul ke
+ * luar container di layar sempit. flex-shrink: 0 supaya tidak bisa tertekan
+ * oleh teks yang panjang.
+ *
+ * Tingginya sengaja dibiarkan lebih besar dari tinggi hero. .ad-hero
+ * memakai align-items: center dengan min-height, jadi kalau gambar lebih
+ * tinggi dari min-height itu, hero ikut meninggi mengikuti gambarnya dan
+ * gambar tetap terlihat di tengah. min-height hanya jadi lantai untuk
+ * layar kecil, bukan plafon.
+ *
+ * Murni dekoratif, jadi alt-nya kosong di markup.
+ */
+.ad-hero-materi__gambar {
+    width: 5rem;
+    height: 5rem;
+    flex-shrink: 0;
+    object-fit: contain;
+}
+
+@media (min-width: 640px) {
+    .ad-hero-materi__gambar {
+        width: 6.75rem;
+        height: 6.75rem;
+    }
+}
+
+@media (min-width: 1024px) {
+    .ad-hero-materi__gambar {
+        width: 9rem;
+        height: 9rem;
+    }
+}
+
+/*
+ * Dipakai juga di halaman Edit Materi sebagai kotak ikon di samping judul,
+ * jadi kelas ini tidak ikut terhapus bersama ilustrasi hero.
+ */
 .ad-hero-materi__ikon {
     display: flex;
     width: 3.25rem;
@@ -3077,67 +3259,27 @@ body.tubuh-admin {
     color: color-mix(in oklab, var(--ad-teks) 72%, transparent);
 }
 
-.ad-hero-materi__kanan {
-    display: none;
-    flex-shrink: 0;
-    align-items: center;
-    gap: 1rem;
-}
-
-@media (min-width: 640px) {
-    .ad-hero-materi__kanan {
-        display: flex;
-    }
-}
-
-.ad-hero-materi__kutip {
-    max-width: 8.5rem;
-    font-family: var(--font-display);
-    font-size: 0.875rem;
-    font-weight: 600;
-    font-style: italic;
-    line-height: 1.5;
-    color: var(--ad-primary-dark);
-}
-
-/* Lebarnya dikunci supaya ilustrasi tidak pernah mendorong container dan
- * menutupi judul di sebelah kirinya. */
-.ad-hero-materi__ilustrasi {
-    width: 8.5rem;
-    max-width: 34%;
-}
-
-@media (min-width: 1024px) {
-    .ad-hero-materi__ilustrasi {
-        width: 10.5rem;
-    }
-}
-
-.ad-hero-materi__ilustrasi svg {
-    display: block;
-    width: 100%;
-    height: auto;
-}
-
-/* ---------- Panel saring (kartu putih di bawah hero) ---------- */
-.ad-saring {
+/* ---------- Menu tiga titik ----------
+ * Tombolnya memakai <summary>, bukan <button>, supaya buka/tutup-nya
+ * ditangani browser dan tetap berfungsi tanpa JavaScript. */
+.ad-titik {
     position: relative;
     flex-shrink: 0;
 }
 
-.ad-saring__tombol,
 .ad-titik__tombol {
     display: inline-flex;
-    min-height: 2.5rem;
+    width: 2.15rem;
+    min-height: 2.15rem;
     align-items: center;
     justify-content: center;
-    gap: 0.45rem;
     border-radius: 9999px;
     border: 1px solid var(--ad-garis);
     background-color: var(--ad-white);
-    padding: 0.55rem 1rem;
-    font-size: 0.8125rem;
+    padding: 0;
+    font-size: 1rem;
     font-weight: 700;
+    line-height: 1;
     color: var(--ad-teks);
     cursor: pointer;
     list-style: none;
@@ -3147,66 +3289,13 @@ body.tubuh-admin {
         color 0.18s ease;
 }
 
-.ad-saring__tombol::-webkit-details-marker,
 .ad-titik__tombol::-webkit-details-marker {
     display: none;
 }
 
-/* Penanda "ada filter aktif": tombolnya jadi ungu muda seperti tab aktif,
- * bukan tombol netral, supaya halaman ini selalu terlihat sudah disaring. */
-.ad-saring[open] .ad-saring__tombol,
-.ad-saring__tombol--ada {
-    border-color: transparent;
-    background-color: var(--ad-primary-light);
-    color: var(--ad-primary-dark);
-}
-
-.ad-saring__tombol:hover {
+.ad-titik__tombol:hover {
     border-color: color-mix(in oklab, var(--ad-primary) 45%, var(--ad-garis));
     color: var(--ad-primary);
-}
-
-.ad-saring__panel {
-    position: absolute;
-    z-index: 40;
-    top: calc(100% + 0.5rem);
-    left: 0;
-    width: min(20rem, calc(100vw - 2rem));
-    border-radius: 1.1rem;
-    border: 1px solid var(--ad-garis);
-    background-color: var(--ad-white);
-    box-shadow: var(--ad-bayangan-naik);
-    padding: 1rem;
-}
-
-.ad-saring__grup + .ad-saring__grup {
-    margin-top: 0.9rem;
-    padding-top: 0.9rem;
-    border-top: 1px solid var(--ad-garis);
-}
-
-.ad-saring__label {
-    display: block;
-    margin-bottom: 0.4rem;
-    font-size: 0.6875rem;
-    font-weight: 700;
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
-    color: var(--ad-teks-2);
-}
-
-/* ---------- Menu tiga titik ---------- */
-.ad-titik {
-    position: relative;
-    flex-shrink: 0;
-}
-
-.ad-titik__tombol {
-    min-height: 2.15rem;
-    width: 2.15rem;
-    padding: 0;
-    font-size: 1rem;
-    line-height: 1;
 }
 
 .ad-titik[open] .ad-titik__tombol {
@@ -3267,9 +3356,18 @@ body.tubuh-admin {
     color: var(--ad-bahaya);
 }
 
-/* ---------- Kartu filter + pencarian ----------
- * Hanya ruang dalam kartunya yang ditambah. .ad-alat (yang dipakai halaman
- * admin lain) tidak diubah, jadi toolbar halaman lain tidak ikut bergeser. */
+/*
+ * ---------- Kartu filter + pencarian ----------
+ * Satu form GET, satu baris: kolom cari, tombol Cari, ketiga select, lalu
+ * dua tombol aksi. Barisnya flex-wrap, jadi saat layar tidak cukup lebar
+ * isinya turun sendiri â€” itu responsif, bukan dua baris yang dirancang.
+ *
+ * Hanya kelas di bawah yang ditambah; .ad-alat, .ad-cari, dan .ad-pilih
+ * dipakai apa adanya supaya toolbar ini dan halaman admin lain tetap sama
+ * persis. Lebar dasarnya sengaja rapat supaya ketujuh kontrol muat dalam
+ * satu baris di desktop, dan kolom cari yang jadi satu-satunya yang
+ * boleh melar.
+ */
 .ad-alat-kotak {
     padding: 0.7rem 0.75rem;
 }
@@ -3286,182 +3384,312 @@ body.tubuh-admin {
     }
 }
 
+.ad-alat-baris {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+/*
+ * Pembungkus satu select di baris filter halaman Materi.
+ *
+ * Wrapper di dalamnya sudah flex (lihat .ad-pilih__bungkus), jadi select
+ * terisi kolomnya dan panahnya menempel di pil. Kelas ini hanya menjaga
+ * ketiga kolom select punya lebar dasar yang sama supaya batasnya lurus.
+ */
+.ad-alat-baris__field {
+    display: flex;
+    flex: 1 1 8.5rem;
+    min-width: 0;
+}
+
+.ad-alat-baris__aksi {
+    display: flex;
+    flex-shrink: 0;
+    align-items: center;
+    gap: 0.5rem;
+    margin-left: auto;
+}
+
+/* Di bawah 1024px muatannya tidak cukup, jadi dua tombol aksi turun ke
+ * baris penuh dan melebar sama supaya tetap mudah ditekan. */
+@media (max-width: 1023px) {
+    .ad-alat-baris__aksi {
+        width: 100%;
+        margin-left: 0;
+    }
+
+    .ad-alat-baris__aksi .ad-tombol {
+        flex: 1;
+    }
+}
+
 /* ---------- Paginasi ----------
- * Satu baris di dalam kartu putih: jumlah data di kiri, tombol halaman di
- * kanan. Lebarnya sama dengan daftar di atasnya. */
+ * Cuma tombol halaman, di tengah dan tanpa kartu. Jumlah data sengaja tidak
+ * ditampilkan: dengan empat kolom kartu, posisi kartu sudah memberitahu
+ * sedang berada di halaman berapa, dan baris "Menampilkan 1-8 dari 10 data"
+ * cuma menambah satu baris teks di bawah halaman yang sudah padat kartu. */
 .ad-paginasi {
     display: flex;
     flex-wrap: wrap;
     align-items: center;
-    justify-content: space-between;
+    justify-content: center;
     gap: 0.75rem;
-    padding: 0.85rem 1.1rem;
-}
-
-.ad-paginasi__info {
-    font-size: 0.8125rem;
-    font-variant-numeric: tabular-nums;
-    color: var(--ad-teks-2);
 }
 
 /*
  * View pagination::tailwind membawa margin-top sendiri (mt-8) karena biasanya
- * dipakai sendirian di halaman panjang. Di dalam kartu ini margin itu cuma
- * jadi jarak yang aneh, jadi dinetralkan di sini — bukan dengan mengubah
- * view bersama yang dipakai semua halaman.
+ * dipakai sendirian di halaman panjang. Di baris ini margin itu cuma jadi
+ * jarak yang aneh, jadi dinetralkan di sini â€” bukan dengan mengubah view
+ * bersama yang dipakai semua halaman.
  */
 .ad-paginasi nav[role="navigation"] {
     margin-top: 0;
 }
 
+/*
+ * Panah dropdown ikut menempel pada pilnya, bukan cuma kelihatan begitu di
+ * select yang teksnya panjang. .ad-pilih__bungkus sudah position: relative,
+ * jadi ini cuma mengunci posisinya terhadap pil itu sendiri.
+ */
+.ad-pilih__bungkus > svg {
+    position: absolute;
+    top: 50%;
+    right: 0.8rem;
+    width: 0.95rem;
+    height: 0.95rem;
+    color: var(--ad-teks-2);
+    transform: translateY(-50%);
+    pointer-events: none;
+}
+
 /* ---------- Kartu materi ----------
- * Satu kolom selebar penuh: status dan tanggal duduk di kolom kanan,
- * sementara judul, pembuat, dan kategori mengisi kolom kiri. */
+ * Bentuknya mengikuti kartu materi milik pengguna: gambar di atas, isi di
+ * bawah. Kolomnya juga sama â€” 2 di ponsel, 2 di tablet, 4 di desktop â€”
+ * supaya berpindah antara halaman Materi user dan admin tidak terasa
+ * seperti dua aplikasi berbeda.
+ */
+.ad-materi__daftar {
+    display: grid;
+    min-width: 0;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1rem;
+}
+
+@media (min-width: 640px) {
+    .ad-materi__daftar {
+        gap: 1.25rem;
+    }
+}
+
+@media (min-width: 1024px) {
+    .ad-materi__daftar {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+}
+
 .ad-materi-kartu {
-    position: relative;
     display: flex;
     min-width: 0;
-    align-items: flex-start;
-    gap: 0.9rem;
+    flex-direction: column;
+
+    /*
+     * Sengaja TIDAK overflow: hidden.
+     *
+     * Menu tiga titik diposisikan absolute di dalam kartu, jadi overflow
+     * akan memotongnya tepat di tepi kartu â€” menu nya tidak pernah terlihat
+     * dan tombolnya ikut terlihat terpotong. Pembulatan sudut kartu pada
+     * blok gambar ditangani .ad-materi-kartu__gambar sendiri, jadi tidak
+     * ada yang perlu dipotong di level kartu.
+     */
     border-radius: 1.1rem;
     border: 1px solid var(--ad-garis);
     background-color: var(--ad-white);
     box-shadow: var(--ad-bayangan);
-    padding: 0.95rem 1.1rem;
     transition:
-        border-color 0.18s ease,
-        box-shadow 0.18s ease;
+        border-color 0.2s ease,
+        box-shadow 0.2s ease,
+        transform 0.2s ease;
 }
 
 .ad-materi-kartu:hover,
 .ad-materi-kartu:focus-within {
+    position: relative;
+
+    /*
+     * Kartu yang sedang di-hover harus melayang di atas kartu-kartu
+     * sesudahnya, supaya menu tiga titiknya tidak tertutup kartu
+     * berikutnya. Tanpa ini menu tetap terbuka tapi ketimpa kartu yang
+     * tidak sedang di-hover.
+     */
+    z-index: 1;
     border-color: color-mix(in oklab, var(--ad-primary) 40%, var(--ad-garis));
     box-shadow: var(--ad-bayangan-naik);
+    transform: translateY(-3px);
 }
 
-/* Wadah daftar: satu kolom, jarak antar kartu seragam. */
-.ad-materi__daftar {
+/*
+ * Blok gambar. Selalu berisi sesuatu: kalau materinya tidak punya
+ * thumbnail, gradasi warna kategori + ikon mapel menggantikannya. Tinggi
+ * dikunci lewat aspect-ratio supaya semua kartu dalam satu baris punya
+ * tinggi yang sama, bukan ikut panjangnya judul.
+ *
+ * Sudut atasnya sendiri yang membulat â€” bukan kartu yang dipotong â€” supaya
+ * kartu boleh melepaskan menu tiga titiknya ke luar.
+ *
+ * --k dan --k-gelap diset inline dari warna kategori, sama seperti kartu
+ * materi milik pengguna.
+ */
+.ad-materi-kartu__gambar {
+    position: relative;
     display: flex;
-    min-width: 0;
-    flex-direction: column;
-    gap: 0.6rem;
-}
-
-.ad-materi-kartu__ikon {
-    display: flex;
-    width: 2.6rem;
-    height: 2.6rem;
+    aspect-ratio: 16 / 9;
     flex-shrink: 0;
     align-items: center;
     justify-content: center;
-    border-radius: 0.95rem;
-    background-color: var(--ad-primary-light);
-    color: var(--ad-primary);
+    overflow: hidden;
+    border-radius: 1.05rem 1.05rem 0 0;
+    background-image: linear-gradient(135deg, var(--k, var(--ad-primary)), var(--k-gelap, var(--ad-primary-dark)));
 }
 
-.ad-materi-kartu__isi {
-    min-width: 0;
-    flex: 1;
+.ad-materi-kartu__foto {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
 }
 
-.ad-materi-kartu__kepala {
-    display: flex;
-    min-width: 0;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 0.35rem 0.5rem;
+.ad-materi-kartu__ikon {
+    font-size: 1.75rem;
+    line-height: 1;
+    filter: drop-shadow(0 4px 10px rgba(29, 18, 66, 0.35));
 }
 
-.ad-materi-kartu__tipe {
-    flex-shrink: 0;
+/* Tingkat kesulitan melayang di pojok kiri, di atas gradasi. Warnanya
+ * mengikuti palet yang sama dengan lencana kesulitan di halaman detail
+ * materi, jadi "Sulit" selalu merah di kedua halaman. */
+.ad-materi-kartu__kesulitan {
+    position: absolute;
+    top: 0.45rem;
+    left: 0.45rem;
     border-radius: 9999px;
-    background-color: var(--ad-primary-light);
-    padding: 0.15rem 0.55rem;
+    background-color: rgba(255, 255, 255, 0.94);
+    padding: 0.15rem 0.5rem;
     font-size: 0.625rem;
     font-weight: 700;
-    letter-spacing: 0.04em;
-    text-transform: uppercase;
-    color: var(--ad-primary-dark);
+    line-height: 1.4;
+    text-transform: capitalize;
+    color: var(--ad-teks-2);
 }
 
-.ad-materi-kartu__judul {
+.ad-materi-kartu__kesulitan--mudah { color: #15803d; }
+.ad-materi-kartu__kesulitan--sedang { color: #b45309; }
+.ad-materi-kartu__kesulitan--sulit { color: #b91c1c; }
+
+.ad-materi-kartu__badan {
+    display: flex;
     min-width: 0;
-    font-size: 0.9375rem;
+    flex: 1;
+    flex-direction: column;
+    padding: 0.8rem 0.7rem 0.75rem;
+}
+
+/* Garis aksen di atas isi, menyambung ke blok gambar seperti di kartu user. */
+.ad-materi-kartu__aksen {
+    display: block;
+    width: 2.25rem;
+    height: 3px;
+    flex-shrink: 0;
+    margin-bottom: 0.55rem;
+    border-radius: 9999px;
+    background-color: var(--k, var(--ad-primary));
+}
+
+/*
+ * Judul dibatasi dua baris. Tanpa itu satu judul panjang akan membuat
+ * kartunya lebih tinggi dan seluruh baris jadi tidak rata, padahal yang
+ * di halaman daftar hanya perlu dibaca sekilas.
+ */
+.ad-materi-kartu__judul {
+    display: -webkit-box;
+    min-width: 0;
+    overflow: hidden;
+    font-size: 0.875rem;
     font-weight: 700;
     line-height: 1.35;
     letter-spacing: -0.01em;
     color: var(--ad-teks);
     overflow-wrap: anywhere;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+}
+
+.ad-materi-kartu__pembuat,
+.ad-materi-kartu__meta,
+.ad-materi-kartu__tanggal {
+    display: flex;
+    min-width: 0;
+    align-items: baseline;
+    gap: 0.3rem;
+    margin-top: 0.35rem;
+    font-size: 0.75rem;
+    color: var(--ad-teks-2);
 }
 
 .ad-materi-kartu__pembuat {
-    display: flex;
-    min-width: 0;
-    align-items: center;
-    gap: 0.4rem;
-    margin-top: 0.5rem;
-    font-size: 0.75rem;
     font-weight: 600;
     color: color-mix(in oklab, var(--ad-teks) 78%, transparent);
 }
 
-.ad-materi-kartu__pembuat span:last-child {
+.ad-materi-kartu__pembuat > span:first-child {
+    flex-shrink: 0;
+}
+
+/* Nama yang panjang dipotong satu baris, bukan menambah tinggi kartu. */
+.ad-materi-kartu__truncate {
+    min-width: 0;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
 }
 
-.ad-materi-kartu__avatar {
+/*
+ * Kaki kartu: status di kiri, tombol Lihat + menu tiga titik di kanan.
+ *
+ * flex-wrap WAJIB di sini. Pada grid empat kolom satu kartu hanya ~218px,
+ * sedangkan isi kakinya perlu ~222px (lencana "Dipublikasikan" + tombol
+ * Lihat + tombol tiga titik). Tanpa wrap, sisanya meluber keluar kartu dan
+ * lalu keluar halaman — dan karena kartu sengaja tidak memakai
+ * overflow: hidden (kalau tidak, menu tiga titiknya ikut terpotong), tidak
+ * ada yang memotongnya.
+ *
+ * Jadi saat kolomnya memang sempit, tombolnya turun ke baris sendiri di
+ * bawah lencana. Itu lebih baik daripada keluar layar.
+ *
+ * margin-top: auto yang mendorong kaki ke bawah, jadi baris status dan
+ * tombolnya sejajar di semua kartu walaupun judulnya beda panjang.
+ */
+.ad-materi-kartu__kaki {
     display: flex;
-    width: 1.15rem;
-    height: 1.15rem;
-    flex-shrink: 0;
+    min-width: 0;
+    flex-wrap: wrap;
     align-items: center;
-    justify-content: center;
-    border-radius: 9999px;
-    background-image: linear-gradient(135deg, var(--a, var(--ad-primary)), var(--a-gelap, var(--ad-primary-dark)));
-    color: #fff;
-    font-size: 0.5rem;
-    font-weight: 700;
-    line-height: 1;
-}
-
-.ad-materi-kartu__meta,
-.ad-materi-kartu__tanggal {
-    margin-top: 0.3rem;
-    font-size: 0.75rem;
-    color: var(--ad-teks-2);
-}
-
-.ad-materi-kartu__kanan {
-    display: flex;
-    flex-shrink: 0;
-    flex-direction: column;
-    align-items: flex-end;
+    justify-content: space-between;
     gap: 0.5rem;
+    margin-top: auto;
+    padding-top: 0.75rem;
 }
 
-/* Di layar sempit kolom kanan turun ke baris sendiri supaya tidak ada teks
- * yang terpotong dan tombol tidak keluar dari kartu. */
-@media (max-width: 639px) {
-    .ad-materi-kartu {
-        flex-wrap: wrap;
-    }
-
-    .ad-materi-kartu__kanan {
-        width: 100%;
-        flex-direction: row;
-        align-items: center;
-        justify-content: space-between;
-    }
-}
-
+/* Tombolnya tidak boleh diremas: ukurannya tetap, yang turun baris kalau
+ * sempit. */
 .ad-materi-kartu__aksi {
     display: flex;
+    flex-shrink: 0;
     align-items: center;
-    gap: 0.35rem;
+    gap: 0.3rem;
+    margin-left: auto;
 }
-
 /* ---------- Konten ---------- */
 .ad-isi-materi {
     max-height: 24rem;

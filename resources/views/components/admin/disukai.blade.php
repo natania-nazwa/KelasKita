@@ -18,13 +18,16 @@
     total berada di tengah. Tidak ada pustaka chart yang ditambahkan, dan
     tidak ada duplikasi perhitungan busur.
 
-    Legenda dipindah ke atas (legenda="atas"): di dashboard datanya cuma
-    satu atau dua pelajaran, jadi legenda di samping akan mengambang di
-    tengah card. Keterangan sumber datanya diletakkan di kaki card,
-    bukan di kepala, supaya kepala card tidak jadi dua baris teks.
+    Keterangan sumber datanya diletakkan di kaki card, bukan di kepala,
+    supaya kepala card tidak jadi dua baris teks.
+
+    ad-analitik--ringkas: tinggi card mengikuti isinya, tidak ikut
+    diregangkan setinggi "Aktivitas Login Mingguan" di sebelahnya. Isinya
+    jauh lebih sedikit daripada grafik mingguan, jadi kalau dipaksa
+    setinggi, separuh card jadi ruang kosong.
 --}}
 
-<section {{ $attributes->class(['ad-seksi', 'ad-kartu', 'ad-analitik']) }}>
+<section {{ $attributes->class(['ad-seksi', 'ad-kartu', 'ad-analitik', 'ad-analitik--ringkas']) }}>
     <header class="ad-kartu__kepala">
         <div class="ad-kartu__kepala-titik">
             {{-- Warna chip ikut isi kartunya: hati ungu untuk "disukai",
@@ -45,7 +48,10 @@
         </div>
     @else
         <div class="ad-kartu__badan">
-            <x-admin.pie :data="$data" label-nilai="Aktivitas" legenda="atas" />
+            {{-- Legenda tetap di sebelah kanan donat (donat kiri, teks
+                 kanan). Yang diubah cuma perataannya: teksnya menempel di
+                 atas, bukan mengambang di tengah-tengah. --}}
+            <x-admin.pie :data="$data" label-nilai="Aktivitas" />
         </div>
 
         <footer class="ad-kartu__kaki ad-kartu__kaki--total">

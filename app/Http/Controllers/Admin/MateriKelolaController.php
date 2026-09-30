@@ -9,6 +9,7 @@ use App\Models\Pelajaran;
 use App\Support\BabMateri;
 use App\Support\BerkasMateri;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Illuminate\View\View;
 
 /**
@@ -17,9 +18,15 @@ use Illuminate\View\View;
  * Route yang sudah ada (user.materi.edit / user.materi.destroy) milik
  * pemilik materi dan menolak admin dengan 403, jadi admin tidak punya jalan
  * untuk mengubah maupun menghapus karya orang lain. Controller ini mengisi
- * kekosongan itu, dan sengaja tidak memeriksa siapa pemilik materinya: yang
- * diurus di sini adalah konten yang sudah tayang, bukan hak publikasi atas
- * karya tersebut.
+ * kekosongan itu, dan sengaja tidak memeriksa apakah materi yang dihapus
+ * dibuat admin atau pengguna: yang diurus di sini adalah konten yang sudah
+ * tayang, dan materinya memang harus bisa ditarik admin kapan saja.
+ *
+ * Edit berbeda. Hanya materi yang dibuat admin sendiri yang boleh diubah:
+ * karya pengguna boleh dibaca dan dihapus dari sini, tapi isinya milik
+ * penulisnya. Aturan yang sama sudah dipakai saat memetakan daftar
+ * (App\Support\DaftarMateriAdmin::petikan), supaya tombol Edit tidak pernah
+ * muncul untuk sesuatu yang pasti ditolak 403.
  *
  * Form edit memakai komponen form yang sama dengan halaman Tambah Materi
  * milik pengguna (x-materi.informasi, x-materi.bab, x-materi.editor) dan

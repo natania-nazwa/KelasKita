@@ -14,31 +14,33 @@ use App\Models\Pelajaran;
  * draft dikelola pemiliknya di "Karya Saya". Karena itu barisnya hanya perlu
  * metadata ringkas untuk kartu di daftar.
  *
- * Isi materi tidak ikut dipetakan di sini. Panel detail di sisi kanan dan
- * halaman detail admin memakai App\Support\DetailMateri, bentuk array yang
- * sama persis dengan halaman detail milik pengguna, supaya isi satu materi
- * tidak pernah punya dua bentuk berbeda tergantung siapa yang membukanya.
+ * Isi materi tidak ikut dipetakan di sini. Halaman detail admin memakai
+ * App\Support\DetailMateri, bentuk array yang sama persis dengan halaman
+ * detail milik pengguna, supaya isi satu materi tidak pernah punya dua
+ * bentuk berbeda tergantung siapa yang membukanya.
  */
 final class DaftarMateriAdmin
 {
     /**
      * Jumlah materi per halaman.
      *
-     * Delapan, bukan dua belas seperti board tabel lama: daftarnya kini
-     * berupa kartu yang lebih tinggi dan berdiri berdampingan dengan panel
-     * detail, jadi delapan kartu sudah memenuhi satu layar tanpa membuat
-     * panel kanan perlu digulir jauh di bawah daftar.
+     * Dua puluh, sama seperti halaman Materi milik pengguna
+     * (DaftarMateri::perHalaman). Daftarnya sekarang grid empat kolom, dan
+     * 20 = 5 baris penuh: tidak pernah ada kartu yatim di baris terakhir,
+     * dan tiap baris masih muat di layar tanpa perlu menggulir untuk melihat
+     * baris berikutnya. Memakai angka yang sama dengan halaman user juga
+     * membuat jumlah halaman di kedua halaman langsung bisa dibandingkan.
      */
     public static function perHalaman(): int
     {
-        return 8;
+        return 20;
     }
 
     /**
      * Petakan sekumpulan materi ke bentuk array yang dipakai kartu di daftar.
      *
      * Bentuk array per baris:
-     *   id, slug, judul, ringkasan, thumbnail, tingkat_kesulitan,
+     *   id, slug, judul, thumbnail, tingkat_kesulitan,
      *   jumlah_bab, waktu_baca, jumlah_dilihat, dilihat,
      *   tanggal => Carbon, tanggal_label, tanggal_jam,
      *   status, status_label, boleh_edit,
@@ -46,15 +48,19 @@ final class DaftarMateriAdmin
      *   pembuat  => [nama, inisial, warna, warna_gelap],
      *   tautan_detail, tautan_edit, tautan_hapus
      *
+     * Tidak ada deskripsi materi di sini: kartu di daftar admin tidak
+     * menampilkannya (isi lengkapnya ada di halaman detail), jadi memetakannya
+     * hanya menambah pekerjaan tanpa dipakai.
+     *
      * Tanggal yang ditampilkan adalah tanggal terbit kalau materi sudah
      * tayang, bukan tanggal pembuatannya: di halaman ini yang relevan adalah
      * kapan materi mulai dilihat pembacanya.
      *
      * @param  iterable<int, Materi>  $materi
      * @param  int|null  $idAdmin  id admin yang sedang masuk, dipakai untuk
-     *                             deciding boleh_edit. Null = tidak ada admin
-     *                             yang bisa diedit, jadi tidak satu pun baris
-     *                             menampilkan tombol Edit.
+     *                             menentukan boleh_edit. Null = tidak ada
+     *                             admin yang bisa diedit, jadi tidak satu
+     *                             pun baris menampilkan tombol Edit.
      * @return array<int, array<string, mixed>>
      */
     public static function petikan(iterable $materi, ?int $idAdmin = null): array
@@ -68,12 +74,8 @@ final class DaftarMateriAdmin
         return $hasil;
     }
 
-        return $hasil;
-    }
-
     /**
-     * Tautan aksi untuk satu materi, dipakai kartu di daftar maupun panel
-     * detail di sisi kanan.
+     * Tautan aksi untuk satu materi, dipakai kartu di daftar.
      *
      * @return array{tautan_detail: string, tautan_edit: string, tautan_hapus: string}
      */
@@ -104,7 +106,6 @@ final class DaftarMateriAdmin
             'id' => $item->getKey(),
             'slug' => $item->slug,
             'judul' => $item->nama,
-            'ringkasan' => $item->ringkasan(140),
             'thumbnail' => BerkasMateri::url($item->thumbnail),
             'tingkat_kesulitan' => (string) $item->tingkat_kesulitan,
             'jumlah_bab' => $item->jumlahBab(),

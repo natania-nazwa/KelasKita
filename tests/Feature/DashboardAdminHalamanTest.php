@@ -363,10 +363,66 @@ class DashboardAdminHalamanTest extends TestCase
         // dari jumlah data, bukan angka mati di markup.
         $this->assertStringContainsString('Total login dalam 6 minggu terakhir', $html);
 
-        // Legenda donat tetap di sebelah kanan donat (pie kiri, teks
-        // kanan), bukan dipindah ke atas.
+        // Donat tetap di kiri, legendarinya di kanan (pakai susun baris,
+        // bukan susun kolom).
         $this->assertStringContainsString('ad-donat__susun', $html);
-        $this->assertStringNotContainsString('ad-donat__susun--atas', $html);
+    }
+
+    public function test_perlu_ditinjau_menampilkan_empat_antrean_terbaru(): void
+    {
+        $admin = $this->buatAdmin();
+        $siswa = $this->buatPengguna(['nama' => 'Sari', 'email' => 'sari@example.com']);
+        $pelajaran = $this->buatPelajaran('Pemrograman');
+
+        // Enam materi menunggu. Kartu harus menampilkan empat yang
+        // terbaru, bukan empat pertama yang kebetulan terambil.
+        foreach (range(1, 6) as $urutan) {
+            $materi = $this->buatMateri($pelajaran, $siswa, "Materi Antre $urutan", Materi::STATUS_PENDING);
+            $materi->forceFill(['created_at' => now()->addSecond($urutan)])->save();
+        }
+
+        $halaman = $this->actingAs($admin)->get('/admin/dashboard')->assertOk();
+
+        // Empat terbaru: nomor 3 sampai 6.
+        $halaman->assertSee('Materi Antre 6')
+            ->assertSee('Materi Antre 5')
+            ->assertSee('Materi Antre 4')
+            ->assertSee('Materi Antre 3');
+
+        /*
+         * Pemeriksaan "yang lama tidak ikut tampil" harus dibatasi ke
+         * daftar "Perlu Ditinjau" saja. Materi Antre 1 dan 2 memang tidak
+         * ada di sana, tapi namanya tetap muncul di card "Aktivitas
+         * Terbaru", jadi assertDontSee() ke seluruh halaman akan salah dan
+         * lulus tanpa benar-benar menguji apa pun.
+         */
+        $daftar = self::potongDaftarTinjau($halaman->getContent());
+
+        $this->assertStringNotContainsString('Materi Antre 2', $daftar);
+        $this->assertStringNotContainsString('Materi Antre 1', $daftar);
+
+        // Tepat empat baris, bukan "minimal empat".
+        $this->assertSame(4, substr_count($daftar, 'ad-tinjau__item'));
+    }
+
+    /**
+     * Potong HTML dashboard hanya bagian daftar "Perlu Ditinjau".
+     *
+     * Baris tinjau adalah satu-satunya elemen <article> di halaman ini
+     * (baris aktivitas memakai <div>), jadi batas bawahnya bisa dicari dari
+     * </article> terakhir. Dipisah jadi method sendiri supaya test di atas
+     * tetap enak dibaca.
+     */
+    private static function potongDaftarTinjau(string $html): string
+    {
+        $awal = strpos($html, 'ad-tinjau--besar');
+        $akhir = strrpos($html, '</article>');
+
+        if ($awal === false || $akhir === false || $akhir < $awal) {
+            return '';
+        }
+
+        return substr($html, $awal, $akhir - $awal);
     }
 
     public function test_kartu_kutipan_menampilkan_teks_dan_ilustrasi_buku(): void

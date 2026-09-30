@@ -13,27 +13,16 @@
         tombol Setujui/Tolak dan tidak punya tab status — dengan daftar yang
         sudah published-only, tab seperti itu hanya mengulang daftar yang sama.
 
-        Isinya: cari, saring, pilih, baca detail, ubah, hapus. Panel di kanan
-        menampilkan ringkasan materi yang dipilih; tombol "Lihat Materi" dari
-        sana membuka halaman detail yang memakai komponen tampilan milik
-        pengguna, jadi yang dibaca admin persis sama dengan yang dibaca user.
+        Isinya: cari, saring, baca detail, ubah, hapus. Daftar ini satu kolom
+        selebar penuh: kartu materi tinggi hanya sebentar, jadi panel preview di
+        sebelah kanan lebih banyak mengambil ruang daripada yang terpakai.
+
+        Tombol "Lihat Materi" membuka halaman detail yang memakai komponen
+        tampilan milik pengguna, jadi yang dibaca admin persis sama dengan
+        yang dibaca user.
     --}}
 
     @php
-        /*
-         * Query string yang sedang aktif, dipakai ulang untuk tautan kartu.
-         *
-         * 'page' sengaja dikosongkan: memilih materi lain harus kembali ke
-         * halaman pertama, karena materi yang dipilih belum tentu ada di
-         * nomor halaman yang sedang dibuka.
-         */
-        $parameter = array_filter([
-            'q' => $kataKunci,
-            'kategori' => $kategoriAktif,
-            'pembuat' => $pembuatAktif,
-            'urut' => $urutAktif === 'terbaru' ? null : $urutAktif,
-        ], fn ($nilai) => filled($nilai));
-
         /*
          * Berapa saringan yang sedang aktif selain kata kunci. "urut" tidak
          * ikut dihitung kalau masih bawaan, karena mengurutkan ulang daftar
@@ -46,37 +35,36 @@
         ], fn ($nilai) => filled($nilai)));
 
         $adaFilter = $jumlahFilter > 0;
-        $slugTerpilih = $terpilih['petikan']['slug'] ?? null;
     @endphp
 
     {{-- =====================
          HERO BANNER
+
+         Dua kolom: teks di kiri, gambar buku di kanan. Ikon dan kutipan
+         tidak dipakai di sini — visual dengan logo dan slogan itu milik hero
+         Dashboard, sedangkan di halaman ini yang dibutuhkan cuma penanda
+         materi.
+
+         Memakai .ad-seksi juga supaya jarak ke kartu filter di bawahnya
+         datang dari aturan .ad-seksi + .ad-seksi.
     ====================== --}}
-    <section class="ad-hero ad-hero--materi">
+    <section class="ad-seksi ad-hero ad-hero--materi">
         <div class="ad-hero-materi__susun">
-            <div class="ad-hero-materi__kiri">
-                <span class="ad-hero-materi__ikon" aria-hidden="true">
-                    <x-admin.ikon nama="buku" ukuran="w-7 h-7" />
-                </span>
+            <div class="ad-hero-materi__teks">
+                <h1 class="ad-hero-materi__judul">Materi</h1>
 
-                <div class="min-w-0">
-                    <h1 class="ad-hero-materi__judul">Materi</h1>
-
-                    <p class="ad-hero-materi__sub">
-                        Kelola materi pembelajaran yang telah dipublikasikan untuk pengguna KelasKita.
-                    </p>
-                </div>
-            </div>
-
-            <div class="ad-hero-materi__kanan">
-                <p class="ad-hero-materi__kutip">
-                    &ldquo;Ilmu hari ini,<br>masa depan esok&rdquo;
+                <p class="ad-hero-materi__sub">
+                    Kelola materi pembelajaran yang telah dipublikasikan untuk pengguna KelasKita.
                 </p>
-
-                <div class="ad-hero-materi__ilustrasi">
-                    <x-admin.ilustrasi-admin />
-                </div>
             </div>
+
+            {{--
+                Ilustrasi buku. Murni dekoratif, jadi alt-nya kosong: tidak ada
+                informasi di dalamnya yang perlu dibaca pembaca layar, dan teks
+                yang penting sudah ada di sebelah kiri.
+            --}}
+            <img class="ad-hero-materi__gambar" src="{{ asset('images/buku.png') }}"
+                alt="" aria-hidden="true" loading="lazy" decoding="async">
         </div>
     </section>
 
@@ -94,147 +82,144 @@
     @endif
 
     {{-- =====================
-         FILTER + PENCARIAN
+         FILTER
 
-         Satu form GET untuk filter dan pencarian sekaligus, supaya mengetik
-         kata kunci tidak mematikan saringan yang sedang aktif, dan sebaliknya.
+         Satu form GET untuk ketiga filter sekaligus, jadi mengganti filter
+         tidak mematikan filter lain yang sedang aktif. Tidak ada tombol
+         buka/tutup: kategorinya cuma tiga, dan menyembunyikannya di balik
+         popover hanya menambah satu klik untuk sesuatu yang selalu dipakai.
 
-         Panel filter memakai <details>: buka/tutup-nya dari browser, jadi
-         filter tetap bisa dipakai tanpa JavaScript. admin.js hanya menambah
-         satu hal: menutupnya dari luar dan dari tombol Escape.
+         Kolom "Cari materi" tidak ada di sini. Pencarian tetap berfungsi
+         lewat kotak pencarian di topbar, yang form-nya sudah mengarah ke
+         halaman ini dengan field "q" — jadi tidak ada pencarian yang
+         hilang, hanya satu kolom yang tidak lagi terduplikasi. Kata kunci
+         yang sedang aktif ikut dibawa sebagai query string supaya saringan
+         di bawah tidak hilang saat admin menyaring daftar.
+
+         Barisnya flex-wrap, jadi saat layar tidak cukup lebar isinya turun
+         sendiri — itu perilaku responsif, bukan dua baris yang sengaja
+         dirancang begitu.
+
+         Label select disembunyikan karena teks di dalamnya sudah menyebut apa
+         yang disaring ("Semua kategori", "Semua pembuat"), jadi tidak ada
+         yang perlu dibaca dua kali.
     ====================== --}}
-    <div class="ad-seksi ad-kartu">
-        <form method="GET" action="{{ route('admin.materi') }}" class="ad-alat">
-            <div class="ad-alat__kiri">
-                <details class="ad-saring" data-tutup-luar @if ($adaFilter) open @endif>
-                    <summary @class(['ad-saring__tombol', 'ad-saring__tombol--ada' => $adaFilter])>
-                        <x-admin.ikon nama="kotak" ukuran="w-4 h-4" />
+    <div class="ad-seksi ad-kartu ad-alat-kotak">
+        <form method="GET" action="{{ route('admin.materi') }}">
+            <div class="ad-alat-baris">
+                {{-- Pencarian yang sudah aktif ikut dibawa, supaya tidak hilang
+                     dari URL saat admin menyaring daftar. --}}
+                @if ($kataKunci !== '')
+                    <input type="hidden" name="q" value="{{ $kataKunci }}">
+                @endif
 
-                        Filter
+                <div class="ad-alat-baris__field">
+                    <label class="sr-only" for="saring-kategori">Saring menurut kategori</label>
 
-                        @if ($adaFilter)
-                            <span class="ad-lencana ad-lencana--ungu">{{ $jumlahFilter }}</span>
-                        @endif
-                    </summary>
+                    <div class="ad-pilih__bungkus">
+                        <select id="saring-kategori" name="kategori" class="ad-pilih">
+                            <option value="">Semua kategori ({{ $totalMateri }})</option>
 
-                    <div class="ad-saring__panel">
-                        <div class="ad-saring__grup">
-                            <label class="ad-saring__label" for="saring-kategori">Kategori</label>
+                            @foreach ($daftarKategori as $kategori)
+                                <option value="{{ $kategori['slug'] }}" @selected($kategoriAktif === $kategori['slug'])>
+                                    {{ $kategori['nama'] }} ({{ $kategori['jumlah'] }})
+                                </option>
+                            @endforeach
+                        </select>
 
-                            <div class="ad-pilih__bungkus">
-                                <select id="saring-kategori" name="kategori" class="ad-pilih">
-                                    <option value="">Semua kategori ({{ $totalMateri }})</option>
-
-                                    @foreach ($daftarKategori as $kategori)
-                                        <option value="{{ $kategori['slug'] }}" @selected($kategoriAktif === $kategori['slug'])>
-                                            {{ $kategori['nama'] }} ({{ $kategori['jumlah'] }})
-                                        </option>
-                                    @endforeach
-                                </select>
-
-                                <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="{{ \App\Support\Ikon::path('panah-bawah') }}" />
-                                </svg>
-                            </div>
-                        </div>
-
-                        <div class="ad-saring__grup">
-                            <label class="ad-saring__label" for="saring-pembuat">Pembuat</label>
-
-                            <div class="ad-pilih__bungkus">
-                                <select id="saring-pembuat" name="pembuat" class="ad-pilih">
-                                    <option value="">Semua pembuat</option>
-
-                                    @foreach ($daftarPembuat as $pembuat)
-                                        <option value="{{ $pembuat['id'] }}" @selected($pembuatAktif === (string) $pembuat['id'])>
-                                            {{ $pembuat['nama'] }}
-                                        </option>
-                                    @endforeach
-                                </select>
-
-                                <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="{{ \App\Support\Ikon::path('panah-bawah') }}" />
-                                </svg>
-                            </div>
-                        </div>
-
-                        <div class="ad-saring__grup">
-                            <label class="ad-saring__label" for="saring-urut">Urutkan</label>
-
-                            <div class="ad-pilih__bungkus">
-                                <select id="saring-urut" name="urut" class="ad-pilih">
-                                    @foreach ($pilihanUrut as $nilai => $label)
-                                        <option value="{{ $nilai }}" @selected($urutAktif === $nilai)>{{ $label }}</option>
-                                    @endforeach
-                                </select>
-
-                                <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="{{ \App\Support\Ikon::path('panah-bawah') }}" />
-                                </svg>
-                            </div>
-                        </div>
-
-                        <div class="ad-saring__grup flex flex-wrap gap-2">
-                            <button type="submit" class="ad-tombol ad-tombol--utama ad-tombol--kecil">Terapkan</button>
-
-                            @if ($adaFilter || $kataKunci !== '')
-                                <a href="{{ route('admin.materi') }}" class="ad-tombol ad-tombol--garis ad-tombol--kecil">Reset</a>
-                            @endif
-                        </div>
+                        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="{{ \App\Support\Ikon::path('panah-bawah') }}" />
+                        </svg>
                     </div>
-                </details>
-            </div>
-
-            <div class="ad-alat__kanan">
-                <div class="ad-cari">
-                    <x-admin.ikon nama="cari" class="ad-cari__ikon" />
-
-                    <label class="sr-only" for="q">Cari materi</label>
-
-                    <input id="q" name="q" type="search" value="{{ $kataKunci }}"
-                        placeholder="Cari materi..." autocomplete="off">
                 </div>
 
-                <button type="submit" class="ad-tombol ad-tombol--garis shrink-0">Cari</button>
+                <div class="ad-alat-baris__field">
+                    <label class="sr-only" for="saring-urut">Urutkan daftar</label>
+
+                    <div class="ad-pilih__bungkus">
+                        <select id="saring-urut" name="urut" class="ad-pilih">
+                            @foreach ($pilihanUrut as $nilai => $label)
+                                <option value="{{ $nilai }}" @selected($urutAktif === $nilai)>{{ $label }}</option>
+                            @endforeach
+                        </select>
+
+                        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="{{ \App\Support\Ikon::path('panah-bawah') }}" />
+                        </svg>
+                    </div>
+                </div>
+
+                <div class="ad-alat-baris__field">
+                    <label class="sr-only" for="saring-pembuat">Saring menurut pembuat</label>
+
+                    <div class="ad-pilih__bungkus">
+                        <select id="saring-pembuat" name="pembuat" class="ad-pilih">
+                            <option value="">Semua pembuat</option>
+
+                            @foreach ($daftarPembuat as $pembuat)
+                                <option value="{{ $pembuat['id'] }}" @selected($pembuatAktif === (string) $pembuat['id'])>
+                                    {{ $pembuat['nama'] }}
+                                </option>
+                            @endforeach
+                        </select>
+
+                        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="{{ \App\Support\Ikon::path('panah-bawah') }}" />
+                        </svg>
+                    </div>
+                </div>
+
+                <div class="ad-alat-baris__aksi">
+                    <button type="submit" class="ad-tombol ad-tombol--utama">Terapkan</button>
+
+                    {{--
+                        Selalu ikut dirender supaya posisinya tidak bergeser
+                        saat filter dipakai dan dilepas. Tanpa saringan yang
+                        aktif tautannya dimatikan: tidak ada yang perlu
+                        dihapus, jadi tidak boleh terlihat bisa diklik.
+                    --}}
+                    <a href="{{ route('admin.materi') }}" @class([
+                        'ad-tombol',
+                        'ad-tombol--garis',
+                        'pointer-events-none opacity-40' => ! $adaFilter && $kataKunci === '',
+                    ]) @if (! $adaFilter && $kataKunci === '') aria-disabled="true" tabindex="-1" @endif>
+                        <x-admin.ikon nama="silang-polos" ukuran="w-4 h-4" />
+
+                        Hapus filter
+                    </a>
+                </div>
             </div>
         </form>
     </div>
-
     {{-- =====================
-         DAFTAR + PANEL DETAIL
+         DAFTAR MATERI
     ====================== --}}
-    <div class="ad-seksi ad-materi">
-        <div class="ad-materi__daftar">
-            @if ($daftar === [])
-                @if ($kataKunci !== '' || $adaFilter)
-                    <x-admin.kosong ikon="cari" judul="Materi tidak ditemukan"
-                        teks="Coba gunakan kata kunci yang berbeda." />
-                @else
-                    <x-admin.kosong ikon="buku" judul="Belum ada materi"
-                        teks="Materi yang telah disetujui akan muncul di sini." />
-                @endif
+    <div class="ad-seksi ad-materi__daftar">
+        @if ($daftar === [])
+            @if ($kataKunci !== '' || $adaFilter)
+                <x-admin.kosong ikon="cari" judul="Materi tidak ditemukan"
+                    teks="Coba gunakan kata kunci yang berbeda." />
             @else
-                @foreach ($daftar as $materi)
-                    <x-admin.materi-kartu :materi="$materi" :terpilih="$slugTerpilih" :parameter="$parameter" />
-                @endforeach
+                <x-admin.kosong ikon="buku" judul="Belum ada materi"
+                    teks="Materi yang telah disetujui akan muncul di sini." />
             @endif
-        </div>
-
-        <div class="ad-materi__panel">
-            <x-admin.materi-panel :terpilih="$terpilih" />
-        </div>
+        @else
+            @foreach ($daftar as $materi)
+                <x-admin.materi-kartu :materi="$materi" />
+            @endforeach
+        @endif
     </div>
 
     {{-- =====================
          PAGINASI
+
+         Cuma tombol halaman, di tengah dan tanpa kartu putih di belakang.
+         Jumlah data ("Menampilkan 1-8 dari 10 data") sengaja dihapus: dengan
+         empat kolom kartu, posisi kartu sudah memberitahu sedang berada di
+         halaman berapa.
     ====================== --}}
     @if ($daftar !== [])
-        <div class="ad-seksi flex flex-col items-center gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <p class="text-sm text-dark/60">
-                Menampilkan {{ $paginasi->firstItem() ?? 0 }}–{{ $paginasi->lastItem() ?? 0 }}
-                dari {{ $paginasi->total() }} data
-            </p>
-
+        <div class="ad-seksi ad-paginasi">
             {{ $paginasi->links() }}
         </div>
     @endif

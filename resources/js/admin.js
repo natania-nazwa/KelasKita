@@ -246,17 +246,20 @@ function initDialog() {
     });
 }
 
-/* ---------- 4. Panel <details> (filter + menu tiga titik) ---------- */
+/* ---------- 4. Menu tiga titik ---------- */
 /*
- * Panel filter dan menu tiga titik di halaman Materi memakai <details>, bukan
- * tombol + <div> yang disembunyikan kelas utilitas. AlasannyaAvailability:
- * buka/tutup-nya sudah ditangani browser, jadi keduanya tetap berfungsi
- * tanpa JavaScript, dan satu blok kecil di bawah ini cukup untuk membuat
- * perilakunya tidak membingungkan.
+ * Menu tiga titik di kartu materi memakai <details>, bukan tombol + <div>
+ * yang disembunyikan kelas utilitas. Alasannya: buka/tutup-nya sudah
+ * ditangani browser, jadi menunya tetap berfungsi tanpa JavaScript, dan satu
+ * blok kecil di bawah ini cukup untuk membuat perilakunya tidak
+ * membingungkan.
  *
  * Yang ditambahkan di sini hanya dua hal yang tidak bisa diberikan oleh
- * <details> sendiri: menutup panel yang kebetulan masih terbuka ketika
- * admin mengklik di luar, dan menutupnya juga dari tombol Escape.
+ * <details> sendiri: menutup menu yang kebetulan masih terbuka ketika admin
+ * mengklik di luar atau menekan Escape.
+ *
+ * Panel filter tidak lagi ikut di sini: sejak ketiga filternya tampil
+ * langsung, tidak ada yang perlu dibuka atau ditutup.
  */
 function initTutupPanel() {
     const panel = document.querySelectorAll("[data-tutup-luar]");
@@ -274,7 +277,7 @@ function initTutupPanel() {
     };
 
     panel.forEach((item) => {
-        // Hanya satu panel terbuka: membuka satu menutup yang lain.
+        // Hanya satu menu terbuka: membuka satu menutup yang lain.
         item.addEventListener("toggle", () => {
             if (item.open) {
                 tutup(item);
