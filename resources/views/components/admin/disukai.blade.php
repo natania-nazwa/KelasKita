@@ -21,12 +21,14 @@
     Keterangan sumber datanya diletakkan di kaki card, bukan di kepala,
     supaya kepala card tidak jadi dua baris teks.
 
-    ad-analitik--ringkas: tinggi card mengikuti isinya, tidak ikut
+    ad-analitik--ringkas: tinggi card hanya mengikuti isinya, tidak ikut
     diregangkan setinggi "Aktivitas Login Mingguan" di sebelahnya. Isinya
-    jauh lebih sedikit daripada grafik mingguan, jadi kalau dipaksa
-    setinggi, separuh card jadi ruang kosong.
---}}
+    satu donat dan satu legenda, sementara card sebelahnya memuat grafik
+    yang jauh lebih tinggi.
 
+    Donatnya sendiri tidak dikecilkan, jadi donat di sini tetap ukuran
+    penuh seperti aslinya.
+--}}
 <section {{ $attributes->class(['ad-seksi', 'ad-kartu', 'ad-analitik', 'ad-analitik--ringkas']) }}>
     <header class="ad-kartu__kepala">
         <div class="ad-kartu__kepala-titik">

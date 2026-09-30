@@ -7,11 +7,11 @@
     {{--
         Dashboard admin.
 
-        Susunan dari atas: banner sapaan, empat kartu statistik, lalu satu
-        baris dua kolom. Kolom kiri: "Perlu Ditinjau" dengan "Menu Cepat"
-        tepat di bawahnya. Kolom kanan: kartu kutipan dengan "Aktivitas
-        Terbaru" tepat di bawahnya. Terakhir, dua kartu analytics (donat
-        pelajaran + garis login).
+        Susunan dari atas: banner sapaan, lalu dua kartu analytics ("Pelajaran
+        yang Disukai" dan "Aktivitas Login Mingguan"), lalu empat kartu
+        statistik, lalu satu baris dua kolom. Kolom kiri: "Perlu Ditinjau"
+        dengan "Menu Cepat" tepat di bawahnya. Kolom kanan: kartu kutipan
+        dengan "Aktivitas Terbaru" tepat di bawahnya.
 
         Semua angka datang dari server: $ringkasan, $perluDitinjau,
         $aktivitas, $pelajaranDisukai, dan $loginMingguan dihitung di
@@ -46,6 +46,16 @@
 
     {{-- ==================== BANNER SAPAAN ==================== --}}
     <x-admin.banner :total-menunggu="$totalMenunggu" />
+
+    {{-- ==================== ANALITIK ==================== --}}
+    {{--
+        Letak analitik tepat di bawah banner sapaan.
+    --}}
+    <section class="ad-seksi ad-grid ad-grid--analitik" aria-label="Analitik dashboard">
+        <x-admin.disukai :data="$pelajaranDisukai" />
+
+        <x-admin.login-mingguan :data="$loginMingguan" />
+    </section>
 
     {{-- ==================== STATISTIK UTAMA ==================== --}}
     <section class="ad-seksi ad-grid ad-grid--statistik" aria-label="Ringkasan platform">
@@ -197,13 +207,6 @@
                 </div>
             </div>
         </div>
-    </section>
-
-    {{-- ==================== ANALITIK ==================== --}}
-    <section class="ad-seksi ad-grid ad-grid--analitik" aria-label="Analitik dashboard">
-        <x-admin.disukai :data="$pelajaranDisukai" />
-
-        <x-admin.login-mingguan :data="$loginMingguan" />
     </section>
 
 @endsection
