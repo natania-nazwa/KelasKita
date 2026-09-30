@@ -1547,23 +1547,24 @@ body.tubuh-admin {
 }
 
 /*
- * Kartu "Pelajaran yang Disukai" hanya setinggi isinya.
+ * Dua kartu analytics ("Pelajaran yang Disukai" dan "Aktivitas Login
+ * Mingguan") setinggi sama, dan tepi atas serta tepi bawahnya rata.
  *
- * Yang dikecilkan hanya tinggi card-nya, dan itu perlu satu aturan
- * saja: align-self: start. Donatnya TIDAK dikecilkan, jadi ukurannya
- * tetap seperti semula (10,5rem); yang berubah hanya card-nya berhenti
- * diregangkan setinggi "Aktivitas Login Mingguan" di sebelahnya.
+ * Sifat ini datang dari grid itu sendiri: .ad-grid--analitik
+ * memakai repeat(2, minmax(0, 1fr)) dan align-items bawaan grid adalah
+ * stretch, jadi kedua card otomatis sama tinggi.
  *
- * Donat pernah ikut dikecilkan ke 9rem pada langkah sebelumnya, dan itu
- * kelewatan: card jadi terlalu pendek, bukan 0,3 cm seperti yang
- * diminta. Donat sudah dikembalikan ke ukuran aslinya.
+ * JANGAN tambahkan align-self, height, atau min-height di sini
+ * untuk salah satu card saja: begitu satu item diberi align-self: start,
+ * card itu berhenti ikut diregangkan sementara tetangganya tetap
+ * diregangkan, dan tepi bawah keduanya langsung tidak rata.
  *
- * Konsekuensinya: tinggi kedua card tidak sama lagi dan tepi bawahnya
- * tidak rata. Itu pilihan yang disengaja untuk card ini.
+ * Kesalahan itu pernah terjadi di sini (class .ad-analitik--ringkas) dan
+ * sekarang sudah dihapus. Kalau suatu saat tinggi kedua card terlihat
+ * beda, periksa dulu apakah salah satunya pernah diberi align-self atau
+ * height eksplisit -- jangan menambahkan margin-top negatif atau
+ * transform untuk memaksa kelihatan rata.
  */
-.ad-analitik--ringkas {
-    align-self: start;
-}
 
 /*
  * Isi kartu analytics dipusatkan vertikal.

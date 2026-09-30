@@ -344,6 +344,63 @@ class DashboardAdminHalamanTest extends TestCase
             ->assertSee('25%');
     }
 
+    public function test_dua_kartu_analytics_sejajar_dan_sama_tinggi(): void
+    {
+        $html = $this->actingAs($this->buatAdmin())->get('/admin/dashboard')->assertOk()->getContent();
+
+        /*
+         * Kedua kartu analytics harus jadi dua anak langsung dari satu
+         * grid yang sama. Kalau salah satunya dibungkus div lain,
+         * atau salah satunya memakai align-self/height sendiri, tinggi
+         * keduanya jadi berbeda dan tepi bawahnya tidak rata.
+         */
+        $awal = strpos($html, 'ad-grid--analitik');
+        $this->assertNotFalse($awal, 'Baris analytics harus ada.');
+
+        /*
+         * Ketiga kartu di baris ini semuanya elemen <section>: kartu
+         * kiri, kartu kanan, lalu baris grid-nya. Jadi penutup baris
+         * adalah </section> KETIGA setelah titik awal, bukan yang
+         * pertama -- yang pertama cuma penutup kartu kiri.
+         */
+        $akhir = $awal;
+
+        for ($i = 0; $i < 3; $i++) {
+            $akhir = strpos($html, '</section>', (int) $akhir);
+            $this->assertNotFalse($akhir, 'Baris analytics harus ditutup.');
+            $akhir += strlen('</section>');
+        }
+
+        $baris = substr($html, (int) $awal, (int) $akhir - (int) $awal);
+
+        // Tepat dua kartu di dalam baris itu, tanpa wrapper tambahan.
+        $this->assertSame(2, substr_count($baris, 'class="ad-kartu ad-analitik"'));
+
+        /*
+         * Root cause yang pernah membuat kartu kanan turun 28px: kedua
+         * kartu ikut memakai .ad-seksi. Kelas itu tidak punya deklarasi
+         * sendiri, satu-satunya aturannya .ad-seksi + .ad-seksi
+         * { margin-top } -- untuk menjeda antara section halaman. Karena
+         * kedua kartu adalah sibling bersebelahan di dalam grid, rule itu
+         * menyala pada kartu kedua dan memberinya margin-top 1,75rem.
+         *
+         * Kartu di dalam grid TIDAK BOLEH memakai .ad-seksi.
+         */
+        $this->assertStringNotContainsString('ad-seksi ad-kartu ad-analitik', $baris);
+        $this->assertStringNotContainsString('ad-kartu ad-analitik ad-seksi', $baris);
+
+        // Tidak ada yang menahan tinggi salah satu kartu.
+        $this->assertStringNotContainsString('ad-analitik--ringkas', $baris);
+
+        foreach (['align-self', 'translate-y', 'ad-kartu--tinggi'] as $yangDilarang) {
+            $this->assertStringNotContainsString($yangDilarang, $baris);
+        }
+
+        // Isi keduanya dipusatkan vertikal supaya card yang lebih pendek
+        // tidak menyisakan ruang kosong menumpuk di bawah.
+        $this->assertStringNotContainsString('ad-analitik--ringkas', $html);
+    }
+
     public function test_kaki_kartu_analytics_menampilkan_keterangan_sumber_data(): void
     {
         $admin = $this->buatAdmin();

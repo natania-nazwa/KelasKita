@@ -21,15 +21,31 @@
     Keterangan sumber datanya diletakkan di kaki card, bukan di kepala,
     supaya kepala card tidak jadi dua baris teks.
 
-    ad-analitik--ringkas: tinggi card hanya mengikuti isinya, tidak ikut
-    diregangkan setinggi "Aktivitas Login Mingguan" di sebelahnya. Isinya
-    satu donat dan satu legenda, sementara card sebelahnya memuat grafik
-    yang jauh lebih tinggi.
-
-    Donatnya sendiri tidak dikecilkan, jadi donat di sini tetap ukuran
-    penuh seperti aslinya.
+    Card ini TIDAK memakai class untuk mencegah peregangannya. Kedua kartu
+    analytics harus sama tinggi, jadi grid dibiarkan meregangkannya
+    (align-items: stretch bawaan grid). Kalau card ini diberi align-self,
+    tinggi card kiri jadi ikut isinya saja sementara card kanan tetap
+    diregangkan, dan tepi bawah keduanya jadi tidak rata.
 --}}
-<section {{ $attributes->class(['ad-seksi', 'ad-kartu', 'ad-analitik', 'ad-analitik--ringkas']) }}>
+
+{{--
+    Section ini SENGAJA tidak memakai kelas .ad-seksi.
+
+    .ad-seksi tidak punya deklarasi sendiri; satu-satunya aturannya adalah
+    .ad-seksi + .ad-seksi { margin-top }, yang ada untuk menjeda antara
+    section halaman yang disusun vertikal. Dua kartu analytics ini adalah
+    item grid yang berdampingan, dan keduanya sibling bersebelahan -- jadi
+    kalau keduanya memakai .ad-seksi, rule itu menyala pada kartu kedua
+    dan memberinya margin-top 1,75rem. Akibatnya tepi atas kartu kanan
+    turun 28px dan keduanya terlihat tidak rata, padahal grid-nya sudah
+    benar.
+
+    .ad-seksi juga tidak diperlukan di sini: jarak ke section di atasnya
+    datang dari .ad-banner + .ad-grid--analitik, dan ke section di
+    bawahnya dari .ad-seksi + .ad-seksi pada section pembungkus-nya.
+--}}
+
+<section {{ $attributes->class(['ad-kartu', 'ad-analitik']) }}>
     <header class="ad-kartu__kepala">
         <div class="ad-kartu__kepala-titik">
             {{-- Warna chip ikut isi kartunya: hati ungu untuk "disukai",

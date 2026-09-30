@@ -33,7 +33,17 @@
     $jumlahMinggu = count($data);
 @endphp
 
-<section {{ $attributes->class(['ad-seksi', 'ad-kartu', 'ad-analitik']) }}>
+{{--
+    Section ini SENGAJA tidak memakai kelas .ad-seksi, sama seperti
+    "Pelajaran yang Disukai".
+
+    Alasannya ada di comments section itu: .ad-seksi hanya punya aturan
+    .ad-seksi + .ad-seksi { margin-top }, dan dua kartu ini sibling
+    bersebelahan di dalam grid. Kalau keduanya memakai .ad-seksi, kartu
+    kedua dapat margin-top 1,75rem dan tepi atasnya turun 28px.
+--}}
+
+<section {{ $attributes->class(['ad-kartu', 'ad-analitik']) }}>
     <header class="ad-kartu__kepala">
         <div class="ad-kartu__kepala-titik">
             <span class="ad-cepat__ikon ad-cepat__ikon--hijau" aria-hidden="true">
