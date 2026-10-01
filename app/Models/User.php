@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
@@ -78,6 +79,25 @@ class User extends Authenticatable
     public function materi(): HasMany
     {
         return $this->hasMany(Materi::class, 'dibuat_oleh');
+    }
+
+    /**
+     * Preferensi milik pengguna ini.
+     *
+     * Foreign key-nya ditulis langsung sebagai "pengguna_id", bukan
+     * dibiarkan ditebak dari nama model: tebakan default untuk model bernama
+     * User adalah "user_id", sedangkan tabelnya memakai "pengguna_id".
+     * Tanpa penulisan ini relasi ini gagal dengan
+     * "column ... user_id does not exist".
+     *
+     * Sengaja hasOne, bukan bentuk yang langsung mengambil, karena barisnya
+     * belum tentu ada. Halaman yang butuh nilai preferensi memanggil
+     * Preferensi::ambil($user), sedangkan memakai relasi ini di tempat lain
+     * tidak pernah menyentuh database.
+     */
+    public function preferensi(): HasOne
+    {
+        return $this->hasOne(Preferensi::class, 'pengguna_id');
     }
 
     /**

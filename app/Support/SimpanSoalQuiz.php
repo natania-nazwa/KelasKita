@@ -63,6 +63,67 @@ final class SimpanSoalQuiz
     }
 
     /**
+     * Salin seluruh soal dari satu quiz ke quiz lain.
+     *
+     * Dipakai aksi "Duplikat" di menu Konten Pembelajaran. Salinannya
+     * persis: tipe, pertanyaan, semua kolom pilihan lama, kunci jawaban,
+     * pembahasan, tingkat kesulitan, dan baris tb_soal_pilihan-nya.
+     *
+     * Barisnya disalin apa adanya, bukan lewat isian form, karena isian form
+     * memakai bentuk larik pilihan sementara database memakai baris
+     * terpisah — mengubah bentuk di tengah jalan berarti salah satu dari
+     * keduanya pasti kehilangan sesuatu (misalnya kunci jawaban bertipe
+     * pilihan banyak, yang tidak muat di satu kolom varchar).
+     *
+     * Pembungkus satu transaksi supaya quiz hasil salinan tidak pernah
+     * tertinggal setengah soal.
+     */
+    public static function salin(Quiz $asal, Quiz $tujuan): void
+    {
+        DB::transaction(function () use ($asal, $tujuan) {
+            $urutan = 0;
+
+            foreach ($asal->soal()->terurut()->with('pilihanSoal')->get() as $baris) {
+                $urutan++;
+
+                /*
+                 * id, created_at, dan updated_at sengaja dibuang: yang
+                 * disalin hanya isi soalnya. Urutannya juga ditulis ulang
+                 * dari posisi baris di quiz asal, supaya soal yang
+                 * dinonaktifkan tidak menyisakan nomor bolong.
+                 */
+                $salin = $baris->getAttributes();
+
+                unset($salin['id'], $salin['quiz_id'], $salin['created_at'], $salin['updated_at']);
+
+                $salin['quiz_id'] = $tujuan->getKey();
+                $salin['urutan'] = $urutan;
+
+                $soalBaru = $tujuan->soal()->create($salin);
+
+                /*
+                 * Urutan baris pilihan dihitung dari posisinya di daftar,
+                 * bukan disalin dari baris asal. Soal lama yang belum punya
+                 * baris di tb_soal_pilihan dibaca lewat kolom pilihan_a
+                 * sampai pilihan_f, dan baris tiruan itu tidak punya
+                 * urutan — menyalinnya akan menulis kosong ke kolom yang
+                 * wajib terisi.
+                 */
+                $posisi = 0;
+
+                foreach ($baris->daftarPilihan() as $pilihan) {
+                    $soalBaru->pilihanSoal()->create([
+                        'huruf' => $pilihan->huruf,
+                        'teks' => $pilihan->teks,
+                        'urutan' => ++$posisi,
+                        'benar' => $pilihan->benar,
+                    ]);
+                }
+            }
+        });
+    }
+
+    /**
      * Pecah satu baris form menjadi data kolom tb_soal dan baris-baris
      * tb_soal_pilihan-nya.
      *

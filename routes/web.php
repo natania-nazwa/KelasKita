@@ -439,6 +439,27 @@ Route::middleware('auth')
         Route::put('/profil', [User\ProfilController::class, 'update'])->name('profil.update');
         Route::delete('/profil/foto', [User\ProfilController::class, 'hapusFoto'])->name('profil.foto.destroy');
         Route::put('/profil/kata-sandi', [User\ProfilController::class, 'ubahKataSandi'])->name('profil.kata-sandi');
+
+        /*
+         * =============================================================
+         * NOTIFIKASI
+         * =============================================================
+         * Satu-satunya rute notifikasi: menandai satu notifikasi sudah
+         * dibaca. Daftar notifikasi sendiri dirender di lonceng topbar,
+         * jadi tidak ada halaman notifikasi terpisah yang harus dibuka
+         * dan ditutup lagi.
+         *
+         * Notifikasi dibuat admin dari menu "Konten Pembelajaran" setiap kali
+         * ia menerbitkan materi atau quiz (lihat
+         * App\Support\NotifikasiKonten). Tidak ada sumber notifikasi lain,
+         * jadi tidak ada rute "buat notifikasi" pun.
+         *
+         * Rute ini dijaga middleware "auth" bersama seluruh halaman user di
+         * atas, dan controller-nya menolak notifikasi milik orang lain dengan
+         * 403.
+         */
+        Route::post('/notifikasi/{notifikasi}/baca', [User\NotifikasiController::class, 'baca'])
+            ->name('notifikasi.baca');
     });
 
 /*
@@ -457,6 +478,72 @@ Route::middleware(['auth', 'admin'])
     ->name('admin.')
     ->group(function () {
         Route::get('/dashboard', Admin\DashboardController::class)->name('dashboard');
+
+        /*
+         * =============================================================
+         * KONTEN PEMBELAJARAN
+         * =============================================================
+         * Ruang kerja admin untuk membuat dan mengelola kontennya sendiri:
+         * materi dan quiz, lengkap dengan simpan draft dan terbitkan
+         * langsung.
+         *
+         * Menu ini berdiri sendiri dan tidak menyenggol tiga halaman admin
+         * yang sudah ada, karena ketiganya memang beda tujuan:
+         *
+         *   - "Materi" dan "Quiz" adalah kumpulan konten yang sudah tayang,
+         *     siapa pun yang membuatnya. Hanya dibaca, dan diubah kalau
+         *     karyanya milik admin sendiri.
+         *   - "Verifikasi" adalah antrean keputusan untuk karya pengguna.
+         *   - "Konten Pembelajaran" (bagian ini) tempat admin menambah,
+         *     menyunting, menggandakan, menerbitkan, dan menarik kembali
+         *     karyanya sendiri.
+         *
+         * Tidak ada tahap persetujuan di sini. Admin di aplikasi ini satu
+         * role dan dia sendiri yang membuat kontennya, jadi status yang
+         * dipakai hanya "draft" dan "published" — dua status yang sudah ada
+         * di tb_materi dan tb_quiz, tidak ada kolom atau tabel baru.
+         *
+         * URL memakai awalan /konten supaya tidak pernah tertukar dengan
+         * /admin/materi dan /admin/quiz yang tetap mengelola katalog konten
+         * published. Segmen literal ("materi", "quiz", "tambah")
+         * didaftarkan sebelum route berparameter, mengikuti pola "/materi"
+         * milik pengguna.
+         *
+         * Parameter materi tetap slug dan parameter quiz tetap id, sama
+         * seperti route admin yang sudah ada, supaya tidak ada tautan lama
+         * yang ikut berubah bentuknya.
+         */
+        Route::get('/konten', Admin\KontenController::class)->name('konten');
+
+        Route::get('/konten/materi/tambah', [Admin\KontenMateriController::class, 'create'])
+            ->name('konten.materi.tambah');
+        Route::post('/konten/materi/tambah', [Admin\KontenMateriController::class, 'store'])
+            ->name('konten.materi.tambah.store');
+        Route::get('/konten/materi/{materi}/edit', [Admin\KontenMateriController::class, 'edit'])
+            ->name('konten.materi.edit');
+        Route::put('/konten/materi/{materi}', [Admin\KontenMateriController::class, 'update'])
+            ->name('konten.materi.update');
+        Route::delete('/konten/materi/{materi}', [Admin\KontenMateriController::class, 'destroy'])
+            ->name('konten.materi.destroy');
+        Route::post('/konten/materi/{materi}/terbitkan', [Admin\KontenMateriController::class, 'publish'])
+            ->name('konten.materi.publish');
+        Route::post('/konten/materi/{materi}/duplikat', [Admin\KontenMateriController::class, 'duplikat'])
+            ->name('konten.materi.duplikat');
+
+        Route::get('/konten/quiz/tambah', [Admin\KontenQuizController::class, 'create'])
+            ->name('konten.quiz.tambah');
+        Route::post('/konten/quiz/tambah', [Admin\KontenQuizController::class, 'store'])
+            ->name('konten.quiz.tambah.store');
+        Route::get('/konten/quiz/{quiz}/edit', [Admin\KontenQuizController::class, 'edit'])
+            ->name('konten.quiz.edit');
+        Route::put('/konten/quiz/{quiz}', [Admin\KontenQuizController::class, 'update'])
+            ->name('konten.quiz.update');
+        Route::delete('/konten/quiz/{quiz}', [Admin\KontenQuizController::class, 'destroy'])
+            ->name('konten.quiz.destroy');
+        Route::post('/konten/quiz/{quiz}/terbitkan', [Admin\KontenQuizController::class, 'publish'])
+            ->name('konten.quiz.publish');
+        Route::post('/konten/quiz/{quiz}/duplikat', [Admin\KontenQuizController::class, 'duplikat'])
+            ->name('konten.quiz.duplikat');
 
         /*
          * Verifikasi: satu halaman untuk semua konten yang menunggu
@@ -567,42 +654,98 @@ Route::middleware(['auth', 'admin'])
         Route::post('/quiz/{quiz}/tolak', [Admin\QuizTinjauController::class, 'tolak'])->name('quiz.tolak');
 
         /*
-         * =============================================================
-         * HALAMAN ADMIN LAINNYA
-         * =============================================================
-         * Empat route di bawah semuanya hanya membaca (GET, tanpa
-         * parameter yang mengubah apa pun). Tujuannya satu: menu
-         * sidebar "Verifikasi", "Pengguna", "Hasil & Statistik", dan
-         * "Pengaturan" punya halaman sendiri dengan design system yang
-         * sama, tanpa mengubah satu pun aturan yang sudah berjalan.
-         *
-         * Yang tetap di tempatnya:
-         *   - materi dan quiz tidak pernah diubah dari sini;
-         *   - persetujuan tetap lewat admin.materi.setujui /
-         *     admin.materi.tolak dan padanannya untuk quiz;
-         *   - peran pengguna tidak bisa diubah dari halaman Pengguna;
-         *   - halaman Pengaturan tidak menyimpan apa pun, dan mengarahkan
-         *     ke /user/profil yang sudah menangani nama, email, dan
-         *     password beserta validasinya.
-         *
-         * Controller-nya diletakkan di app/Http/Controllers/Admin
-         * bersama controller admin yang sudah ada supaya tidak ada
-         * file baru di luar struktur yang sekarang.
+         * Daftar materi dan quiz yang menunggu keputusan, digabung dalam
+         * satu daftar dengan tab jenis dan tab status.
          */
-
-        // Daftar materi dan quiz yang menunggu keputusan, digabung dalam
-        // satu daftar dengan tab jenis dan tab status.
         Route::get('/verifikasi', Admin\VerifikasiController::class)->name('verifikasi');
 
-        // Daftar seluruh akun. Hanya dibaca: tidak ada aksi yang
-        // mengaktifkan, menonaktifkan, mengubah peran, atau menghapus.
+        /*
+         * Daftar seluruh akun. Hanya dibaca: tidak ada aksi yang
+         * mengaktifkan, menonaktifkan, mengubah peran, atau menghapus.
+         */
         Route::get('/pengguna', Admin\PenggunaController::class)->name('pengguna');
 
-        // Rekap pembelajaran seluruh platform: tren pengguna, pelajaran
-        // terpopuler, dan sebaran isi per kategori.
-        Route::get('/statistik', Admin\StatistikController::class)->name('statistik');
-
-        // Akun admin yang sedang login, plus arah ke halaman Profil
-        // yang sudah menangani semua perubahannya.
+        /*
+         * =============================================================
+         * PENGATURAN
+         * =============================================================
+         * Pusat pengaturan admin. Semuanya satu grup route di bawah
+         * /admin/pengaturan supaya menu sidebar "Pengaturan" punya satu
+         * pola URL dan active state-nya bisa dicocokkan dengan
+         * routeIs('admin.pengaturan*').
+         *
+         * Yang dipisah halaman dan yang dipisah dialog mengikuti
+         * beratnya pekerjaan, bukan sekadar selera:
+         *
+         *   - Halaman sendiri  : Profil, Keamanan, Kelola Mata Pelajaran,
+         *                       Sesi Login, Informasi Sistem, Tentang.
+         *                       Semuanya punya isi panjang atau langkah
+         *                       lebih dari satu, dan memakai GET supaya
+         *                       bisa ditandai, dibagikan, dan di-back.
+         *   - Dialog di /pengaturan : Notifikasi dan Publikasi. Keduanya satu
+         *                       form pendek yang selesai dalam satu langkah,
+         *                       dan tidak perlu halaman tersendiri.
+         *   - Konfirmasi       : Logout dari semua perangkat dan Keluar
+         *                       dari akun. Keduanya mengirim POST ke route
+         *                       di bawah, jadi tetap jalan tanpa JavaScript.
+         *
+         * Tidak ada endpoint JSON di sini. Seluruh perubahan dikirim lewat
+         * form biasa supaya topbar dan sidebar ikut memakai data terbaru
+         * tanpa perlu disegarkan manual.
+         */
         Route::get('/pengaturan', Admin\PengaturanController::class)->name('pengaturan');
+
+        // Profil admin: nama, email, dan foto profil.
+        Route::get('/pengaturan/profil', [Admin\ProfilAdminController::class, 'edit'])->name('pengaturan.profil');
+        Route::put('/pengaturan/profil', [Admin\ProfilAdminController::class, 'update'])->name('pengaturan.profil.update');
+        Route::delete('/pengaturan/profil/foto', [Admin\ProfilAdminController::class, 'destroyFoto'])->name('pengaturan.profil.foto.destroy');
+
+        // Keamanan: ubah kata sandi.
+        Route::get('/pengaturan/keamanan', [Admin\KeamananAdminController::class, 'edit'])->name('pengaturan.keamanan');
+        Route::put('/pengaturan/keamanan/kata-sandi', [Admin\KeamananAdminController::class, 'update'])->name('pengaturan.keamanan.kata-sandi');
+
+        // Preferensi: tema, notifikasi, dan aturan publikasi.
+        Route::put('/pengaturan/tema', [Admin\PreferensiController::class, 'tema'])->name('pengaturan.tema');
+        Route::put('/pengaturan/notifikasi', [Admin\PreferensiController::class, 'notifikasi'])->name('pengaturan.notifikasi');
+        Route::put('/pengaturan/publikasi', [Admin\PreferensiController::class, 'publikasi'])->name('pengaturan.publikasi');
+
+        /*
+         * Kelola Mata Pelajaran. Mengelola baris tb_pelajaran yang sudah ada,
+         * termasuk kolom "aktif"-nya, jadi admin bisa menyembunyikan sebuah
+         * mata pelajaran dari pilihan tanpa merusak materi yang memakainya.
+         */
+        Route::get('/pengaturan/pelajaran', [Admin\PelajaranKelolaController::class, 'index'])->name('pengaturan.pelajaran');
+        Route::post('/pengaturan/pelajaran', [Admin\PelajaranKelolaController::class, 'store'])->name('pengaturan.pelajaran.store');
+        Route::put('/pengaturan/pelajaran/{pelajaran}', [Admin\PelajaranKelolaController::class, 'update'])->name('pengaturan.pelajaran.update');
+        Route::delete('/pengaturan/pelajaran/{pelajaran}', [Admin\PelajaranKelolaController::class, 'destroy'])->name('pengaturan.pelajaran.destroy');
+
+        // Keamanan lanjutan: daftar perangkat dan logout dari semuanya.
+        Route::get('/pengaturan/sesi', [Admin\SesiController::class, 'index'])->name('pengaturan.sesi');
+        Route::delete('/pengaturan/sesi', [Admin\SesiController::class, 'hapusSemua'])->name('pengaturan.sesi.destroy');
+
+        // Informasi sistem dan tentang aplikasi.
+        Route::get('/pengaturan/sistem', [Admin\SistemController::class, 'index'])->name('pengaturan.sistem');
+        Route::get('/pengaturan/tentang', [Admin\SistemController::class, 'tentang'])->name('pengaturan.tentang');
+
+        /*
+         * =============================================================
+         * NOTIFIKASI ADMIN
+         * =============================================================
+         * Satu-satunya rute notifikasi admin: menandai satu notifikasi sudah
+         * dibaca. Daftar notifikasi sendiri dirender di lonceng topbar
+         * (components/admin/topbar-kanan), jadi tidak ada halaman notifikasi
+         * terpisah yang harus dibuka dan ditutup lagi.
+         *
+         * Rute ini hidup di luar /admin/pengaturan, bukan di dalam blok
+         * preference di atas, karena topbar yang memakainya sengaja tidak
+         * dirender di halaman Pengaturan: lonceng tidak akan pernah pakai
+         * tautan dari /admin/pengaturan*.
+         *
+         * Tidak ada rute "buat notifikasi". Barisnya dibuat oleh
+         * App\Support\NotifikasiAdmin dari kejadian nyata di aplikasi, dan
+         * masing-masing jenisnya dikendalikan satu saklar di
+         * /admin/pengaturan.
+         */
+        Route::post('/notifikasi/{notifikasi}/baca', [Admin\NotifikasiAdminController::class, 'baca'])
+            ->name('pengaturan.notifikasi.baca');
     });

@@ -977,7 +977,7 @@ html {
 
 /*
  * Baris metadata + tombol Simpan. gap horizontal 1rem (16px) berada di
- * rentang 14�18px yang diminta rancangan, dan margin-left:auto menekan
+ * rentang 14-18px yang diminta rancangan, dan margin-left:auto menekan
  * tombolnya ke ujung kanan pada layar lebar.
  */
 .kartu-kepala__meta {
@@ -5186,7 +5186,7 @@ html {
     }
 
     /* Tipe Benar / Salah tidak punya baris tambahan, jadi tombolnya
-       disembunyikan � display:flex di atas bisa menimpa atribut hidden. */
+        disembunyikan dan display:flex di atas bisa menimpa atribut hidden. */
     .tombol-pilihan-tambah[hidden] {
         display: none;
     }
@@ -5233,7 +5233,7 @@ html {
     }
 
     /* ============================================================
-       BUILDER SOAL � LAYAR LEBAR
+        BUILDER SOAL - LAYAR LEBAR
        ------------------------------------------------------------
        Panduan langkah disusun jadi empat kolom begitu ada ruangnya,
        dengan garis tipis penghubung di celah grid.
@@ -6095,6 +6095,17 @@ html {
         box-shadow: inset 0 0 0 1px color-mix(in oklab, #fcd34d 45%, transparent);
     }
 
+    /* Draft adalah status paling sering dilihat di "Karya Saya" dan di
+       "Konten Pembelajaran", jadi tint-nya paling diredakan: abu netral,
+       bukan warna status lain yang lebih mencolok. Tanpa aturan ini, draft
+       jatuh ke gaya dasar .karya-status dan lencana statusnya terlihat
+       hampir tidak punya warna sama sekali. */
+    .karya-status--draft {
+        background-color: color-mix(in oklab, #94a3b8 18%, white);
+        color: #556070;
+        box-shadow: inset 0 0 0 1px color-mix(in oklab, #94a3b8 32%, transparent);
+    }
+
     .karya-status--ditolak {
         background-color: color-mix(in oklab, #fda4af 26%, white);
         color: #be3f5c;
@@ -6310,6 +6321,42 @@ html {
         border-color: #e8b7bc;
         background-color: #fdecee;
         color: #a8323c;
+    }
+
+    /* ---------- Baris aksi kartu Konten Pembelajaran ----------
+     *
+     * Kartu "Konten Pembelajaran" punya lima tombol aksi, bukan tiga seperti
+     * kartu "Karya Saya".
+     *
+     * Di kartu pengguna tombol "Lihat" yang mengisi ruang sisa itu terlihat
+     * seimbang: tiga tombol membagi baris rata. Di sini lima tombol tidak
+     * akan membagi rata — ruang sisa jadi jauh lebih besar dari tombol mana
+     * pun, sehingga "Lihat" melebar jadi oval panjang yang tidak proporsional
+     * dengan empat tombol di sebelahnya.
+     *
+     * Jadi peregangannya dimatikan di kartu ini: setiap tombol selebar isinya
+     * sendiri, dan baris aksinya jadi grid dua kolom supaya lima tombol
+     * tersusun rapi (2-2-1), bukan mengalir bebas yang bisa berakhir dengan
+     * satu tombol sendirian di baris terakhir.
+     */
+    .kartu-konten .karya-aksi {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        align-items: center;
+    }
+
+    .kartu-konten .karya-aksi__tombol {
+        width: 100%;
+    }
+
+    .kartu-konten .karya-aksi__tombol--utama {
+        flex: 0 0 auto;
+    }
+
+    /* Tombol terakhir melebar penuh: baris paling bawah jadi memakai seluruh
+       lebar kartu dan tidak ada tombol yang menggantung di situ. */
+    .kartu-konten .karya-aksi > *:last-child {
+        grid-column: 1 / -1;
     }
 
     /* ---------- Judul kartu yang jadi tautan ---------- */
@@ -9934,6 +9981,11 @@ html {
     color: color-mix(in oklab, #fcd34d 45%, #ece8ff);
 }
 
+[data-theme='gelap'] .karya-status--draft {
+    background-color: color-mix(in oklab, #94a3b8 18%, #191336);
+    color: color-mix(in oklab, #94a3b8 45%, #ece8ff);
+}
+
 [data-theme='gelap'] .karya-status--ditolak {
     background-color: color-mix(in oklab, #fda4af 18%, #191336);
     color: color-mix(in oklab, #fda4af 50%, #ece8ff);
@@ -10651,7 +10703,7 @@ html {
 }
 
 /*
- * Baris metadata: "Dibuat oleh Admin � 10 Soal � Tingkat Mudah".
+ * Baris metadata: "Dibuat oleh Admin / 10 Soal / Tingkat Mudah".
  *
  * Pemisah memakai ::before pada setiap butir kecuali yang pertama,
  * bukan elemen bullet tersendiri. Alasannya baris ini boleh
@@ -10669,8 +10721,8 @@ html {
     color: color-mix(in oklab, var(--color-dark) 58%, transparent);
 }
 
-.detail-quiz__meta li + li::before {
-    content: '�';
+   .detail-quiz__meta li + li::before {
+    content: '/';
     margin-right: 0.7rem;
     color: color-mix(in oklab, var(--color-dark) 32%, transparent);
 }
@@ -12096,3 +12148,159 @@ html {
 
 
 
+
+/* ================================================================
+   LONTECENG NOTIFIKASI
+   Dipakai components/app/notifikasi.blade.php di top bar halaman user.
+
+   Strukturnya <details>, sama seperti menu akun di sebelahnya: buka dan
+   tutupnya sudah ditangani browser, jadi notifikasi tetap bisa
+   dibaca tanpa JavaScript. Yang ditambahkan JavaScript hanya penandaan
+   terbaca saat satu baris diklik.
+
+   Lebarnya dibatasi dan diposisikan dengan right-0 supaya panel turun ke
+   kiri dari lonceng dan tidak keluar layar di tepi kanan. Masalah yang
+   sama sudah ditangani menu akun di layout ini.
+   ================================================================ */
+.notif {
+    position: relative;
+}
+
+.notif__tombol {
+    position: relative;
+    display: flex;
+    width: 2.5rem;
+    height: 2.5rem;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid var(--color-lavender);
+    border-radius: 9999px;
+    background-color: var(--color-brand-bg);
+    color: color-mix(in oklab, var(--color-dark) 60%, transparent);
+    cursor: pointer;
+    list-style: none;
+    transition:
+        color 0.18s ease,
+        border-color 0.18s ease;
+}
+
+.notif__tombol::-webkit-details-marker {
+    display: none;
+}
+
+.notif__tombol:hover,
+.notif[open] .notif__tombol {
+    color: var(--color-primary);
+    border-color: var(--color-primary);
+}
+
+.notif__titik {
+    position: absolute;
+    right: 0.4rem;
+    top: 0.4rem;
+    width: 0.5rem;
+    height: 0.5rem;
+    border-radius: 9999px;
+    background-color: var(--color-primary);
+    box-shadow: 0 0 0 2px #fff;
+}
+
+.notif__panel {
+    position: absolute;
+    z-index: 40;
+    right: 0;
+    top: calc(100% + 0.5rem);
+    width: min(22rem, calc(100vw - 2rem));
+    overflow: hidden;
+    border: 1px solid var(--color-lavender);
+    border-radius: 1rem;
+    background-color: #fff;
+    box-shadow: 0 24px 44px -28px rgba(33, 26, 58, 0.6);
+}
+
+.notif__kepala {
+    border-bottom: 1px solid color-mix(in oklab, var(--color-lavender) 70%, transparent);
+    padding: 0.7rem 0.9rem;
+    font-size: 0.6875rem;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: color-mix(in oklab, var(--color-dark) 55%, transparent);
+}
+
+.notif__daftar {
+    max-height: 22rem;
+    overflow-y: auto;
+    padding: 0.35rem;
+}
+
+.notif__kosong {
+    padding: 1.1rem 0.75rem;
+    text-align: center;
+    font-size: 0.8125rem;
+    color: color-mix(in oklab, var(--color-dark) 55%, transparent);
+}
+
+.notif__item {
+    display: flex;
+    gap: 0.65rem;
+    border-radius: 0.7rem;
+    padding: 0.6rem 0.65rem;
+    color: inherit;
+    text-decoration: none;
+    transition: background-color 0.18s ease;
+}
+
+.notif__item:hover {
+    background-color: color-mix(in oklab, var(--color-lavender) 45%, transparent);
+}
+
+/*
+ * Yang belum dibaca ditandai dengan latar tipis, bukan dengan menebalkan
+ * seluruh teks: notifikasi yang sudah dibaca tetap boleh dibaca ulang, jadi
+ * yang dibedakan hanya tingkat kesegaran pesannya.
+ */
+.notif__item.is-belum {
+    background-color: color-mix(in oklab, var(--color-lavender) 26%, transparent);
+}
+
+.notif__item-kiri {
+    flex-shrink: 0;
+}
+
+.notif__item-ikon {
+    display: flex;
+    width: 1.9rem;
+    height: 1.9rem;
+    align-items: center;
+    justify-content: center;
+    border-radius: 9999px;
+    background-color: color-mix(in oklab, var(--color-lavender) 70%, transparent);
+    color: var(--color-primary);
+}
+
+.notif__item-isi {
+    display: flex;
+    min-width: 0;
+    flex-direction: column;
+    gap: 0.1rem;
+}
+
+.notif__item-judul {
+    font-size: 0.8125rem;
+    font-weight: 700;
+    line-height: 1.35;
+    color: var(--color-dark);
+}
+
+.notif__item-pesan {
+    font-size: 0.75rem;
+    line-height: 1.5;
+    color: color-mix(in oklab, var(--color-dark) 65%, transparent);
+}
+
+.notif__item-waktu {
+    margin-top: 0.1rem;
+    font-size: 0.6875rem;
+    color: color-mix(in oklab, var(--color-dark) 45%, transparent);
+}

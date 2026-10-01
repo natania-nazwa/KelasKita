@@ -11,6 +11,7 @@ use App\Models\SesiQuiz;
 use App\Models\Soal;
 use App\Models\SoalRagu;
 use App\Models\User;
+use App\Support\NotifikasiAdmin;
 use App\Support\Penilaian;
 use App\Support\PenjagaSesi;
 use App\Support\SesiAktif;
@@ -355,6 +356,12 @@ class SesiKerjakanController extends Controller
             $pengerjaan->hitungUlang();
             $pengerjaan->selesai_pada = now();
             $pengerjaan->save();
+
+            // Hasil kuis yang baru selesai diberi tahu ke admin, selama admin
+            // masih ingin menerima kabar itu. Saklarnya ada di Pengaturan
+            // admin, jadi mematikan "Ada hasil kuis baru" benar-benar membuat
+            // baris notifikasi ini tidak pernah dibuat.
+            NotifikasiAdmin::hasilKuisBaru($pengerjaan);
         }
 
         $sesi->peserta()

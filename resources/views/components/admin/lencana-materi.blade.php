@@ -11,10 +11,10 @@
      * satu materi terlihat sama di mana pun.
      */
     $gaya = match ($status) {
-        'published' => ['pita' => 'bg-[#e4f4ec] text-[#1f8f5c]', 'ikon' => 'tanda-centang'],
-        'pending' => ['pita' => 'bg-[#fcf0df] text-[#b8720f]', 'ikon' => 'jam'],
-        'rejected' => ['pita' => 'bg-[#fbe9ec] text-[#c2455f]', 'ikon' => 'silang-polos'],
-        default => ['pita' => 'bg-[#f1eff7] text-[#6f6a8c]', 'ikon' => 'pena'],
+        'published' => ['pita' => 'bg-[var(--ad-cucian-sukses)] text-[var(--ad-teks-sukses)]', 'ikon' => 'tanda-centang'],
+        'pending' => ['pita' => 'bg-[var(--ad-cucian-peringatan)] text-[var(--ad-teks-peringatan)]', 'ikon' => 'jam'],
+        'rejected' => ['pita' => 'bg-[var(--ad-cucian-bahaya)] text-[var(--ad-teks-bahaya)]', 'ikon' => 'silang-polos'],
+        default => ['pita' => 'bg-[var(--ad-permukaan-lavender)] text-[var(--ad-teks-3)]', 'ikon' => 'pena'],
     };
 @endphp
 

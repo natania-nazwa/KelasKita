@@ -8,15 +8,13 @@ use App\Models\PengerjaanQuiz;
 use App\Models\Quiz;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Support\Carbon;
-use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
 /**
  * Agregasi read-only untuk halaman admin.
  *
- * Semua angka di dashboard dan halaman "Hasil & Statistik" dihitung di
+ * Semua angka di dashboard dan di halaman admin lain dihitung di
  * sini, bukan di controller dan bukan di view, supaya:
  *
  *   1. satu query ditulis sekali dan dipakai di beberapa halaman;
@@ -33,14 +31,6 @@ use Illuminate\Support\Str;
  */
 final class StatistikAdmin
 {
-    /**
-     * Berapa hari ke belakang yang dipakai untuk grafik tren.
-     */
-    public static function hariTren(): int
-    {
-        return 7;
-    }
-
     /**
      * Berapa baris teratas yang dipakai untuk "pelajaran terpopuler".
      */
@@ -233,64 +223,6 @@ final class StatistikAdmin
     }
 
     /**
-     * Deret tren pengguna baru, pengguna unik yang login, dan quiz
-     * yang dikerjakan untuk N hari terakhir.
-     *
-     * Dikembalikan lengkap dengan hari yang nol: kalau ada hari tanpa
-     * pengguna baru, hari itu tetap ada di deret dengan nilai 0. Kalau
-     * hari kosong dibuang, garis grafik akan melompati tanggal dan
-     * grafikVG berbohong soal kapan kejadiannya terjadi.
-     *
-     * @return array<int, array{label: string, tanggal: string, pengguna_baru: int, pengguna_login: int, quiz_dikerjakan: int}>
-     */
-    public static function trenPengguna(): array
-    {
-        $hari = self::hariTren();
-        $mulai = now()->startOfDay()->subDays($hari - 1);
-
-        $baris = DB::table('tb_pengguna')
-            ->selectRaw('created_at::date as hari, COUNT(*) as jumlah')
-            ->where('created_at', '>=', $mulai)
-            ->groupBy('created_at::date')
-            ->pluck('jumlah', 'hari');
-
-        /*
-         * Sesi dibaca per hari, bukan per timestamp: satu orang yang
-         * membuka aplikasi sepuluh kali dalam sehari tetap dihitung
-         * sebagai satu pengguna aktif untuk hari itu.
-         */
-        $login = DB::table('sessions')
-            ->selectRaw("to_char(to_timestamp(last_activity), 'YYYY-MM-DD') as hari, COUNT(DISTINCT user_id) as jumlah")
-            ->where('last_activity', '>=', (int) $mulai->getTimestamp())
-            ->whereNotNull('user_id')
-            ->groupBy('hari')
-            ->pluck('jumlah', 'hari');
-
-        $dikerjakan = DB::table('tb_pengerjaan_quiz')
-            ->selectRaw('created_at::date as hari, COUNT(*) as jumlah')
-            ->where('created_at', '>=', $mulai)
-            ->groupBy('created_at::date')
-            ->pluck('jumlah', 'hari');
-
-        $hasil = [];
-
-        for ($i = 0; $i < $hari; $i++) {
-            $tanggal = $mulai->copy()->addDays($i);
-            $kunci = $tanggal->format('Y-m-d');
-
-            $hasil[] = [
-                'label' => $tanggal->translatedFormat('D'),
-                'tanggal' => $tanggal->translatedFormat('d M'),
-                'pengguna_baru' => (int) ($baris[$kunci] ?? 0),
-                'pengguna_login' => (int) ($login[$kunci] ?? 0),
-                'quiz_dikerjakan' => (int) ($dikerjakan[$kunci] ?? 0),
-            ];
-        }
-
-        return $hasil;
-    }
-
-    /**
      * Materi dan quiz yang menunggu keputusan admin, digabung jadi satu
      * daftar untuk kartu "Perlu Ditinjau".
      *
@@ -465,44 +397,6 @@ final class StatistikAdmin
     }
 
     /**
-     * Sebarannya isi platform per kategori: materi, quiz, dan jumlah
-     * pengerjaan per pelajaran.
-     *
-     * Dipakai di halaman "Hasil & Statistik" sebagai pie chart isi
-     * platform. Pelajaran yang ada di katalog tapi belum punya isi
-     * apa pun tidak dihitung, jadi potongannya selalu berisi sesuatu.
-     *
-     * @return array<int, array{label: string, nilai: int, warna: string, materi: int, quiz: int}>
-     */
-    public static function isiPerPelajaran(int $batas = 6): array
-    {
-        $baris = DB::table('tb_pelajaran as pa')
-            ->leftJoin('tb_materi as m', 'm.pelajaran_id', '=', 'pa.id')
-            ->leftJoin('tb_quiz as q', 'q.pelajaran_id', '=', 'pa.id')
-            ->selectRaw('pa.slug, pa.nama')
-            ->selectRaw('COUNT(DISTINCT m.id) as materi')
-            ->selectRaw('COUNT(DISTINCT q.id) as quiz')
-            ->groupBy('pa.slug', 'pa.nama')
-            ->havingRaw('COUNT(DISTINCT m.id) + COUNT(DISTINCT q.id) > 0')
-            ->orderByRaw('COUNT(DISTINCT m.id) + COUNT(DISTINCT q.id) DESC')
-            ->limit($batas)
-            ->get();
-
-        return $baris->map(function ($item): array {
-            $kategori = Pelajaran::warna($item->slug, $item->nama);
-            $total = (int) $item->materi + (int) $item->quiz;
-
-            return [
-                'label' => $kategori['nama'],
-                'nilai' => $total,
-                'warna' => $kategori['warna'],
-                'materi' => (int) $item->materi,
-                'quiz' => (int) $item->quiz,
-            ];
-        })->all();
-    }
-
-    /**
      * Jumlah konten per status, untuk angka di tab filter.
      *
      * Satu query untuk semua status supaya tab tidak butuh N query.
@@ -520,80 +414,5 @@ final class StatistikAdmin
         return collect($pilihan)
             ->map(fn (string $label, string $status): int => (int) ($jumlah[$status] ?? 0))
             ->all();
-    }
-
-    /**
-     * Rata-rata nilai, nilai tertinggi, dan jumlah pengerjaan dalam N
-     * hari terakhir, untuk kartu ringkasan halaman statistik.
-     *
-     * @return array{jumlah: int, rata: float, tertinggi: int}
-     */
-    public static function nilaiPengerjaan(int $hari = 30): array
-    {
-        $query = PengerjaanQuiz::query()
-            ->selesai()
-            ->where('created_at', '>=', now()->subDays($hari));
-
-        return [
-            'jumlah' => (int) (clone $query)->count(),
-            'rata' => round((float) ((clone $query)->avg('nilai') ?? 0), 1),
-            'tertinggi' => (int) ((clone $query)->max('nilai') ?? 0),
-        ];
-    }
-
-    /**
-     * Aktivitas belajar 7 hari terakhir sebagai deret siap grafik.
-     *
-     * Tiga deret memakai satu skala: quiz yang dikerjakan, materi yang
-     * dibaca, dan pengguna baru. Satu grafik batanginstead tiga grafik
-     * supaya perbandingannya terbaca langsung.
-     *
-     * @return array<int, array{label: string, tanggal: string, quiz_dikerjakan: int, materi_dibaca: int, pengguna_baru: int}>
-     */
-    public static function aktivitasBelajar(int $hari = 7): array
-    {
-        $mulai = now()->startOfDay()->subDays($hari - 1);
-
-        $dikerjakan = self::hitungPerHari('tb_pengerjaan_quiz', 'quiz_id', $mulai);
-        $dibaca = self::hitungPerHari('tb_materi', 'id', $mulai, 'jumlah_dilihat');
-        $pengguna = self::hitungPerHari('tb_pengguna', 'id', $mulai);
-
-        $hasil = [];
-
-        for ($i = 0; $i < $hari; $i++) {
-            $tanggal = $mulai->copy()->addDays($i);
-            $kunci = $tanggal->format('Y-m-d');
-
-            $hasil[] = [
-                'label' => $tanggal->translatedFormat('D'),
-                'tanggal' => $tanggal->translatedFormat('d M'),
-                'quiz_dikerjakan' => (int) ($dikerjakan[$kunci] ?? 0),
-                'materi_dibaca' => (int) ($dibaca[$kunci] ?? 0),
-                'pengguna_baru' => (int) ($pengguna[$kunci] ?? 0),
-            ];
-        }
-
-        return $hasil;
-    }
-
-    /**
-     * Jumlah baris per hari untuk satu tabel, dikelompokkan berdasarkan
-     * created_at::date.
-     *
-     * Sumi opsional dipakai untuk kolom jumlah_dilihat pada materi:
-     * "materi dibaca" di sini berarti jumlah kali materi dibuka,
-     * bukan jumlah materi yang berbeda.
-     *
-     * @return Collection<string, int>
-     */
-    private static function hitungPerHari(string $tabel, string $kolomUnik, Carbon $mulai, ?string $jumlah = null): Collection
-    {
-        $query = DB::table($tabel)
-            ->selectRaw('created_at::date as hari')
-            ->selectRaw($jumlah ? 'COALESCE(SUM('.$jumlah.'), 0) as jumlah' : 'COUNT(DISTINCT '.$kolomUnik.') as jumlah')
-            ->where('created_at', '>=', $mulai)
-            ->groupBy('hari');
-
-        return $query->pluck('jumlah', 'hari');
     }
 }

@@ -154,6 +154,34 @@ class Ikon
         'filter' => 'M10.5 6h9.75M10.5 6a1.5 1.5 0 1 1-3 0m3 0a1.5 1.5 0 1 0-3 0M3.75 6H7.5m3 12h9.75m-9.75 0a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m-3.75 0H7.5m9-6h3.75m-3.75 0a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m-9.75 0h9.75',
         // Catatan penolakan dan pesan peringatan di panel review.
         'peringatan' => 'M12 9v3.75m9-.75a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9 3.75h.008v.008H12v-.008Z',
+        // Ponsel: baris "Sesi Login" di Pengaturan admin, untuk membedakan
+        // perangkat genggam dari perangkat meja yang tampil di bawahnya.
+        'ponsel' => 'M10.5 1.5H8.25A2.25 2.25 0 0 0 6 3.75v16.5a2.25 2.25 0 0 0 2.25 2.25h7.5A2.25 2.25 0 0 0 18 20.25V3.75a2.25 2.25 0 0 0-2.25-2.25H13.5m-3 0V3h3V1.5m-3 0h3m-3 18.75h3',
+        // Monitor: kepala seksi "Sistem" di Pengaturan admin.
+        'monitor' => 'M9 17.25v1.007a3 3 0 0 1-.879 2.122L7.5 21h9l-.621-.621A3 3 0 0 1 15 18.257V17.25m6-12V15a2.25 2.25 0 0 1-2.25 2.25H5.25A2.25 2.25 0 0 1 3 15V5.25m18 0A2.25 2.25 0 0 0 18.75 3H5.25A2.25 2.25 0 0 0 3 5.25m18 0V12a2.25 2.25 0 0 1-2.25 2.25H5.25A2.25 2.25 0 0 1 3 12V5.25',
+        // Tanda informasi: baris "Informasi Sistem" dan "Tentang Kelas Kita".
+        'info' => 'm11.25 11.25.041-.02a.75.75 0 0 1 1.063.852l-.708 2.836a.75.75 0 0 0 1.063.853l.041-.021M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9-3.75h.008v.008H12V8.25Z',
+        // Tuas geser: baris "Tampilan" di Pengaturan admin, yang kendalinya
+        // sendiri berupa dua tombol mode, bukan baris yang membuka halaman.
+        'tuas' => 'M10.5 6h9.75M10.5 6a1.5 1.5 0 1 1 3 0m-3 0a1.5 1.5 0 1 0 3 0M3.75 6H7.5m3 12h9.75m-9.75 0a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m-3.75 0H7.5m9-6h3.75m-3.75 0a1.5 1.5 0 0 1-3 0m3 0a1.5 1.5 0 0 0-3 0m-9.75 0h9.75',
+        // Kotak centang: kepala seksi "Pengaturan Publikasi".
+        'kotak-centang' => 'M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z',
+
+        // Tiga titik mendatar: pemicu menu aksi di tiap baris daftar Konten
+        // Pembelajaran. Berbeda dari "menu" (tiga garis) yang dipakai topbar
+        // untuk membuka sidebar — di sini yang ditekan adalah barisnya, bukan
+        // halaman, jadi lambangnya harus titik bukan garis.
+        'titik-tiga' => 'M6.75 12a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0ZM12.75 12a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0ZM18.75 12a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0Z',
+
+        // Panah masuk baki: aksi Publish di menu baris dan tombol "Publish
+        // Sekarang". Dipilih karena arahnya terlihat sebagai "dikirim ke
+        // pengguna", bukan sekadar "disetujui".
+        'unggah' => 'M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 7.5 12 3m0 0L7.5 7.5M12 3v13.5',
+
+        // Dua persegi bertumpuk: aksi Duplikat di menu baris. Bentuknya
+        // langsung mengatakan "salinan" tanpa perlu kalimat, dan tidak sama
+        // dengan ikon "salin ke papan klip" yang dipakai di halaman detail.
+        'salin' => 'M15.75 17.25v3.375c0 .621-.504 1.125-1.125 1.125h-9.75a1.125 1.125 0 0 1-1.125-1.125V7.875c0-.621.504-1.125 1.125-1.125H6.75a9.06 9.06 0 0 1 1.5.124m7.5 10.376h3.375c.621 0 1.125-.504 1.125-1.125V11.25c0-4.46-3.243-8.161-7.5-8.876a9.06 9.06 0 0 0-1.5-.124H9.375c-.621 0-1.125.504-1.125 1.125v3.5m7.5 10.375H9.375a1.125 1.125 0 0 1-1.125-1.125v-9.25m0 0h1.5a5.25 5.25 0 0 1 5.25-5.25H15',
     ];
 
     /**

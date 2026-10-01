@@ -157,9 +157,6 @@
 
                         <x-admin.cepat ikon="grup" judul="Kelola Pengguna"
                             keterangan="Lihat siapa saja yang memakai KelasKita" :href="route('admin.pengguna')" />
-
-                        <x-admin.cepat ikon="grafik" judul="Lihat Statistik"
-                            keterangan="Tren belajar, nilai, dan pelajaran terpopuler" :href="route('admin.statistik')" />
                     </div>
                 </div>
             </div>

@@ -98,10 +98,29 @@ function initWizardQuiz(akar) {
     const isianCatatan = $("[data-catatan-isian]");
     const ringkasanDaftar = $("[data-wizard-ringkasan-daftar]");
 
-    /** Jumlah langkah wizard. */
-    const TOTAL_LANGKAH = 3;
+    /*
+     * Field "aksi" milik form admin. Form milik pemilik tidak punya input
+     * ini, jadi setiap penulisan ke sini otomatis tidak berlaku untuk form
+     * itu.
+     */
+    const inputAksi = form.querySelector("[data-konten-aksi]");
 
-    /** Subjudul kepala halaman per langkah. */
+    /*
+     * Jumlah langkah wizard, dibaca dari atribut halaman.
+     *
+     * Form admin punya dua tahap (Informasi Dasar, Buat Soal) sementara form
+     * pemilik punya tiga, dan keduanya memakai file ini: logikanya sama,
+     * yang berbeda hanya berapa banyak panel yang boleh dibuka.
+     */
+    const TOTAL_LANGKAH = Number(akar.dataset.langkahTotal) || 3;
+
+    /*
+     * Subjudul kepala halaman per langkah.
+     *
+     * Panjang array boleh lebih pendek dari jumlah langkah: langkah yang
+     * tidak punya kalimat sendiri dibiarkan kosong, bukan menampilkan
+     * kalimat langkah sebelumnya.
+     */
     const SUBJUDUL = [
         "Tentukan informasi dasar untuk kuis yang akan kamu buat.",
         "Susun daftar soal dan tentukan jawaban yang benar.",
@@ -719,7 +738,7 @@ function initWizardQuiz(akar) {
         });
 
         if (subjudul) {
-            subjudul.textContent = SUBJUDUL[langkah - 1];
+            subjudul.textContent = SUBJUDUL[langkah - 1] ?? "";
         }
 
         gambarStepper();
@@ -910,14 +929,20 @@ function initWizardQuiz(akar) {
     /**
      * Kirim form.
      *
-     * Berlaku untuk dua tempat: "Selesai & Simpan" di langkah 3 dan
-     * "Draft" di baris aksi langkah 2. Server memvalidasi seluruh form
-     * sekaligus, jadi keduanya harus memeriksa ketiga langkah dulu —
-     * tombolnya bertipe button, bukan submit, supaya pengiriman bisa
-     * ditahan dan langkah yang bermasalah dibuka lebih dulu, alih-alih
-     * memantulkan halaman ke awal setiap ada yang salah.
+     * Berlaku untuk tiga tempat: "Selesai & Simpan" di langkah terakhir,
+     * "Draft" di baris aksi langkah 2, dan — di form admin — "Publish
+     * Sekarang". Server memvalidasi seluruh form sekaligus, jadi semuanya
+     * harus memeriksa langkah-langkah yang ada dulu; tombolnya bertipe
+     * button, bukan submit, supaya pengiriman bisa ditahan dan langkah yang
+     * bermasalah dibuka lebih dulu, alih-alih memantulkan halaman ke awal
+     * setiap ada yang salah.
+     *
+     * "aksi" hanya berarti sesuatu di form admin yang punya input
+     * [data-konten-aksi]: di situ nilainya menentukan apakah hasil simpan
+     * berstatus draft atau langsung terbit. Form milik pemilik tidak punya
+     * input itu, jadi parameternya diabaikan di sana.
      */
-    function kirimQuiz() {
+    function kirimQuiz(aksi = null) {
         if (!validasiLangkahSatu()) {
             keLangkah(1, -1);
             return;
@@ -928,19 +953,24 @@ function initWizardQuiz(akar) {
             return;
         }
 
-        if (!validasiLangkahTiga()) {
-            // Satu-satunya isian langkah 3 yang bisa menolak kiriman: kode
-            // akses. Panelnya baru saja dibuka, jadi kursor dipindahkan ke
-            // sana sekarang.
-            kePengaturan();
-            inputKode?.focus();
+        /*
+         * Langkah Pengaturan hanya diperiksa kalau form ini memang punya
+         * langkah itu. Satu-satunya isian yang ada di sana dan bisa menolak
+         * kiriman adalah kode akses, jadi form dua tahap tidak pernah
+         * tersangkut di sini.
+         */
+        if (TOTAL_LANGKAH >= 3) {
+            if (!validasiLangkahTiga()) {
+                kePengaturan();
+                inputKode?.focus();
 
-            return;
-        }
+                return;
+            }
 
-        if (inputPublikasikan?.value === "1" && !bukakanCatatanPendukung()) {
-            kePengaturan();
-            return;
+            if (inputPublikasikan?.value === "1" && !bukakanCatatanPendukung()) {
+                kePengaturan();
+                return;
+            }
         }
 
         // Isian soal ditulis ulang tepat sebelum form dikirim, supaya isian
@@ -948,8 +978,27 @@ function initWizardQuiz(akar) {
         // terkirim dan tidak tertinggal satu langkah.
         builder()?.tulisInput();
 
+        if (aksi && inputAksi) {
+            inputAksi.value = aksi;
+        }
+
         form.requestSubmit();
     }
+
+    /*
+     * Tombol di luar form ini — "Publish Sekarang" di baris aksi langkah 2
+     * dan dialog konfirmasi terbitan — memanggil fungsi yang sama lewat
+     * objek global, persis seperti yang dilakukan builder soal di atas.
+     * Dipasang begitu wizard siap, dan dihapus lagi kalau halaman ini
+     * dilepas, supaya tidak ada sisa wizard lama yang masih bisa dipanggil.
+     */
+    window.kelasKitaKontenKirim = kirimQuiz;
+
+    window.addEventListener("pagehide", () => {
+        if (window.kelasKitaKontenKirim === kirimQuiz) {
+            delete window.kelasKitaKontenKirim;
+        }
+    });
 
     tombolSimpan?.addEventListener("click", () => {
         if (langkah === TOTAL_LANGKAH) {
@@ -958,7 +1007,7 @@ function initWizardQuiz(akar) {
     });
 
     // Simpan sebagai draft tanpa menyelesaikan langkah Pengaturan.
-    tombolDraft?.addEventListener("click", kirimQuiz);
+    tombolDraft?.addEventListener("click", () => kirimQuiz("draft"));
 
     /*
      * Mengubah isi form juga harus: (1) menulis ulang input tersembunyi

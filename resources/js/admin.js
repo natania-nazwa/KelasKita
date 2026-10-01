@@ -5,14 +5,16 @@
  * di halaman, jadi modul ini bisa diimpor untuk semua halaman admin
  * tanpa perlu tahu halaman mana yang sedang dibuka.
  *
- * Empat hal yang ditangani:
+ * Delapan hal yang ditangani:
  *   1. Drawer sidebar di bawah 1024px.
  *   2. Dropdown akun di topbar.
- *   3. Dialog peninjauan konten.
- *   4. Halaman Verifikasi: pemilihan baris, panel review, dialog
+ *   3. Panel notifikasi di topbar.
+ *   4. Dialog peninjauan konten.
+ *   5. Menu tiga titik di kartu konten.
+ *   6. Halaman Verifikasi: pemilihan baris, panel review, dialog
  *      Setujui / Tolak, filter tambahan, dan toast.
- *   5. Dialog hapus materi.
- *   6. Dialog detail pengguna.
+ *   7. Dialog hapus materi.
+ *   8. Dialog detail pengguna.
  *
  * Tanpa JavaScript: sidebar tetap tampil di desktop, tombol Keluar di
  * sidebar tetap ada, setiap keputusan Setujui / Tolak tetap punya
@@ -117,7 +119,133 @@ function initDropdownAkun() {
     });
 }
 
-/* ---------- 3. Dialog peninjauan ---------- */
+/* ---------- 3. Panel notifikasi ---------- */
+/*
+ * Lonceng di topbar admin. Yang dikerjakan dua hal, dan keduanya berhenti
+ * sendiri di halaman tanpa lonceng (semua halaman /admin/pengaturan*).
+ *
+ * Pertama, membuka dan menutup panel. Isi panel sudah dirender server dari
+ * tb_notifikasi, jadi tidak ada yang perlu diambil dari jaringan saat
+ * dibuka.
+ *
+ * Kedua, menandai satu baris terbaca lewat fetch begitu diklik, supaya titik
+ * merahnya hilang sebelum halaman tujuan selesai dimuat. Kalau permintaan itu
+ * ditolak atau jaringan gagal, tandanya dikembalikan: notifikasi yang
+ * sebenarnya belum terbaca tidak boleh terlihat sudah dibaca.
+ *
+ * Tanpa JavaScript panel tidak pernah terbuka dan tidak ada yang ditandai
+ * terbaca, tapi tidak ada satu pun notifikasi yang hilang: isinya sudah benar
+ * di HTML.
+ */
+function initNotifikasiTopbar() {
+    const wadah = document.querySelector("[data-admin-notif]");
+
+    if (!wadah) {
+        return;
+    }
+
+    const tombol = wadah.querySelector("[data-admin-notif-tombol]");
+    const panel = wadah.querySelector("[data-admin-notif-panel]");
+    const titik = wadah.querySelector("[data-admin-notif-titik]");
+    const sisa = wadah.querySelector("[data-admin-notif-sisa]");
+
+    if (!tombol || !panel) {
+        return;
+    }
+
+    const tutup = () => {
+        panel.classList.remove("is-buka");
+        tombol.setAttribute("aria-expanded", "false");
+    };
+
+    tombol.addEventListener("click", (event) => {
+        event.stopPropagation();
+
+        const akanBuka = !panel.classList.contains("is-buka");
+
+        panel.classList.toggle("is-buka", akanBuka);
+        tombol.setAttribute("aria-expanded", akanBuka ? "true" : "false");
+    });
+
+    // Klik di luar menutup panel. Tombolnya dikecualikan supaya klik kedua
+    // tidak langsung membukanya lagi setelah dokumen ini menutupnya.
+    document.addEventListener("click", (event) => {
+        if (!wadah.contains(event.target)) {
+            tutup();
+        }
+    });
+
+    document.addEventListener("keydown", (event) => {
+        if (event.key === "Escape") {
+            tutup();
+        }
+    });
+
+    /**
+     * Kurangi angka notifikasi yang belum dibaca, lalu sembunyikan titiknya
+     * kalau sudah tidak ada.
+     */
+    const perbaruiSisa = (jumlah) => {
+        if (typeof jumlah !== "number") {
+            return;
+        }
+
+        if (sisa) {
+            sisa.textContent = jumlah > 0 ? `${jumlah} belum dibaca` : "";
+        }
+
+        if (jumlah > 0) {
+            return;
+        }
+
+        titik?.remove();
+    };
+
+    wadah.addEventListener("click", (event) => {
+        const baris = event.target.closest("[data-admin-notif-item]");
+
+        if (!baris) {
+            return;
+        }
+
+        // Hanya yang belum dibaca yang perlu ditandai; yang sudah dibaca tidak
+        // akan mengubah apa pun di server.
+        if (!baris.classList.contains("is-belum")) {
+            return;
+        }
+
+        const alamat = baris.dataset.adminNotifBaca;
+
+        if (!alamat) {
+            return;
+        }
+
+        baris.classList.remove("is-belum");
+
+        fetch(alamat, {
+            method: "POST",
+            headers: {
+                Accept: "application/json",
+                "Content-Type": "application/json",
+                "X-CSRF-TOKEN":
+                    document.querySelector('meta[name="csrf-token"]')?.content || "",
+                "X-Requested-With": "XMLHttpRequest",
+            },
+            credentials: "same-origin",
+            body: "{}",
+        })
+            .then((res) => (res.ok ? res.json() : null))
+            .then((data) => perbaruiSisa(data?.sisa))
+            .catch(() => {
+                // Jaringan gagal atau server menolak: tandanya dikembalikan
+                // supaya tidak hilang notifikasi yang sebenarnya belum
+                // ditandai terbaca.
+                baris.classList.add("is-belum");
+            });
+    });
+}
+
+/* ---------- 4. Dialog peninjauan ---------- */
 /*
  * Satu dialog dipakai ulang untuk semua baris yang sedang ditinjau:
  * judul, ringkasan, dan URL keputusan diambil dari data-* tombol yang
@@ -248,7 +376,7 @@ function initDialog() {
     });
 }
 
-/* ---------- 4. Menu tiga titik ---------- */
+/* ---------- 5. Menu tiga titik ---------- */
 /*
  * Menu tiga titik di kartu materi memakai <details>, bukan tombol + <div>
  * yang disembunyikan kelas utilitas. Alasannya: buka/tutup-nya sudah
@@ -264,7 +392,14 @@ function initDialog() {
  * langsung, tidak ada yang perlu dibuka atau ditutup.
  */
 function initTutupPanel() {
-    const panel = document.querySelectorAll("[data-tutup-luar]");
+    /*
+     * Array.from, bukan NodeList mentah: di bawah dipakai .find(), yang
+     * hanya ada di Array. NodeList hasil querySelectorAll tidak punya
+     * metode itu, sehingga pemanggilannya melempar "find is not a function"
+     * di setiap klik — termasuk di halaman yang tidak punya satu pun menu
+     * tiga titik, karena error-nya muncul dari listener global di bawah.
+     */
+    const panel = Array.from(document.querySelectorAll("[data-tutup-luar]"));
 
     if (!panel.length) {
         return;
@@ -302,7 +437,7 @@ function initTutupPanel() {
     });
 }
 
-/* ---------- 5. Dialog hapus materi ---------- */
+/* ---------- 6. Dialog hapus materi ---------- */
 /*
  * Sama seperti dialog tinjauan: satu dialog dipakai ulang untuk semua kartu,
  * dan isinya diambil dari data-* tombol yang ditekan, bukan dari server. Jadi
@@ -326,6 +461,7 @@ function initDialogHapus() {
 
     const judul = dialog.querySelector("[data-hapus-judul]");
     const meta = dialog.querySelector("[data-hapus-meta]");
+    const pesan = dialog.querySelector("[data-hapus-pesan]");
     const form = dialog.querySelector("[data-hapus-form]");
 
     let pemicu = null;
@@ -348,6 +484,17 @@ function initDialogHapus() {
 
             if (meta) {
                 meta.textContent = tombol.dataset.hapusMeta || "";
+            }
+
+            /*
+             * Pesannya boleh ditimpa per baris. Yang paling perlu
+             * dibedakan: konten yang sudah tayang lebih berbahaya dihapus,
+             * karena ikut hilang dari halaman pengguna — bukan hanya dari
+             * daftar admin. Tanpa itu, kalimat yang sama dipakai untuk
+             * materi draft dan materi yang sedang dibaca pengguna.
+             */
+            if (pesan && tombol.dataset.hapusPesan) {
+                pesan.textContent = tombol.dataset.hapusPesan;
             }
 
             // Tanpa URL dari tombol, form tidak boleh dikirim ke mana pun.
@@ -382,7 +529,7 @@ function initDialogHapus() {
     });
 }
 
-/* ---------- 6. Halaman Verifikasi ---------- */
+/* ---------- 7. Halaman Verifikasi ---------- */
 /*
  * Halaman ini punya dua bagian yang berubah tanpa memuat ulang halaman:
  * isi panel review di kolom kanan, dan dialog Setujui / Tolak yang
@@ -711,7 +858,7 @@ function initVerifikasi() {
     }
 }
 
-/* ---------- 7. Dialog detail pengguna ---------- */
+/* ---------- 8. Dialog detail pengguna ---------- */
 /*
  * Satu dialog untuk semua baris di halaman Pengguna, diisi dari peta JSON di
  * halaman itu sendiri. Peta-nya dibaca sekali saat halaman dimuat, jadi
@@ -918,6 +1065,7 @@ function initDetailPengguna() {
 
 initDrawer();
 initDropdownAkun();
+initNotifikasiTopbar();
 initDialog();
 initTutupPanel();
 initDialogHapus();

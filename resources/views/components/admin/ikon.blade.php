@@ -17,7 +17,7 @@
     sebanding.
 
     Atribut class dari luar digabung dengan ukuran bawaan, jadi
-    <x-admin.ikon nama="cari" class="ad-atas__cari-ikon" /> tetap bisa
+    <x-admin.ikon nama="menu" class="ad-sisi__ikon" /> tetap bisa
     diposisikan oleh kelas CSS-nya sendiri.
 --}}
 

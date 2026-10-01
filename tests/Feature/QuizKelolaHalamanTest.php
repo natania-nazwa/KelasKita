@@ -359,19 +359,27 @@ class QuizKelolaHalamanTest extends TestCase
             ->assertDontSee('Quiz Berbeda');
     }
 
-    public function test_filter_pembuat_mengerucutkan_daftar(): void
+    public function test_tidak_ada_filter_pembuat_di_kartu_filter(): void
     {
+        /*
+         * Dropdown "Semua pembuat" dihapus dari halaman ini, sama seperti di
+         * halaman Materi: daftar pembuat bisa jadi tidak punya satu pun
+         * pilihan, dan nama pembuat tetap bisa dicari lewat kolom cari.
+         */
         $admin = $this->buatAdmin();
-        $satu = $this->buatPengguna(['nama' => 'Siti', 'email' => 'siti@example.com']);
-        $dua = $this->buatPengguna(['nama' => 'Andi', 'email' => 'andi@example.com']);
-        $this->buatTerbit($satu, 'Quiz Siti');
-        $this->buatTerbit($dua, 'Quiz Andi');
+        $this->buatTerbit($this->buatPengguna(['nama' => 'Siti']), 'Quiz Siti');
 
+        $html = $this->actingAs($admin)->get('/admin/quiz')->assertOk()->getContent();
+
+        $this->assertStringNotContainsString('name="pembuat"', $html);
+        $this->assertStringNotContainsString('Semua pembuat', $html);
+        $this->assertStringNotContainsString('saring-pembuat', $html);
+
+        // Nama pembuat tetap bisa dicari lewat kolom cari.
         $this->actingAs($admin)
-            ->get(route('admin.quiz', ['pembuat' => $satu->getKey()]))
+            ->get(route('admin.quiz', ['q' => 'Siti']))
             ->assertOk()
-            ->assertSee('Quiz Siti')
-            ->assertDontSee('Quiz Andi');
+            ->assertSee('Quiz Siti');
     }
 
     public function test_urutan_paling_lama_menampilkan_quiz_terlama_dulu(): void
@@ -411,21 +419,21 @@ class QuizKelolaHalamanTest extends TestCase
         $this->assertSame(1, substr_count($html, 'value="terlama"'));
     }
 
-    public function test_pencarian_dan_ketiga_filter_tampil_tanpa_hanya_dukungan_javascript(): void
+    public function test_pencarian_dan_kedua_filter_tampil_tanpa_hanya_dukungan_javascript(): void
     {
         $admin = $this->buatAdmin();
         $this->buatTerbit($this->buatPengguna(), 'Quiz Terbit', $this->buatPelajaran('Teknologi', 'teknologi'));
 
         $html = $this->actingAs($admin)->get('/admin/quiz')->assertOk()->getContent();
 
-        // Satu form GET untuk ketiga filter sekaligus.
+        // Satu form GET untuk kedua filter sekaligus.
         $this->assertStringContainsString('method="GET"', $html);
         $this->assertStringContainsString(route('admin.quiz'), $html);
 
         // Tiap select punya label yang bisa dibaca pembaca layar, walau
         // labelnya disembunyikan karena teks select sudah menyebut apa yang
         // disaring.
-        foreach (['saring-kategori', 'saring-urut', 'saring-pembuat'] as $id) {
+        foreach (['saring-kategori', 'saring-urut'] as $id) {
             $this->assertStringContainsString('for="'.$id.'"', $html);
         }
 
@@ -481,9 +489,15 @@ class QuizKelolaHalamanTest extends TestCase
         $this->assertStringContainsString('action="'.route('admin.quiz').'"', $quiz);
 
         // Di halaman lain, topbar memakai default Materi dan tetap jujur.
-        $lain = $this->actingAs($admin)->get('/admin/pengaturan')->assertOk()->getContent();
-        $this->assertStringContainsString('placeholder="Cari materi..."', $lain);
-        $this->assertStringNotContainsString('placeholder="Cari quiz..."', $lain);
+        // Pengaturan tidak dipakai sebagai contoh di sini: topbar halaman itu
+        // sengaja tidak memuat kotak pencarian sama sekali, dan itu sudah
+        // diuji di PengaturanTampilanTest.
+        foreach (['/admin/dashboard', '/admin/verifikasi', '/admin/pengguna'] as $url) {
+            $lain = $this->actingAs($admin)->get($url)->assertOk()->getContent();
+
+            $this->assertStringContainsString('placeholder="Cari materi..."', $lain);
+            $this->assertStringNotContainsString('placeholder="Cari quiz..."', $lain);
+        }
     }
 
     public function test_kata_kunci_aktif_tetap_ikut_dibawa_saat_menyaring(): void
@@ -504,14 +518,28 @@ class QuizKelolaHalamanTest extends TestCase
         $this->assertStringNotContainsString('type="hidden" name="q"', $html);
     }
 
-    public function test_hapus_filter_aktif_khwa_saring_tidak_ada(): void
+    public function test_hapus_filter_selalu_bisa_diklik_walau_tidak_ada_saringan(): void
     {
+        /*
+         * Tombol "Hapus filter" dulu dimatikan (pointer-events-none +
+         * aria-disabled) kalau tidak ada saringan yang aktif. Akibatnya
+         * tombol yang tetap kelihatan seperti tombol tidak bereaksi apa
+         * pun saat diklik, dan itu terbaca sebagai tombol rusak.
+         *
+         * Sekarang tautannya selalu hidup dan selalu menuju URL polos,
+         * jadi diklik saat daftar sudah bersih hanya memuat ulang daftar
+         * yang sama.
+         */
         $admin = $this->buatAdmin();
         $this->buatTerbit($this->buatPengguna());
 
-        $html = $this->actingAs($admin)->get('/admin/quiz')->assertOk()->getContent();
+        foreach (['/admin/quiz', route('admin.quiz', ['kategori' => 'teknologi'])] as $alamat) {
+            $html = $this->actingAs($admin)->get($alamat)->assertOk()->getContent();
 
-        $this->assertStringContainsString('aria-disabled="true"', $html);
+            $this->assertStringContainsString('href="'.route('admin.quiz').'"', $html);
+            $this->assertStringNotContainsString('aria-disabled="true"', $html);
+            $this->assertStringNotContainsString('pointer-events-none', $html);
+        }
     }
 
     public function test_kategori_tanpa_quiz_tidak_ditawarkan(): void

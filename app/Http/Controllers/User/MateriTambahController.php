@@ -7,6 +7,7 @@ use App\Http\Requests\MateriIsianRequest;
 use App\Models\Materi;
 use App\Models\Pelajaran;
 use App\Support\BerkasMateri;
+use App\Support\NotifikasiAdmin;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Str;
 use Illuminate\View\View;
@@ -49,6 +50,14 @@ class MateriTambahController extends Controller
         ]);
 
         $materi->save();
+
+        // Kabar untuk admin bahwa antrean Verifikasi bertambah. Yang dibaca
+        // hanya saklar "Konten menunggu ditinjau" di Pengaturan admin;
+        // keputusan tetap diambil di halaman Verifikasi seperti biasa, tidak
+        // ada alur persetujuan baru yang dibuka dari sini.
+        if ($diajukan) {
+            NotifikasiAdmin::kontenMenunggu($materi);
+        }
 
         return redirect()
             ->route('user.karya-saya', ['tab' => 'materi'])

@@ -133,6 +133,18 @@ class Pelajaran extends Model
     }
 
     /**
+     * Quiz yang memakai mata pelajaran ini.
+     *
+     * Sisi sebaliknya dari Quiz::pelajaran(), dan dipakai halaman "Kelola
+     * Mata Pelajaran" untuk menghitung berapa konten yang bergantung pada
+     * setiap baris sebelum admin menghapusnya.
+     */
+    public function quiz(): HasMany
+    {
+        return $this->hasMany(Quiz::class);
+    }
+
+    /**
      * Hanya pelajaran aktif yang boleh muncul sebagai filter.
      */
     public function scopeAktif(Builder $query): Builder

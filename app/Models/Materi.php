@@ -27,6 +27,7 @@ use Illuminate\Support\Str;
  */
 #[Fillable([
     'pelajaran_id',
+    'kelas',
     'dibuat_oleh',
     'nama',
     'slug',
@@ -353,6 +354,41 @@ class Materi extends Model
             'pelajaran',
             fn (Builder $pelajaran) => $pelajaran->where('slug', $slug)
         );
+    }
+
+    /**
+     * Filter kelas tujuan, dipakai filter "Semua Kelas" di daftar Konten
+     * Pembelajaran.
+     *
+     * Pencocokan tidak mempedulikan huruf besar-kecil, jadi "rpl 2" dari URL
+     * tetap menemukan materi yang tersimpan "RPL 2". Nilai admin dikembalikan
+     * apa adanya supaya filter kosong berarti "semua kelas" dan bukan
+     * "kelas yang namanya tidak ada".
+     */
+    public function scopeKelas(Builder $query, ?string $kelas): Builder
+    {
+        $kelas = trim((string) $kelas);
+
+        if ($kelas === '') {
+            return $query;
+        }
+
+        $operator = $this->getConnection()->getDriverName() === 'pgsql' ? 'ilike' : 'like';
+
+        return $query->where('kelas', $operator, addcslashes($kelas, '%_\\'));
+    }
+
+    /**
+     * Nama kelas tujuan, atau null kalau belum ditentukan.
+     *
+     * Disatuwakannya di sini supaya lencana kelas di daftar dan nilai yang
+     * disimpan di form tidak pernah berbeda soal spasi di awal atau di akhir.
+     */
+    public function labelKelas(): ?string
+    {
+        $kelas = trim((string) $this->kelas);
+
+        return $kelas === '' ? null : $kelas;
     }
 
     /**

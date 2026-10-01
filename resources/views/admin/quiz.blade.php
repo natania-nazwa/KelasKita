@@ -45,7 +45,6 @@
          */
         $jumlahFilter = count(array_filter([
             'kategori' => $kategoriAktif,
-            'pembuat' => $pembuatAktif,
             'urut' => $urutAktif === 'terbaru' ? null : $urutAktif,
         ], fn ($nilai) => filled($nilai)));
 
@@ -110,9 +109,9 @@
     {{-- =====================
          FILTER
 
-         Satu form GET untuk pencarian dan ketiga filter sekaligus, jadi
+         Satu form GET untuk pencarian dan kedua filter sekaligus, jadi
          mengganti filter tidak mematikan filter lain yang sedang aktif, dan
-         sebaliknya. Tidak ada tombol buka/tutup: kategorinya cuma tiga, dan
+         sebaliknya. Tidak ada tombol buka/tutup: isinya cuma dua, dan
          menyembunyikannya di balik popover hanya menambah satu klik untuk
          sesuatu yang selalu dipakai.
 
@@ -129,10 +128,14 @@
          dirancang begitu.
 
          Label select disembunyikan karena teks di dalamnya sudah menyebut apa
-         yang disaring ("Semua kategori", "Semua pembuat"), jadi tidak ada
-         yang perlu dibaca dua kali.
+         yang disaring ("Semua kategori"), jadi tidak ada yang perlu dibaca
+         dua kali.
 
-         Modifier --kuis hanya untuk halaman ini: kolom cari dan ketiga
+         Tidak ada filter pembuat di sini, sama seperti halaman Materi, dan
+         alasannya sama: nama pembuat sudah bisa dicari lewat kolom cari.
+         Kartu di daftar tetap menampilkan siapa pembuatnya.
+
+         Modifier --kuis hanya untuk halaman ini: kolom cari dan kedua
          select diberi cucian ungu muda, tombol "Terapkan" diberi gradasi,
          dan "Hapus filter" memerah saat dilewati. Warnanya saja — isian,
          label, dan urutan tombolnya tetap sama.
@@ -185,40 +188,30 @@
                     </div>
                 </div>
 
-                <div class="ad-alat-baris__field">
-                    <label class="sr-only" for="saring-pembuat">Saring menurut pembuat</label>
-
-                    <div class="ad-pilih__bungkus">
-                        <select id="saring-pembuat" name="pembuat" class="ad-pilih">
-                            <option value="">Semua pembuat</option>
-
-                            @foreach ($daftarPembuat as $pembuat)
-                                <option value="{{ $pembuat['id'] }}" @selected($pembuatAktif === (string) $pembuat['id'])>
-                                    {{ $pembuat['nama'] }}
-                                </option>
-                            @endforeach
-                        </select>
-
-                        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="{{ \App\Support\Ikon::path('panah-bawah') }}" />
-                        </svg>
-                    </div>
-                </div>
-
                 <div class="ad-alat-baris__aksi">
                     <button type="submit" class="ad-tombol ad-tombol--utama">Terapkan</button>
 
                     {{--
-                        Selalu ikut dirender supaya posisinya tidak bergeser
-                        saat filter dipakai dan dilepas. Tanpa saringan yang
-                        aktif tautannya dimatikan: tidak ada yang perlu
-                        dihapus, jadi tidak boleh terlihat bisa diklik.
+                        Selalu hidup, tidak pernah dimatikan.
+
+                        Dulu tautan ini diberi pointer-events-none dan
+                        aria-disabled ketika tidak ada saringan yang aktif,
+                        dengan alasan "tidak ada yang perlu dihapus".
+                        Akibatnya tombol yang tetap kelihatan seperti tombol
+                        justru tidak bereaksi apa pun saat diklik, dan admin
+                        menyimpulkan tombolnya rusak.
+
+                        Menghemat satu klik itu tidak balancing dengan
+                        tombol yang terlihat bisa diklik tapi mati: tautan
+                        ini tetap menuju URL polos, jadi diklik saat daftar
+                        sudah bersih hanya memuat ulang daftar yang sama.
+
+                        Karena itu tidak ada lagi keadaan mati di sini. Yang
+                        dihapus adalah kata kunci, kategori, urutan, dan
+                        pembuat sekaligus, karena tautannya menuju route
+                        tanpa query string sama sekali.
                     --}}
-                    <a href="{{ route('admin.quiz') }}" @class([
-                        'ad-tombol',
-                        'ad-tombol--garis',
-                        'pointer-events-none opacity-40' => ! $adaFilter && $kataKunci === '',
-                    ]) @if (! $adaFilter && $kataKunci === '') aria-disabled="true" tabindex="-1" @endif>
+                    <a href="{{ route('admin.quiz') }}" class="ad-tombol ad-tombol--garis">
                         <x-admin.ikon nama="silang-polos" ukuran="w-4 h-4" />
 
                         Hapus filter

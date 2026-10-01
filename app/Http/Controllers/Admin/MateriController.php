@@ -5,7 +5,6 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Materi;
 use App\Models\Pelajaran;
-use App\Models\User;
 use App\Support\DaftarMateriAdmin;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Builder;
@@ -66,10 +65,9 @@ class MateriController extends Controller
     {
         $kataKunci = trim((string) $request->query('q'));
         $kategori = trim((string) $request->query('kategori'));
-        $pembuat = trim((string) $request->query('pembuat'));
         $urut = $this->urutanTerpilih($request->query('urut'));
 
-        $daftar = $this->daftarMateri($kataKunci, $kategori, $pembuat, $urut);
+        $daftar = $this->daftarMateri($kataKunci, $kategori, $urut);
 
         return view('admin.materi', [
             'daftar' => DaftarMateriAdmin::petikan($daftar->items(), $request->user()?->getKey()),
@@ -77,8 +75,6 @@ class MateriController extends Controller
             'kataKunci' => $kataKunci,
             'kategoriAktif' => $kategori,
             'daftarKategori' => $this->daftarKategori(),
-            'daftarPembuat' => $this->daftarPembuat(),
-            'pembuatAktif' => $pembuat,
             'urutAktif' => $urut,
             'pilihanUrut' => $this->pilihanUrut(),
             'totalMateri' => Materi::query()->terbit()->count(),
@@ -86,19 +82,25 @@ class MateriController extends Controller
     }
 
     /**
-     * Materi sesuai kata kunci, kategori, pembuat, dan urutan.
+     * Materi sesuai kata kunci, kategori, dan urutan.
      *
      * Pencarian dibungkus satu grup WHERE supaya tidak bertabrakan dengan
      * filter yang dipasang sebelumnya: tanpa grup itu, mengetik kata kunci
      * akan membuat "atau" ikut meloloskan materi dari kategori lain.
+     *
+     * Tidak ada filter pembuat. Dulu ada dropdown "Semua pembuat", dan
+     * dropdown itu bisa jadi tidak punya satu pun pilihan: materi yang sudah
+     * tayang tidak selalu punya dibuat_oleh yang terisi, jadi daftar pembuat
+     * yang diambil dari materi yang punya pembuat saja bisa kosong. Nama
+     * pembuat tetap bisa dicari lewat kolom cari, jadi tidak ada yang hilang
+     * ketika dropdown-nya dihapus.
      */
-    private function daftarMateri(string $kataKunci, string $kategori, string $pembuat, string $urut): LengthAwarePaginator
+    private function daftarMateri(string $kataKunci, string $kategori, string $urut): LengthAwarePaginator
     {
         $query = Materi::query()
             ->terbit()
             ->with(['pelajaran', 'pembuat'])
             ->when($kategori !== '', fn (Builder $query) => $query->kategori($kategori))
-            ->when($pembuat !== '', fn (Builder $query) => $query->where('dibuat_oleh', $pembuat))
             ->when($kataKunci !== '', fn (Builder $query) => $query->where(fn (Builder $query) => $this->kriteriaPencarian($query, $kataKunci)));
 
         (self::urutan()[$urut])($query);
@@ -160,36 +162,6 @@ class MateriController extends Controller
             ->filter(fn (array $item) => $item['jumlah'] > 0)
             ->sortBy(fn (array $item) => [$urutanKatalog[$item['slug']] ?? 99, $item['nama']])
             ->values();
-    }
-
-    /**
-     * Pembuat yang punya materi published, untuk dropdown filter.
-     *
-     * Hanya diambil dari materi yang sudah terbit supaya pilihan ini tidak
-     * pernah berisi nama yang menyaring daftar menjadi kosong.
-     *
-     * @return Collection<int, array{id: int, nama: string}>
-     */
-    private function daftarPembuat(): Collection
-    {
-        $adaMateri = Materi::query()
-            ->terbit()
-            ->whereNotNull('dibuat_oleh')
-            ->select('dibuat_oleh')
-            ->distinct()
-            ->pluck('dibuat_oleh')
-            ->map(fn ($id) => (int) $id)
-            ->all();
-
-        if ($adaMateri === []) {
-            return new Collection;
-        }
-
-        return User::query()
-            ->whereKey($adaMateri)
-            ->orderBy('nama')
-            ->get(['id', 'nama'])
-            ->map(fn (User $pengguna) => ['id' => (int) $pengguna->getKey(), 'nama' => $pengguna->nama]);
     }
 
     /**

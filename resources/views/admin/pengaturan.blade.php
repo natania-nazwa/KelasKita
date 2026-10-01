@@ -5,217 +5,245 @@
 @section('content')
 
     {{--
-        Halaman "Pengaturan" area admin.
+        Halaman "Pengaturan" area admin: pusat semua pengaturan admin.
 
-        Halaman ini menampilkan akun admin yang sedang login, dan tidak
-        menyimpan apa pun.
+        Layout dua kolom mengikuti pola yang dipakai halaman admin lain:
+        .ad-atur-kolom berubah jadi satu kolom di bawah 1024px. Semua isi
+        kartu adalah baris pengaturan, tidak ada satu pun form yang disimpan
+        di halaman ini, sehingga tinggi tiap kartu mengikuti isinya dan tidak
+        ada kartu besar yang memenuhi layar.
 
-        Form ubah nama, email, dan password tidak diduplikasi di sini.
-        Kemampuan itu sudah ada dan sudah lengkap validasinya di halaman
-        Profil (/user/profil) milik akun yang sama, dengan aturan
-        password, verifikasi email, dan penanganan kata sandi lama.
-        Menyalin form yang sama ke tempat kedua berarti menyalin aturan
-        itu juga, dan dua tempat itu pasti akan berbeda suatu saat.
+        Yang dipisah halaman dan yang dipisah dialog mengikuti beratnya
+        pekerjaan, bukan selera:
 
-        Karena itu isian di bawah sengaja dibuat disabled, bukan form
-        yang bisa diketik lalu diam-diam tidak tersimpan. Kotaknya tetap
-        ada supaya admin tahu persis apa yang dibutuhkan, dan tombolnya
-        mengarah ke halaman yang benar-benar menyimpan perubahannya.
+          Halaman  : Profil, Keamanan, Kelola Mata Pelajaran, Sesi Login,
+                     Informasi Sistem, Tentang. Semuanya punya langkah lebih
+                     dari satu atau daftar yang panjang.
+          Dialog   : Notifikasi dan Publikasi. Semuanya satu form pendek.
+          Inline   : Tampilan. Kendalinya sudah ada di barisnya, jadi
+                     membuka halaman hanya untuk satu tombol tidak masuk akal.
+
+        Baris yang membuka dialog ditulis langsung di sini sebagai <button>
+        dengan kelas ad-atur-baris, bukan lewat x-admin.atur-baris: komponen
+        itu merender <a>, dan tombolnya harus benar-benar tombol supaya bisa
+        dibuka tanpa JavaScript dan bisa difokus dengan keyboard.
     --}}
 
-    <x-admin.kepala judul="Pengaturan" subjudul="Akun admin dan keamanan KelasKita." />
+    <div class="ad-seksi">
+        <x-admin.kepala judul="Pengaturan"
+            subjudul="Kelola preferensi akun, tampilan, notifikasi, dan aplikasi." ikon="roda" />
+    </div>
 
-    <section class="ad-seksi ad-grid ad-grid--dua">
-        <div class="space-y-5">
+    <div class="ad-atur-kolom">
 
-            {{-- ==================== PROFIL ADMIN ==================== --}}
-            <div class="ad-kartu">
-                <header class="ad-kartu__kepala">
-                    <div class="ad-kartu__kepala-titik">
-                        <span class="ad-cepat__ikon" aria-hidden="true">
-                            <x-admin.ikon nama="pengguna" ukuran="w-5 h-5" />
-                        </span>
+        {{-- ==================== KOLOM KIRI ==================== --}}
+        <div class="ad-atur-tumpukan">
 
-                        <h2 class="ad-kartu__kepala-judul">Profil Admin</h2>
-                    </div>
-                </header>
+            {{-- ---------- AKUN ---------- --}}
+            <x-admin.atur-seksi judul="Akun" ikon="pengguna"
+                subjudul="Kelola informasi profil dan keamanan akun.">
 
-                <div class="ad-kartu__badan">
-                    <div class="flex items-center gap-4">
-                        <x-admin.avatar :inisial="$admin?->inisial() ?? 'A'" ukuran="besar" />
+                <x-admin.atur-baris ikon="pengguna" judul="Profil Admin"
+                    subjudul="Kelola foto profil, nama, dan email."
+                    :href="route('admin.pengaturan.profil')" />
 
-                        <div class="min-w-0">
-                            <p class="text-base font-bold text-[#29245C]">{{ $admin?->nama ?? 'Admin' }}</p>
-                            <p class="mt-0.5 break-all text-xs text-[#77739A]">{{ $admin?->email }}</p>
-
-                            <span class="ad-lencana ad-lencana--ungu mt-1.5">
-                                <x-admin.ikon nama="perisai" ukuran="w-3 h-3" />
-                                Administrator
-                            </span>
-                        </div>
-                    </div>
-
-                    <div class="mt-5 space-y-4">
-                        <label class="ad-field">
-                            <span class="ad-field__label">Nama</span>
-
-                            <input class="ad-input" type="text" value="{{ $admin?->nama }}" readonly>
-                        </label>
-
-                        <label class="ad-field">
-                            <span class="ad-field__label">Email</span>
-
-                            <input class="ad-input" type="email" value="{{ $admin?->email }}" readonly>
-                        </label>
-                    </div>
-
-                    <div class="ad-alert mt-4">
-                        <span class="ad-alert__ikon" aria-hidden="true">
-                            <x-admin.ikon nama="lampu" ukuran="w-3.5 h-3.5" />
-                        </span>
-
-                        <p class="min-w-0">
-                            Nama dan email diubah di halaman Profil, supaya aturannya
-                            hanya ada di satu tempat dan tidak bisa berbeda antara
-                            halaman ini dan halaman Profil.
-                        </p>
-                    </div>
-                </div>
-
-                <footer class="ad-kartu__kaki">
-                    <a href="{{ route('user.profil') }}" class="ad-tombol ad-tombol--utama">
-                        <x-admin.ikon nama="pena" />
-                        Simpan Perubahan
-                    </a>
-                </footer>
-            </div>
-
-            {{-- ==================== KEAMANAN ==================== --}}
-            <div class="ad-kartu">
-                <header class="ad-kartu__kepala">
-                    <div class="ad-kartu__kepala-titik">
-                        <span class="ad-cepat__ikon" aria-hidden="true">
-                            <x-admin.ikon nama="gembok" ukuran="w-5 h-5" />
-                        </span>
-
-                        <h2 class="ad-kartu__kepala-judul">Keamanan</h2>
-                    </div>
-                </header>
-
-                <div class="ad-kartu__badan">
-                    <div class="space-y-4">
-                        <label class="ad-field">
-                            <span class="ad-field__label">Password lama</span>
-
-                            <input class="ad-input" type="password" placeholder="••••••••" disabled>
-                        </label>
-
-                        <label class="ad-field">
-                            <span class="ad-field__label">Password baru</span>
-
-                            <input class="ad-input" type="password" placeholder="Minimal 8 karakter" disabled>
-
-                            <span class="ad-field__petunjuk">Minimal 8 karakter.</span>
-                        </label>
-
-                        <label class="ad-field">
-                            <span class="ad-field__label">Konfirmasi password</span>
-
-                            <input class="ad-input" type="password" placeholder="Ulangi password baru" disabled>
-                        </label>
-                    </div>
-
-                    <div class="ad-alert mt-4">
-                        <span class="ad-alert__ikon" aria-hidden="true">
-                            <x-admin.ikon nama="lampu" ukuran="w-3.5 h-3.5" />
-                        </span>
-
-                        <p class="min-w-0">
-                            Isian di atas belum bisa diklik: password hanya bisa diubah
-                            di halaman Profil, yang juga memeriksa password lama kamu
-                            sebelum menyimpan.
-                        </p>
-                    </div>
-                </div>
-
-                <footer class="ad-kartu__kaki">
-                    <a href="{{ route('user.profil') }}" class="ad-tombol ad-tombol--garis">
-                        <x-admin.ikon nama="gembok" />
-                        Ubah Password
-                    </a>
-                </footer>
-            </div>
-        </div>
-
-        {{-- ==================== INFORMASI AKUN ==================== --}}
-        <div class="ad-kartu h-fit">
-            <header class="ad-kartu__kepala">
-                <div class="ad-kartu__kepala-titik">
-                    <span class="ad-cepat__ikon" aria-hidden="true">
-                        <x-admin.ikon nama="kalender" ukuran="w-5 h-5" />
+                <button type="button" class="ad-atur-baris" data-atur-dialog-buka="atur-keamanan"
+                    data-atur-sorot="keamanan">
+                    <span class="ad-atur-baris__ikon" aria-hidden="true">
+                        <x-admin.ikon nama="perisai" ukuran="w-4 h-4" />
                     </span>
 
-                    <h2 class="ad-kartu__kepala-judul">Informasi Akun</h2>
+                    <span class="ad-atur-baris__teks">
+                        <span class="ad-atur-baris__judul">Keamanan</span>
+                        <span class="ad-atur-baris__sub">Ubah password dan kelola keamanan akun.</span>
+                    </span>
+
+                    <span class="ad-atur-baris__kanan">
+                        <x-admin.ikon nama="panah-kanan" ukuran="w-4 h-4"
+                            class="ad-atur-baris__chevron" />
+                    </span>
+                </button>
+            </x-admin.atur-seksi>
+
+            {{-- ---------- PREFERENSI ---------- --}}
+            <x-admin.atur-seksi judul="Preferensi" ikon="tuas"
+                subjudul="Atur tampilan dan notifikasi sesuai kebutuhan.">
+
+                {{--
+                    Tampilan tidak berupa baris yang membuka halaman, tapi
+                    kendali yang menempel di barisnya. Dua tombol mode
+                    dikelompokkan dengan role="group" supaya pembaca layar
+                    tahu ini satu kendali dengan dua pilihan, bukan dua
+                    kendali yang tidak berhubungan.
+                --}}
+                <div class="ad-atur-baris">
+                    <span class="ad-atur-baris__ikon" aria-hidden="true">
+                        <x-admin.ikon nama="monitor" ukuran="w-4 h-4" />
+                    </span>
+
+                    <span class="ad-atur-baris__teks">
+                        <span class="ad-atur-baris__judul">Tampilan</span>
+                        <span class="ad-atur-baris__sub">Pilih mode tampilan aplikasi.</span>
+                    </span>
+
+                    <div class="ad-atur-baris__kanan">
+                        {{--
+                            Satu form untuk dua tombol: tombol yang ditekan
+                            mengirim temanya sendiri lewat atribut name dan
+                            value, jadi tidak ada input yang perlu diisi lebih
+                            dulu dan formnya tetap jalan tanpa JavaScript.
+
+                            JavaScript hanya menambah satu hal: tema langsung
+                            berubah sebelum server sempat menjawab, supaya tidak
+                            ada kedipan di layar.
+                        --}}
+                        <form method="POST" action="{{ route('admin.pengaturan.tema') }}"
+                            data-atur-tema-form>
+                            @csrf
+                            @method('PUT')
+
+                            <div class="ad-atur-terang-gelap" role="group" aria-label="Mode tampilan"
+                                data-atur-tema>
+                                <button type="submit" name="tema" value="terang"
+                                    class="ad-atur-terang-gelap__tombol" data-atur-tema-pilih="terang"
+                                    aria-pressed="{{ $preferensi->temaAman() === 'terang' ? 'true' : 'false' }}">
+                                    <x-admin.ikon nama="matahari" ukuran="w-3.5 h-3.5" />
+                                    Terang
+                                </button>
+
+                                <button type="submit" name="tema" value="gelap"
+                                    class="ad-atur-terang-gelap__tombol" data-atur-tema-pilih="gelap"
+                                    aria-pressed="{{ $preferensi->temaAman() === 'gelap' ? 'true' : 'false' }}">
+                                    <x-admin.ikon nama="bulan" ukuran="w-3.5 h-3.5" />
+                                    Gelap
+                                </button>
+                            </div>
+                        </form>
+                    </div>
                 </div>
-            </header>
 
-            <div class="ad-kartu__badan">
-                <dl>
-                    <div class="flex items-center justify-between gap-3 border-b border-[#E8E4F5] py-2.5">
-                        <dt class="text-xs text-[#77739A]">Bergabung</dt>
-                        <dd class="shrink-0 text-xs font-bold text-[#29245C]">
-                            {{ $bergabung?->translatedFormat('d F Y') ?? '-' }}
-                        </dd>
-                    </div>
+                <button type="button" class="ad-atur-baris" data-atur-dialog-buka="atur-notifikasi"
+                    data-atur-sorot="notifikasi">
+                    <span class="ad-atur-baris__ikon" aria-hidden="true">
+                        <x-admin.ikon nama="lonceng" ukuran="w-4 h-4" />
+                    </span>
 
-                    <div class="flex items-center justify-between gap-3 border-b border-[#E8E4F5] py-2.5">
-                        <dt class="text-xs text-[#77739A]">Peran</dt>
-                        <dd>
-                            <span class="ad-lencana ad-lencana--ungu">Admin</span>
-                        </dd>
-                    </div>
+                    <span class="ad-atur-baris__teks">
+                        <span class="ad-atur-baris__judul">Notifikasi</span>
+                        <span class="ad-atur-baris__sub">Atur notifikasi yang ingin diterima.</span>
+                    </span>
 
-                    <div class="flex items-center justify-between gap-3 border-b border-[#E8E4F5] py-2.5">
-                        <dt class="text-xs text-[#77739A]">Status</dt>
-                        <dd>
-                            @if ($admin?->isAktif())
-                                <span class="ad-lencana ad-lencana--sukses">
-                                    <span class="ad-lencana__titik" aria-hidden="true"></span>
-                                    Aktif
-                                </span>
-                            @else
-                                <span class="ad-lencana ad-lencana--abu">
-                                    <span class="ad-lencana__titik" aria-hidden="true"></span>
-                                    Nonaktif
-                                </span>
-                            @endif
-                        </dd>
-                    </div>
-                </dl>
+                    <span class="ad-atur-baris__kanan">
+                        <x-admin.ikon nama="panah-kanan" ukuran="w-4 h-4"
+                            class="ad-atur-baris__chevron" />
+                    </span>
+                </button>
+            </x-admin.atur-seksi>
 
-                <p class="ad-seksi__judul mt-6 !text-base">Ringkasan Platform</p>
+            {{-- ---------- SISTEM ---------- --}}
+            <x-admin.atur-seksi judul="Sistem" ikon="monitor"
+                subjudul="Informasi aplikasi dan versi sistem.">
 
-                <div class="mt-3 grid grid-cols-3 gap-2">
-                    @foreach ([
-                        ['Pengguna', $ringkasan['pengguna'], 'grup'],
-                        ['Materi', $ringkasan['materi'], 'buku'],
-                        ['Quiz', $ringkasan['quiz'], 'soal'],
-                    ] as $item)
-                        <div class="rounded-xl border border-[#E8E4F5] bg-[#F7F5FF] px-2 py-3 text-center">
-                            <x-admin.ikon :nama="$item[2]" class="mx-auto mb-1.5 w-4 h-4 text-[#6D4AFF]" />
+                <x-admin.atur-baris ikon="info" judul="Informasi Sistem"
+                    subjudul="Lihat status server, database, dan versi aplikasi."
+                    :href="route('admin.pengaturan.sistem')" />
 
-                            <p class="text-lg font-extrabold tabular-nums text-[#29245C]">{{ $item[1] }}</p>
-                            <p class="text-[0.625rem] text-[#77739A]">{{ $item[0] }}</p>
-                        </div>
-                    @endforeach
-                </div>
-
-                <p class="ad-teks-2 mt-5 !text-xs">
-                    Halaman ini hanya menampilkan. Semua perubahan disimpan oleh
-                    halaman Profil, bukan di sini.
-                </p>
-            </div>
+                <x-admin.atur-baris ikon="buku" judul="Tentang Kelas Kita"
+                    subjudul="Lihat informasi aplikasi, versi, dan pembaruan."
+                    :href="route('admin.pengaturan.tentang')" />
+            </x-admin.atur-seksi>
         </div>
-    </section>
+
+        {{-- ==================== KOLOM KANAN ==================== --}}
+        <div class="ad-atur-tumpukan">
+
+            {{-- ---------- PENGATURAN PEMBELAJARAN ---------- --}}
+            <x-admin.atur-seksi judul="Pengaturan Pembelajaran" ikon="buku"
+                subjudul="Kelola mata pelajaran dan pengaturan konten.">
+
+                <x-admin.atur-baris ikon="dokumen" judul="Kelola Mata Pelajaran"
+                    subjudul="Atur mata pelajaran yang digunakan."
+                    :jumlah="$jumlahPelajaran.' mata pelajaran'"
+                    :href="route('admin.pengaturan.pelajaran')" />
+
+                <button type="button" class="ad-atur-baris" data-atur-dialog-buka="atur-publikasi"
+                    data-atur-sorot="publikasi">
+                    <span class="ad-atur-baris__ikon" aria-hidden="true">
+                        <x-admin.ikon nama="kotak-centang" ukuran="w-4 h-4" />
+                    </span>
+
+                    <span class="ad-atur-baris__teks">
+                        <span class="ad-atur-baris__judul">Pengaturan Publikasi</span>
+                        <span class="ad-atur-baris__sub">Atur default konten baru.</span>
+                    </span>
+
+                    <span class="ad-atur-baris__kanan">
+                        <x-admin.ikon nama="panah-kanan" ukuran="w-4 h-4"
+                            class="ad-atur-baris__chevron" />
+                    </span>
+                </button>
+            </x-admin.atur-seksi>
+
+            {{-- ---------- KEAMANAN LANJUTAN ---------- --}}
+            <x-admin.atur-seksi judul="Keamanan Lanjutan" ikon="perisai"
+                subjudul="Kelola sesi login dan keamanan akun.">
+
+                <x-admin.atur-baris ikon="ponsel" judul="Sesi Login"
+                    subjudul="Lihat perangkat yang sedang login."
+                    :href="route('admin.pengaturan.sesi')" />
+
+                <button type="button" class="ad-atur-baris" data-atur-dialog-buka="atur-logout-semua"
+                    data-atur-sorot="logout-semua">
+                    <span class="ad-atur-baris__ikon" aria-hidden="true">
+                        <x-admin.ikon nama="pintu-keluar" ukuran="w-4 h-4" />
+                    </span>
+
+                    <span class="ad-atur-baris__teks">
+                        <span class="ad-atur-baris__judul">Logout dari Semua Perangkat</span>
+                        <span class="ad-atur-baris__sub">Keluar dari semua perangkat yang terhubung.</span>
+                    </span>
+
+                    <span class="ad-atur-baris__kanan">
+                        <x-admin.ikon nama="panah-kanan" ukuran="w-4 h-4"
+                            class="ad-atur-baris__chevron" />
+                    </span>
+                </button>
+            </x-admin.atur-seksi>
+
+            {{--
+                Kartu tanpa judul dan tanpa ikon kepala.
+
+                Ikon pintu keluar dan kalimat "Keluar dari Akun" di kepala kartu
+                ini hanya mengulang apa yang sudah ada di baris di bawahnya, jadi
+                kepala kartanya dihapus. Baris logout-nya tetap ada lengkap
+                dengan ikon dan dialognya, jadi keluar dari akun tidak ikut
+                hilang.
+            --}}
+            <x-admin.atur-seksi bahaya>
+
+                <button type="button" class="ad-atur-baris ad-atur-baris--bahaya"
+                    data-atur-dialog-buka="atur-keluar" data-atur-sorot="keluar">
+                    <span class="ad-atur-baris__ikon" aria-hidden="true">
+                        <x-admin.ikon nama="pintu-keluar" ukuran="w-4 h-4" />
+                    </span>
+
+                    <span class="ad-atur-baris__teks">
+                        <span class="ad-atur-baris__judul">Keluar dari Akun</span>
+                        <span class="ad-atur-baris__sub">Anda akan keluar dari aplikasi.</span>
+                    </span>
+
+                    <span class="ad-atur-baris__kanan">
+                        <x-admin.ikon nama="panah-kanan" ukuran="w-4 h-4"
+                            class="ad-atur-baris__chevron" />
+                    </span>
+                </button>
+            </x-admin.atur-seksi>
+        </div>
+    </div>
+
+    {{-- ---------- Dialog-dialog di halaman ini ---------- --}}
+    @include('admin.pengaturan.dialog')
+
+    <x-admin.toast :judul="session('sukses')" :pesan="session('suksesDetail')" />
 
 @endsection

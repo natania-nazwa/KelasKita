@@ -61,6 +61,8 @@ final class NotifikasiKonten
             return 0;
         }
 
+        $sekarang = now();
+
         $baris = $sasaran->map(fn ($id) => [
             'pengguna_id' => $id,
             'jenis' => $jenis,
@@ -70,6 +72,11 @@ final class NotifikasiKonten
             'konten_tipe' => $konten instanceof Materi
                 ? Notifikasi::KONTEN_MATERI
                 : Notifikasi::KONTEN_QUIZ,
+            // Ditulis sendiri karena insert() massal lewat query builder
+            // tidak menyentuh timestamp Eloquent. Tanpa ini kolomnya tetap
+            // null dan lonceng menampilkan baris tanpa waktu.
+            'created_at' => $sekarang,
+            'updated_at' => $sekarang,
         ])->all();
 
         Notifikasi::query()->insert($baris);
@@ -109,7 +116,7 @@ final class NotifikasiKonten
             return [];
         }
 
-        return self::petakan($baris);
+        return self::petikan($baris);
     }
 
     /**

@@ -8,6 +8,7 @@ use App\Models\Pelajaran;
 use App\Models\Quiz;
 use App\Support\BerkasQuiz;
 use App\Support\KodeQuiz;
+use App\Support\NotifikasiAdmin;
 use App\Support\SimpanSoalQuiz;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Str;
@@ -78,6 +79,13 @@ class QuizTambahController extends Controller
         ]);
 
         SimpanSoalQuiz::ganti($quiz, $data['soal']);
+
+        // Kabar untuk admin bahwa antrean Verifikasi bertambah. Yang dibaca
+        // hanya saklar "Konten menunggu ditinjau" di Pengaturan admin;
+        // keputusan tetap diambil di halaman Verifikasi seperti biasa.
+        if ($diajukan) {
+            NotifikasiAdmin::kontenMenunggu($quiz);
+        }
 
         return redirect()
             ->route('user.karya-saya', ['tab' => 'quiz'])

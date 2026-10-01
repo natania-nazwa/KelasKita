@@ -17,6 +17,34 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Application Version
+    |--------------------------------------------------------------------------
+    |
+    | Versi aplikasi KelasKita yang ditampilkan di halaman "Informasi Sistem"
+    | dan "Tentang Kelas Kita" pada area admin.
+    |
+    | Disimpan di .env, bukan ditulis langsung di view, supaya naik versi
+    | cukup mengubah satu baris tanpa menyentuh kode.
+    |
+    */
+
+    'versi' => env('APP_VERSION', '1.0.0'),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Nama Developer / Tim
+    |--------------------------------------------------------------------------
+    |
+    | Nama tim yang mengerjakan aplikasi ini. Kosong berarti halaman
+    | "Tentang Kelas Kita" tidak menampilkan baris ini sama sekali, bukan
+    | menampilkan placeholder.
+    |
+    */
+
+    'pengembang' => env('APP_PENGEMBANG'),
+
+    /*
+    |--------------------------------------------------------------------------
     | Application Environment
     |--------------------------------------------------------------------------
     |

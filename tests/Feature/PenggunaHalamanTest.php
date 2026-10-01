@@ -276,9 +276,10 @@ class PenggunaHalamanTest extends TestCase
         $admin = $this->buatAdmin();
         $sari = $this->buatPengguna(['nama' => 'Sari', 'email' => 'sari@example.com']);
 
-        // Satu halaman menampung 15 baris, jadi Rina masuk ke halaman dua dan
-        // tidak ikut dirender. Kalau peta detail ikut memuatnya, isinya jadi
-        // grown tanpa batas dan setiap baris menarik data yang tidak tampil.
+        // Satu halaman menampung 15 baris, jadi sebagian pengguna masuk ke
+        // halaman dua dan tidak ikut dirender. Kalau peta detail ikut memuatnya,
+        // isinya jadi grown tanpa batas dan setiap baris menarik data yang tidak
+        // tampil.
         foreach (range(1, 20) as $urutan) {
             $this->buatPengguna([
                 'nama' => "Siswa $urutan",
@@ -286,10 +287,25 @@ class PenggunaHalamanTest extends TestCase
             ]);
         }
 
-        $detail = $this->actingAs($admin)->get(route('admin.pengguna'))->viewData('detail');
+        $halaman = $this->actingAs($admin)->get(route('admin.pengguna'));
 
-        $this->assertArrayHasKey($sari->getKey(), $detail);
+        $daftar = $halaman->viewData('daftar');
+        $detail = $halaman->viewData('detail');
+
+        $idDiHalaman = $daftar->getCollection()->pluck('id')->all();
+
+        $this->assertCount(15, $idDiHalaman);
         $this->assertCount(15, $detail);
+
+        // Peta detail harus persis sama dengan isi halamannya: tidak ada
+        // pengguna luar halaman ini yang ikut terambil, dan tidak ada baris di
+        // halaman ini yang hilang.
+        $this->assertSame([], array_diff(array_keys($detail), $idDiHalaman));
+        $this->assertSame([], array_diff($idDiHalaman, array_keys($detail)));
+
+        // Daftar diurutkan terbaru lebih dulu, jadi Sari yang dibuat paling
+        // awal ada di halaman dua dan tidak boleh muncul di peta ini.
+        $this->assertNotContains($sari->getKey(), array_keys($detail));
     }
 
     /*

@@ -38,6 +38,18 @@ class MateriIsianRequest extends FormRequest
             'isi' => ['required', 'string', 'min:20'],
             'tingkat_kesulitan' => ['required', Rule::in(['Mudah', 'Sedang', 'Sulit'])],
 
+            /*
+             * Kelas tujuan, diisi dari form Konten Pembelajaran di area admin.
+             *
+             * Nullable dan tidak required: form milik pengguna tidak punya
+             * field ini sama sekali, jadi materi yang dibuat pengguna tetap
+             * boleh terbit tanpa kelas. Karena field-nya tidak dikirim form
+             * itu, validated() juga tidak mengembalikannya dan kolomnya tidak
+             * ikut tersentuh — konten yang sudah punya kelas pun tidak akan
+             * kehilangan kelasnya karena diedit dari sisi pengguna.
+             */
+            'kelas' => ['nullable', 'string', 'max:60'],
+
             // Tombol publikasi di form tambah dan form edit.
             'publikasikan' => ['nullable', 'boolean'],
 
@@ -71,6 +83,7 @@ class MateriIsianRequest extends FormRequest
             'isi.required' => 'Isi materi wajib diisi.',
             'isi.min' => 'Isi materi minimal 20 karakter.',
             'tingkat_kesulitan.in' => 'Tingkat kesulitan tidak dikenal.',
+            'kelas.max' => 'Nama kelas maksimal 60 karakter.',
             'catatan_pengajuan.required' => 'Tuliskan catatan pendukung supaya admin tahu apa yang sudah diperbaiki.',
             'catatan_pengajuan.max' => 'Catatan pengajuan maksimal 500 karakter.',
             'thumbnail.file' => 'Thumbnail harus berupa file gambar.',

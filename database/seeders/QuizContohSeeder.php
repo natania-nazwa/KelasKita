@@ -13,7 +13,7 @@ use Illuminate\Database\Seeder;
  *
  * Seeder ini sengaja terpisah dari QuizSeeder. Isi QuizSeeder tidak diubah
  * karena isinya sudah dipakai halaman Quiz dan beberapa test, sedangkan
- * kebutuhan di sini cuma satu kartu untuk看一眼 tampilannya.
+ * kebutuhan di sini cuma satu kartu untuk melihat tampilannya.
  *
  * Sifatnya idempoten: quiz dicocokkan lewat "judul" dan soal lewat
  * (quiz_id, urutan), jadi aman dijalankan berulang kali.

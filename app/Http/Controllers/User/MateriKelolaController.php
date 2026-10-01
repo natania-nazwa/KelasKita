@@ -8,6 +8,7 @@ use App\Models\Materi;
 use App\Models\Pelajaran;
 use App\Support\BabMateri;
 use App\Support\BerkasMateri;
+use App\Support\NotifikasiAdmin;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -92,6 +93,12 @@ class MateriKelolaController extends Controller
 
         if ($dikirim) {
             $item->ajukanPersetujuan();
+
+            // Kabar untuk admin bahwa antrean Verifikasi bertambah. Yang
+            // dibaca hanya saklar "Konten menunggu ditinjau" di Pengaturan
+            // admin; keputusan tetap diambil di halaman Verifikasi seperti
+            // biasa, tidak ada alur persetujuan baru yang dibuka di sini.
+            NotifikasiAdmin::kontenMenunggu($item);
         }
 
         return redirect()

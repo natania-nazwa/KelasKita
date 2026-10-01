@@ -213,19 +213,30 @@ class MateriKelolaHalamanTest extends TestCase
             ->assertDontSee('Materi Biologi');
     }
 
-    public function test_filter_pembuat_mengerucutkan_daftar(): void
+    public function test_tidak_ada_filter_pembuat_di_kartu_filter(): void
     {
+        /*
+         * Dropdown "Semua pembuat" pernah ada dan bisa jadi tidak punya satu
+         * pun pilihan: materi yang sudah tayang tidak selalu punya
+         * dibuat_oleh yang terisi, jadi daftar pembuat yang diambil dari
+         * materi yang punya pembuat saja bisa kosong — filter yang
+         * kelihatan ada tapi tidak bisa dipakai. Karena itu dropdownnya
+         * dihapus; nama pembuat tetap bisa dicari lewat kolom cari.
+         */
         $admin = $this->buatAdmin();
-        $budi = $this->buatPengguna(['nama' => 'Budi Santoso']);
-        $siti = $this->buatPengguna(['nama' => 'Siti Aminah', 'email' => 'siti@example.com']);
-        $this->buatTerbit($budi, 'Materi Budi');
-        $this->buatTerbit($siti, 'Materi Siti');
+        $this->buatTerbit($this->buatPengguna(), 'Materi Budi');
 
+        $html = $this->actingAs($admin)->get('/admin/materi')->assertOk()->getContent();
+
+        $this->assertStringNotContainsString('name="pembuat"', $html);
+        $this->assertStringNotContainsString('Semua pembuat', $html);
+        $this->assertStringNotContainsString('saring-pembuat', $html);
+
+        // Nama pembuat tetap bisa dicari lewat kolom cari.
         $this->actingAs($admin)
-            ->get(route('admin.materi', ['pembuat' => (string) $siti->getKey()]))
+            ->get(route('admin.materi', ['q' => 'Budi']))
             ->assertOk()
-            ->assertSee('Materi Siti')
-            ->assertDontSee('Materi Budi');
+            ->assertSee('Materi Budi');
     }
 
     public function test_urutan_paling_lama_menampilkan_materi_terlama_dulu(): void
@@ -259,7 +270,7 @@ class MateriKelolaHalamanTest extends TestCase
      * =============================================================
      */
 
-    public function test_pencarian_dan_ketiga_filter_tampil_tanpa_hanya_dukungan_javascript(): void
+    public function test_pencarian_dan_kedua_filter_tampil_tanpa_hanya_dukungan_javascript(): void
     {
         $admin = $this->buatAdmin();
         $this->buatTerbit($this->buatPengguna());
@@ -269,12 +280,10 @@ class MateriKelolaHalamanTest extends TestCase
             ->assertOk()
             ->getContent();
 
-        // Tiga select, ketiganya di dalam satu form GET tanpa popover.
+        // Dua select, keduanya di dalam satu form GET tanpa popover.
         $this->assertStringContainsString('name="kategori"', $html);
         $this->assertStringContainsString('name="urut"', $html);
-        $this->assertStringContainsString('name="pembuat"', $html);
         $this->assertStringContainsString('Semua kategori', $html);
-        $this->assertStringContainsString('Semua pembuat', $html);
 
         // Dua tombol aksi.
         $this->assertStringContainsString('>Terapkan<', $html);
@@ -441,22 +450,28 @@ class MateriKelolaHalamanTest extends TestCase
         $this->assertStringContainsString('justify-content: space-between', $aturan);
     }
 
-    public function test_hapus_filter_aktif_khwa_saring_tidak_ada(): void
+    public function test_hapus_filter_selalu_bisa_diklik_walau_tidak_ada_saringan(): void
     {
+        /*
+         * Tombol "Hapus filter" dulu dimatikan (pointer-events-none +
+         * aria-disabled) kalau tidak ada saringan yang aktif. Akibatnya
+         * tombol yang tetap kelihatan seperti tombol tidak bereaksi apa
+         * pun saat diklik, dan itu terbaca sebagai tombol rusak.
+         *
+         * Sekarang tautannya selalu hidup dan selalu menuju URL polos,
+         * jadi diklik saat daftar sudah bersih hanya memuat ulang daftar
+         * yang sama.
+         */
         $admin = $this->buatAdmin();
         $this->buatTerbit($this->buatPengguna(), 'Materi Satu');
 
-        $dimatikan = $this->actingAs($admin)->get('/admin/materi')->assertOk()->getContent();
-        $menyala = $this->actingAs($admin)
-            ->get(route('admin.materi', ['kategori' => 'matematika']))
-            ->assertOk()
-            ->getContent();
+        foreach (['/admin/materi', route('admin.materi', ['kategori' => 'matematika'])] as $alamat) {
+            $html = $this->actingAs($admin)->get($alamat)->assertOk()->getContent();
 
-        // Tanpa saringan, tombolnya tampil redup dan tidak bisa diklik.
-        $this->assertStringContainsString('aria-disabled="true"', $dimatikan);
-
-        // Ada saringan, tautan hapus filter-nya hidup lagi.
-        $this->assertStringNotContainsString('aria-disabled="true"', $menyala);
+            $this->assertStringContainsString('href="'.route('admin.materi').'"', $html);
+            $this->assertStringNotContainsString('aria-disabled="true"', $html);
+            $this->assertStringNotContainsString('pointer-events-none', $html);
+        }
     }
 
     public function test_urutan_hanya_ada_terbaru_dan_terlama(): void
@@ -575,6 +590,52 @@ class MateriKelolaHalamanTest extends TestCase
         return (string) preg_replace('#/\*.*?\*/#s', '', $aturan);
     }
 
+    public function test_yang_melebar_di_baris_filter_adalah_kolom_cari_bukan_select(): void
+    {
+        /*
+         * Select pernah ikut melebar karena flex-grow-nya 1, sehingga ruang
+         * sisa di baris filter dibagi ke semua select. Begitu satu select
+         * dihapus, ruang itu larut ke dua select yang tersisa dan keduanya
+         * melebar sendiri. Sekarang kolom cari yang menyerap ruang sisa, dan
+         * select tetap setipis lebar dasarnya.
+         *
+         * Dipakai nilai flex, bukan pixel: yang dijaga perilakunya (siapa
+         * yang grow), bukan hasil hitungannya yang sudah pasti beda antar
+         * browser.
+         */
+        $css = file_get_contents(resource_path('css/admin.css'));
+
+        // Yang diperiksa nilai grow-nya: "flex: <grow> <shrink> <basis>".
+        // Semua blok ikut diperiksa, termasuk yang di dalam media query —
+        // grow 0 di media query desktop-lah yang bikin kolom cari ikut
+        // ikut sempit saat layar lebar.
+        //
+        // Selector diikat ke awal baris, jadi hanya aturan dasarnya yang
+        // ikut dihitung. Aturan yang disengaja berbeda — misalnya
+        // .ad-alat-kotak--konten untuk baris filter "Konten Pembelajaran"
+        // yang semuanya dibagi rata dalam satu baris lurus — punya selector
+        // berprefiks dan punya testnya sendiri di KontenPembelajaranTest.
+        $grow = function (string $aturan): string {
+            preg_match('/flex:\s*(\d+)/', $this->tanpaKomentar($aturan), $cocok);
+
+            return $cocok[1];
+        };
+
+        preg_match_all('/^\s*\.ad-alat-baris > \.ad-cari \{([^}]*)\}/m', $css, $cari);
+        preg_match_all('/^\s*\.ad-alat-baris__field \{([^}]*)\}/m', $css, $field);
+
+        $this->assertGreaterThanOrEqual(2, count($cari[1]));
+        $this->assertGreaterThanOrEqual(1, count($field[1]));
+
+        foreach ($cari[1] as $aturan) {
+            $this->assertSame('1', $grow($aturan));
+        }
+
+        foreach ($field[1] as $aturan) {
+            $this->assertSame('0', $grow($aturan));
+        }
+    }
+
     public function test_pembungkus_select_memakai_kelas_yang_sama(): void
     {
         $admin = $this->buatAdmin();
@@ -582,15 +643,15 @@ class MateriKelolaHalamanTest extends TestCase
 
         $html = $this->actingAs($admin)->get('/admin/materi')->assertOk()->getContent();
 
-        // Ketiganya harus dibungkus .ad-pilih__bungkus dan memakai .ad-pilih,
+        // Dua-duanya harus dibungkus .ad-pilih__bungkus dan memakai .ad-pilih,
         // tidak ada select yang dilepas dari pembungkusnya.
-        $this->assertSame(3, substr_count($html, 'class="ad-pilih__bungkus"'));
-        $this->assertSame(3, substr_count($html, 'class="ad-pilih"'));
+        $this->assertSame(2, substr_count($html, 'class="ad-pilih__bungkus"'));
+        $this->assertSame(2, substr_count($html, 'class="ad-pilih"'));
 
         // Tiap pembungkus harus punya tepat satu select dan satu svg panah.
         preg_match_all('#<div class="ad-pilih__bungkus">(.*?)</div>#s', $html, $bungkus);
 
-        $this->assertCount(3, $bungkus[1]);
+        $this->assertCount(2, $bungkus[1]);
 
         foreach ($bungkus[1] as $isi) {
             $this->assertSame(1, substr_count($isi, '<select'));

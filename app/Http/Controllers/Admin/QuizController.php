@@ -5,7 +5,6 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Pelajaran;
 use App\Models\Quiz;
-use App\Models\User;
 use App\Support\DaftarQuizAdmin;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Builder;
@@ -66,10 +65,9 @@ class QuizController extends Controller
     {
         $kataKunci = trim((string) $request->query('q'));
         $kategori = trim((string) $request->query('kategori'));
-        $pembuat = trim((string) $request->query('pembuat'));
         $urut = $this->urutanTerpilih($request->query('urut'));
 
-        $daftar = $this->daftarQuiz($kataKunci, $kategori, $pembuat, $urut);
+        $daftar = $this->daftarQuiz($kataKunci, $kategori, $urut);
 
         return view('admin.quiz', [
             'daftar' => DaftarQuizAdmin::petikan($daftar->items(), $request->user()?->getKey()),
@@ -77,8 +75,6 @@ class QuizController extends Controller
             'kataKunci' => $kataKunci,
             'kategoriAktif' => $kategori,
             'daftarKategori' => $this->daftarKategori(),
-            'daftarPembuat' => $this->daftarPembuat(),
-            'pembuatAktif' => $pembuat,
             'urutAktif' => $urut,
             'pilihanUrut' => $this->pilihanUrut(),
             'totalQuiz' => Quiz::query()->terbit()->count(),
@@ -86,7 +82,7 @@ class QuizController extends Controller
     }
 
     /**
-     * Quiz sesuai kata kunci, kategori, pembuat, dan urutan.
+     * Quiz sesuai kata kunci, kategori, dan urutan.
      *
      * Pencarian dibungkus satu grup WHERE supaya tidak bertabrakan dengan
      * filter yang dipasang sebelumnya: tanpa grup itu, mengetik kata kunci
@@ -95,15 +91,18 @@ class QuizController extends Controller
      * Jumlah soal ikut dihitung lewat withCount dan langsung diberi nama
      * jumlah_soal_termuat supaya Quiz::jumlahSoal() membacanya dari sana.
      * Tanpa itu, kartu di daftar akan menjalankan satu query per baris.
+     *
+     * Tidak ada filter pembuat, sama seperti halaman Materi. Nama pembuat
+     * tetap bisa dicari lewat kolom cari, jadi tidak ada yang hilang ketika
+     * dropdown-nya dihapus.
      */
-    private function daftarQuiz(string $kataKunci, string $kategori, string $pembuat, string $urut): LengthAwarePaginator
+    private function daftarQuiz(string $kataKunci, string $kategori, string $urut): LengthAwarePaginator
     {
         $query = Quiz::query()
             ->terbit()
             ->with(['pelajaran', 'pembuat'])
             ->withCount(['soal as jumlah_soal_termuat' => fn (Builder $soal) => $soal->aktif()])
             ->when($kategori !== '', fn (Builder $query) => $query->kategori($kategori))
-            ->when($pembuat !== '', fn (Builder $query) => $query->where('dibuat_oleh', $pembuat))
             ->when($kataKunci !== '', fn (Builder $query) => $query->where(fn (Builder $query) => $this->kriteriaPencarian($query, $kataKunci)));
 
         (self::urutan()[$urut])($query);
@@ -168,36 +167,6 @@ class QuizController extends Controller
             ->filter(fn (array $item) => $item['jumlah'] > 0)
             ->sortBy(fn (array $item) => [$urutanKatalog[$item['slug']] ?? 99, $item['nama']])
             ->values();
-    }
-
-    /**
-     * Pembuat yang punya quiz published, untuk dropdown filter.
-     *
-     * Hanya diambil dari quiz yang sudah terbit supaya pilihan ini tidak
-     * pernah berisi nama yang menyaring daftar menjadi kosong.
-     *
-     * @return Collection<int, array{id: int, nama: string}>
-     */
-    private function daftarPembuat(): Collection
-    {
-        $adaQuiz = Quiz::query()
-            ->terbit()
-            ->whereNotNull('dibuat_oleh')
-            ->select('dibuat_oleh')
-            ->distinct()
-            ->pluck('dibuat_oleh')
-            ->map(fn ($id) => (int) $id)
-            ->all();
-
-        if ($adaQuiz === []) {
-            return new Collection;
-        }
-
-        return User::query()
-            ->whereKey($adaQuiz)
-            ->orderBy('nama')
-            ->get(['id', 'nama'])
-            ->map(fn (User $pengguna) => ['id' => (int) $pengguna->getKey(), 'nama' => $pengguna->nama]);
     }
 
     /**

@@ -5,6 +5,45 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>@yield('title', 'Dashboard Admin | KelasKita')</title>
+
+    {{--
+        Tema harus sudah terpasang SEBELUM halaman digambar, kalau tidak admin
+        akan melihat kilatan terang sedikit lebih dulu setiap kali memuat
+        halaman dalam mode gelap.
+
+        Yang dibaca di sini ada dua, dan urutannya disengaja:
+
+          - localStorage "kk-tema" = pilihan terakhir di perangkat ini. Ini yang
+            menang, karena admin yang sedang membuka halaman ini baru saja
+            memilih tema itu dan mungkin belum sempat menyalinnya ke
+            localStorage.
+
+          - $temaAdmin             = kolom "tema" di tb_preferensi untuk akun
+            ini, dikirimkan dari view composer. Ini yang berlaku di perangkat
+            lain, di mana localStorage masih kosong.
+
+        Kalau keduanya tidak ada (admin belum pernah membuka Pengaturan, dan
+        storage diblokir mode privat), tempatnya jatuh ke terang.
+
+        localStorage dan database sengaja dua-duanya dipakai: yang pertama
+        membuat tema langsung berubah tanpa kedipan, yang kedua membuat
+        pilihan yang sama ikut berlaku di perangkat lain.
+    --}}
+    <script>
+        (function () {
+            var dariServer = @json($temaAdmin ?? 'terang');
+
+            try {
+                var tersimpan = window.localStorage.getItem('kk-tema');
+
+                document.documentElement.dataset.theme =
+                    tersimpan === 'gelap' || tersimpan === 'terang' ? tersimpan : dariServer;
+            } catch (e) {
+                document.documentElement.dataset.theme = dariServer;
+            }
+        })();
+    </script>
+
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 
     {{--
@@ -31,8 +70,8 @@
     Struktur: sidebar di kiri (fixed, jadi jadi drawer di bawah 1024px)
     dan kolom konten di kanan yang berisi topbar lalu halaman.
 
-    Nilai variabel di bawah dipakai sidebar dan topbar supaya menu aktif,
-    jumlah konten yang menunggu, dan nama akun hanya ditulis satu kali.
+    Nilai variabel di bawah dipakai sidebar supaya menu aktif dan jumlah
+    konten yang menunggu hanya ditulis satu kali.
 --}}
 @php
     $admin = auth()->user();
@@ -56,6 +95,25 @@
      * "verifikasi", jadi URL lama tidak berubah dan tidak ada route
      * yang bentrok. Label UI tetap "Verifikasi" supaya urutannya
      * mengikuti yang diminta.
+     *
+     * "Konten Pembelajaran" adalah menu baru dan berdiri sendiri. Ia bukan
+     * pengganti "Materi" atau "Quiz", dan bukan juga "Verifikasi":
+     *
+     *   - Materi / Quiz  = katalog konten yang sudah tayang, siapa pun
+     *                      yang membuatnya (dibaca, dan diubah kalau karya
+     *                      admin sendiri).
+     *   - Verifikasi     = antrean setujui / tolak untuk karya pengguna.
+     *   - Konten         = ruang kerja admin: tambah, sunting, gandakan,
+     *                      terbitkan, dan tarik kembali karyanya sendiri.
+     *
+     * Dulu menu ini punya dua anak (Materi dan Quiz) yang membuka satu
+     * halaman dengan tab berbeda. Anak-anaknya dihapus karena membuat
+     * "Materi" dan "Quiz" muncul dua kali di sidebar — sekali sebagai anak
+     * tanpa ikon dan sekali sebagai menu utama yang berikon — dan yang
+     * paling membingungkan justru yang tidak berikon. Berpindah antara
+     * Materi dan Quiz di ruang kerja admin sekarang lewat tab di dalam
+     * halaman Konten Pembelajaran (nav.ad-tab di admin/konten.blade.php),
+     * yang sudah ada dan tidak bergantung pada menu turunan.
      */
     $menuUtama = [
         [
@@ -63,6 +121,12 @@
             'ikon' => 'papan',
             'href' => route('admin.dashboard'),
             'aktif' => request()->routeIs('admin.dashboard'),
+        ],
+        [
+            'label' => 'Konten Pembelajaran',
+            'ikon' => 'buku',
+            'href' => route('admin.konten'),
+            'aktif' => request()->routeIs('admin.konten*'),
         ],
         [
             'label' => 'Verifikasi',
@@ -99,25 +163,48 @@
             'href' => route('admin.pengguna'),
             'aktif' => request()->routeIs('admin.pengguna'),
         ],
-        [
-            'label' => 'Hasil & Statistik',
-            'ikon' => 'grafik',
-            'href' => route('admin.statistik'),
-            'aktif' => request()->routeIs('admin.statistik'),
-        ],
     ];
 
     $menuBawah = [
         [
+            /*
+             * "admin.pengaturan*" dengan bintang, bukan route yang persis sama.
+             * Pengaturan punya banyak halaman anak (profil, keamanan, pelajaran,
+             * sesi, sistem, tentang), dan memakai nama route yang sama persis
+             * membuat menunya menyala hanya di /admin/pengaturan. Menu yang
+             * sedang dibuka harus tetap terlihat aktif di seluruh sub-halamannya.
+             */
             'label' => 'Pengaturan',
             'ikon' => 'roda',
             'href' => route('admin.pengaturan'),
-            'aktif' => request()->routeIs('admin.pengaturan'),
+            'aktif' => request()->routeIs('admin.pengaturan*'),
         ],
     ];
+
+    /*
+     * Topbar punya dua bentuk. Pengaturan dan semua sub-halamannya memakai
+     * bentuk ringkas: tombol buka sidebar saja.
+     *
+     * Dengan bintang, bukan route yang persis sama, supaya /admin/pengaturan
+     * /profil ikut termasuk. Daftar sub-halaman ini akan pernah bertambah, dan
+     * setiap halaman baru itu otomatis ikut mendapat bentuk topbar yang sama
+     * tanpa perlu daftar kedua.
+     *
+     * Halaman lain memakai bentuk penuh, yang isinya ada di
+     * components/admin/topbar-kanan.blade.php.
+     */
+    $topbarRingkas = request()->routeIs('admin.pengaturan*');
 @endphp
 
-<body class="tubuh-admin antialiased">
+{{--
+        Aturan "Konfirmasi sebelum Publish" dari Pengaturan, ditaruh di sini
+        supaya seluruh halaman admin membacanya dari satu tempat dan
+        resources/js/konten-publish.js tidak perlu query apa pun.
+
+        Nilai "0" berarti dimatikan, jadi tombol publish langsung mengirim
+        form. Nilai lain berarti dialog konfirmasi dibuka lebih dulu.
+    --}}
+<body class="tubuh-admin antialiased" data-konten-konfirmasi="{{ $konfirmasiPublikasi ?? '1' }}">
 
 <div class="ad-rangka">
 
@@ -227,101 +314,42 @@
     <div class="ad-utama">
 
         {{-- ---------- TOPBAR ---------- --}}
-        <header class="ad-atas">
-            <div class="ad-atas__baris">
+        {{--
+            Dua bentuk topbar, dan yang mana dipakai ditentukan lewat
+            $topbarRingkas di blok @php atas.
 
+            Bentuk penuh, di semua halaman admin kecuali Pengaturan: kotak
+            pencarian, lonceng notifikasi, dan menu akun.
+
+            Bentuk ringkas, di semua halaman /admin/pengaturan*: tombol buka
+            sidebar saja.
+
+            Kenapa Pengaturan dibedakan? Karena di halaman itu tiga hal itu memang
+            tidak berguna: setiap daftar sudah punya kotak pencarian sendiri,
+            saklar notifikasi ada tepat di halaman itu, dan tautan Pengaturan di
+            menu akun menunjuk halaman yang sedang dibuka. Tombol Keluar di kaki
+            sidebar juga sudah ada, dan posisinya sama di semua halaman.
+
+            Notifikasi admin tidak ikut hilang: barisnya tetap dibuat di database
+            dan saklarnya tetap mengatur. Hanya tempat membacanya yang tidak ada
+            di halaman ini.
+
+            Bentuk ringkas disembunyikan di layar lebar, karena satu-satunya
+            isinya tombol yang sudah disembunyikan di sana. Kalau tidak, halaman
+            Pengaturan akan memakai strip kosong setinggi topbar di atas judulnya
+            sendiri. Di bawah 1024px tombolnya justru satu-satunya cara membuka
+            sidebar, jadi topbarnya tetap ada.
+        --}}
+        <header @class(['ad-atas', 'ad-atas--ringkas' => $topbarRingkas])>
+            <div class="ad-atas__baris">
                 <button type="button" class="ad-atas__buka" data-sisi-buka aria-controls="sisi-admin"
                     aria-expanded="false" aria-label="Buka menu">
                     <x-admin.ikon nama="menu" ukuran="w-5 h-5" />
                 </button>
 
-                {{--
-                    Pencarian topbar. Aplikasi belum punya pencarian global,
-                    jadi form ini mengirim "q" ke halaman daftar yang sedang
-                    dibuka — Materi atau Quiz — dan teksnya ikut menyesuaikan
-                    halaman itu.
-
-                    Teksnya sengaja tidak menjanjikan lebih dari yang ada.
-                    Dulu label dan placeholder-nya menulis "Cari materi, quiz,
-                    pengguna" di setiap halaman, padahal form-nya hanya menuju
-                    satu daftar: mengetik di halaman Quiz akan mendarat di
-                    halaman Materi dan hasilnya tidak pernah terlihat. Sekarang
-                    yang ditulis apa yang benar-benar dicari.
-
-                    Halaman lain (Dashboard, Verifikasi, Pengguna, Pengaturan)
-                    memakai default: Materi, karena itu daftar konten dengan
-                    pencarian yang selalu ada.
-                --}}
-                @php
-                    /*
-                     * Halaman daftar tempat kotak ini mengirim, beserta teksnya.
-                     * Dihitung sekali supaya label, placeholder, dan action
-                     * tidak mungkin berbeda satu sama lain.
-                     */
-                    $halamanCari = request()->routeIs('admin.quiz*') ? 'quiz' : 'materi';
-                @endphp
-                <form class="ad-atas__cari" method="GET"
-                    action="{{ $halamanCari === 'quiz' ? route('admin.quiz') : route('admin.materi') }}"
-                    role="search">
-                    <label for="cari-ad">Cari {{ $halamanCari }}</label>
-
-                    <x-admin.ikon nama="cari" class="ad-atas__cari-ikon" />
-
-                    <input id="cari-ad" name="q" type="search"
-                        value="{{ request('q') }}" placeholder="Cari {{ $halamanCari }}..."
-                        autocomplete="off">
-                </form>
-
-                <div class="ad-atas__kanan">
-                    {{--
-                        Lonceng notifikasi. Aplikasi belum punya tabel
-                        notifikasi, jadi tombolnya sengaja type="button"
-                        dan tidak mengirim apa pun: penandanya dekoratif.
-                    --}}
-                    <button type="button" class="ad-atas__notif" aria-label="Notifikasi">
-                        <x-admin.ikon nama="lonceng" ukuran="w-5 h-5" />
-
-                        <span class="ad-atas__titik" aria-hidden="true"></span>
-                    </button>
-
-                    {{-- Akun + dropdown --}}
-                    <div class="ad-atas__akun">
-                        <button type="button" class="ad-atas__akun-tombol" data-akun-tombol aria-expanded="false"
-                            aria-controls="akun-menu">
-                            <x-admin.avatar :inisial="$admin?->inisial() ?? 'A'" ukuran="kecil" />
-
-                            <span class="ad-atas__akun-teks">
-                                <span class="ad-atas__akun-nama">{{ $admin?->nama ?? 'Admin' }}</span>
-                                <span class="ad-atas__akun-peran">Admin</span>
-                            </span>
-
-                            <x-admin.ikon nama="panah-bawah" class="ad-atas__akun-panah" />
-                        </button>
-
-                        <div class="ad-atas__akun-menu" id="akun-menu" data-akun-menu>
-                            <div class="ad-atas__akun-menu-kepala">
-                                <x-admin.avatar :inisial="$admin?->inisial() ?? 'A'" ukuran="sedang" />
-
-                                <span class="min-w-0">
-                                    <span class="ad-atas__akun-menu-nama">{{ $admin?->nama ?? 'Admin' }}</span>
-                                    <span class="ad-atas__akun-menu-email">{{ $admin?->email ?? 'admin@kelaskita.com' }}</span>
-                                </span>
-                            </div>
-
-                            <a href="{{ route('admin.pengaturan') }}" class="ad-atas__akun-menu-aksi">
-                                Pengaturan
-                            </a>
-
-                            <form method="POST" action="{{ route('logout') }}" class="ad-atas__akun-menu-kaki">
-                                @csrf
-
-                                <button type="submit" class="ad-atas__akun-menu-aksi">
-                                    Keluar
-                                </button>
-                            </form>
-                        </div>
-                    </div>
-                </div>
+                @unless ($topbarRingkas)
+                    <x-admin.topbar-kanan :admin="$admin" />
+                @endunless
             </div>
         </header>
 

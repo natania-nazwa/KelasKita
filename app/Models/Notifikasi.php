@@ -37,11 +37,60 @@ class Notifikasi extends Model
     /** Quiz baru diterbitkan admin. */
     public const JENIS_QUIZ_BARU = 'quiz_baru';
 
+    /*
+     * Empat jenis berikut hanya masuk ke lonceng admin, bukan ke milik
+     * pengguna. Semuanya ditulis oleh App\Support\NotifikasiAdmin, dan setiap
+     * jenisnya punya satu saklar preferensi yang mengendalikannya, jadi
+     * mematikan saklarnya di Pengaturan benar-benar menghentikan notifikasi
+     * jenis itu.
+     */
+    /** Admin menerbitkaryanya sendiri. */
+    public const JENIS_KONTEN_TERBIT = 'konten_terbit';
+
+    /** Admin menyimpan karyanya sebagai draft. */
+    public const JENIS_KONTEN_DRAFT = 'konten_draft';
+
+    /** Hasil kuis baru dari seorang pengguna. */
+    public const JENIS_HASIL_KUIS = 'hasil_kuis';
+
+    /** Karya pengguna yang menunggu diperiksa admin. */
+    public const JENIS_KONTEN_MENUNGGU = 'konten_menunggu';
+
     /** Dua jenis yang pernah ada, untuk dropdown dan validasi. */
     public const JENIS_TERSEDIA = [
         self::JENIS_MATERI_BARU,
         self::JENIS_QUIZ_BARU,
+        self::JENIS_KONTEN_TERBIT,
+        self::JENIS_KONTEN_DRAFT,
+        self::JENIS_HASIL_KUIS,
+        self::JENIS_KONTEN_MENUNGGU,
     ];
+
+    /**
+     * Ikon yang dipakai lonceng untuk setiap jenis notifikasi.
+     *
+     * Dipetakan di model, bukan di view, supaya view tidak harus tahu daftar
+     * jenisnya. Dipakai kedua lonceng: milik pengguna dan milik admin, supaya
+     * kabar yang sama memakai lambang yang sama.
+     *
+     * @return array<string, string>
+     */
+    public const IKON = [
+        self::JENIS_MATERI_BARU => 'buku',
+        self::JENIS_QUIZ_BARU => 'centang',
+        self::JENIS_KONTEN_TERBIT => 'centang',
+        self::JENIS_KONTEN_DRAFT => 'file-teks',
+        self::JENIS_HASIL_KUIS => 'piala',
+        self::JENIS_KONTEN_MENUNGGU => 'jam',
+    ];
+
+    /**
+     * Nama ikon untuk jenis ini, dengan nilai bawaan yang aman.
+     */
+    public static function ikon(string $jenis): string
+    {
+        return self::IKON[$jenis] ?? 'lonceng';
+    }
 
     /** Nilai kolom konten_tipe untuk materi. */
     public const KONTEN_MATERI = 'materi';
@@ -118,6 +167,51 @@ class Notifikasi extends Model
         return match ($this->konten_tipe) {
             self::KONTEN_MATERI => Materi::query()->find($this->konten_id),
             self::KONTEN_QUIZ => Quiz::query()->find($this->konten_id),
+            default => null,
+        };
+    }
+
+    /**
+     * Halaman tujuan notifikasi ini untuk admin, atau null kalau barisnya bukan
+     * notifikasi admin.
+     *
+     * Empat jenis notifikasi admin diselesaikan di sini supaya panel lonceng
+     * tidak perlu tahu jalan mana yang benar untuk tiap jenis:
+     *
+     *   - karya admin sendiri -> form edit di Konten Pembelajaran, karena
+     *     notifikasi itu kabar tentang mengelola konten, bukan membacanya;
+     *   - hasil kuis baru      -> dashboard admin. Dulu halaman "Hasil &
+     *     Statistik", tapi halaman itu sudah tidak ada di aplikasi sekarang;
+     *   - menunggu ditinjau    -> Verifikasi, tempat keputusan diambil.
+     *
+     * Kalau kontennya sudah dihapus, tautannya hilang dan barisnya tetap
+     * ditampilkan sebagai teks biasa. Pesannya masih benar sebagai kabar, dan
+     * tidak ada lagi halaman yang bisa dituju.
+     */
+    public function tautanAdmin(): ?string
+    {
+        if ($this->jenis === self::JENIS_HASIL_KUIS) {
+            return route('admin.dashboard');
+        }
+
+        if ($this->jenis === self::JENIS_KONTEN_MENUNGGU) {
+            return route('admin.verifikasi');
+        }
+
+        if (! in_array($this->jenis, [self::JENIS_KONTEN_TERBIT, self::JENIS_KONTEN_DRAFT], true)) {
+            return null;
+        }
+
+        // Satu kali saja: setiap pemanggilan konten() membuka query baru.
+        $konten = $this->konten();
+
+        return match ($this->konten_tipe) {
+            self::KONTEN_MATERI => $konten?->slug
+                ? route('admin.konten.materi.edit', $konten->slug)
+                : null,
+            self::KONTEN_QUIZ => $konten
+                ? route('admin.konten.quiz.edit', $konten->getKey())
+                : null,
             default => null,
         };
     }

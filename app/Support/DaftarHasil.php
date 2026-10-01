@@ -182,7 +182,7 @@ final class DaftarHasil
     }
 
     /**
-     * Jumlah pengerjaan per status, untuk 숫a di tiap tab.
+     * Jumlah pengerjaan per status, untuk angka di tiap tab.
      *
      * Mengikuti kata kunci pencarian yang sedang dipakai, jadi mengetik
      * kata kunci ikut memperbarui jumlah di tab.

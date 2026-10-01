@@ -12,6 +12,35 @@ import "./quiz-tambah.js";
 // yang dipakai wizard sebelum lanjut ke langkah berikutnya.
 import "./quiz-builder.js";
 
+/*
+ * Area admin "Konten Pembelajaran": konfirmasi terbitan dan perpindahan tahap
+ * form materi.
+ *
+ * Diimpor setelah quiz-tambah.js karena tombol "Publish Sekarang" milik
+ * wizard quiz memasang listener-nya sendiri lebih dulu, dan listener di
+ * konten-publish.js dipasang di fase tangkap supaya tetap menang.
+ */
+import "./konten-publish.js";
+
+/*
+ * Halaman "Konten Pembelajaran": menu aksi per baris (titik-tiga) dan
+ * kerangka daftar saat berpindah tab, mencari, menyaring, atau paginasi.
+ *
+ * Diimpor setelah konten-publish.js karena baris daftar memakai pemicunya
+ * untuk aksi Publish, dan listener di konten-publish.js dipasang di fase
+ * tangkap supaya tetap menang.
+ */
+import "./konten-daftar.js";
+
+/*
+ * Area admin "Pengaturan": dialog pengaturan, saklar, mode terang/gelap,
+ * pratinjau foto profil, dan lonceng notifikasi di topbar.
+ *
+ * Diimpor paling akhir karena modul-modul di atas tidak bergantung padanya,
+ * dan urutan ini membuat area admin lainnya selesai dulu.
+ */
+import "./pengaturan-admin.js";
+
 // Halaman detail quiz (daftar soal yang dilipat, tombol bagikan).
 import "./quiz-detail.js";
 
@@ -21,7 +50,7 @@ import "./quiz-detail.js";
  * WAJIB di-import sebelum quiz-lobby.js. Form jawaban di soal terakhir juga
  * memakai dialog konfirmasi milik quiz-lobby.js, dan kedua modul sama-sama
  * memasang listener submit pada form yang sama. Yang memasang lebih dulu
- *说了算: kalau dialog konfirmasi lebih dulu, isian yang masih kosong akan
+ * yang menang: kalau dialog konfirmasi lebih dulu, isian yang masih kosong akan
  * tetap membuka dialog "Selesaikan Quiz?" walau jawabannya belum ada.
  */
 import "./quiz-kerjakan.js";
@@ -31,6 +60,9 @@ import "./quiz-lobby.js";
 
 // Halaman Profil (dialog, lihat password, pilih foto, mode terang/gelap).
 import "./profil.js";
+
+// Lonceng notifikasi di top bar halaman user (tandai terbaca saat diklik).
+import "./notifikasi.js";
 
 /*
  * Area admin KelasKita (drawer sidebar, dropdown akun, dialog tinjau).
@@ -766,10 +798,31 @@ function initMuatLebih() {
     }
 }
 
+/**
+ * Filter yang langsung mengirim form begitu pilihannya diganti.
+ *
+ * Halaman "Konten Pembelajaran" punya lima kontrol di satu baris: kotak
+ * cari, Kelas, Kategori, Status, dan Urutan. Tanpa ini, memilih "RPL 2"
+ * baru berlaku setelah admin juga menekan "Terapkan" — padahal pada tiga
+ * select sisanya tidak ada alasan untuk menunggu, dan tombol "Terapkan"
+ * yang kelihatan seperti tidak ikut bekerja membuat daftar kosong dengan
+ * alasan yang tidak ketahuan.
+ *
+ * Kotak cari sengaja TIDAK ikut di sini: isinya belum selesai diketik,
+ * jadi mengirim setiap ketikan akan memuat ulang halaman berkali-kali.
+ * Ia tetap punya tombol "Terapkan".
+ */
+function initSaringLangsung() {
+    document.querySelectorAll("[data-konten-saring-pilih]").forEach((pilih) => {
+        pilih.addEventListener("change", () => pilih.form?.requestSubmit());
+    });
+}
+
 initReveal();
 initScrollProgress();
 initNavSpy();
 initCari();
+initSaringLangsung();
 initBookmark();
 initQuizMuat();
 initMuatLebih();

@@ -3,37 +3,55 @@
 namespace App\Support;
 
 use App\Models\Materi;
+use App\Models\Pelajaran;
 use App\Models\Quiz;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Str;
 
 /**
- * Mengubah materi atau quiz menjadi baris daftar untuk halaman
+ * Mengubah materi atau quiz menjadi kartu daftar untuk halaman
  * "Konten Pembelajaran" di area admin.
  *
- * Satu kelas untuk dua jenis konten, karena barisnya memang sama: thumbnail,
+ * Satu kelas untuk dua jenis konten, karena kartunya memang sama: thumbnail,
  * judul, keterangan singkat, kategori, status, tanggal, dan tautan aksi.
- * Bedanya hanya kata "Materi"/"Quiz" dan apa yang dihitung di keterangan
+ * Bedanya hanya kata "Materi"/"Quiz", satuan jumlah, dan apa yang dihitung di keterangan
  * (jumlah bab untuk materi, jumlah soal untuk quiz) — jadi dipisah-pisah
  * hanya akan membuat dua daftar yang nyaris sama.
  *
  * Berbeda dengan App\Support\DaftarMateriAdmin dan DaftarQuizAdmin, yang
  * hanya memetakan konten yang sudah tayang: di sini admin melihat semua
  * status, karena itulah gunanya halaman ini.
+ *
+ * Kelas ini tidak memilih konten mana yang boleh tampil. Pola "hanya karya
+ * sendiri" diputuskan di pemanggil lewat Model::scopeMilik, sama seperti di
+ * halaman "Karya Saya", supaya satu tempat yang memutuskan batas daftar dan
+ * satu tempat yang memetakan barisnya.
  */
 final class DaftarKonten
 {
-    /** Jumlah baris per halaman. */
+    /** Jumlah kartu per halaman. */
     public const PER_HALAMAN = 12;
 
     /**
      * Petakan sekumpulan model (materi atau quiz) ke bentuk array yang
-     * dipakai baris daftar.
+     * dipakai kartu daftar.
      *
-     * Bentuk array per baris:
-     *   id, jenis, judul, ringkasan, meta, thumbnail, jumlah,
+     * Bentuk array per kartu sengaja mengikuti kartu "Karya Saya" milik
+     * pengguna (App\Support\DaftarMateri dan DaftarQuiz) sebanyak mungkin:
+     * judul, deskripsi, thumbnail, jumlah, menit, tanggal, kategori, dan
+     * status. Kartu di "Konten Pembelajaran" memakai kelas CSS yang sama
+     * persis dengan kartu pengguna, jadi satu konten punya tampilan yang sama
+     * di kedua tempat tanpa dua set gaya yang bisa menyimpang.
+     *
+     * Yang ditambahkan: `jenis` (materi atau quiz) supaya satu komponen
+     * kartu bisa melayani keduanya, dan `ringkasan` yang dipakai sebagai
+     * keterangan singkat pada dialog hapus.
+     *
+     * Bentuk array per kartu:
+     *   id, jenis, judul, deskripsi, jumlah, satuan, menit, ringkasan,
+     *   thumbnail, kelas, terbit, tanggal_label, status, warna_status,
+     *   status_label, status_ringkas,
      *   kategori => [nama, ikon, warna, warna_gelap],
-     *   terbit, tanggal_label, status, status_label, warna_status,
      *   tautan => [lihat, edit, hapus, publish, duplikat]
      *
      * @param  iterable<int, Materi|Quiz>  $konten
@@ -71,12 +89,19 @@ final class DaftarKonten
             'id' => $item->getKey(),
             'jenis' => $materi ? 'materi' : 'quiz',
             'judul' => $materi ? $item->nama : $item->judul,
+            'deskripsi' => $materi
+                ? $item->ringkasan(120)
+                : (string) $item->deskripsi,
+            'jumlah' => $materi ? $item->jumlahBab() : $item->jumlahSoal(),
+            'satuan' => $materi ? 'Bab' : 'Soal',
+            'menit' => $materi ? $item->waktuBaca() : (int) $item->durasi,
             'ringkasan' => $materi
                 ? 'Materi • '.$item->jumlahBab().' bab'
                 : 'Quiz • '.$item->jumlahSoal().' soal',
             'thumbnail' => $materi
                 ? BerkasMateri::url($item->thumbnail)
                 : BerkasQuiz::url($item->thumbnail),
+            'kelas' => $item->labelKelas(),
             'kategori' => [
                 'nama' => $kategori['nama'],
                 'ikon' => $kategori['ikon'],
@@ -86,10 +111,25 @@ final class DaftarKonten
             'terbit' => $terbit,
             'tanggal_label' => DetailMateri::tanggal($terbit),
             'status' => (string) $item->status,
-            'status_label' => $item->labelStatus(),
             'warna_status' => $item->warnaStatus(),
+            'status_label' => $item->labelStatus(),
+            'status_ringkas' => self::statusRingkas((string) $item->status),
             'tautan' => self::tautan($item),
         ];
+    }
+
+    /**
+     * Label status pendek untuk lencana di baris daftar.
+     *
+     * Berbeda dengan labelStatus() yang dipakai halaman detail dan form
+     * ("Dipublikasikan"), lencana di baris perlu dua kata supaya muat
+     * berdampingan dengan lencana kelas dan tanggal tanpa membuat baris
+     * membungkus. Hanya dua status yang bisa muncul di sini: daftar ini
+     * manage karya admin sendiri, yang statusnya cuma draft atau published.
+     */
+    private static function statusRingkas(string $status): string
+    {
+        return $status === Materi::STATUS_PUBLISHED ? 'Published' : 'Draft';
     }
 
     /**
@@ -98,7 +138,14 @@ final class DaftarKonten
      * Semuanya memakai route milik "Konten Pembelajaran", bukan route admin
      * yang sudah ada: daftar ini mengelola seluruh konten, bukan hanya yang
      * sudah tayang, jadi jalurnya tidak boleh sama dengan halaman "Materi" dan
-     * "Quiz" yang tetap manages konten published saja.
+     * "Quiz" yang tetap mengelola katalog konten published saja.
+     *
+     * Satu-satunya pengecualian adalah "lihat". Menulis ulang halaman detail
+     * hanya supaya tombol "Lihat" di sini kembali ke daftar ini akan menjadi
+     * dua salinan dari komponen yang sama; kedua halaman detail admin sudah
+     * merender komponen tampilan milik pengguna dan tidak memeriksa status,
+     * jadi satu pun sudah cukup untuk membaca materi maupun quiz dari status
+     * mana pun.
      *
      * @return array{lihat: string, edit: string, hapus: string, publish: string, duplikat: string}
      */
@@ -106,7 +153,7 @@ final class DaftarKonten
     {
         if ($item instanceof Materi) {
             return [
-                'lihat' => route('admin.konten.materi.lihat', $item->slug),
+                'lihat' => route('admin.materi.show', $item->slug),
                 'edit' => route('admin.konten.materi.edit', $item->slug),
                 'hapus' => route('admin.konten.materi.destroy', $item->slug),
                 'publish' => route('admin.konten.materi.publish', $item->slug),
@@ -115,7 +162,7 @@ final class DaftarKonten
         }
 
         return [
-            'lihat' => route('admin.konten.quiz.lihat', $item->getKey()),
+            'lihat' => route('admin.quiz.show', $item->getKey()),
             'edit' => route('admin.konten.quiz.edit', $item->getKey()),
             'hapus' => route('admin.konten.quiz.destroy', $item->getKey()),
             'publish' => route('admin.konten.quiz.publish', $item->getKey()),
@@ -137,7 +184,7 @@ final class DaftarKonten
         $slug = $dasar;
         $urutan = 2;
 
-        while (static::slugDipakai($tabel, $slug, $abaikan)) {
+        while (self::slugDipakai($tabel, $slug, $abaikan)) {
             $slug = $dasar.'-'.$urutan;
             $urutan++;
         }

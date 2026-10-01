@@ -7,6 +7,7 @@ use App\Models\PengerjaanQuiz;
 use App\Models\Quiz;
 use App\Models\SesiQuiz;
 use App\Support\KodeSesi;
+use App\Support\NotifikasiAdmin;
 use App\Support\SesiAktif;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -139,6 +140,10 @@ class QuizMulaiController extends Controller
              */
             $pengerjaan->hitungUlang();
             $pengerjaan->forceFill(['selesai_pada' => now()])->save();
+
+            // Sama seperti pada sesi yang ditutup normal: hasil yang baru saja
+            // selesai diberi tahu ke admin kalau admin masih ingin menerimanya.
+            NotifikasiAdmin::hasilKuisBaru($pengerjaan);
 
             $sesi->tutup();
 

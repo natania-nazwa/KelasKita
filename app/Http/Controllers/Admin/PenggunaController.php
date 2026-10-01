@@ -69,7 +69,16 @@ class PenggunaController extends Controller
              * "nilai_rata" dan bukan nama hasil penggabungan yang panjang.
              */
             ->withAvg('pengerjaanQuizSelesai as nilai_rata', 'nilai')
-            ->latest()
+            /*
+             * Urutannya created_at lalu id, bukan created_at saja. Satu
+             * halaman admin bisa memuat lebih dari satu baris dengan waktu
+             * bergabung yang sama persis, dan tanpa id sebagai pemutus,
+             * baris yang sama bisa muncul di dua halaman atau dilewati sama
+             * sekali. Notifikasi dan pencarian tidak terpengaruh, jadi ini
+             * hanya menutup celah pagination.
+             */
+            ->latest('created_at')
+            ->latest('id')
             ->paginate(self::PER_HALAMAN)
             ->withQueryString();
 
