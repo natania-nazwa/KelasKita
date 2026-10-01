@@ -433,28 +433,57 @@ class QuizKelolaHalamanTest extends TestCase
         $this->assertStringContainsString('Terapkan', $html);
     }
 
-    public function test_halaman_tidak_lagi_memakai_kolom_cari_karena_topbar_menutupinya(): void
+    public function test_kolom_cari_ada_di_kartu_filter_dan_juga_di_topbar(): void
     {
         $admin = $this->buatAdmin();
-        $this->buatTerbit($this->buatPengguna());
+        $pemilik = $this->buatPengguna();
+        $this->buatTerbit($pemilik, 'Quiz Katakana');
+        $this->buatTerbit($pemilik, 'Quiz Lain');
 
         $html = $this->actingAs($admin)->get('/admin/quiz')->assertOk()->getContent();
 
-        // Tidak ada kolom cari ganda di dalam halaman.
-        $this->assertStringNotContainsString('id="q-quiz"', $html);
+        /*
+         * Dua tempat mencari, sengaja. Dulu kolom di kartu filter dihapus
+         * karena dianggap kembar dengan topbar, dan hasilnya satu-satunya
+         * tempat mencari jadi kotak kecil di layar atas yang menulis "Cari
+         * materi, quiz, pengguna" padahal isinya cuma satu daftar.
+         */
+        $this->assertStringContainsString('id="cari-quiz"', $html);
+        $this->assertStringContainsString('placeholder="Cari quiz..."', $html);
 
-        // Kotak topbar ikut mengarah ke halaman ini, jadi mengetik di sana
-        // benar-benar menyaring daftar quiz — bukan mendarat di halaman lain.
-        $this->assertStringContainsString('action="'.route('admin.quiz').'"', $html);
+        // Topbar-nya ikut mencari quiz, dan tidak lagi menjanjikan pencarian
+        // global yang memang tidak ada di aplikasi ini.
         $this->assertStringContainsString('id="cari-ad"', $html);
-        $this->assertStringContainsString('name="q"', $html);
+        $this->assertStringContainsString('action="'.route('admin.quiz').'"', $html);
+        $this->assertStringNotContainsString('Cari materi, quiz, pengguna', $html);
 
-        // Dan form GET di halaman ini tetap menerapkan kata kunci yang masuk
-        // dari topbar, walau tidak ada lagi kolomnya.
+        // Form filter tetap GET ke halaman ini, jadi Enter di kolom cari
+        // langsung menyaring.
         $this->actingAs($admin)
-            ->get(route('admin.quiz', ['q' => 'Quiz Terbit']))
+            ->get(route('admin.quiz', ['q' => 'Katakana']))
             ->assertOk()
-            ->assertSee('Quiz Terbit');
+            ->assertSee('Quiz Katakana')
+            ->assertDontSee('Quiz Lain');
+    }
+
+    public function test_topbar_menulis_jujur_soal_yang_benar_benar_dicari(): void
+    {
+        $admin = $this->buatAdmin();
+
+        // Di halaman Materi, topbar mencari materi.
+        $materi = $this->actingAs($admin)->get('/admin/materi')->assertOk()->getContent();
+        $this->assertStringContainsString('placeholder="Cari materi..."', $materi);
+        $this->assertStringContainsString('action="'.route('admin.materi').'"', $materi);
+
+        // Di halaman Quiz, topbar mencari quiz.
+        $quiz = $this->actingAs($admin)->get('/admin/quiz')->assertOk()->getContent();
+        $this->assertStringContainsString('placeholder="Cari quiz..."', $quiz);
+        $this->assertStringContainsString('action="'.route('admin.quiz').'"', $quiz);
+
+        // Di halaman lain, topbar memakai default Materi dan tetap jujur.
+        $lain = $this->actingAs($admin)->get('/admin/pengaturan')->assertOk()->getContent();
+        $this->assertStringContainsString('placeholder="Cari materi..."', $lain);
+        $this->assertStringNotContainsString('placeholder="Cari quiz..."', $lain);
     }
 
     public function test_kata_kunci_aktif_tetap_ikut_dibawa_saat_menyaring(): void
@@ -468,7 +497,11 @@ class QuizKelolaHalamanTest extends TestCase
             ->assertOk()
             ->getContent();
 
-        $this->assertStringContainsString('<input type="hidden" name="q" value="Sepakat">', $html);
+        // Kolomnya terlihat dan sudah terisi, jadi menyaring kategori tidak
+        // menghapus kata kunci yang sedang aktif. Tidak ada lagi input
+        // tersembunyi untuk "q": input yang terlihat itulah yang mengirimnya.
+        $this->assertStringContainsString('<input id="cari-quiz" name="q" type="search" value="Sepakat"', $html);
+        $this->assertStringNotContainsString('type="hidden" name="q"', $html);
     }
 
     public function test_hapus_filter_aktif_khwa_saring_tidak_ada(): void
@@ -857,8 +890,13 @@ class QuizKelolaHalamanTest extends TestCase
         $this->assertStringNotContainsString('data-bagikan-buka', $html);
     }
 
-    public function test_detail_admin_menampilkan_kembali_ke_daftar_quiz(): void
+    public function test_detail_admin_hanya_menampilkan_kembali_ke_daftar_quiz(): void
     {
+        /*
+         * Halaman detail hanya punya tombol kembali. Form edit disalakan dari
+         * menu tiga titik pada kartu di daftar — di sana letaknya berdampingan
+         * dengan Hapus — jadi di sini tidak ada jalan kedua untuk mengelola.
+         */
         $admin = $this->buatAdmin();
         $quiz = $this->buatTerbit($this->buatPengguna(), 'Quiz Terbit');
 
@@ -869,6 +907,9 @@ class QuizKelolaHalamanTest extends TestCase
 
         $this->assertStringContainsString('Kembali ke Quiz', $html);
         $this->assertStringContainsString(route('admin.quiz'), $html);
+
+        $this->assertStringNotContainsString(route('admin.quiz.edit', $quiz), $html);
+        $this->assertStringNotContainsString('Edit Quiz', $html);
 
         // Tautan "Lihat semua" di Daftar Soal milik halaman pengguna, dan
         // admin/quiz tidak punya daftar yang bisa ditunjuknya.

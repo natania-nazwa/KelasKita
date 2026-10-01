@@ -290,27 +290,38 @@ class MateriKelolaHalamanTest extends TestCase
      * =============================================================
      */
 
-    public function test_halaman_tidak_lagi_menampilkan_kolom_cari(): void
+    public function test_kolom_cari_ada_di_kartu_filter_dan_juga_di_topbar(): void
     {
+        /*
+         * Dua tempat mencari, sengaja. Kolom di kartu filter pernah dihapus
+         * karena dianggap kembar dengan kotak topbar, dan hasilnya satu-satunya
+         * tempat mencari jadi kotak kecil di layar atas yang menulis "Cari
+         * materi, quiz, pengguna" padahal isinya cuma satu daftar. Sekarang
+         * keduanya ada: yang di kartu filter yang jelas ada di halaman ini,
+         * dan yang di topbar yang bisa dipakai tanpa menggulir ke bawah.
+         */
         $admin = $this->buatAdmin();
-        $this->buatTerbit($this->buatPengguna(), 'Dasar HTML');
+        $pemilik = $this->buatPengguna();
+        $this->buatTerbit($pemilik, 'Materi Katakana');
+        $this->buatTerbit($pemilik, 'Materi Lain');
 
         $html = $this->actingAs($admin)
             ->get('/admin/materi')
             ->assertOk()
             ->getContent();
 
-        $this->assertStringNotContainsString('ad-alat-baris__cari', $html);
-        $this->assertStringNotContainsString('placeholder="Cari materi..."', $html);
+        $this->assertStringContainsString('id="cari-materi"', $html);
+        $this->assertStringContainsString('placeholder="Cari materi..."', $html);
+        $this->assertStringContainsString('id="cari-ad"', $html);
+        $this->assertStringNotContainsString('Cari materi, quiz, pengguna', $html);
     }
 
     public function test_pencarian_tetap_bisa_dipakai_lewat_kotak_di_topbar(): void
     {
         /*
-         * Kolom cari dihapus dari halaman, jadi kotak pencarian di topbar
-         * sekarang satu-satunya jalannya. Form-nya harus tetap mengarah ke
-         * halaman ini dan tetap mengirim "q" — kalau salah satu berubah,
-         * pencarian mati total tanpa ada satu pun tombol yang gagal terlihat.
+         * Kolom di kartu filter ada, tapi kotak topbar juga harus tetap
+         * bekerja dan tetap mengirim "q" — kalau salah satu berubah, satu
+         * tempat mencari mati tanpa ada satu pun tombol yang gagal terlihat.
          */
         $admin = $this->buatAdmin();
         $pemilik = $this->buatPengguna();
@@ -327,7 +338,7 @@ class MateriKelolaHalamanTest extends TestCase
         $this->assertStringContainsString('name="q"', $html);
 
         // Dan form GET di halaman ini tetap Apply kata kunci yang masuk dari
-        // topbar, walau tidak ada lagi kolomnya.
+        // topbar maupun dari kolom cari.
         $this->actingAs($admin)
             ->get(route('admin.materi', ['q' => 'Katakana']))
             ->assertOk()
@@ -343,10 +354,15 @@ class MateriKelolaHalamanTest extends TestCase
         $this->buatTerbit($pemilik, 'Materi Katakana', $this->buatPelajaran('Teknologi', 'teknologi'));
 
         // Menyaring kategori tidak boleh menghapus kata kunci yang sedang aktif.
-        $this->actingAs($admin)
+        $html = $this->actingAs($admin)
             ->get(route('admin.materi', ['q' => 'Katakana', 'kategori' => 'teknologi']))
             ->assertOk()
-            ->assertSee('Materi Katakana');
+            ->getContent();
+
+        // Kolomnya terlihat dan sudah terisi, jadi tidak ada lagi input
+        // tersembunyi untuk "q".
+        $this->assertStringContainsString('<input id="cari-materi" name="q" type="search" value="Katakana"', $html);
+        $this->assertStringNotContainsString('type="hidden" name="q"', $html);
     }
 
     /*
@@ -917,17 +933,25 @@ class MateriKelolaHalamanTest extends TestCase
         );
     }
 
-    public function test_detail_admin_menampilkan_kembali_ke_daftar_materi(): void
+    public function test_detail_admin_hanya_menampilkan_kembali_ke_daftar_materi(): void
     {
+        /*
+         * Halaman detail hanya punya tombol kembali. Form edit disalakan dari
+         * menu tiga titik pada kartu di daftar — di sana letaknya berdampingan
+         * dengan Hapus — jadi di sini tidak ada jalan kedua untuk mengelola.
+         */
         $admin = $this->buatAdmin();
         $materi = $this->buatTerbit($this->buatPengguna());
 
-        $this->actingAs($admin)
+        $halaman = $this->actingAs($admin)
             ->get(route('admin.materi.show', $materi->slug))
             ->assertOk()
             ->assertSee('Kembali ke Materi')
             ->assertSee(route('admin.materi'), false)
-            ->assertSee(route('admin.materi.edit', $materi->slug), false);
+            ->getContent();
+
+        $this->assertStringNotContainsString(route('admin.materi.edit', $materi->slug), $halaman);
+        $this->assertStringNotContainsString('Edit Materi', $halaman);
     }
 
     /**

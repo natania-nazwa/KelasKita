@@ -10900,6 +10900,17 @@ html {
     overflow-wrap: anywhere;
 }
 
+/*
+ * Baris di luar jendela tampilan disembunyikan lewat atribut hidden,
+ * baik oleh server (lihat components/quiz/detail-daftar-soal) maupun
+ * oleh tombol "Lihat semua" (initDaftarSoal di resources/js/quiz-detail.js).
+ * Aturan ini wajib ada karena display:flex di atas menimpa atribut hidden
+ * bawaan browser yang hanya bernilai display:none.
+ */
+.daftar-soal__baris[hidden] {
+    display: none;
+}
+
 /* ---------- Dialog Bagikan ---------- */
 .detail-bagikan__tautan {
     width: 100%;

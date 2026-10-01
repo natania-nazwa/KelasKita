@@ -6,6 +6,7 @@ use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
@@ -63,6 +64,58 @@ class User extends Authenticatable
     public function isAktif(): bool
     {
         return (bool) $this->aktif;
+    }
+
+    /**
+     * Materi yang dibuat pengguna ini.
+     *
+     * Foreign key-nya "dibuat_oleh", bukan "user_id": materi adalah milik
+     * siapa pun yang membuatnya, dan kolom itu sudah dibaca lewat
+     * Materi::pembuat(). Relasi ini adalah sisi sebaliknya dari relasi
+     * itu, dipakai halaman admin "Pengguna" untuk menghitung karya tiap
+     * pengguna tanpa satu query per baris.
+     */
+    public function materi(): HasMany
+    {
+        return $this->hasMany(Materi::class, 'dibuat_oleh');
+    }
+
+    /**
+     * Quiz yang dibuat pengguna ini. Sama seperti materi(), sisi sebaliknya
+     * dari Quiz::pembuat().
+     */
+    public function quiz(): HasMany
+    {
+        return $this->hasMany(Quiz::class, 'dibuat_oleh');
+    }
+
+    /**
+     * Seluruh pengerjaan quiz milik pengguna ini, belum selesai maupun
+     * sudah selesai.
+     *
+     * Foreign key-nya ditulis langsung sebagai "pengguna_id" dan bukan
+     *iarkan ditebak dari nama model. Tebakan default untuk model Bernama
+     * User adalah "user_id", sedangkan tabelnya memakai "pengguna_id" —
+     * jadi tanpa penulisan ini seluruh query yang memakai relasi ini gagal
+     * dengan "column ... user_id does not exist".
+     */
+    public function pengerjaanQuiz(): HasMany
+    {
+        return $this->hasMany(PengerjaanQuiz::class, 'pengguna_id');
+    }
+
+    /**
+     * Hanya pengerjaan yang sudah ditutup, untuk rata-rata nilai.
+     *
+     * Relasi terpisah, bukan filter saat memanggil: withAvg() memang tidak
+     * menerima kondisi tambahan, jadi satu-satunya cara menghitung rata-rata
+     * dari pengerjaan yang selesai adalah punya relasi yang sudah dibatasi
+     * sejak awal. Nama "selesai" tetap diambil dari
+     * PengerjaanQuiz::scopeSelesai(), jadi definisinya cuma satu.
+     */
+    public function pengerjaanQuizSelesai(): HasMany
+    {
+        return $this->pengerjaanQuiz()->selesai();
     }
 
     /**

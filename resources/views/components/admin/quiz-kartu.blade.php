@@ -33,13 +33,33 @@
      * Kartu tidak bisa diklik seluruhnya. Satu-satunya jalan ke quiz adalah
      * tombol Lihat, supaya menu tiga titik tidak ikut jadi bagian dari area
      * klik yang sama.
+     *
+     * Modifier --kuis dipakai di kartu ini saja: warna kategori merambat ke
+     * isi kartu (cucian di atas badan, titik di baris meta, tombol Lihat,
+     * menu tiga titik), nama pembuat memakai warna avatarnya sendiri, dan
+     * lencana kesulitan dibedakan warnanya. Semuanya warna, bayangan, dan
+     * dekorasi — tidak ada yang menambah, mengurangi, atau memindahkan
+     * elemen, jadi bentuk kartu di halaman ini sama persis dengan kartunya
+     * di halaman Materi.
      */
 
     $kategori = $quiz['kategori'];
+    $pembuat = $quiz['pembuat'];
+
+    /*
+     * Tingkat kesulitan dipakai sebagai kelas modifier, supaya lencana di
+     * pojok gambar bisa dibedakan: hijau untuk Mudah, oranye untuk Sedang,
+     * merah untuk Sulit. Nilai dari model sudah berupa "Mudah", "Sedang",
+     * atau "Sulit", jadi hanya huruf kecilnya yang dipakai di kelas.
+     *
+     * Nilai lain tetap dapat lencana — kelas dasarnya tidak bergantung pada
+     * modifier ini, jadi data yang tidak dikenal tidak membuat kartu rusak.
+     */
+    $kelasKesulitan = 'ad-kartu-daftar__kesulitan--'.strtolower((string) $quiz['tingkat_kesulitan']);
 @endphp
 
-<article class="ad-kartu-daftar"
-    style="--k: {{ $kategori['warna'] }}; --k-gelap: {{ $kategori['warna_gelap'] }};">
+<article class="ad-kartu-daftar ad-kartu-daftar--kuis"
+    style="--k: {{ $kategori['warna'] }}; --k-gelap: {{ $kategori['warna_gelap'] }}; --p: {{ $pembuat['warna'] }}; --p-gelap: {{ $pembuat['warna_gelap'] }};">
 
     {{--
         A. Blok gambar. Selalu berisi sesuatu: kalau quiznya tidak punya
@@ -56,11 +76,14 @@
 
         {{--
             Tingkat kesulitan melayang di pojok kiri. Di kartu admin ini satu
-           -satunya tempat informasi tentang tingkat kesulitan, dan tidak
+            -satunya tempat informasi tentang tingkat kesulitan, dan tidak
             beradu dengan kategori yang sudah tampil di baris meta.
+
+            Warnanya ikut membawa warna tingkatnya lewat $kelasKesulitan,
+            supaya lencana ini tidak selalu abu-abu.
         --}}
         @if (filled($quiz['tingkat_kesulitan']))
-            <span class="ad-kartu-daftar__kesulitan capitalize">{{ $quiz['tingkat_kesulitan'] }}</span>
+            <span @class(['ad-kartu-daftar__kesulitan', 'capitalize', $kelasKesulitan])>{{ $quiz['tingkat_kesulitan'] }}</span>
         @endif
     </div>
 
@@ -73,9 +96,14 @@
         <p class="ad-kartu-daftar__pembuat">
             <span>Dibuat oleh:</span>
 
-            <span class="ad-kartu-daftar__truncate">{{ $quiz['pembuat']['nama'] }}</span>
+            <span class="ad-kartu-daftar__truncate">{{ $pembuat['nama'] }}</span>
         </p>
 
+        {{--
+            Kategori dan jumlah soal. Titik warna kategorinya datang dari
+            ::before .ad-kartu-daftar__meta, jadi teksnya sendiri tetap
+            persis seperti sebelumnya.
+        --}}
         <p class="ad-kartu-daftar__meta">
             {{ $kategori['nama'] }} &middot; {{ $quiz['jumlah_soal'] }} Soal
         </p>

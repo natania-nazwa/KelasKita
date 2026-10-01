@@ -6,6 +6,24 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>@yield('title', 'Dashboard Admin | KelasKita')</title>
     @vite(['resources/css/app.css', 'resources/js/app.js'])
+
+    {{--
+        Tanpa JavaScript, daftar soal di halaman detail quiz dibuka penuh
+        dan tombol "Lihat semua" yang melipatnya disembunyikan. Aturan yang
+        sama persis ada di layouts/app (noscript-nya) karena kedua layout
+        merender komponen x-quiz.detail-daftar-soal yang sama.
+    --}}
+    <noscript>
+        <style>
+            .daftar-soal__baris[hidden] {
+                display: flex !important;
+            }
+
+            [data-daftar-soal-tombol] {
+                display: none !important;
+            }
+        </style>
+    </noscript>
 </head>
 {{--
     Layout area admin KelasKita.
@@ -218,27 +236,39 @@
                 </button>
 
                 {{--
-                    Pencarian topbar. Aplikasi belum punya pencarian
-                    global, jadi form ini mengirim "q" ke halaman daftar yang
-                    sedang dibuka — Kotak Materi atau Kotak Quiz — karena
-                    keduanya punya daftar published-only dengan pencarian yang
-                    sama. Tanpa itu, mengetik kata kunci di halaman Quiz akan
-                    mendarat di halaman Materi dan hasilnya tidak pernah
-                    terlihat, padahal kotak ini terlihat bisa dipakai.
+                    Pencarian topbar. Aplikasi belum punya pencarian global,
+                    jadi form ini mengirim "q" ke halaman daftar yang sedang
+                    dibuka — Materi atau Quiz — dan teksnya ikut menyesuaikan
+                    halaman itu.
 
-                    Halaman lain (Dashboard, Verifikasi, Pengaturan) memakai
-                    default: Materi, karena itu satu-satunya daftar konten
-                    dengan kolom pencarian yang selalu ada.
+                    Teksnya sengaja tidak menjanjikan lebih dari yang ada.
+                    Dulu label dan placeholder-nya menulis "Cari materi, quiz,
+                    pengguna" di setiap halaman, padahal form-nya hanya menuju
+                    satu daftar: mengetik di halaman Quiz akan mendarat di
+                    halaman Materi dan hasilnya tidak pernah terlihat. Sekarang
+                    yang ditulis apa yang benar-benar dicari.
+
+                    Halaman lain (Dashboard, Verifikasi, Pengguna, Pengaturan)
+                    memakai default: Materi, karena itu daftar konten dengan
+                    pencarian yang selalu ada.
                 --}}
+                @php
+                    /*
+                     * Halaman daftar tempat kotak ini mengirim, beserta teksnya.
+                     * Dihitung sekali supaya label, placeholder, dan action
+                     * tidak mungkin berbeda satu sama lain.
+                     */
+                    $halamanCari = request()->routeIs('admin.quiz*') ? 'quiz' : 'materi';
+                @endphp
                 <form class="ad-atas__cari" method="GET"
-                    action="{{ request()->routeIs('admin.quiz*') ? route('admin.quiz') : route('admin.materi') }}"
+                    action="{{ $halamanCari === 'quiz' ? route('admin.quiz') : route('admin.materi') }}"
                     role="search">
-                    <label for="cari-ad">Cari materi, quiz, pengguna</label>
+                    <label for="cari-ad">Cari {{ $halamanCari }}</label>
 
                     <x-admin.ikon nama="cari" class="ad-atas__cari-ikon" />
 
                     <input id="cari-ad" name="q" type="search"
-                        value="{{ request('q') }}" placeholder="Cari materi, quiz, pengguna..."
+                        value="{{ request('q') }}" placeholder="Cari {{ $halamanCari }}..."
                         autocomplete="off">
                 </form>
 

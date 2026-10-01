@@ -20,6 +20,11 @@ use Tests\TestCase;
  *   - daftar soal menampilkan pertanyaannya saja (inti soal, tanpa pilihan),
  *     dan TIDAK pernah jawaban benar maupun pembahasan, karena halaman ini
  *     dibuka sebelum quiz dikerjakan;
+ *   - daftar soal hanya lima baris pertama yang tampil, sisanya menunggu
+ *     tombol "Lihat semua" di bawah daftar, dan tombol itu hilang begitu
+ *     tidak ada lagi soal tersembunyi. Berlaku sama di halaman admin;
+ *   - tautan "Lihat semua" di kepala daftar (daftar quiz satu kategori)
+ *     hanya muncul selama masih ada soal tersembunyi;
  *   - tautan Kembali dan Mulai Quiz menuju route yang benar;
  *   - quiz tanpa soal, dan quiz draft milik orang lain, ditolak di kedua
  *     halaman (detail dan mulai).
@@ -176,6 +181,77 @@ class QuizDetailTest extends TestCase
             ->get(route('user.quiz.detail', $quiz))
             ->assertOk()
             ->assertDontSee('Soal yang sudah dinonaktifkan.');
+    }
+
+    /**
+     * Pembatasan lima baris pada daftar soal. Baris keenam dan seterusnya
+     * datang sudah beratribut hidden dari server (bukan disembunyikan JS),
+     * jadi perilakunya bisa diuji dari HTML tanpa browser.
+     */
+    public function test_daftar_soal_dengan_lima_soal_tanpa_sisa_tidak_mempunyai_tombol(): void
+    {
+        $user = $this->buatPengguna();
+        $quiz = $this->buatQuiz($user);
+
+        for ($nomor = 1; $nomor <= 5; $nomor++) {
+            $this->buatSoal($quiz, $nomor);
+        }
+
+        $isi = $this->actingAs($user)
+            ->get(route('user.quiz.detail', $quiz))
+            ->assertOk()
+            ->getContent();
+
+        // Tidak ada soal tersembunyi, maka tombol buka/tutupnya tidak ada.
+        $this->assertSame(0, substr_count($isi, 'class="daftar-soal__baris" hidden'));
+        $this->assertSame(5, substr_count($isi, 'class="daftar-soal__baris"'));
+        $this->assertStringNotContainsString('data-batas="5"', $isi);
+
+        // Tautan "Lihat semua" di kepala daftar ikut hilang: tanpa soal
+        // tersembunyi tautan itu tidak menawarkan apa-apa selain membingungkan.
+        $this->assertStringNotContainsString('/user/quiz?kategori=', $isi);
+    }
+
+    public function test_daftar_soal_lebih_dari_lima_menyembunyikan_sisa_dan_menampilkan_tombol(): void
+    {
+        $user = $this->buatPengguna();
+        $quiz = $this->buatQuiz($user);
+
+        for ($nomor = 1; $nomor <= 12; $nomor++) {
+            $this->buatSoal($quiz, $nomor);
+        }
+
+        $isi = $this->actingAs($user)
+            ->get(route('user.quiz.detail', $quiz))
+            ->assertOk()
+            ->getContent();
+
+        // Seluruh soal tetap dirender, hanya lima baris pertama yang tampil.
+        $this->assertSame(12, substr_count($isi, 'class="daftar-soal__baris"'));
+        $this->assertSame(7, substr_count($isi, 'class="daftar-soal__baris" hidden'));
+        $this->assertStringContainsString('data-batas="5"', $isi);
+
+        // Masih ada soal tersembunyi, jadi tautan kategori di kepala tetap ada.
+        $this->assertStringContainsString('/user/quiz?kategori=', $isi);
+    }
+
+    public function test_halaman_detail_admin_juga_membatasi_lima_soal_pertama(): void
+    {
+        $admin = $this->buatPengguna(['peran' => User::PERAN_ADMIN]);
+        $quiz = $this->buatQuiz($admin);
+
+        for ($nomor = 1; $nomor <= 7; $nomor++) {
+            $this->buatSoal($quiz, $nomor);
+        }
+
+        $isi = $this->actingAs($admin)
+            ->get(route('admin.quiz.show', $quiz))
+            ->assertOk()
+            ->getContent();
+
+        $this->assertSame(7, substr_count($isi, 'class="daftar-soal__baris"'));
+        $this->assertSame(2, substr_count($isi, 'class="daftar-soal__baris" hidden'));
+        $this->assertStringContainsString('data-batas="5"', $isi);
     }
 
     public function test_tombol_kembali_dan_mulai_quiz_menuju_route_yang_benar(): void

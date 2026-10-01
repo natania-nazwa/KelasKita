@@ -44,18 +44,21 @@
          BARIS AKSI ADMIN
          Berada di luar area konten materi, jadi tidak menyentuh isi yang
          harus identik dengan versi pengguna.
+
+         Hanya ada tombol kembali. Tombol Edit Materi sengaja tidak ada di
+         sini: perubahan materi disalakan dari menu tiga titik pada kartu di
+         daftar Materi, dan di sana letaknya berdampingan dengan Hapus —
+         jadi satu tempat untuk mengelola, bukan dua.
+
+         Wrapper-nya tetap dipakai walau isinya cuma satu tautan: kelas
+         justify-between dengan satu anak hasilnya sama dengan
+         justify-start, jadi tautannya tetap di kiri seperti sebelumnya.
     ====================== --}}
     <div class="ad-seksi flex flex-wrap items-center justify-between gap-3">
         <a href="{{ $detail['tautan_daftar'] }}" class="ad-tautan">
             <x-admin.ikon nama="panah-kiri" />
 
             Kembali ke Materi
-        </a>
-
-        <a href="{{ $tautanEdit }}" class="ad-tombol ad-tombol--halus">
-            <x-admin.ikon nama="pena" />
-
-            Edit Materi
         </a>
     </div>
 

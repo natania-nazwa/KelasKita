@@ -11,6 +11,8 @@
  *   3. Dialog peninjauan konten.
  *   4. Halaman Verifikasi: pemilihan baris, panel review, dialog
  *      Setujui / Tolak, filter tambahan, dan toast.
+ *   5. Dialog hapus materi.
+ *   6. Dialog detail pengguna.
  *
  * Tanpa JavaScript: sidebar tetap tampil di desktop, tombol Keluar di
  * sidebar tetap ada, setiap keputusan Setujui / Tolak tetap punya
@@ -709,9 +711,215 @@ function initVerifikasi() {
     }
 }
 
+/* ---------- 7. Dialog detail pengguna ---------- */
+/*
+ * Satu dialog untuk semua baris di halaman Pengguna, diisi dari peta JSON di
+ * halaman itu sendiri. Peta-nya dibaca sekali saat halaman dimuat, jadi
+ * membuka dialog tidak menembak request apa pun dan daftar yang panjang
+ * tetap hanya punya satu kotak detail.
+ *
+ * Server tetap sumber kebenaran: peta ini cuma berisi angka yang sudah
+ * dihitung di server, dan JavaScript tidak menghitung ulang apa pun.
+ *
+ * Fokus dikurung di dalam dialog selama terbuka. Tanpa itu, menekan Tab
+ * berulang kali akan berjalan naik ke sidebar dan topbar di belakang dialog,
+ * yang secara visual tertutup tapi masih bisa difokus — jadi pembaca
+ * keyboard bisa tersesat keluar dari dialog yang terbuka.
+ */
+function initDetailPengguna() {
+    const dialog = document.querySelector("[data-dialog-pengguna]");
+    const sumber = document.querySelector("[data-detail-pengguna]");
+
+    if (!dialog || !sumber) {
+        return;
+    }
+
+    let peta = {};
+
+    try {
+        peta = JSON.parse(sumber.textContent) || {};
+    } catch {
+        // Peta rusak tidak boleh membuat seluruh halaman error. Tombolnya
+        // dinonaktifkan supaya tidak ada dialog kosong yang terbuka.
+        document.querySelectorAll("[data-detail-buka]").forEach((tombol) => {
+            tombol.disabled = true;
+        });
+
+        return;
+    }
+
+    const medan = {
+        peran: dialog.querySelector("[data-detail-peran]"),
+        peranLencana: dialog.querySelector("[data-detail-peran-lencana]"),
+        nama: dialog.querySelector("[data-detail-nama]"),
+        email: dialog.querySelector("[data-detail-email]"),
+        avatar: dialog.querySelector("[data-detail-avatar]"),
+        status: dialog.querySelector("[data-detail-status]"),
+        bergabung: dialog.querySelector("[data-detail-bergabung]"),
+        materi: dialog.querySelector("[data-detail-materi]"),
+        quiz: dialog.querySelector("[data-detail-quiz]"),
+        selesai: dialog.querySelector("[data-detail-selesai]"),
+        nilai: dialog.querySelector("[data-detail-nilai]"),
+        nilaiKet: dialog.querySelector("[data-detail-nilai-ket]"),
+    };
+
+    let pemicu = null;
+
+    const tutup = () => {
+        dialog.classList.remove("is-buka");
+        dialog.setAttribute("aria-hidden", "true");
+        document.body.style.overflow = "";
+
+        pemicu?.focus();
+        pemicu = null;
+    };
+
+    /** Elemen yang boleh menerima fokus di dalam dialog. */
+    const fokusable = () =>
+        Array.from(
+            dialog.querySelectorAll(
+                'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])',
+            ),
+        ).filter((el) => el.offsetParent !== null);
+
+    const isi = (orang) => {
+        const tampil = (medan, nilai) => {
+            if (medan) {
+                medan.textContent = nilai;
+            }
+        };
+
+        tampil(medan.peran, orang.peran_label);
+        tampil(medan.nama, orang.nama);
+        tampil(medan.email, orang.email);
+        tampil(medan.status, orang.status_label);
+        tampil(medan.bergabung, orang.bergabung_jam ? `${orang.bergabung} · ${orang.bergabung_jam}` : orang.bergabung);
+        tampil(medan.materi, orang.materi);
+        tampil(medan.quiz, orang.quiz);
+        tampil(medan.selesai, orang.selesai);
+
+        // "—" bukan 0 saat belum ada yang dinilai. Teks aslinya sudah
+        // disiapkan server supaya JavaScript tidak memutuskan sendiri apa
+        // yang harus ditulis kalau datanya kosong.
+        tampil(medan.nilai, orang.nilai_rata_label);
+        tampil(medan.nilaiKet, orang.nilai_keterangan);
+
+        if (medan.peranLencana) {
+            medan.peranLencana.textContent = orang.peran_label;
+            // Peran dan status memakai kelas lencana yang sama seperti di
+            // tabel, jadi warnanya ikut berubah dari data yang sama.
+            medan.peranLencana.className = `ad-lencana ${orang.peran === "admin" ? "ad-lencana--ungu" : "ad-lencana--abu"}`;
+
+            const titik = document.createElement("span");
+            titik.className = "ad-lencana__titik";
+            titik.setAttribute("aria-hidden", "true");
+            medan.status.textContent = "";
+
+            if (orang.aktif) {
+                medan.status.className = "ad-lencana ad-lencana--sukses";
+                medan.status.append(titik, document.createTextNode(" Aktif"));
+            } else {
+                medan.status.className = "ad-lencana ad-lencana--abu";
+                medan.status.append(titik, document.createTextNode(" Nonaktif"));
+            }
+        }
+
+        // Avatar memakai komponen yang sama dengan tabel: warna diturunkan
+        // dari nama, dan foto profil hanya dipakai kalau ada.
+        if (medan.avatar) {
+            medan.avatar.style.setProperty("--a", orang.warna);
+            medan.avatar.style.setProperty("--a-gelap", orang.warna_gelap);
+            medan.avatar.innerHTML = "";
+
+            if (orang.foto) {
+                const gambar = document.createElement("img");
+
+                gambar.src = orang.foto;
+                gambar.alt = "";
+                gambar.width = 52;
+                gambar.height = 52;
+                gambar.decoding = "async";
+
+                medan.avatar.append(gambar);
+            } else {
+                medan.avatar.textContent = orang.inisial;
+            }
+        }
+    };
+
+    document.querySelectorAll("[data-detail-buka]").forEach((tombol) => {
+        tombol.addEventListener("click", () => {
+            const orang = peta[tombol.dataset.detailBuka];
+
+            // Baris yang tidak ada di peta tidak mungkin terjadi, tapi kalau
+            // terjadi dialognya lebih baik tidak terbuka sama sekali
+            // daripada terbuka dengan kotak kosong.
+            if (!orang) {
+                return;
+            }
+
+            pemicu = tombol;
+            isi(orang);
+
+            dialog.classList.add("is-buka");
+            dialog.setAttribute("aria-hidden", "false");
+            document.body.style.overflow = "hidden";
+
+            dialog.querySelector("[data-detail-tutup]")?.focus();
+        });
+    });
+
+    dialog.querySelectorAll("[data-detail-tutup]").forEach((el) => {
+        el.addEventListener("click", tutup);
+    });
+
+    // Klik area gelap di luar kartu dialog juga menutupnya.
+    dialog.addEventListener("click", (event) => {
+        if (event.target === dialog) {
+            tutup();
+        }
+    });
+
+    document.addEventListener("keydown", (event) => {
+        if (!dialog.classList.contains("is-buka")) {
+            return;
+        }
+
+        if (event.key === "Escape") {
+            tutup();
+
+            return;
+        }
+
+        if (event.key !== "Tab") {
+            return;
+        }
+
+        const daftar = fokusable();
+
+        if (!daftar.length) {
+            return;
+        }
+
+        const awal = daftar[0];
+        const akhir = daftar[daftar.length - 1];
+
+        // Tab dari elemen terakhir kembali ke yang pertama, dan sebaliknya,
+        // supaya fokus tidak pernah keluar dari dialog.
+        if (event.shiftKey && document.activeElement === awal) {
+            event.preventDefault();
+            akhir.focus();
+        } else if (!event.shiftKey && document.activeElement === akhir) {
+            event.preventDefault();
+            awal.focus();
+        }
+    });
+}
+
 initDrawer();
 initDropdownAkun();
 initDialog();
 initTutupPanel();
 initDialogHapus();
 initVerifikasi();
+initDetailPengguna();

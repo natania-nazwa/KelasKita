@@ -10,17 +10,19 @@
          * dikembalikan sebagai jarak halaman. Nilainya harus selalu pasangan:
          * -m-6 dengan p-4, dan lg:-m-10 dengan lg:p-6.
          *
-         * Lebar isinya dikunci max-w-6xl (1152px, mendekati 1200px yang
-         * diminta rancangan) supaya di layar besar kartu utama dan kartu
-         * informasi tidak merekah ke tepi.
+         * Lebar isinya TIDAK dibatasi (dulu dikunci max-w-6xl) supaya
+         * halaman ini selebar halaman detail di area admin, yang memang
+         * memakai konten tanpa batas lebar. Susunan kartu, warna, dan
+         * komponennya tidak ikut berubah.
          */
         $kategori = $kartu['kategori'];
 
         /*
          * "Lihat semua" pada Daftar Soal mengarah ke daftar quiz di kategori
-         * yang sama, karena tidak ada halaman khusus daftar soal. Kategori
-         * kosong tidak pernah diberi tautan, supaya tidak muncul
-         * "kategori=" kosong di URL.
+         * yang sama, karena tidak ada halaman khusus daftar soal. Tautannya
+         * baru dirender kalau masih ada soal tersembunyi (lihat
+         * x-quiz.detail-daftar-soal), dan kategori kosong tidak pernah
+         * diberi tautan, supaya tidak muncul "kategori=" kosong di URL.
          */
         $tautanKategori = filled($kategori['slug'])
             ? route('user.quiz', ['kategori' => $kategori['slug']])
@@ -30,7 +32,7 @@
     @endphp
 
     <div class="kanvas-halaman -m-6 min-h-[calc(100dvh-4rem)] p-4 lg:-m-10 lg:p-6">
-        <div class="mx-auto w-full max-w-6xl">
+        <div class="w-full">
 
             {{-- 1. Kembali ke daftar quiz. --}}
             <a href="{{ route('user.quiz') }}" class="tombol-kembali">

@@ -95,6 +95,47 @@ class Materi extends Model
     }
 
     /**
+     * Terbitkan materi ini sekarang juga.
+     *
+     * Dipakai oleh menu "Konten Pembelajaran" di area admin: admin adalah
+     * pembuat sekaligus penerbit, jadi tidak ada tahap menunggu keputusan
+     * siapa pun. Materi langsung menjadi "published" dan tanggal terbitnya
+     * diisi.
+     *
+     * Nilai yang disimpan sama persis dengan setujui() di bawah, tapi
+     * dipisah supaya maksudnya terbaca dari tempat dipanggil: setujui()
+     * milik halaman Verifikasi, terbitkan() milik admin yang menerbitkan
+     * karyanya sendiri.
+     */
+    public function terbitkan(): void
+    {
+        $this->forceFill([
+            'status' => self::STATUS_PUBLISHED,
+            'dipublish_pada' => now(),
+            'catatan_admin' => null,
+        ])->save();
+    }
+
+    /**
+     * Tarik materi ini kembali menjadi draft.
+     *
+     * Hanya turun dari "published": status lain tidak disentuh, supaya alasan
+     * penolakan dan hitungan pengajuan ulang milik karya pengguna tidak ikut
+     * hilang karena admin memutuskan menyembunyikan materinya sejenak.
+     */
+    public function tarikDariDaftar(): void
+    {
+        if ($this->status !== self::STATUS_PUBLISHED) {
+            return;
+        }
+
+        $this->forceFill([
+            'status' => self::STATUS_DRAFT,
+            'dipublish_pada' => null,
+        ])->save();
+    }
+
+    /**
      * Materi yang sudah diajukan dan sedang menunggu keputusan admin.
      *
      * Dipakai halaman "Tinjau Materi" di area admin.

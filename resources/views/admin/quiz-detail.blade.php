@@ -24,6 +24,11 @@
         ini bukan tempat memutuskan apa pun, keputusan itu ada di menu
         Verifikasi.
 
+        Tombol Edit Quiz juga tidak ada di sini, sama seperti tombol Edit
+        Materi di halaman detail materi: perubahan disalakan dari menu tiga
+        titik pada kartu di daftar, di sana letaknya berdampingan dengan
+        Hapus — jadi satu tempat untuk mengelola, bukan dua.
+
         Layout admin tidak memakai kanvas penuh seperti halaman pengguna:
         sidebar dan topbar tetap terlihat supaya admin tidak kehilangan akses
         kembali ke panelnya.
@@ -33,18 +38,17 @@
          BARIS AKSI ADMIN
          Berada di luar area konten quiz, jadi tidak menyentuh isi yang
          harus identik dengan versi pengguna.
+
+         Hanya ada tombol kembali; lihat catatan di kepala halaman soal
+         kenapa tombol Edit tidak ikut di sini. Wrapper-nya tetap dipakai
+         walau isinya cuma satu tautan: justify-between dengan satu anak
+         hasilnya sama dengan justify-start, jadi tautannya tetap di kiri.
     ====================== --}}
     <div class="ad-seksi flex flex-wrap items-center justify-between gap-3">
         <a href="{{ route('admin.quiz') }}" class="ad-tautan">
             <x-admin.ikon nama="panah-kiri" />
 
             Kembali ke Quiz
-        </a>
-
-        <a href="{{ $tautanEdit }}" class="ad-tombol ad-tombol--halus">
-            <x-admin.ikon nama="pena" />
-
-            Edit Quiz
         </a>
     </div>
 

@@ -84,17 +84,24 @@
     {{-- =====================
          FILTER
 
-         Satu form GET untuk ketiga filter sekaligus, jadi mengganti filter
-         tidak mematikan filter lain yang sedang aktif. Tidak ada tombol
-         buka/tutup: kategorinya cuma tiga, dan menyembunyikannya di balik
-         popover hanya menambah satu klik untuk sesuatu yang selalu dipakai.
+         Satu form GET untuk pencarian dan ketiga filter sekaligus, jadi
+         mengganti filter tidak mematikan filter lain yang sedang aktif, dan
+         sebaliknya. Tidak ada tombol buka/tutup: kategorinya cuma tiga, dan
+         menyembunyikannya di balik popover hanya menambah satu klik untuk
+         sesuatu yang selalu dipakai.
 
-         Kolom "Cari materi" tidak ada di sini. Pencarian tetap berfungsi
-         lewat kotak pencarian di topbar, yang form-nya sudah mengarah ke
-         halaman ini dengan field "q" — jadi tidak ada pencarian yang
-         hilang, hanya satu kolom yang tidak lagi terduplikasi. Kata kunci
-         yang sedang aktif ikut dibawa sebagai query string supaya saringan
-         di bawah tidak hilang saat admin menyaring daftar.
+         Kolom "Cari materi" ada di sini, bukan cuma di topbar. Waktu kolom
+         ini dihapus karena dianggap kembar dengan kotak topbar, hasilnya
+         satu-satunya tempat mencari jadi kotak kecil di layar atas yang
+         menulis "Cari materi, quiz, pengguna" padahal isinya cuma satu
+         daftar — persis di halaman tempat admin sedang menyaring. Sekarang
+         keduanya ada: yang di sini yang tampak jelas di halaman filter, dan
+         yang di topbar yang bisa dipakai tanpa menggulir ke bawah.
+
+         Karena kolomnya ikut di dalam form ini, tidak ada lagi input tersembunyi
+         untuk membawa kata kunci: input yang terlihat itulah yang mengirim
+         "q". Enter di dalam kolom ini mengirim form, jadi tidak butuh tombol
+         cari terpisah.
 
          Barisnya flex-wrap, jadi saat layar tidak cukup lebar isinya turun
          sendiri — itu perilaku responsif, bukan dua baris yang sengaja
@@ -102,16 +109,20 @@
 
          Label select disembunyikan karena teks di dalamnya sudah menyebut apa
          yang disaring ("Semua kategori", "Semua pembuat"), jadi tidak ada
-         yang perlu dibaca dua kali.
+         yang perlu dibaca dua kali. Label kolom cari juga disembunyikan, tapi
+         hanya karena teks placeholder-nya sudah menyebut apa yang dicari.
     ====================== --}}
     <div class="ad-seksi ad-kartu ad-alat-kotak">
         <form method="GET" action="{{ route('admin.materi') }}">
             <div class="ad-alat-baris">
-                {{-- Pencarian yang sudah aktif ikut dibawa, supaya tidak hilang
-                     dari URL saat admin menyaring daftar. --}}
-                @if ($kataKunci !== '')
-                    <input type="hidden" name="q" value="{{ $kataKunci }}">
-                @endif
+                <div class="ad-cari">
+                    <x-admin.ikon nama="cari" class="ad-cari__ikon" />
+
+                    <label class="sr-only" for="cari-materi">Cari materi</label>
+
+                    <input id="cari-materi" name="q" type="search" value="{{ $kataKunci }}"
+                        placeholder="Cari materi..." autocomplete="off">
+                </div>
 
                 <div class="ad-alat-baris__field">
                     <label class="sr-only" for="saring-kategori">Saring menurut kategori</label>

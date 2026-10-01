@@ -175,9 +175,16 @@ class JadwalHalamanTest extends TestCase
             ->get('/user/jadwal?tanggal='.$tanggal->toDateString())
             ->assertOk()
             ->assertSee($hari[0]['judul'])
-            // Tiap baris menampilkan kelas, ruang, dan durasinya.
-            ->assertSee('Lab Komputer 1')
-            ->assertSee('1 jam 30 menit');
+            /*
+             * Tiap baris menampilkan kelas, ruang, dan durasinya. Nilainya
+             * diambil dari $hari (sumber kebenaran yang sama dengan
+             * halaman), bukan ditulis mati: ruang contoh berbeda per hari —
+             * Senin-Rabu "Lab Komputer 1", Kamis-Jumat "Ruang Kelas 3B" —
+             * jadi teks hardcoded hanya lulus kalau test kebetulan dijalankan
+             * di awal minggu.
+             */
+            ->assertSee($hari[0]['ruang'])
+            ->assertSee($hari[0]['durasi_label']);
 
         $this->assertSame(
             array_column($hari, 'id'),

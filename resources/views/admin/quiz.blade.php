@@ -28,6 +28,13 @@
         Tombol "Lihat Quiz" membuka halaman detail yang memakai komponen
         tampilan milik pengguna, jadi yang dibaca admin persis sama dengan
         yang dibaca user.
+
+        Yang membedakan halaman ini dari halaman Materi hanya warnanya:
+        kelas --kuis pada hero, kartu filter, dan kartu daftar. Semua aturan
+        CSS untuk kelas itu hanya berlaku di halaman ini, jadi Materi tetap
+        seperti sebelumnya. Kerangka, urutan, dan fungsinya tidak berubah —
+        kelas --kuis tidak menambah, mengurangi, atau memindahkan elemen apa
+        pun, hanya warna, bayangan, dan dekorasi yang ditumpuk di atasnya.
     --}}
 
     @php
@@ -55,8 +62,13 @@
 
          Memakai .ad-seksi juga supaya jarak ke kartu filter di bawahnya
          datang dari aturan .ad-seksi + .ad-seksi.
+
+         Modifier --kuis hanya untuk halaman ini: pola titik dua warna,
+         cincin cahaya di belakang gambar, dan garis aksen di bawah judul.
+         Semuanya lapisan ::before/::after yang absolute, jadi hero tetap
+         setinggi dan selebar yang sebelumnya.
     ====================== --}}
-    <section class="ad-seksi ad-hero ad-hero--konten">
+    <section class="ad-seksi ad-hero ad-hero--konten ad-hero--kuis">
         <div class="ad-hero-konten__susun">
             <div class="ad-hero-konten__teks">
                 <h1 class="ad-hero-konten__judul">Quiz</h1>
@@ -98,17 +110,19 @@
     {{-- =====================
          FILTER
 
-         Satu form GET untuk ketiga filter sekaligus, jadi mengganti filter
-         tidak mematikan filter lain yang sedang aktif. Tidak ada tombol
-         buka/tutup: kategorinya cuma tiga, dan menyembunyikannya di balik
-         popover hanya menambah satu klik untuk sesuatu yang selalu dipakai.
+         Satu form GET untuk pencarian dan ketiga filter sekaligus, jadi
+         mengganti filter tidak mematikan filter lain yang sedang aktif, dan
+         sebaliknya. Tidak ada tombol buka/tutup: kategorinya cuma tiga, dan
+         menyembunyikannya di balik popover hanya menambah satu klik untuk
+         sesuatu yang selalu dipakai.
 
-         Kolom "Cari quiz" tidak ada di sini. Pencarian tetap berfungsi
-         lewat kotak pencarian di topbar, yang form-nya sudah mengarah ke
-         halaman ini dengan field "q" — jadi tidak ada pencarian yang
-         hilang, hanya satu kolom yang tidak lagi terduplikasi. Kata kunci
-         yang sedang aktif ikut dibawa sebagai query string supaya saringan
-         di bawah tidak hilang saat admin menyaring daftar.
+         Kolom "Cari quiz" ada di sini, bukan cuma di topbar. Identik dengan
+         halaman Materi: pencarian di halaman ini mencari judul, kategori, dan
+         pembuat, persis seperti yang dilakukan halaman Materi.
+
+         Karena kolomnya ikut di dalam form ini, tidak ada lagi input tersembunyi
+         untuk membawa kata kunci: input yang terlihat itulah yang mengirim
+         "q", dan Enter di dalamnya mengirim form.
 
          Barisnya flex-wrap, jadi saat layar tidak cukup lebar isinya turun
          sendiri — itu perilaku responsif, bukan dua baris yang sengaja
@@ -117,15 +131,23 @@
          Label select disembunyikan karena teks di dalamnya sudah menyebut apa
          yang disaring ("Semua kategori", "Semua pembuat"), jadi tidak ada
          yang perlu dibaca dua kali.
+
+         Modifier --kuis hanya untuk halaman ini: kolom cari dan ketiga
+         select diberi cucian ungu muda, tombol "Terapkan" diberi gradasi,
+         dan "Hapus filter" memerah saat dilewati. Warnanya saja — isian,
+         label, dan urutan tombolnya tetap sama.
     ====================== --}}
-    <div class="ad-seksi ad-kartu ad-alat-kotak">
+    <div class="ad-seksi ad-kartu ad-alat-kotak ad-alat-kotak--kuis">
         <form method="GET" action="{{ route('admin.quiz') }}">
             <div class="ad-alat-baris">
-                {{-- Pencarian yang sudah aktif ikut dibawa, supaya tidak hilang
-                     dari URL saat admin menyaring daftar. --}}
-                @if ($kataKunci !== '')
-                    <input type="hidden" name="q" value="{{ $kataKunci }}">
-                @endif
+                <div class="ad-cari">
+                    <x-admin.ikon nama="cari" class="ad-cari__ikon" />
+
+                    <label class="sr-only" for="cari-quiz">Cari quiz</label>
+
+                    <input id="cari-quiz" name="q" type="search" value="{{ $kataKunci }}"
+                        placeholder="Cari quiz..." autocomplete="off">
+                </div>
 
                 <div class="ad-alat-baris__field">
                     <label class="sr-only" for="saring-kategori">Saring menurut kategori</label>

@@ -55,6 +55,10 @@
         Aturan kedua untuk form edit materi: catatan pendukung baru muncul
         setelah tombol "Ajukan Persetujuan" ditekan. Tanpa JS tombol itu jadi
         submit biasa, jadi isian harus sudah terlihat sejak awal.
+
+        Aturan ketiga untuk daftar soal di halaman detail quiz: baris keenam
+        dan seterusnya datang dalam keadaan tersembunyi, dan tombol yang
+        membukanya tidak berfungsi tanpa JS, jadi keduanya dibalik di sini.
     --}}
     <noscript>
         <style>
@@ -70,6 +74,18 @@
                 opacity: 1 !important;
                 visibility: visible !important;
                 transform: none !important;
+            }
+
+            /* Daftar soal pada halaman detail quiz: baris keenam dan
+               seterusnya dikirim tersembunyi oleh server, dan tombol
+               "Lihat semua" yang membukanya bergantung pada JS. Tanpa JS
+               keduanya dibalik — seluruh soal tampil, tombolnya hilang. */
+            .daftar-soal__baris[hidden] {
+                display: flex !important;
+            }
+
+            [data-daftar-soal-tombol] {
+                display: none !important;
             }
         </style>
     </noscript>

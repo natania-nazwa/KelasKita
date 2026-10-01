@@ -30,6 +30,11 @@
     --ad-bahaya: #e96b83;
     --ad-info: #5b8def;
 
+    /* Kartu dialog detail: dipisah dari --ad-white supaya "kartu di atas
+       kartu" tetap punya batas yang terlihat tanpa border tambahan. */
+    --ad-kartu: #ffffff;
+    --ad-kuning: #f4a340;
+
     /* Lebar sidebar desktop: spec 250-270px. */
     --ad-lebar-sisi: 264px;
 
@@ -3534,15 +3539,13 @@ body.tubuh-admin {
 
 /*
  * ---------- Kartu filter + pencarian ----------
- * Satu form GET, satu baris: kolom cari, tombol Cari, ketiga select, lalu
- * dua tombol aksi. Barisnya flex-wrap, jadi saat layar tidak cukup lebar
- * isinya turun sendiri — itu responsif, bukan dua baris yang dirancang.
+ * Satu form GET, satu baris: kolom cari, ketiga select, lalu dua tombol aksi.
+ * Barisnya flex-wrap, jadi saat layar tidak cukup lebar isinya turun sendiri —
+ * itu responsif, bukan dua baris yang dirancang.
  *
  * Hanya kelas di bawah yang ditambah; .ad-alat, .ad-cari, dan .ad-pilih
  * dipakai apa adanya supaya toolbar ini dan halaman admin lain tetap sama
- * persis. Lebar dasarnya sengaja rapat supaya ketujuh kontrol muat dalam
- * satu baris di desktop, dan kolom cari yang jadi satu-satunya yang
- * boleh melar.
+ * persis.
  */
 .ad-alat-kotak {
     padding: 0.7rem 0.75rem;
@@ -3565,6 +3568,28 @@ body.tubuh-admin {
     flex-wrap: wrap;
     align-items: center;
     gap: 0.5rem;
+}
+
+/*
+ * Kolom cari di baris filter memakai .ad-cari milik toolbar admin lain,
+ * tapi dibatasi lebih sempit di sini.
+ *
+ * .ad-cari melebar sampai 18rem, dan itu benar untuk toolbar yang isinya
+ * cuma kotak cari. Baris filter ini juga memuat tiga select dan dua tombol
+ * aksi, jadi 18rem akan membuat seluruhnya terlanjur turun ke baris kedua
+ * di layar 1024px — tempat yang justru paling perlu hemat tinggi.
+ *
+ * Lebar 14rem cukup untuk membaca "Cari materi..." atau "Cari quiz..."
+ * tanpa terpotong, dan ketiga select tetap dapat lebar dasarnya yang sama.
+ */
+.ad-alat-baris > .ad-cari {
+    flex: 1 1 12rem;
+}
+
+@media (min-width: 640px) {
+    .ad-alat-baris > .ad-cari {
+        flex: 0 1 14rem;
+    }
 }
 
 /*
@@ -3966,6 +3991,515 @@ body.tubuh-admin {
     gap: 0.3rem;
     margin-left: auto;
 }
+
+/* ================================================================
+   POLESAN VISUAL (halaman "Materi" dan "Quiz" di admin)
+
+   Yang ada di blok ini seluruhnya warna, bayangan, dan dekorasi — tidak ada
+   satu pun aturan yang menambah, mengurangi, memindahkan, atau mengurutkan
+   elemen. Posisi, jumlah kolom, jarak, dan urutan markup tetap persis seperti
+   sebelum blok ini ada, jadi halaman tidak bergeser hanya karena dipoles.
+
+   Dua hal yang membuat itu mungkin:
+
+     1. Setiap dekorasi yang baru adalah ::before atau ::after yang
+        diposisikan absolute, di dalam wadah yang sudah position: relative
+        dan overflow: hidden. Browser menggambarnya sebagai lapisan di atas
+        atau di belakang, tanpa pernah ikut dihitung saat tata letak dibangun.
+     2. Setiap lapisan baru diberi pointer-events: none, jadi tidak pernah
+        menahan klik, hover, atau fokus tombol yang ada di atasnya.
+
+   Warna diambil dari --k (warna kategori tiap kartu, sudah diset inline) dan
+   dari palet admin yang sudah ada, jadi tidak ada satu pun warna hard-coded
+   baru yang harus dijelaskan di sini.
+   ================================================================ */
+
+/* ---------- Hero: gumpalan warna di belakang ---------- */
+
+/*
+ * Tiga gumpalan lembut di belakang hero.
+ *
+ * .ad-hero sudah position: relative + overflow: hidden, jadi ::after absolute
+ * tidak mungkin mendorong isi ke bawah atau keluar kotak.
+ *
+ * Ungu di kanan bawahmengikuti cahaya yang sudah ada di latar hero, jadi tidak
+ * terasa sebagai elemen baru. Dua gumpalan lain (biru dan mint) sengaja jauh
+ * lebih redup dan ditaruh ke sudut yang tidak dipakai teks — kalau sama
+ * kuat, hero jadi ramai dan bersaing dengan subjudulnya.
+ *
+ * z-index: 0 karena .ad-hero-konten__susun sudah position: relative dengan
+ * z-index: 1. Tanpa itu, gumpalan ini justru menutupi teks.
+ */
+.ad-hero--konten::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    background-image:
+        radial-gradient(15rem 10rem at 10% 122%, rgba(91, 141, 239, 0.2), transparent 70%),
+        radial-gradient(12rem 8rem at 58% -34%, rgba(53, 183, 121, 0.16), transparent 70%),
+        radial-gradient(19rem 13rem at 96% 118%, rgba(109, 74, 255, 0.2), transparent 72%);
+    pointer-events: none;
+}
+
+/*
+ * Judul diberi warna bergradasi.
+ *
+ * Dibiarkan di balik @supports karena fallback-nya color: transparent. Di
+ * peramban yang tidak mendukung background-clip: text, teksnya akan hilang
+ * total — bukan terlihat jelek, tapi tidak terlihat sama sekali. Jadi warna
+ * solid hanya dipasang di dalam blok yang pasti didukung.
+ */
+.ad-hero-konten__judul {
+    position: relative;
+}
+
+@supports ((-webkit-background-clip: text) or (background-clip: text)) {
+    .ad-hero-konten__judul {
+        background-image: linear-gradient(104deg, var(--ad-primary-dark) 0%, var(--ad-primary) 52%, #9b6dff 100%);
+        -webkit-background-clip: text;
+        background-clip: text;
+        color: transparent;
+    }
+}
+
+/*
+ * Bayangan lembut pada ilustrasi hero.
+ *
+ * filter: drop-shadow dipakai, bukan box-shadow, karena yang di-drop
+ * adalah bentuk gambarnya sendiri, bukan kotak tempat gambarnya berada. Kalau
+ * memakai box-shadow, bayangannya mengikuti kotak dan ikut berputar bersama
+ * object-fit — pada gambar bujur sangkar terlihat seperti kotak gelap yang
+ * melayang.
+ */
+.ad-hero-konten__gambar {
+    filter: drop-shadow(0 18px 26px rgba(76, 47, 179, 0.22));
+}
+
+/* ---------- Kartu filter ---------- */
+
+/*
+ * Kartu filter cukup dengan cucian ungu tipis di kepala dan bayangan yang
+ * sedikit lebih dalam, supaya kartu terasa lebih menonjol tanpa garis aksen
+ * atasnya. Pita warna 3px yang pernah ada di sini sudah dihapus: dengan
+ * search dan tiga select yang sudah bergradasi, garis di atasnya cuma menambah
+ * satu warna yang tidak lagi dibutuhkan.
+ */
+.ad-alat-kotak {
+    background-image: linear-gradient(180deg, rgba(109, 74, 255, 0.03) 0%, rgba(109, 74, 255, 0) 62%);
+    box-shadow:
+        0 1px 2px rgba(41, 36, 92, 0.03),
+        0 14px 30px -26px rgba(76, 47, 179, 0.35);
+}
+
+/* ---------- Kartu di daftar ---------- */
+
+/*
+ * Bayangan kartu diberi warna kategori, bukan abu-abu.
+ *
+ * --k diset inline per kartu dari warna kategorinya, jadi setiap kategori
+ * punya nuansa bayangannya sendiri tanpa perlu kelas tambahan. Kalau --k
+ * belum ada (kartu dirender tanpa style inline), nilai bawaan primary yang
+ * dipakai — persis seperti blok gambar dan aksen kartu.
+ *
+ * Rules ini sengaja ditulis ulang di sini, bukan diubah di aturan aslinya di
+ * atas, supaya aturan asli tetaputters seperti yang diuji test: kartu tidak
+ * boleh memakai overflow: hidden, dan hanya ::before/::after yang boleh
+ * absolute.
+ */
+.ad-kartu-daftar {
+    box-shadow:
+        0 1px 2px rgba(41, 36, 92, 0.035),
+        0 12px 26px -22px color-mix(in oklab, var(--k, var(--ad-primary)) 55%, transparent);
+}
+
+.ad-kartu-daftar:hover,
+.ad-kartu-daftar:focus-within {
+    border-color: color-mix(in oklab, var(--k, var(--ad-primary)) 42%, var(--ad-garis));
+    box-shadow:
+        0 2px 4px rgba(41, 36, 92, 0.05),
+        0 22px 40px -24px color-mix(in oklab, var(--k, var(--ad-primary)) 78%, transparent);
+}
+
+/*
+ * Cahaya warna kategori di blok gambar.
+ *
+ * Ditumpuk di atas gradasi yang sudah ada, jadi blok gambar tidak berubah
+ * bentuk maupun tinggi — hanya warnanya jadi sedikit lebih kaya.
+ */
+.ad-kartu-daftar__gambar::after {
+    background-image:
+        radial-gradient(120% 90% at 14% 8%, rgba(255, 255, 255, 0.34), transparent 60%),
+        linear-gradient(to top, color-mix(in oklab, var(--k-gelap, var(--ad-primary-dark)) 42%, transparent), transparent 55%);
+}
+
+/*
+ * Aksen di bawah gambar jadi gradasi: warna kategori di kiri, ungu admin di
+ * kanan. Panjang dan tebalnya tetap, jadi tidak ada yang bergeser.
+ */
+.ad-kartu-daftar__aksen {
+    background-image: linear-gradient(90deg, var(--k, var(--ad-primary)) 0%, var(--ad-primary) 100%);
+    box-shadow: 0 4px 12px -6px var(--k, var(--ad-primary));
+}
+
+/* ---------- Empty state ---------- */
+
+/*
+ * Hanya pesan kosong yang ada di dalam grid daftar. .ad-kosong dipakai juga
+ * oleh halaman lain, jadi polesannya sengaja di-scope di sini supaya halaman
+ * yang lain tidak ikut berubah tanpa diminta.
+ */
+.ad-daftar-kartu > .ad-kosong {
+    background-image:
+        radial-gradient(22rem 12rem at 50% -20%, rgba(109, 74, 255, 0.1), transparent 70%),
+        linear-gradient(180deg, rgba(237, 231, 255, 0.5) 0%, rgba(255, 255, 255, 0) 70%);
+}
+
+.ad-daftar-kartu > .ad-kosong .ad-kosong__ikon {
+    background-image: linear-gradient(140deg, var(--ad-primary-light) 0%, var(--ad-white) 70%);
+    box-shadow:
+        0 10px 22px -16px rgba(76, 47, 179, 0.9),
+        inset 0 0 0 1px color-mix(in oklab, var(--ad-primary) 18%, transparent);
+    color: var(--ad-primary);
+}
+
+/* ---------- Paginasi ---------- */
+
+/*
+ * Halaman yang sedang dibuka memakai gradasi, jadi posisinya terbaca tanpa
+ * harus Alongside membandingkan bentuknya dengan tombol lain. Tombol lain tetap
+ * putih seperti sebelumnya supaya hanya satu yang menonjol.
+ */
+.ad-paginasi nav[role="navigation"] > [aria-current="page"] {
+    background-image: linear-gradient(135deg, var(--ad-primary) 0%, var(--ad-primary-dark) 100%);
+    box-shadow:
+        0 10px 20px -14px rgba(76, 47, 179, 0.9),
+        inset 0 1px 0 rgba(255, 255, 255, 0.22);
+}
+
+.ad-paginasi nav[role="navigation"] > a:hover {
+    background-image: linear-gradient(135deg, var(--ad-primary-light) 0%, #ffffff 100%);
+    border-color: color-mix(in oklab, var(--ad-primary) 50%, var(--ad-garis));
+    color: var(--ad-primary-dark);
+}
+
+/* ================================================================
+   POLESAN VISUAL — HALAMAN "QUIZ" SAJA
+
+   Blok di atas dipakai bersama oleh halaman Materi dan Quiz. Yang di bawah
+   ini sengaja dikunci ke kelas --kuis, yang hanya dipakai di
+   admin/quiz.blade.php dan components/admin/quiz-kartu.blade.php, jadi
+   halaman Materi tidak ikut berubah.
+
+   Syaratnya sama seperti blok di atas: tidak ada satu pun aturan yang
+   menambah, mengurangi, memindahkan, atau mengurutkan elemen. Yang dipakai
+   hanya warna, bayangan, border, dan ::before/::after yang absolute dengan
+   pointer-events: none. Jadi tata letak, urutan, isi, dan fungsi setiap
+   elemen di halaman ini persis sama seperti sebelum blok ini ada.
+
+   Warna besides palet admin diambil dari --k dan --k-gelap (warna kategori
+   tiap kartu) plus --p dan --p-gelap (warna avatar pembuatnya). Keduanya
+   sudah diset inline di kartu, jadi tidak ada warna hard-coded baru yang
+   harus dicatat di sini.
+   ================================================================ */
+
+/* ---------- Hero: pola titik, cincin cahaya, aksen judul ---------- */
+
+/*
+ * Pola titik di hero jadi dua warna dan diberi masker radial, jadi
+ * titiknya menumpuk di sisi kanan — sisi gambar — lalu menghilang sebelum
+ * mencapai teks. Menggantikan ::before bawaan .ad-hero (satu warna ungu)
+ * hanya di halaman ini.
+ */
+.ad-hero--kuis::before {
+    background-image:
+        radial-gradient(rgba(109, 74, 255, 0.3) 1.2px, transparent 1.2px),
+        radial-gradient(rgba(91, 141, 239, 0.34) 1px, transparent 1px);
+    background-size:
+        16px 16px,
+        24px 24px;
+    background-position:
+        0 0,
+        8px 12px;
+    opacity: 0.62;
+    -webkit-mask-image: radial-gradient(80% 98% at 94% 50%, #000 0%, transparent 76%);
+    mask-image: radial-gradient(80% 98% at 94% 50%, #000 0%, transparent 76%);
+}
+
+/*
+ * Dua gumpalan warna baru di latar hero — merah muda di kiri bawah dan biru
+ * di kanan — supaya hero tidak berhenti di dua warna ungu yang mirip.
+ * Cahaya putih di belakang gambar (lapisan kedua) dan gradasi yang sudah ada
+ * (lapisan terakhir) ikut ditulis ulang di sini, karena background-image
+ * tidak bisa ditimpa sebagian: ia selalu berlaku utuh.
+ */
+.ad-hero--kuis {
+    background-image:
+        radial-gradient(16rem 11rem at 3% 118%, rgba(233, 107, 131, 0.18), transparent 70%),
+        radial-gradient(18rem 12rem at 88% 52%, rgba(255, 255, 255, 0.66), transparent 70%),
+        radial-gradient(30rem 16rem at 88% -20%, rgba(139, 108, 255, 0.24), transparent 70%),
+        linear-gradient(135deg, #f6f2ff 0%, #ece6ff 52%, #e3dbff 100%);
+}
+
+/*
+ * Cincin cahaya di belakang gambar hero.
+ *
+ * Ditaruh di ::after .ad-hero-konten__susun, satu-satunya wadah yang
+ * membungkus gambar itu. Absolute, jadi tidak menambah tinggi maupun lebar
+ * hero; kalau sebagian keluar kotak, .ad-hero yang memotong (overflow:
+ * hidden) ikut memotongnya, dan hasilnya cincin yang terpotong rapi di tepi
+ * hero.
+ *
+ * z-index: 0 karena .ad-hero-konten__susun sudah position: relative dengan
+ * z-index: 1. Gambarnya sendiri butuh position: relative + z-index: 1 di
+ * bawah, karena ::after selalu digambar setelah anak statis dalam urutan
+ * pohon — tanpa itu cincin ini justru menutupi gambar.
+ */
+.ad-hero--kuis .ad-hero-konten__susun::after {
+    content: '';
+    position: absolute;
+    z-index: 0;
+    top: 50%;
+    right: -1.5rem;
+    width: 11rem;
+    height: 11rem;
+    border-radius: 9999px;
+    background-image: radial-gradient(
+        circle at 50% 50%,
+        color-mix(in oklab, var(--ad-primary) 26%, transparent) 0%,
+        color-mix(in oklab, var(--ad-info) 16%, transparent) 52%,
+        transparent 72%
+    );
+    box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--ad-primary) 22%, transparent);
+    transform: translateY(-50%);
+    pointer-events: none;
+}
+
+.ad-hero--kuis .ad-hero-konten__gambar {
+    position: relative;
+    z-index: 1;
+}
+
+@media (min-width: 1024px) {
+    .ad-hero--kuis .ad-hero-konten__susun::after {
+        right: -2.75rem;
+        width: 15rem;
+        height: 15rem;
+    }
+}
+
+/*
+ * Garis aksen di bawah judul hero. Absolute, jadi tidak menambah tinggi hero
+ * dan tidak mendorong subjudul — jaraknya (0.3rem) sengaja lebih kecil dari
+ * jarak subjudul (0.5rem) supaya pita ini berhenti tepat di atas teksnya.
+ * Panjang dan tebalnya sama dengan .ad-kartu-daftar__aksen, jadi motif yang
+ * sama berulang di hero dan di kartu.
+ */
+.ad-hero--kuis .ad-hero-konten__judul {
+    position: relative;
+}
+
+.ad-hero--kuis .ad-hero-konten__judul::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    bottom: -0.3rem;
+    width: 2.5rem;
+    height: 3px;
+    border-radius: 9999px;
+    background-image: linear-gradient(90deg, var(--ad-primary) 0%, var(--ad-info) 100%);
+    box-shadow: 0 6px 14px -8px rgba(76, 47, 179, 0.9);
+}
+
+/* Subjudul diberi sedikit ungu, cukup untuk terasa hidup tanpa turun
+ * kontrasnya. */
+.ad-hero--kuis .ad-hero-konten__sub {
+    color: color-mix(in oklab, var(--ad-teks) 76%, var(--ad-primary));
+}
+
+/* ---------- Kartu filter: isian bercucian ungu, tombol bergradasi ---------- */
+
+/*
+ * Kolom cari dan ketiga select tidak putih polos, tapi cucian ungu muda.
+ * .ad-cari dan .ad-pilih dipakai toolbar admin lain, jadi warnanya hanya
+ * ditulis lewat .ad-alat-kotak--kuis di halaman ini.
+ *
+ * Hover dan focus mengembalikan putih: saat sedang dipakai, isiannya harus
+ * terbaca sebagai isian, bukan sebagai tombol.
+ */
+.ad-alat-kotak--kuis .ad-cari input,
+.ad-alat-kotak--kuis .ad-pilih {
+    border-color: color-mix(in oklab, var(--ad-primary) 22%, var(--ad-garis));
+    background-color: color-mix(in oklab, var(--ad-primary-light) 42%, var(--ad-white));
+}
+
+.ad-alat-kotak--kuis .ad-cari input:hover,
+.ad-alat-kotak--kuis .ad-pilih:hover,
+.ad-alat-kotak--kuis .ad-cari input:focus,
+.ad-alat-kotak--kuis .ad-pilih:focus {
+    background-color: var(--ad-white);
+}
+
+/*
+ * "Terapkan" jadi tombol ungu bergradasi. background-color bawaan
+ * .ad-tombol--utama sengaja tidak diubah: gambar gradasinya melapisi
+ * warna itu, jadi aturan aslinya tetap berlaku kalau gradasi ini gagal
+ * dimuat.
+ */
+.ad-alat-kotak--kuis .ad-tombol--utama {
+    background-image: linear-gradient(135deg, var(--ad-primary) 0%, #8f68ff 55%, #5b8def 145%);
+    box-shadow:
+        0 12px 24px -16px rgba(76, 47, 179, 0.95),
+        inset 0 1px 0 rgba(255, 255, 255, 0.25);
+}
+
+.ad-alat-kotak--kuis .ad-tombol--utama:hover {
+    background-image: linear-gradient(135deg, var(--ad-primary-dark) 0%, #7d52f5 55%, #4c7fe0 145%);
+}
+
+/* "Hapus filter" mengikuti warna aksinya: merah muda, bukan ungu, karena
+ * dari situ semua quiz yang sedang disaring bisa hilang dari daftar. */
+.ad-alat-kotak--kuis .ad-tombol--garis:hover {
+    border-color: color-mix(in oklab, var(--ad-bahaya) 45%, var(--ad-garis));
+    background-color: color-mix(in oklab, var(--ad-bahaya) 10%, var(--ad-white));
+    color: #c2455f;
+}
+
+/* ---------- Kartu quiz: warna kategori merambat ke isi ---------- */
+
+/*
+ * Duduknya ::before dan ::after dipakai .ad-titik (menu tiga titik) yang
+ * posisinya sudah relatif terhadap dirinya sendiri, jadi position: relative
+ * di sini tidak memindahkan apa pun.
+ */
+.ad-kartu-daftar--kuis {
+    position: relative;
+}
+
+/* Cucian warna kategori di kepala badan kartu, meredup ke bawah. */
+.ad-kartu-daftar--kuis .ad-kartu-daftar__badan {
+    background-image: linear-gradient(
+        180deg,
+        color-mix(in oklab, var(--k, var(--ad-primary)) 12%, transparent) 0%,
+        transparent 3.25rem
+    );
+}
+
+/*
+ * Pola titik putih di blok gambar, dimasker ke pojok kanan atas.
+ *
+ * Hanya terlihat kalau quiznya tidak punya thumbnail — kalau ada, gambarnya
+ * punya z-index: 1 dan menutupi lapisan ini, persis seperti yang diinginkan:
+ * dotsnya jadi bagian dari gradasi kategori, bukan lapisan di atas foto.
+ */
+.ad-kartu-daftar--kuis .ad-kartu-daftar__gambar::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image: radial-gradient(rgba(255, 255, 255, 0.55) 1.1px, transparent 1.1px);
+    background-size: 15px 15px;
+    opacity: 0.45;
+    -webkit-mask-image: radial-gradient(85% 90% at 88% 8%, #000 0%, transparent 72%);
+    mask-image: radial-gradient(85% 90% at 88% 8%, #000 0%, transparent 72%);
+    pointer-events: none;
+}
+
+/* Cincin tipis warna kategori di dalam blok gambar saat kartu dilewati. */
+.ad-kartu-daftar--kuis:hover .ad-kartu-daftar__gambar,
+.ad-kartu-daftar--kuis:focus-within .ad-kartu-daftar__gambar {
+    box-shadow: inset 0 0 0 2px color-mix(in oklab, var(--k, var(--ad-primary)) 60%, transparent);
+}
+
+/* Aksen memanjang sedikit saat kartu dilewati. Yang berubah hanya
+ * lebarnya, bukan ketebalan atau posisinya, jadi tidak ada yang bergeser. */
+.ad-kartu-daftar--kuis .ad-kartu-daftar__aksen {
+    background-image: linear-gradient(
+        90deg,
+        var(--k, var(--ad-primary)) 0%,
+        color-mix(in oklab, var(--k, var(--ad-primary)) 30%, var(--ad-info)) 60%,
+        var(--ad-info) 100%
+    );
+    transition: width 0.2s ease;
+}
+
+.ad-kartu-daftar--kuis:hover .ad-kartu-daftar__aksen,
+.ad-kartu-daftar--kuis:focus-within .ad-kartu-daftar__aksen {
+    width: 3.5rem;
+}
+
+/* Judul ikut warna kategorinya saat kartu dilewati. */
+.ad-kartu-daftar--kuis .ad-kartu-daftar__judul {
+    transition: color 0.18s ease;
+}
+
+.ad-kartu-daftar--kuis:hover .ad-kartu-daftar__judul,
+.ad-kartu-daftar--kuis:focus-within .ad-kartu-daftar__judul {
+    color: var(--k-gelap, var(--ad-primary-dark));
+}
+
+/* Nama pembuat memakai warna avatarnya sendiri, jadi dua kartu dengan
+ * kategori yang sama tetap berbeda warna. */
+.ad-kartu-daftar--kuis .ad-kartu-daftar__truncate {
+    color: var(--p-gelap, var(--ad-teks));
+}
+
+/* Baris meta memakai warna kategori, dengan titik kategori di depannya. */
+.ad-kartu-daftar--kuis .ad-kartu-daftar__meta {
+    color: color-mix(in oklab, var(--k-gelap, var(--ad-primary-dark)) 78%, var(--ad-teks));
+}
+
+.ad-kartu-daftar--kuis .ad-kartu-daftar__meta::before {
+    content: '';
+    width: 0.4rem;
+    height: 0.4rem;
+    flex-shrink: 0;
+    align-self: center;
+    border-radius: 9999px;
+    background-color: var(--k, var(--ad-primary));
+    box-shadow: 0 0 0 3px color-mix(in oklab, var(--k, var(--ad-primary)) 20%, transparent);
+}
+
+/* Tombol "Lihat" dan menu tiga titik mengikuti warna kategori. */
+.ad-kartu-daftar--kuis .ad-kartu-daftar__aksi .ad-tombol--halus {
+    border-color: color-mix(in oklab, var(--k, var(--ad-primary)) 32%, var(--ad-white));
+    background-color: color-mix(in oklab, var(--k, var(--ad-primary)) 13%, var(--ad-white));
+    color: var(--k-gelap, var(--ad-primary-dark));
+}
+
+.ad-kartu-daftar--kuis .ad-kartu-daftar__aksi .ad-tombol--halus:hover {
+    border-color: transparent;
+    background-color: var(--k, var(--ad-primary));
+    color: var(--ad-white);
+}
+
+.ad-kartu-daftar--kuis .ad-titik__tombol {
+    border-color: color-mix(in oklab, var(--k, var(--ad-primary)) 22%, var(--ad-garis));
+    color: color-mix(in oklab, var(--k-gelap, var(--ad-primary-dark)) 65%, var(--ad-teks-2));
+}
+
+/*
+ * Lencana kesulitan dibedakan warnanya: hijau, oranye, merah.
+ *
+ * Nilainya sama persis dengan pita status di components/admin/lencana-materi,
+ * jadi "Mudah" selalu hijau dan "Sulit" selalu merah di seluruh area admin.
+ * Modifier-nya sudah ada di CSS dasar; yang ditambah di sini hanya latar
+ * lencana, karena di situ ia masih putih seperti lencana status.
+ */
+.ad-kartu-daftar--kuis .ad-kartu-daftar__kesulitan--mudah {
+    background-color: #e4f4ec;
+    color: #1f8f5c;
+}
+
+.ad-kartu-daftar--kuis .ad-kartu-daftar__kesulitan--sedang {
+    background-color: #fcf0df;
+    color: #b8720f;
+}
+
+.ad-kartu-daftar--kuis .ad-kartu-daftar__kesulitan--sulit {
+    background-color: #fbe9ec;
+    color: #c2455f;
+}
+
 /* ---------- Konten ---------- */
 .ad-isi-materi {
     max-height: 24rem;
@@ -5464,4 +5998,268 @@ body.tubuh-admin {
         transition: none;
         animation: none;
     }
+}
+
+/* ================================================================
+   HALAMAN PENGGUNA
+   Seluruh kelas di bawah berawalan .ad-ug- (users). Design system di
+   atas dipakai apa adanya: tidak ada token baru, tidak ada palet baru,
+   tidak ada font baru.
+
+   Yang ditambahkan hanya bentuk yang belum punya padanannya: kolom
+   dua baris di tabel, baris informasi di kaki daftar, isi dialog detail,
+   dan Avatar yang bisa menampilkan foto.
+
+   Foto profil sengaja memakai .ad-avatar yang sudah ada, bukan kelas
+   baru, supaya warna inisial dan ukurannya tetap satu sumber benar.
+   ================================================================ */
+
+/* ---------- Avatar: inisial atau foto ----------
+ *
+ * .ad-avatar tadinya isinya teks inisial saja. Sekarang foto profil
+ * boleh mengisi penuh bulatannya, jadi overflow disembunyikan dan
+ * gambarnya ikut membulat. Aturan ini tidak mengubah tampilan avatar
+ * yang hanya berisi teks.
+ */
+.ad-avatar {
+    overflow: hidden;
+}
+
+.ad-avatar > img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: inherit;
+}
+
+/* ---------- Baris informasi di kaki daftar ---------- */
+.ad-ug__info {
+    flex-basis: 100%;
+    margin: 0;
+    text-align: center;
+    font-size: 0.75rem;
+    color: var(--ad-teks-2);
+}
+
+.ad-ug__info-titik {
+    padding: 0 0.4rem;
+    color: var(--ad-soft);
+}
+
+/* ================================================================
+   DIALOG DETAIL PENGGUNA
+   ================================================================
+   Isinya (avatar, peran, status, bergabung, empat angka karya) tidak
+   berubah — yang dirapikan di sini hanya tampilannya:
+
+     - identitas dipindah ke kartu bergradien lembut supaya jadi focal
+       point pertama, bukan sekadar baris avatar di atas daftar;
+     - tiga data peran/status/bergabung jadi sel grid dengan label di
+       atas nilainya, bukan "label di kiri, nilai di kanan" yang bikin
+       tinggi baris tidak seragam;
+     - empat angka activity jadi kartu yang diberi aksen warna berbeda
+       per jenis, supaya mata bisa membedakan kategori tanpa membaca
+       labelnya dulu.
+
+   Semua ukuran memakai rem dan lebar ikut grille, supaya tetap ikut
+   mengikuti ukuran teks yang sudah diatur pengguna di pengaturan.
+   ================================================================ */
+
+/* Peran ditulis sebagai label kecil di atas nama, karena di tabel peran
+   tampil sebagai lencana dan di dialog ukurannya jadi terlalu kecil kalau
+   ikut jadi lencana yang sama. */
+.ad-ug__dialog-peran {
+    display: inline-flex;
+    align-items: center;
+    margin: 0 0 0.4rem;
+    padding: 0.2rem 0.55rem;
+    border-radius: 999px;
+    background-color: var(--ad-primary-light);
+    color: var(--ad-primary);
+    font-size: 0.625rem;
+    font-weight: 800;
+    letter-spacing: 0.09em;
+    text-transform: uppercase;
+}
+
+/* ---------- Kartu identitas ---------- */
+.ad-ug__identitas {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1.1rem;
+    border-radius: 1.15rem;
+    background-image: linear-gradient(
+        135deg,
+        var(--ad-primary-light) 0%,
+        var(--ad-latar) 62%
+    );
+    padding: 1.25rem 1rem;
+    text-align: center;
+}
+
+@media (min-width: 480px) {
+    .ad-ug__identitas {
+        flex-direction: row;
+        align-items: center;
+        gap: 1.15rem;
+        padding: 1.15rem 1.25rem;
+        text-align: left;
+    }
+}
+
+/* Avatar dikelilingi cincin putih supaya terpisah dari gradien di
+   belakangnya tanpa harus menambah border yang thickening. */
+.ad-ug__identitas .ad-avatar--besar {
+    border: 0.25rem solid var(--ad-kartu);
+    box-shadow: 0 0.5rem 1rem -0.4rem rgb(49 46 129 / 0.28);
+}
+
+.ad-ug__identitas-daftar {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0.5rem;
+    min-width: 0;
+    flex: 1;
+    margin: 0;
+}
+
+@media (min-width: 400px) {
+    .ad-ug__identitas-daftar {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+}
+
+.ad-ug__identitas-baris {
+    display: flex;
+    min-width: 0;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.3rem;
+    border-radius: 0.75rem;
+    background-color: var(--ad-kartu);
+    padding: 0.55rem 0.5rem;
+    text-align: center;
+}
+
+@media (min-width: 480px) {
+    .ad-ug__identitas-baris {
+        align-items: flex-start;
+        text-align: left;
+    }
+}
+
+.ad-ug__identitas-baris dt {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    font-size: 0.625rem;
+    font-weight: 700;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+    color: var(--ad-teks-2);
+}
+
+.ad-ug__identitas-baris dd {
+    margin: 0;
+    font-size: 0.8125rem;
+}
+
+/* ---------- Kartu activity ---------- */
+.ad-ug__aktivitas {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0.6rem;
+    margin-top: 0.85rem;
+    border-top: 1px solid var(--ad-garis);
+    padding-top: 0.85rem;
+}
+
+@media (min-width: 480px) {
+    .ad-ug__aktivitas {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+@media (min-width: 1024px) {
+    .ad-ug__aktivitas {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+}
+
+.ad-ug__aktivitas-kartu {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.6rem;
+    border: 1px solid var(--ad-garis);
+    border-radius: 0.9rem;
+    background-color: var(--ad-latar);
+    padding: 0.75rem 0.8rem;
+    transition: border-color 0.15s ease, background-color 0.15s ease;
+}
+
+.ad-ug__aktivitas-kartu:hover {
+    border-color: var(--ad-soft);
+    background-color: var(--ad-kartu);
+}
+
+.ad-ug__aktivitas-ikon {
+    display: flex;
+    width: 1.9rem;
+    height: 1.9rem;
+    flex-shrink: 0;
+    align-items: center;
+    justify-content: center;
+    border-radius: 0.6rem;
+    background-color: var(--ad-primary-light);
+    color: var(--ad-primary);
+}
+
+/* Aksen per jenis: konten, soal, pencapaian, dan nilai dibedakan
+   warnanya supaya tiap kartu terbaca sekilas dari warnanya. */
+.ad-ug__aktivitas-kartu:nth-child(1) .ad-ug__aktivitas-ikon {
+    background-color: color-mix(in srgb, var(--ad-info) 14%, transparent);
+    color: var(--ad-info);
+}
+
+.ad-ug__aktivitas-kartu:nth-child(2) .ad-ug__aktivitas-ikon {
+    background-color: var(--ad-primary-light);
+    color: var(--ad-primary);
+}
+
+.ad-ug__aktivitas-kartu:nth-child(3) .ad-ug__aktivitas-ikon {
+    background-color: color-mix(in srgb, var(--ad-sukses) 14%, transparent);
+    color: var(--ad-sukses);
+}
+
+.ad-ug__aktivitas-kartu:nth-child(4) .ad-ug__aktivitas-ikon {
+    background-color: color-mix(in srgb, var(--ad-kuning) 16%, transparent);
+    color: var(--ad-kuning);
+}
+
+.ad-ug__aktivitas-isi {
+    display: flex;
+    min-width: 0;
+    flex-direction: column;
+}
+
+.ad-ug__aktivitas-label {
+    font-size: 0.6875rem;
+    font-weight: 600;
+    color: var(--ad-teks-2);
+}
+
+.ad-ug__aktivitas-nilai {
+    font-size: 1.25rem;
+    font-weight: 800;
+    line-height: 1.2;
+    letter-spacing: -0.01em;
+    color: var(--ad-teks);
+}
+
+/* Keterangan rata-rata nilai boleh dua baris, jadi dibiarkan kecil. */
+.ad-ug__aktivitas-ket {
+    font-size: 0.6875rem;
+    line-height: 1.35;
+    color: var(--ad-teks-2);
 }

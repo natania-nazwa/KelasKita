@@ -1,8 +1,80 @@
-// Halaman detail quiz: tombol Bagikan dan pemotretan banner kategori kalau
-// fotonya gagal dimuat.
+// Halaman detail quiz: tombol Bagikan, pembatasan lima baris pada daftar
+// soal, dan pemotretan banner kategori kalau fotonya gagal dimuat.
 // Semua fungsi berhenti sendiri kalau elemennya tidak ada di halaman ini.
 
 const KELAS_TERBUKA = "is-buka";
+
+/*
+ * Daftar soal: lima baris pertama tampil, tombol "Lihat semua" di bawah
+ * daftar menambah lima baris setiap klik (5, 10, 15, ...), dan begitu
+ * seluruh soal terbuka tombolnya berganti jadi "Sembunyikan" untuk
+ * mengembalikan daftar ke lima baris seperti awal.
+ *
+ * Baris yang belum waktunya tampil sudah diberi atribut hidden oleh
+ * server, jadi tidak ada kilatan soal berikutnya sebelum skrip ini
+ * berjalan. Tanpa JavaScript seluruh baris dibuka kembali oleh aturan
+ * noscript di layout, dan tombolnya ikut disembunyikan karena tidak ada
+ * yang bisa dilakukannya.
+ */
+function initDaftarSoal() {
+    const seksi = document.querySelector("[data-daftar-soal]");
+
+    if (!seksi) {
+        return;
+    }
+
+    const wadah = seksi.querySelector("[data-daftar-soal-tombol]");
+    const tombol = wadah ? wadah.querySelector("button") : null;
+    const baris = Array.prototype.slice.call(
+        seksi.querySelectorAll(".daftar-soal__baris"),
+    );
+
+    if (!tombol || baris.length === 0) {
+        return;
+    }
+
+    const batas = Number(wadah.dataset.batas) || 5;
+    let tampil = Math.min(batas, baris.length);
+
+    const pasang = () => {
+        baris.forEach((baris, index) => {
+            if (index >= tampil) {
+                baris.setAttribute("hidden", "");
+            } else {
+                baris.removeAttribute("hidden");
+            }
+        });
+
+        // Semua soal sudah terlihat = tugas tombol tinggal menutup kembali.
+        tombol.textContent =
+            tampil >= baris.length ? "Sembunyikan" : "Lihat semua";
+    };
+
+    tombol.addEventListener("click", () => {
+        const terbukaPenuh = tampil >= baris.length;
+
+        tampil = terbukaPenuh
+            ? Math.min(batas, baris.length)
+            : Math.min(tampil + batas, baris.length);
+
+        pasang();
+
+        // Menutup kembali memendekkan daftar drastis, jadi gulir ke atas
+        // seksi supaya pengguna tidak ditinggal di ruang kosong bawah.
+        if (terbukaPenuh) {
+            const kurangiGerak = window.matchMedia(
+                "(prefers-reduced-motion: reduce)",
+            ).matches;
+
+            seksi.scrollIntoView({
+                block: "start",
+                behavior: kurangiGerak ? "auto" : "smooth",
+            });
+        }
+    });
+
+    pasang();
+}
 
 /**
  * Tombol "Bagikan".
@@ -130,4 +202,5 @@ function initBanner() {
 }
 
 initBagikan();
+initDaftarSoal();
 initBanner();
