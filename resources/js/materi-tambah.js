@@ -64,32 +64,32 @@ function initTambahMateri(akar) {
     const panelIsian = $("[data-isian-panel]");
 
     /*
-     * Kartu "Isi Materi" belum muncul saat form dibuka.
+     * Kartu "Isi Materi" mengikuti isi daftar bab.
      *
-     * Editor itu yang paling panjang di halaman, jadi halaman baru yang belum
-     * berisi apa-apa tidak perlu menampilkannya: yang perlu ditunjukkan adalah
-     * daftar bab dan tombol "+ Tambah Bab" untuk memulainya. Kartu itu baru
-     * muncul setelah tombol itu ditekan.
+     * Satu aturan saja: kartu tampil kalau daftar babnya tidak kosong. Jadi
+     * form yang baru dibuka — yang daftar babnya masih kosong — belum
+     * menampilkan editor, dan baru menampilkannya setelah admin menekan
+     * "+ Tambah Bab". Sebaliknya, materi yang sudah punya bab (mode edit, atau
+     * kiriman yang gagal validasi lalu diulang) langsung menampilkan editornya
+     * karena isian yang lalu ada yang perlu disunting.
      *
-     * Materi yang sudah punya bab (mode edit, atau kiriman yang gagal validasi
-     * lalu diulang) tetap langsung menampilkan editor-nya, karena di sana isi
-     * yang lalu ada yang perlu disunting.
-     *
-     * isianSiap yang memegang keadaan ini, bukan atribut hidden di HTML:
+     * Editor disembunyikan lewat JavaScript, bukan atribut hidden di HTML:
      * tanpa JavaScript kartu tetap tampil, jadi isian materi masih bisa diisi
      * dan form masih bisa dikirim lewat tombolnya.
+     *
+     * Yang menyembunyikannya bukan hanya tab Preview, jadi syarat tab ikut
+     * dibaca di sini.
      */
-    let isianSiap = false;
     let tabAktif = "bab";
 
     /**
-     * Kartu "Isi Materi" hanya tampil kalau dua syaratnya terpenuhi: isiannya
-     * sudah siap ditulis, dan tab yang terbuka bukan Preview.
+     * Kartu "Isi Materi" hanya tampil kalau daftar babnya sudah terisi dan tab
+     * yang terbuka bukan Preview.
      */
     function perbaruiKartuIsian() {
         panelIsian?.classList.toggle(
             "hidden",
-            tabAktif === "preview" || !isianSiap,
+            tabAktif === "preview" || bab.length === 0,
         );
     }
 
@@ -228,16 +228,14 @@ function initTambahMateri(akar) {
             }
         }
 
-        bab = pulih && pulih.length ? pulih : [{ id: uid(), title: "Pendahuluan", content: editor.innerHTML }];
-        aktifId = bab[0].id;
-
         /*
-         * Isian siap disunting kalau babnya benar-benar dari form, bukan satu
-         * bab bawaan yang dibuat di atas. Kalau begitu, kartu "Isi Materi"
-         * langsung tampil: materi yang sudah punya isi perlu disunting, bukan
-         * menunggu admin menekan "+ Tambah Bab" dulu.
+         * Bab tidak pernah dibuat diam-diam. Form yang belum punya bab apa pun
+         * dibiarkan kosong, supaya jelas apa yang harus dilakukan admin lebih
+         * dulu: menekan "+ Tambah Bab". Bab pertama yang dibuat itu bernama
+         * "Pendahuluan" supaya sama dengan bab bawaan yang dulu muncul otomatis.
          */
-        isianSiap = pulih !== null && pulih.length > 0;
+        bab = pulih && pulih.length ? pulih : [];
+        aktifId = bab[0]?.id ?? null;
 
         perbaruiKartuIsian();
     }
@@ -256,7 +254,24 @@ function initTambahMateri(akar) {
 
     function muatEditor() {
         const sekarang = aktif();
-        if (!sekarang) return;
+
+        /*
+         * Daftar bab bisa kosong — itulah keadaan awal form baru, dan juga
+         * hasil yang mungkin dari menghapus bab terakhir. Editor dikosongkan
+         * supaya isian bab yang sudah dihapus tidak ikut tersimpan lagi, dan
+         * kartu "Isi Materi" yang sedang disembunyikan tidak menyimpan isian
+         * basi untuk form berikutnya.
+         */
+        if (!sekarang) {
+            editor.innerHTML = "";
+            judulBab.value = "";
+            badgeBab.textContent = "Bab 0";
+
+            hitungKarakter();
+            perbaruiStatusAlat();
+
+            return;
+        }
 
         editor.innerHTML = sekarang.content || "";
         judulBab.value = sekarang.title;
@@ -279,17 +294,19 @@ function initTambahMateri(akar) {
     function tambahBab() {
         simpanAktif();
 
-        const baru = { id: uid(), title: "Bab Baru", content: "" };
+        const baru = {
+            id: uid(),
+            title: bab.length === 0 ? "Pendahuluan" : "Bab Baru",
+            content: "",
+        };
+
         bab.splice(indeksAktif() + 1, 0, baru);
         aktifId = baru.id;
-
-        // Bab baru berarti admin mulai menulis: kartu isi baru boleh tampil.
-        isianSiap = true;
-        perbaruiKartuIsian();
 
         muatEditor();
         renderBab();
         renderPratinjau();
+        perbaruiKartuIsian();
 
         judulBab.focus();
         judulBab.select();
@@ -310,13 +327,10 @@ function initTambahMateri(akar) {
         bab.splice(asal + 1, 0, salinan);
         aktifId = salinan.id;
 
-        // Sama seperti menambah bab: isiannya sudah jelas mau disunting.
-        isianSiap = true;
-        perbaruiKartuIsian();
-
         muatEditor();
         renderBab();
         renderPratinjau();
+        perbaruiKartuIsian();
     }
 
     function geserBab(id, selisih) {
@@ -364,17 +378,34 @@ function initTambahMateri(akar) {
         tutupDialogHapus();
 
         if (aktifId === dihapus.id) {
+            // Daftar bab boleh jadi kosong setelah penghapusan terakhir, jadi
+            // bab berikutnya dicari tahu lebih dulu sebelum dipakainya.
             const baru = bab[Math.min(index, bab.length - 1)];
-            aktifId = baru.id;
+            aktifId = baru?.id ?? null;
             muatEditor();
         }
 
         renderBab();
         renderPratinjau();
+        perbaruiKartuIsian();
     }
 
     function renderBab() {
+        /*
+         * Daftar bab yang kosong mengisi kartu dengan satu kalimat yang
+         * mengarah ke tombol "+ Tambah Bab", karena di keadaan itu editor pun
+         * belum muncul. Tanpa kalimat itu, kartu terlihat seperti gagal dimuat:
+         * ada judul "Daftar Bab" tapi isinya nol.
+         */
+        const kosong = bab.length === 0
+            ? `
+                <p class="w-full rounded-xl border border-dashed border-lavender px-4 py-6 text-center text-sm leading-relaxed text-muted">
+                    Belum ada bab. Tekan <span class="font-bold text-ungu">+ Tambah Bab</span> untuk memulai menulis isi materi.
+                </p>`
+            : "";
+
         daftarBab.innerHTML =
+            kosong +
             bab
                 .map((item, index) => {
                     const terpilih = item.id === aktifId;
@@ -415,7 +446,7 @@ function initTambahMateri(akar) {
                     Tambah Bab
                 </button>`;
 
-        jumlahBab.textContent = `${bab.length} Bab`;
+        jumlahBab.textContent = bab.length === 0 ? "Belum ada bab" : `${bab.length} Bab`;
 
         // Nomor bab aktif ikut berubah setelah bab dipindah/dihapus.
         badgeBab.textContent = `Bab ${indeksAktif() + 1}`;

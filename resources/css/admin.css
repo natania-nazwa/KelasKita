@@ -7792,38 +7792,26 @@ body.tubuh-admin {
     }
 }
 
-/* Radius 20px, sesuai ukuran kartu yang diminta.
+/*
+ * Kartu aksi tidak punya bentuknya sendiri: view-nya memakai .ad-kartu-daftar,
+ * kartu potret yang sama dengan halaman Materi dan Quiz di area admin. Bentuk
+ * itu sudah sama dengan kartu "Karya Saya" milik pengguna — blok gambar 16:9 di
+ * atas, garis aksen, judul dua baris, isi, lalu kaki tombol yang menempel di
+ * dasar karena margin-top: auto pada __badan dan __kaki.
  *
- * Permukaannya soft, bukan putih: kartu putih di atas latar yang sudah ungu
- * pucat terlihat seperti lubang terang, dan deretan kartu putih di halaman
- * yang panjang ini cepat menyilaukan.
+ * Menuliskannya lagi di sini hanya akan membuat versi kedua yang bisa
+ * menyimpang. Yang tersisa untuk kelas ini adalah warnanya, dan itu pun
+ * selalu ditulis setelah .ad-kartu-daftar di file ini, jadi aturan yang sama
+ * dengan satu kelas sudah cukup untuk menimpanya.
  *
- * Warna dasar di sini lavender dan dipakai sebagai nilai cadangan. Warna
- * sebenarnya datang dari modifier di bawah, jadi "Tambah Materi" dan
- * "Tambah Kuis" tidak terlihat seperti dua kartu yang sama persis.
+ * Warnanya: hijau untuk materi, ungu untuk kuis. Warna dasar lavender hanya
+ * nilai cadangan, supaya kartu yang somehow kehilangan modifier-nya tetap punya
+ * warna yang masuk akal dan bukan putih polos di tengah halaman.
  */
 .ad-konten-aksi__kartu {
-    display: flex;
-    min-width: 0;
-    align-items: flex-start;
-    gap: 1rem;
-    border: 1px solid var(--ad-garis);
-    border-radius: 20px;
     background-color: var(--ad-permukaan-lavender);
-    padding: 1.25rem 1.35rem;
-    box-shadow: var(--ad-bayangan);
-    transition:
-        border-color 0.18s ease,
-        box-shadow 0.18s ease,
-        transform 0.18s ease;
 }
 
-/*
- * Warna kedua kartu aksi sengaja beda, jadi admin bisa membedakannya tanpa
- * membaca judulnya: hijau untuk materi, ungu untuk kuis. Warna diambil dari
- * token cucian yang sudah ada, jadi keduanya ikut mode gelap dan tidak
- * kelihatan seperti warna yang ditempel terpisah.
- */
 .ad-konten-aksi__kartu--materi {
     background-color: var(--ad-cucian-sukses);
 }
@@ -7833,65 +7821,28 @@ body.tubuh-admin {
 }
 
 /*
- * Kotak ikon jadi putih di kedua kartu. Kalau ikut warna kartunya, kotak
- * ikon ungu di atas kartu kuis yang juga ungu lenyap tidak terlihat, dan di
- * kartu materi jadi warna ketiga yang tidak ada maksudnya. Kotak putih
- * berlapis teks berwarna membuat ikon terbaca sebagai lencana kecil di atas
- * kartu berwarna apa pun.
+ * Satu kalimat saja, dibatasi dua baris supaya kartu setinggi kartu sebelahnya
+ * walau kalimatnya panjang. Nilai tipografinya mengikuti
+ * .ad-kartu-daftar__judul yang di atasnya.
  */
-.ad-konten-aksi__kartu--materi .ad-konten-aksi__ikon {
-    background-color: var(--ad-white);
-    color: var(--ad-sukses);
-}
-
-.ad-konten-aksi__kartu--kuis .ad-konten-aksi__ikon {
-    background-color: var(--ad-white);
-    color: var(--ad-teks-ungu-terang);
-}
-
-.ad-konten-aksi__kartu:hover,
-.ad-konten-aksi__kartu:focus-within {
-    border-color: color-mix(in oklab, var(--ad-primary) 38%, var(--ad-garis));
-    box-shadow: var(--ad-bayangan-naik);
-    transform: translateY(-2px);
-}
-
-.ad-konten-aksi__ikon {
-    display: grid;
-    width: 2.85rem;
-    height: 2.85rem;
-    flex-shrink: 0;
-    place-items: center;
-    border-radius: 0.95rem;
-    background-color: var(--ad-cucian-ungu);
-    color: var(--ad-teks-ungu-terang);
-}
-
-.ad-konten-aksi__isi {
-    display: flex;
-    min-width: 0;
-    flex: 1;
-    flex-direction: column;
-    gap: 0.3rem;
-}
-
-.ad-konten-aksi__judul {
-    font-size: 1rem;
-    font-weight: 800;
-    letter-spacing: -0.01em;
-    color: var(--ad-teks);
-}
-
 .ad-konten-aksi__pesan {
-    font-size: 0.8125rem;
-    line-height: 1.55;
-    color: var(--ad-teks-2);
+    margin-top: 0.3rem;
+    font-size: 0.75rem;
+    line-height: 1.6;
+    color: color-mix(in oklab, var(--ad-teks) 62%, transparent);
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
 }
 
-/* Tombolnya menempel ke kiri kartu dan tidak ikut melebar. */
+/*
+ * Tombolnya melebar penuh. Kaki kartu cuma berisi satu tombol, dan
+ * justify-content: space-between pada .ad-kartu-daftar__kaki akan menempelkannya
+ * ke kiri — jadi melebar penuh di sini yang membuat baris bawah kartu rata.
+ */
 .ad-konten-aksi__tombol {
-    margin-top: 0.5rem;
-    align-self: flex-start;
+    width: 100%;
 }
 
 /* ---------- Tab dengan garis bawah ---------- */

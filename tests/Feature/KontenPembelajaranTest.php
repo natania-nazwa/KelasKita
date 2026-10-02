@@ -776,7 +776,7 @@ class KontenPembelajaranTest extends TestCase
      * Menaruh baris alat di atas kartu berwarna membuat halaman ini
      * berlapis-lapis warna tanpa menambah informasi apa pun.
      *
-     * Yang dijaga di sini bukan nameof warnanya, tapi tiga sifatnya: tidak
+     * Yang dijaga bukan nameof warnanya, tapi tiga sifatnya: tidak
      * ada yang berubah diam-diam, tidak ada dua permukaan berdekatan yang
      * sama, dan tombolnya sepadan dengan kartunya — tombol ungu di atas
      * kartu hijau justru menghilangkan pembedaan yang dibawa warnanya.
@@ -813,27 +813,17 @@ class KontenPembelajaranTest extends TestCase
         $this->assertSame('var(--ad-cucian-ungu)', $warna('.ad-konten-aksi__kartu--kuis'));
 
         // Kotak daftar lavender: paling tenang, supaya judul barisnya terbaca.
+        // Bentuk kartu aksinya ada di test terpisah.
         $this->assertSame('var(--ad-permukaan-lavender)', $warna('.ad-konten-kotak'));
 
         /*
-         * Baris alat putih. Dinyatakan eksplisit, bukan dengan/color::white, dan
-         * gradasi .ad-kartu harus tetap dimatikan: gradasi itu digambar DI
-         * ATAS background-color, jadi background-color saja tidak cukup
-         * menentukan apa yang benar-benar terlihat.
+         * Baris alat putih. Dinyatakan eksplisit, dan gradasi .ad-kartu harus
+         * tetap dimatikan: gradasi itu digambar DI ATAS background-color, jadi
+         * background-color saja tidak cukup menentukan apa yang benar-benar
+         * terlihat.
          */
         $this->assertSame('var(--ad-permukaan)', $warna('.ad-konten-alat-kotak'));
         $this->assertStringContainsString('background-image: none', $ambil('.ad-konten-alat-kotak'));
-
-        /*
-         * Kotak ikon harus putih di kedua kartu. Kalau ikut warna kartunya,
-         * ikon ungu di atas kartu kuis yang juga ungu lenyap tidak terlihat.
-         */
-        foreach (['--materi', '--kuis'] as $modifier) {
-            $this->assertStringContainsString(
-                'background-color: var(--ad-white)',
-                $ambil('.ad-konten-aksi__kartu'.$modifier.' .ad-konten-aksi__ikon')
-            );
-        }
 
         /*
          * Hover baris tidak boleh sama dengan wadahnya: begitu kotak daftar
@@ -851,6 +841,65 @@ class KontenPembelajaranTest extends TestCase
          * mengambil warna kartu, popup-nya hilang di dalam kartu.
          */
         $this->assertSame('var(--ad-permukaan)', $warna('.ad-konten-menu__isi'));
+    }
+
+    /*
+     * Bentuk kartu aksi harus sama dengan kartu "Karya Saya" milik pengguna dan
+     * dengan kartu di halaman Materi/Quiz admin — potret, bukan mendatar.
+     *
+     * Yang dijaga bukan hanya gayanya, tapi juga bahwa ia memakai kelas yang
+     * sama. Kalau bentuknya ditulis ulang di .ad-konten-aksi__kartu, kartu ini
+     * akan menyimpang dari kartu-kartu lain setiap kali salah satunya berubah,
+     * dan test ini tidak akanARD apa-apa karena keduanya akan tetap punya
+     * "warna" yang sama.
+     */
+    public function test_kartu_aksi_memakai_kartu_potret_yang_sama_dengan_karya_saya(): void
+    {
+        $admin = $this->buatAdmin();
+        $this->buatPelajaran();
+
+        $halaman = $this->actingAs($admin)
+            ->get(route('admin.konten'))
+            ->assertOk()
+            ->baseResponse->getContent();
+
+        // Dua kartu, dan keduanya memakai kelas kartu potret area admin.
+        $this->assertSame(
+            2,
+            substr_count($halaman, 'ad-kartu-daftar ad-konten-aksi__kartu'),
+            'Kedua kartu aksi harus memakai .ad-kartu-daftar.'
+        );
+
+        // Potret berarti ada blok gambar di atas dan kaki tombol di bawah.
+        $this->assertSame(2, substr_count($halaman, 'class="ad-kartu-daftar__gambar"'));
+        $this->assertSame(2, substr_count($halaman, 'class="ad-kartu-daftar__kaki"'));
+        $this->assertSame(2, substr_count($halaman, 'class="ad-kartu-daftar__aksen" aria-hidden="true"'));
+
+        // Kelas lama yang mendatar harus benar-benar hilang, kalau tidak masih
+        // ada yang menempel dan bentuknya jadi setengah-setengah.
+        foreach (['ad-konten-aksi__ikon', 'ad-konten-aksi__isi', 'ad-konten-aksi__judul'] as $lama) {
+            $this->assertStringNotContainsString($lama, $halaman);
+        }
+
+        // Gradasi blok gambar dan garis aksennya ikut warna kartu.
+        $this->assertStringContainsString('--k: #35b779', $halaman);
+        $this->assertStringContainsString('--k: #6d4aff', $halaman);
+
+        // .ad-kartu-daftar harus benar-benar potret, bukan cuma namanya.
+        $css = $this->tanpaKomentar(file_get_contents(resource_path('css/admin.css')));
+
+        $kartu = preg_match('/\.ad-kartu-daftar\s*\{([^}]*)\}/', $css, $cocok) ? $cocok[1] : '';
+        $gambar = preg_match('/\.ad-kartu-daftar__gambar\s*\{([^}]*)\}/', $css, $cocok) ? $cocok[1] : '';
+
+        $this->assertStringContainsString('flex-direction: column', $kartu);
+        $this->assertStringContainsString('aspect-ratio: 16 / 9', $gambar);
+
+        // Tombolnya melebar penuh supaya baris bawah kartu rata; kalau tidak,
+        // justify-content: space-between pada kaki akan menempelkannya ke kiri.
+        preg_match('/\.ad-konten-aksi__tombol\s*\{([^}]*)\}/', $css, $cocok);
+
+        $this->assertNotEmpty($cocok, 'Aturan .ad-konten-aksi__tombol tidak ada di admin.css.');
+        $this->assertStringContainsString('width: 100%', $cocok[1]);
     }
 
     /**

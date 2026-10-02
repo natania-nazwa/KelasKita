@@ -88,14 +88,20 @@
          KARTU AKSI
     ======================
          Dua kartu dengan lebar sama: dua kolom di desktop, satu kolom di
-         mobile. Tautan dan kalimatnya ditulis di komponen supaya daftar di
-         bawah dan form yang dibuka dari sini tidak pernah berbeda.
+         mobile. Bentuknya potret, bukan mendatar — blok gambar 16:9 di atas,
+         lalu isi, lalu tombol di dasar. Itu bentuk yang sama dengan kartu
+         "Karya Saya" milik pengguna dan dengan kartu di halaman Materi dan
+         Quiz, dan disamakan lewat kelas .ad-kartu-daftar yang sama persis,
+         bukan dengan menulis ulang gaya di sini. Kalau bentuknya ditulis
+         ulang, kartu ini pasti akan menyimpang dari kartu-kartu lain satu
+         per satu setiap kali salah satunya berubah.
 
-         Tombolnya pun sepadan dengan kartunya: "Tambah Materi" hijau
-         (ad-tombol--sukses) di atas kartu hijau, "Tambah Kuis" ungu
-         (ad-tombol--utama) di atas kartu ungu. Dua tombol ungu di atas dua
-         kartu yang berbeda justru menghilangkan pembedaan yang dibawa
-         warnanya, jadi tombolnya ikut membedakan. --}}
+         Yang tetap milik halaman ini hanya warnanya. --k dan --k-gelap
+         memberi warna gradasi blok gambar dan garis aksennya; modifier
+         --materi / --kuis memberi warna badan kartunya; dan tombolnya
+         sepadan dengan kartunya — hijau di atas kartu hijau, ungu di atas
+         kartu ungu. Dua tombol ungu di atas dua kartu berbeda justru
+         menghilangkan pembedaan yang dibawa warnanya. --}}
     <div class="ad-seksi">
         <div class="ad-konten-aksi">
             {{--
@@ -104,47 +110,61 @@
                 Materi" dan "Tambah Kuis" akan terlihat seperti dua kartu
                 yang sama persis padahal isinya beda jenis.
             --}}
-            <div class="ad-konten-aksi__kartu ad-konten-aksi__kartu--materi">
-                <span class="ad-konten-aksi__ikon" aria-hidden="true">
-                    <x-admin.ikon nama="dokumen" ukuran="w-6 h-6" />
-                </span>
+            <article style="--k: #35b779; --k-gelap: #2a9a63;"
+                class="ad-kartu-daftar ad-konten-aksi__kartu ad-konten-aksi__kartu--materi">
+                <div class="ad-kartu-daftar__gambar">
+                    <span class="ad-kartu-daftar__ikon" aria-hidden="true">
+                        <x-admin.ikon nama="dokumen" ukuran="w-9 h-9" :tebal="1.7" />
+                    </span>
+                </div>
 
-                <div class="ad-konten-aksi__isi">
-                    <h2 class="ad-konten-aksi__judul">Tambah Materi</h2>
+                <div class="ad-kartu-daftar__badan">
+                    <span class="ad-kartu-daftar__aksen" aria-hidden="true"></span>
+
+                    <h2 class="ad-kartu-daftar__judul">Tambah Materi</h2>
 
                     <p class="ad-konten-aksi__pesan">
                         Buat materi pembelajaran untuk peserta didik.
                     </p>
 
-                    <a href="{{ route('admin.konten.materi.tambah') }}"
-                        class="ad-tombol ad-tombol--sukses ad-tombol--kecil ad-konten-aksi__tombol">
-                        <x-admin.ikon nama="tambah" ukuran="w-4 h-4" :tebal="2.4" />
+                    <div class="ad-kartu-daftar__kaki">
+                        <a href="{{ route('admin.konten.materi.tambah') }}"
+                            class="ad-tombol ad-tombol--sukses ad-tombol--kecil ad-konten-aksi__tombol">
+                            <x-admin.ikon nama="tambah" ukuran="w-4 h-4" :tebal="2.4" />
 
-                        Tambah Materi
-                    </a>
+                            Tambah Materi
+                        </a>
+                    </div>
                 </div>
-            </div>
+            </article>
 
-            <div class="ad-konten-aksi__kartu ad-konten-aksi__kartu--kuis">
-                <span class="ad-konten-aksi__ikon" aria-hidden="true">
-                    <x-admin.ikon nama="buku-centang" ukuran="w-6 h-6" />
-                </span>
+            <article style="--k: #6d4aff; --k-gelap: #4c2fb3;"
+                class="ad-kartu-daftar ad-konten-aksi__kartu ad-konten-aksi__kartu--kuis">
+                <div class="ad-kartu-daftar__gambar">
+                    <span class="ad-kartu-daftar__ikon" aria-hidden="true">
+                        <x-admin.ikon nama="buku-centang" ukuran="w-9 h-9" :tebal="1.7" />
+                    </span>
+                </div>
 
-                <div class="ad-konten-aksi__isi">
-                    <h2 class="ad-konten-aksi__judul">Tambah Kuis</h2>
+                <div class="ad-kartu-daftar__badan">
+                    <span class="ad-kartu-daftar__aksen" aria-hidden="true"></span>
+
+                    <h2 class="ad-kartu-daftar__judul">Tambah Kuis</h2>
 
                     <p class="ad-konten-aksi__pesan">
                         Buat kuis untuk menguji pemahaman peserta didik.
                     </p>
 
-                    <a href="{{ route('admin.konten.quiz.tambah') }}"
-                        class="ad-tombol ad-tombol--utama ad-tombol--kecil ad-konten-aksi__tombol">
-                        <x-admin.ikon nama="tambah" ukuran="w-4 h-4" :tebal="2.4" />
+                    <div class="ad-kartu-daftar__kaki">
+                        <a href="{{ route('admin.konten.quiz.tambah') }}"
+                            class="ad-tombol ad-tombol--utama ad-tombol--kecil ad-konten-aksi__tombol">
+                            <x-admin.ikon nama="tambah" ukuran="w-4 h-4" :tebal="2.4" />
 
-                        Tambah Kuis
-                    </a>
+                            Tambah Kuis
+                        </a>
+                    </div>
                 </div>
-            </div>
+            </article>
         </div>
     </div>
 
@@ -398,9 +418,14 @@
                 JavaScript tepat sebelum browser meninggalkan halaman ini
                 (resources/js/konten-daftar.js). Tanpa JavaScript ia tetap
                 tersembunyi dan daftar di bawahnya tetap terbaca utuh.
+
+                Kerangkanya kartu, bukan baris, karena yang akan menggantikannya
+                adalah grid kartu. Kerangka berbentuk lain membuat admin
+                mengira halamannya sedang berganti tata letak, bukan sedang
+                memuat.
             --}}
-            <div class="ad-konten-kotak" data-konten-rangka hidden aria-hidden="true">
-                @for ($i = 0; $i < 5; $i++)
+            <div class="ad-konten-daftar" data-konten-rangka hidden aria-hidden="true">
+                @for ($i = 0; $i < 8; $i++)
                     <div class="ad-konten-kerangka">
                         <span class="ad-konten-kerangka__kotak"></span>
 
@@ -478,28 +503,35 @@
                     @endif
                 </div>
             @else
-                {{-- ADA ISI: baris per konten, bukan kartu per konten. --}}
-                <div class="ad-konten-kotak">
-                    <div class="ad-konten-info">
-                        <p class="ad-konten-info__jumlah">
-                            Menampilkan <strong>{{ $jumlahBaris }}</strong>
-                            {{ $bahanKonten }}
-                            @if ($paginasi && $paginasi->total() > $jumlahBaris)
-                                dari <strong>{{ $paginasi->total() }}</strong>
-                            @endif
-                        </p>
+                {{-- ADA ISI: kartu per konten, potret, sama dengan kartu "Karya Saya"
+                     milik pengguna. Dipakai x-admin.konten-kartu, bukan ditulis
+                     ulang di sini.
 
-                        <p class="ad-konten-info__jumlah">
-                            <x-admin.ikon nama="jam" ukuran="w-3.5 h-3.5" class="inline" />
-                            Terakhir diperbarui sesuai tanggal di setiap baris
-                        </p>
-                    </div>
+                     Tanpa kotak pembungkus: kartu di halaman Karya Saya juga berdiri
+                     langsung di atas latar halaman, dan membungkusnya di kotak besar
+                     hanya menambah satu garis dan satu radius yang tidak ada gunanya.
+                     Kotak .ad-konten-kotak tetap dipakai untuk state gagal dan kosong,
+                     yang memang butuh tempat sendiri karena tidak ada isinya untuk
+                     ditampilkan. --}}
+                <div class="ad-konten-info">
+                    <p class="ad-konten-info__jumlah">
+                        Menampilkan <strong>{{ $jumlahBaris }}</strong>
+                        {{ $bahanKonten }}
+                        @if ($paginasi && $paginasi->total() > $jumlahBaris)
+                            dari <strong>{{ $paginasi->total() }}</strong>
+                        @endif
+                    </p>
 
-                    <div class="ad-konten-daftar" data-konten-daftar>
-                        @foreach ($daftar as $baris)
-                            <x-admin.konten-baris :kartu="$baris" />
-                        @endforeach
-                    </div>
+                    <p class="ad-konten-info__jumlah">
+                        <x-admin.ikon nama="jam" ukuran="w-3.5 w-3.5" class="inline" />
+                        Terakhir diperbarui sesuai tanggal di setiap kartu
+                    </p>
+                </div>
+
+                <div class="ad-konten-daftar" data-konten-daftar>
+                    @foreach ($daftar as $baris)
+                        <x-admin.konten-kartu :kartu="$baris" />
+                    @endforeach
                 </div>
 
                 {{-- PAGINASI: tombol halaman saja, tanpa kartu putih. --}}
