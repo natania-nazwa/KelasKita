@@ -189,6 +189,44 @@ class KontenPembelajaranTest extends TestCase
     }
 
     /**
+     * Query daftar gagal: kepala, kartu aksi, tab, dan tombol "Coba Lagi"
+     * tetap tampil, bukan halaman 500.
+     *
+     * Controller menutup query daftar dan mengembalikan state "gagal",
+     * supaya kegagalan tidak pernah berubah jadi daftar kosong yang
+     * terlihat seperti "belum ada konten". Cabang ini dulu melempar
+     * "Undefined variable $request" karena view memakai $request yang tidak
+     * pernah Laravel salin ke data view — kartu errornya justru yang gagal
+     * dirender, dan tombol "Coba Lagi" tidak pernah bisa dipakai.
+     */
+    public function test_daftar_gagal_dimuat_tetap_menampilkan_tombol_coba_lagi(): void
+    {
+        $admin = $this->buatAdmin();
+        $this->buatQuiz($admin, Quiz::STATUS_DRAFT, 'Quiz Penyebab Gagal');
+
+        /*
+         * Tabel soal dibuang. Ini satu-satunya tabel yang hanya disentuh oleh
+         * query daftar tab Quiz (withCount soal), jadi yang melempar memang
+         * blok try — kepala, jumlah materi, dan jumlah quiz tetap berhasil
+         * dihitung seperti biasa.
+         *
+         * Satu quiz dibuat lebih dulu karena paginate() melewatkan query
+         * daftar sama sekali saat total baris 0. Tanpa baris ini kegagalan
+         * tidak pernah terjadi dan halaman jatuh ke state "Belum ada quiz".
+         */
+        Schema::dropIfExists('tb_soal');
+
+        $halaman = $this->actingAs($admin)
+            ->get(route('admin.konten', ['tab' => 'quiz']))
+            ->assertOk()
+            ->baseResponse->getContent();
+
+        $this->assertStringContainsString('Konten Pembelajaran', $halaman);
+        $this->assertStringContainsString('Gagal memuat konten', $halaman);
+        $this->assertStringContainsString('Coba Lagi', $halaman);
+    }
+
+    /**
      * Urutan bagian halaman: kartu aksi, baris alat, tab, daftar.
      *
      * Baris alat (cari + filter) menempel di bawah dua kartu aksi, bukan di
@@ -1476,6 +1514,55 @@ class KontenPembelajaranTest extends TestCase
          */
         $this->assertStringNotContainsString('name="kelas"', $halaman);
         $this->assertStringNotContainsString('Kelas Tujuan', $halaman);
+    }
+
+    /**
+     * Dialog hapus bab harus berada di dalam akar form yang sama.
+     *
+     * resources/js/materi-tambah.js hanya mencari elemen di dalam elemen
+     * [data-tambah-materi] PERTAMA di halaman. Kalau dialog dibungkus akar
+     * terpisah, dialognya tidak ditemukan dan modul langsung menghapus bab
+     * tanpa konfirmasi (lihat cabang !dialog di bukaDialogHapus), padahal
+     * form pemiliknya selalu bertanya dulu.
+     *
+     * Yang diperiksa dua hal: akarnya cuma satu, dan dialognya ada setelah
+     * akar itu dibuka. Keduanya berpasangan — akar tunggal tanpa dialog
+     * sama saja mematikan konfirmasinya.
+     */
+    public function test_dialog_hapus_bab_berada_di_dalam_akar_form(): void
+    {
+        $admin = $this->buatAdmin();
+        $materi = $this->buatMateri($admin, Materi::STATUS_DRAFT, 'Materi Dialog Hapus');
+
+        $halaman = [
+            'tambah' => $this->actingAs($admin)
+                ->get(route('admin.konten.materi.tambah'))
+                ->assertOk()
+                ->baseResponse->getContent(),
+            'edit' => $this->actingAs($admin)
+                ->get(route('admin.konten.materi.edit', $materi->slug))
+                ->assertOk()
+                ->baseResponse->getContent(),
+        ];
+
+        foreach ($halaman as $nama => $isiHalaman) {
+            $this->assertSame(
+                1,
+                substr_count($isiHalaman, 'data-tambah-materi'),
+                "Halaman $nama harus punya tepat satu akar form."
+            );
+
+            $akar = strpos($isiHalaman, 'data-tambah-materi');
+            $dialog = strpos($isiHalaman, 'data-dialog-hapus role="dialog"');
+
+            $this->assertNotFalse($akar, "Akar form halaman $nama tidak ditemukan.");
+            $this->assertNotFalse($dialog, "Halaman $nama tidak punya dialog hapus bab.");
+            $this->assertGreaterThan(
+                $akar,
+                $dialog,
+                "Dialog hapus bab halaman $nama berada di luar akar form."
+            );
+        }
     }
 
     public function test_halaman_tambah_quiz_memakai_tiga_tahap_seperti_form_pemilik(): void

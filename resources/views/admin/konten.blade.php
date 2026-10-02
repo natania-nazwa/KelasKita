@@ -385,7 +385,14 @@ Modifier --materi dan --kuis bukan hiasan: keduanya yang
                         Terjadi masalah saat mengambil data pembelajaran.
                     </p>
 
-                    <a href="{{ request()->fullUrlWithQuery($request->except('page')) }}"
+                    {{-- "Coba Lagi" memuat ulang URL yang sama tanpa
+                         parameter halaman: cabang gagal artinya paginasi tidak
+                         pernah menghasilkan data, jadi halaman yang sama
+                         kemungkinan tetap kosong. request() dipakai, bukan
+                         $request — Laravel tidak pernah menyalin request ke
+                         data view, jadi $request di sini akan melempar
+                         "Undefined variable" justru ketika kartu ini dirender. --}}
+                    <a href="{{ request()->fullUrlWithQuery(['page' => null]) }}"
                         class="ad-tombol ad-tombol--utama">
                         <x-admin.ikon nama="roda" ukuran="w-4 h-4" />
 

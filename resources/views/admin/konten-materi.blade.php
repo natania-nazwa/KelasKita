@@ -206,7 +206,6 @@
                 </div>
             </div>
         </form>
-    </div>
 
     {{-- =========================
          DIALOG
@@ -223,7 +222,6 @@
          pemilik â€” termasuk letaknya: modul itu mencari elemen di dalam
          akar data-tambah-materi, jadi dialog harus ikut di dalam akar itu
          supaya tombol "Ya, hapus" benar-benar bekerja di sini. --}}
-    <div data-tambah-materi>
         <div class="dialog-bab" data-dialog-hapus role="dialog" aria-modal="true"
             aria-labelledby="judul-dialog-hapus">
             <div class="w-full max-w-sm rounded-2xl border border-ungu-line bg-white p-5 shadow-[0_30px_60px_-30px_rgba(49,46,129,0.8)]">
