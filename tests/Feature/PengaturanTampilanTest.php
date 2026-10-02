@@ -547,7 +547,86 @@ class PengaturanTampilanTest extends TestCase
         }
     }
 
-    public function test_topbar_halaman_admin_lain_tetap_punya_pencarian_lonceng_dan_akun(): void
+    /**
+     * Lima menuarea yang memakai topbar ringkas: Koten Pembelajaran (daftar
+     * dan form), Verifikasi, Pengguna, Materi, dan Quiz (daftar, detail, dan
+     * form edit).
+     *
+     * Yang diuji per halaman bukan hanya "tombol buka sidebar masih ada",
+     * tapi juga bahwa pencarian, lonceng, dan menu akun benar-benar tidak
+     * dirender — termasuk panel isinya, bukan cuma tombolnya.
+     */
+    public function test_topbar_lima_menuarea_cuma_punya_tombol_buka_sidebar(): void
+    {
+        $admin = $this->buatAdmin();
+        $this->buatPelajaran();
+
+        $materi = Materi::create([
+            'pelajaran_id' => Pelajaran::query()->value('id'),
+            'dibuat_oleh' => $admin->getKey(),
+            'nama' => 'Materi Topbar',
+            'slug' => 'materi-topbar',
+            'deskripsi' => 'Ringkasan materi.',
+            'isi' => 'Isi materi yang cukup panjang untuk sebuah pengujian.',
+            'tingkat_kesulitan' => 'Mudah',
+            'status' => Materi::STATUS_PUBLISHED,
+        ]);
+
+        $quiz = Quiz::create([
+            'pelajaran_id' => Pelajaran::query()->value('id'),
+            'dibuat_oleh' => $admin->getKey(),
+            'judul' => 'Quiz Topbar',
+            'slug' => 'quiz-topbar',
+            'deskripsi' => 'Ringkasan quiz.',
+            'tingkat_kesulitan' => Quiz::TINGKAT_MUDAH,
+            'visibilitas' => Quiz::VISIBILITAS_PUBLIK,
+            'status' => Quiz::STATUS_PUBLISHED,
+        ]);
+
+        $halaman = [
+            // Konten Pembelajaran: daftar, tab quiz, dan kedua form.
+            route('admin.konten'),
+            route('admin.konten', ['tab' => 'quiz']),
+            route('admin.konten.materi.tambah'),
+            route('admin.konten.quiz.tambah'),
+
+            // Verifikasi dan Pengguna.
+            route('admin.verifikasi'),
+            route('admin.pengguna'),
+
+            // Materi: daftar, detail, form edit.
+            route('admin.materi'),
+            route('admin.materi.show', $materi->slug),
+            route('admin.materi.edit', $materi->slug),
+
+            // Quiz: daftar, detail, form edit.
+            route('admin.quiz'),
+            route('admin.quiz.show', $quiz),
+            route('admin.quiz.edit', $quiz),
+        ];
+
+        foreach ($halaman as $url) {
+            $html = $this->actingAs($admin)->get($url)->assertOk()->getContent();
+
+            $this->assertStringContainsString('data-sisi-buka', $html);
+
+            foreach ([
+                'ad-atas__cari',
+                'ad-atas__notif',
+                'ad-atas__akun',
+                'data-admin-notif',
+                'data-akun-tombol',
+            ] as $harusTidakAda) {
+                $this->assertStringNotContainsString(
+                    $harusTidakAda,
+                    $html,
+                    "Topbar {$url} masih memuat {$harusTidakAda} padahal harusnya ringkas."
+                );
+            }
+        }
+    }
+
+    public function test_topbar_dashboard_tetap_punya_pencarian_lonceng_dan_akun(): void
     {
         $admin = $this->buatAdmin();
 

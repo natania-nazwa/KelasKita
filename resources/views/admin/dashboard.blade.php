@@ -157,6 +157,9 @@
 
                         <x-admin.cepat ikon="grup" judul="Kelola Pengguna"
                             keterangan="Lihat siapa saja yang memakai KelasKita" :href="route('admin.pengguna')" />
+
+                        <x-admin.cepat ikon="roda" judul="Pengaturan"
+                            keterangan="Kelola preferensi akun dan aplikasi" :href="route('admin.pengaturan')" />
                     </div>
                 </div>
             </div>

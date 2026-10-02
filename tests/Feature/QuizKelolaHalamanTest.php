@@ -441,7 +441,7 @@ class QuizKelolaHalamanTest extends TestCase
         $this->assertStringContainsString('Terapkan', $html);
     }
 
-    public function test_kolom_cari_ada_di_kartu_filter_dan_juga_di_topbar(): void
+    public function test_kolom_cari_hanya_ada_di_kartu_filter(): void
     {
         $admin = $this->buatAdmin();
         $pemilik = $this->buatPengguna();
@@ -451,18 +451,14 @@ class QuizKelolaHalamanTest extends TestCase
         $html = $this->actingAs($admin)->get('/admin/quiz')->assertOk()->getContent();
 
         /*
-         * Dua tempat mencari, sengaja. Dulu kolom di kartu filter dihapus
-         * karena dianggap kembar dengan topbar, dan hasilnya satu-satunya
-         * tempat mencari jadi kotak kecil di layar atas yang menulis "Cari
-         * materi, quiz, pengguna" padahal isinya cuma satu daftar.
+         * Satu tempat mencari, di dalam halaman ini. Kotak pencarian di topbar
+         * sengaja tidak dirender di menuarea ini: isinya cuma satu daftar,
+         * sementara kolom di kartu filter jelas mencari quiz dan tidak perlu
+         * menggulir ke bawah.
          */
         $this->assertStringContainsString('id="cari-quiz"', $html);
         $this->assertStringContainsString('placeholder="Cari quiz..."', $html);
-
-        // Topbar-nya ikut mencari quiz, dan tidak lagi menjanjikan pencarian
-        // global yang memang tidak ada di aplikasi ini.
-        $this->assertStringContainsString('id="cari-ad"', $html);
-        $this->assertStringContainsString('action="'.route('admin.quiz').'"', $html);
+        $this->assertStringNotContainsString('id="cari-ad"', $html);
         $this->assertStringNotContainsString('Cari materi, quiz, pengguna', $html);
 
         // Form filter tetap GET ke halaman ini, jadi Enter di kolom cari
@@ -474,28 +470,30 @@ class QuizKelolaHalamanTest extends TestCase
             ->assertDontSee('Quiz Lain');
     }
 
-    public function test_topbar_menulis_jujur_soal_yang_benar_benar_dicari(): void
+    public function test_kolom_cari_menulis_jujur_materi_atau_quiz_yang_benar_benar_dicari(): void
     {
         $admin = $this->buatAdmin();
 
-        // Di halaman Materi, topbar mencari materi.
+        // Di halaman Materi, kolomnya mencari materi.
         $materi = $this->actingAs($admin)->get('/admin/materi')->assertOk()->getContent();
         $this->assertStringContainsString('placeholder="Cari materi..."', $materi);
         $this->assertStringContainsString('action="'.route('admin.materi').'"', $materi);
 
-        // Di halaman Quiz, topbar mencari quiz.
+        // Di halaman Quiz, kolomnya mencari quiz.
         $quiz = $this->actingAs($admin)->get('/admin/quiz')->assertOk()->getContent();
         $this->assertStringContainsString('placeholder="Cari quiz..."', $quiz);
         $this->assertStringContainsString('action="'.route('admin.quiz').'"', $quiz);
 
-        // Di halaman lain, topbar memakai default Materi dan tetap jujur.
-        // Pengaturan tidak dipakai sebagai contoh di sini: topbar halaman itu
-        // sengaja tidak memuat kotak pencarian sama sekali, dan itu sudah
-        // diuji di PengaturanTampilanTest.
-        foreach (['/admin/dashboard', '/admin/verifikasi', '/admin/pengguna'] as $url) {
+        /*
+         * Halaman yang tidak punya daftar tidak memuat kolom cari bersama
+         * sekali pun — bukan karena salah placeholder, tapi karena topbar
+         * penuhnya memang hanya dipakai di Dashboard. Bentuk ringkas di
+         * menuarea lain sudah diuji di PengaturanTampilanTest.
+         */
+        foreach (['/admin/verifikasi', '/admin/pengguna'] as $url) {
             $lain = $this->actingAs($admin)->get($url)->assertOk()->getContent();
 
-            $this->assertStringContainsString('placeholder="Cari materi..."', $lain);
+            $this->assertStringNotContainsString('placeholder="Cari materi..."', $lain);
             $this->assertStringNotContainsString('placeholder="Cari quiz..."', $lain);
         }
     }

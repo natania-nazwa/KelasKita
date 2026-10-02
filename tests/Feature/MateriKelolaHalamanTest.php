@@ -299,15 +299,13 @@ class MateriKelolaHalamanTest extends TestCase
      * =============================================================
      */
 
-    public function test_kolom_cari_ada_di_kartu_filter_dan_juga_di_topbar(): void
+    public function test_kolom_cari_hanya_ada_di_kartu_filter(): void
     {
         /*
-         * Dua tempat mencari, sengaja. Kolom di kartu filter pernah dihapus
-         * karena dianggap kembar dengan kotak topbar, dan hasilnya satu-satunya
-         * tempat mencari jadi kotak kecil di layar atas yang menulis "Cari
-         * materi, quiz, pengguna" padahal isinya cuma satu daftar. Sekarang
-         * keduanya ada: yang di kartu filter yang jelas ada di halaman ini,
-         * dan yang di topbar yang bisa dipakai tanpa menggulir ke bawah.
+         * Satu tempat mencari, di dalam halaman ini. Kotak pencarian di topbar
+         * sengaja tidak dirender di menuarea ini: isinya hanya satu daftar,
+         * sementara kolom di kartu filter jelas mencari materi dan tidak
+         * perlu menggulir ke bawah. Topbar penuh hanya dipakai di Dashboard.
          */
         $admin = $this->buatAdmin();
         $pemilik = $this->buatPengguna();
@@ -321,16 +319,17 @@ class MateriKelolaHalamanTest extends TestCase
 
         $this->assertStringContainsString('id="cari-materi"', $html);
         $this->assertStringContainsString('placeholder="Cari materi..."', $html);
-        $this->assertStringContainsString('id="cari-ad"', $html);
+        $this->assertStringNotContainsString('id="cari-ad"', $html);
         $this->assertStringNotContainsString('Cari materi, quiz, pengguna', $html);
     }
 
-    public function test_pencarian_tetap_bisa_dipakai_lewat_kotak_di_topbar(): void
+    public function test_pencarian_tetap_bisa_dipakai_lewat_kolom_di_kartu_filter(): void
     {
         /*
-         * Kolom di kartu filter ada, tapi kotak topbar juga harus tetap
-         * bekerja dan tetap mengirim "q" — kalau salah satu berubah, satu
-         * tempat mencari mati tanpa ada satu pun tombol yang gagal terlihat.
+         * Topbar sudah tidak membawa kotak pencarian di halaman ini, jadi satu
+         *-satunya tempat mencari adalah kolom di kartu filter. Form GET-nya
+         * tetap harus mengirim "q" — kalau berubah, tempat mencari mati tanpa
+         * ada satu pun tombol yang gagal terlihat.
          */
         $admin = $this->buatAdmin();
         $pemilik = $this->buatPengguna();
@@ -343,11 +342,11 @@ class MateriKelolaHalamanTest extends TestCase
             ->getContent();
 
         $this->assertStringContainsString('action="'.route('admin.materi').'"', $html);
-        $this->assertStringContainsString('id="cari-ad"', $html);
+        $this->assertStringContainsString('id="cari-materi"', $html);
         $this->assertStringContainsString('name="q"', $html);
 
         // Dan form GET di halaman ini tetap Apply kata kunci yang masuk dari
-        // topbar maupun dari kolom cari.
+        // kolom cari maupun dari query string.
         $this->actingAs($admin)
             ->get(route('admin.materi', ['q' => 'Katakana']))
             ->assertOk()

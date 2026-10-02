@@ -85,23 +85,19 @@
     </header>
 
     {{-- =====================
+    {{-- =====================
          KARTU AKSI
     ======================
          Dua kartu dengan lebar sama: dua kolom di desktop, satu kolom di
-         mobile. Bentuknya potret, bukan mendatar — blok gambar 16:9 di atas,
-         lalu isi, lalu tombol di dasar. Itu bentuk yang sama dengan kartu
-         "Karya Saya" milik pengguna dan dengan kartu di halaman Materi dan
-         Quiz, dan disamakan lewat kelas .ad-kartu-daftar yang sama persis,
-         bukan dengan menulis ulang gaya di sini. Kalau bentuknya ditulis
-         ulang, kartu ini pasti akan menyimpang dari kartu-kartu lain satu
-         per satu setiap kali salah satunya berubah.
+         mobile. Bentuknya mendatar — ikon di kiri, lalu isi, lalu tombol di
+         bawahnya. Potret dipakai untuk isi yang dibaca (daftar konten di bawah),
+         sedangkan di sini yang perlu adalah satu jalannya: menekan tombol
+         untuk membuat konten baru. Potret justru membuat jarak antara ikon dan
+         tombol, padahal di sini keduanya adalah satu perintah.
 
-         Yang tetap milik halaman ini hanya warnanya. --k dan --k-gelap
-         memberi warna gradasi blok gambar dan garis aksennya; modifier
-         --materi / --kuis memberi warna badan kartunya; dan tombolnya
-         sepadan dengan kartunya — hijau di atas kartu hijau, ungu di atas
-         kartu ungu. Dua tombol ungu di atas dua kartu berbeda justru
-         menghilangkan pembedaan yang dibawa warnanya. --}}
+         Warnanya tetap berbeda: kartu "Tambah Materi" hijau dan "Tambah Kuis"
+         ungu, tombolnya sepadan dengan kartunya. Dua tombol ungu di atas dua
+         kartu berbeda justru menghilangkan pembedaan yang dibawa warnanya. --}}
     <div class="ad-seksi">
         <div class="ad-konten-aksi">
             {{--
@@ -110,61 +106,47 @@
                 Materi" dan "Tambah Kuis" akan terlihat seperti dua kartu
                 yang sama persis padahal isinya beda jenis.
             --}}
-            <article style="--k: #35b779; --k-gelap: #2a9a63;"
-                class="ad-kartu-daftar ad-konten-aksi__kartu ad-konten-aksi__kartu--materi">
-                <div class="ad-kartu-daftar__gambar">
-                    <span class="ad-kartu-daftar__ikon" aria-hidden="true">
-                        <x-admin.ikon nama="dokumen" ukuran="w-9 h-9" :tebal="1.7" />
-                    </span>
-                </div>
+            <div class="ad-konten-aksi__kartu ad-konten-aksi__kartu--materi">
+                <span class="ad-konten-aksi__ikon" aria-hidden="true">
+                    <x-admin.ikon nama="dokumen" ukuran="w-6 h-6" />
+                </span>
 
-                <div class="ad-kartu-daftar__badan">
-                    <span class="ad-kartu-daftar__aksen" aria-hidden="true"></span>
-
-                    <h2 class="ad-kartu-daftar__judul">Tambah Materi</h2>
+                <div class="ad-konten-aksi__isi">
+                    <h2 class="ad-konten-aksi__judul">Tambah Materi</h2>
 
                     <p class="ad-konten-aksi__pesan">
                         Buat materi pembelajaran untuk peserta didik.
                     </p>
 
-                    <div class="ad-kartu-daftar__kaki">
-                        <a href="{{ route('admin.konten.materi.tambah') }}"
-                            class="ad-tombol ad-tombol--sukses ad-tombol--kecil ad-konten-aksi__tombol">
-                            <x-admin.ikon nama="tambah" ukuran="w-4 h-4" :tebal="2.4" />
+                    <a href="{{ route('admin.konten.materi.tambah') }}"
+                        class="ad-tombol ad-tombol--sukses ad-tombol--kecil ad-konten-aksi__tombol">
+                        <x-admin.ikon nama="tambah" ukuran="w-4 h-4" :tebal="2.4" />
 
-                            Tambah Materi
-                        </a>
-                    </div>
+                        Tambah Materi
+                    </a>
                 </div>
-            </article>
+            </div>
 
-            <article style="--k: #6d4aff; --k-gelap: #4c2fb3;"
-                class="ad-kartu-daftar ad-konten-aksi__kartu ad-konten-aksi__kartu--kuis">
-                <div class="ad-kartu-daftar__gambar">
-                    <span class="ad-kartu-daftar__ikon" aria-hidden="true">
-                        <x-admin.ikon nama="buku-centang" ukuran="w-9 h-9" :tebal="1.7" />
-                    </span>
-                </div>
+            <div class="ad-konten-aksi__kartu ad-konten-aksi__kartu--kuis">
+                <span class="ad-konten-aksi__ikon" aria-hidden="true">
+                    <x-admin.ikon nama="buku-centang" ukuran="w-6 h-6" />
+                </span>
 
-                <div class="ad-kartu-daftar__badan">
-                    <span class="ad-kartu-daftar__aksen" aria-hidden="true"></span>
-
-                    <h2 class="ad-kartu-daftar__judul">Tambah Kuis</h2>
+                <div class="ad-konten-aksi__isi">
+                    <h2 class="ad-konten-aksi__judul">Tambah Kuis</h2>
 
                     <p class="ad-konten-aksi__pesan">
                         Buat kuis untuk menguji pemahaman peserta didik.
                     </p>
 
-                    <div class="ad-kartu-daftar__kaki">
-                        <a href="{{ route('admin.konten.quiz.tambah') }}"
-                            class="ad-tombol ad-tombol--utama ad-tombol--kecil ad-konten-aksi__tombol">
-                            <x-admin.ikon nama="tambah" ukuran="w-4 h-4" :tebal="2.4" />
+                    <a href="{{ route('admin.konten.quiz.tambah') }}"
+                        class="ad-tombol ad-tombol--utama ad-tombol--kecil ad-konten-aksi__tombol">
+                        <x-admin.ikon nama="tambah" ukuran="w-4 h-4" :tebal="2.4" />
 
-                            Tambah Kuis
-                        </a>
-                    </div>
+                        Tambah Kuis
+                    </a>
                 </div>
-            </article>
+            </div>
         </div>
     </div>
 

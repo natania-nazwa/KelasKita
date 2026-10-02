@@ -214,7 +214,7 @@ class KontenPembelajaranTest extends TestCase
             'kartu aksi' => strpos($halaman, 'class="ad-konten-aksi"'),
             'baris alat' => strpos($halaman, 'ad-konten-alat-kotak'),
             'tab' => strpos($halaman, '<nav class="ad-konten-tab"'),
-            'daftar' => strpos($halaman, 'class="ad-konten-kotak"'),
+            'daftar' => strpos($halaman, 'data-konten-daftar'),
         ];
 
         foreach ($posisi as $bagian => $tempat) {
@@ -248,7 +248,7 @@ class KontenPembelajaranTest extends TestCase
             ->assertSee('Published');
     }
 
-    public function test_daftar_berupa_baris_bukan_kartu_grid(): void
+    public function test_daftar_berupa_grid_kartu_sama_seperti_karya_saya(): void
     {
         $admin = $this->buatAdmin();
         $this->buatMateri($admin, Materi::STATUS_DRAFT, 'Materi Mentah');
@@ -257,15 +257,34 @@ class KontenPembelajaranTest extends TestCase
         $halaman = $this->actingAs($admin)->get(route('admin.konten'))->assertOk();
 
         /*
-         * Daftar di halaman ini sengaja berupa BARIS, bukan grid kartu seperti
-         * "Karya Saya". Yang diuji bukan cuma kelas barisnya, tapi juga
-         * bahwa grid kartu lama benar-benar tidak dipakai lagi — kalau
-         * keduanya dibiarkan, isi yang sama akan muncul dua kali.
+         * Daftar di halaman ini adalah grid kartu, sama seperti "Karya Saya"
+         * milik pengguna, dan memakai komponen yang sama: x-admin.konten-kartu
+         * yang sudah memakai kelas kartu-materi, karya-kartu, karya-info, dan
+         * karya-aksi. Dua-duanya ditolak kalau kartu ditulis ulang di sini:
+         * grid-nya akan melebar sendiri karena satu judul tanpa spasi, dan isi
+         * yang sama bisa muncul dua kali kalau kartu lama dibiarkan.
          */
-        $halaman->assertSee('ad-konten-baris', false)
-            ->assertSee('ad-konten-daftar', false)
-            ->assertDontSee('kartu-konten', false)
-            ->assertDontSee('grid-cols-1 gap-5 min-w-0 sm:grid-cols-2 xl:grid-cols-3', false);
+        $halaman->assertSee('ad-konten-daftar', false)
+            ->assertSee('data-konten-daftar', false)
+            ->assertSee('kartu-materi karya-kartu kartu-konten', false);
+
+        // Komponen baris yang pernah dipakai di sini sudah tidak boleh ada.
+        $halaman->assertDontSee('ad-konten-baris', false);
+
+        /*
+         * Empat kolom di layar lebar. Yang dijaga lewat admin.css karena
+         * jumlah kolom tidak bisa dibaca dari HTML.
+         */
+        $css = $this->tanpaKomentar(file_get_contents(resource_path('css/admin.css')));
+
+        preg_match('/\.ad-konten-daftar\s*\{([^}]*)\}/', $css, $cocok);
+
+        $this->assertNotEmpty($cocok, 'Aturan .ad-konten-daftar tidak ada di admin.css.');
+        $this->assertStringContainsString('display: grid', $cocok[1]);
+
+        $this->assertStringContainsString('repeat(4, minmax(0, 1fr))', $css);
+        $this->assertStringContainsString('repeat(2, minmax(0, 1fr))', $css);
+        $this->assertStringContainsString('repeat(3, minmax(0, 1fr))', $css);
 
         // "Karya Saya" milik pengguna tidak boleh ikut berubah.
         $karyaSaya = $this->actingAs($admin)
@@ -273,11 +292,10 @@ class KontenPembelajaranTest extends TestCase
             ->assertOk();
 
         $karyaSaya->assertSee('grid-cols-1 gap-5 min-w-0 sm:grid-cols-2 xl:grid-cols-3', false)
-            ->assertSee('kartu-materi karya-kartu', false)
-            ->assertDontSee('ad-konten-baris', false);
+            ->assertSee('kartu-materi karya-kartu', false);
     }
 
-    public function test_baris_menampilkan_judul_metadata_tanggal_dan_status_tanpa_lencana_kelas(): void
+    public function test_kartu_menampilkan_judul_metadata_tanggal_dan_status(): void
     {
         $admin = $this->buatAdmin();
         $this->buatMateri($admin, Materi::STATUS_PUBLISHED, 'Pengenalan HTML');
@@ -289,17 +307,22 @@ class KontenPembelajaranTest extends TestCase
             ->assertSee('Bab')
             ->assertSee('Published');
 
-        // Tanggal tampil sebagai elemen <time>, bukan teks bebas.
         $isi = $halaman->baseResponse->getContent();
 
-        $this->assertStringContainsString('ad-konten-baris__tanggal', $isi);
-        $this->assertStringContainsString('<time datetime="', $isi);
+        /*
+         * Judul dan kategori jadi tautan, dan tanggal lewat karya-info seperti
+         * di kartu pengguna. Keduanya penting: tanpa tautan judul, kartu satu
+         *-satunya cara untuk membuka halaman detailnya.
+         */
+        $this->assertStringContainsString('karya-judul', $isi);
+        $this->assertStringContainsString('karya-info__butir', $isi);
+        $this->assertStringContainsString('kartu-materi__lencana', $isi);
 
         /*
-         * Kelas tujuan sudah dihapus dari seluruh aplikasi, jadi baris tidak
+         * Kelas tujuan sudah dihapus dari seluruh aplikasi, jadi kartu tidak
          * boleh lagi menaruh lencana kelas — termasuk kotak kosong untuk konten
-         * yang belum punya kelas, yang cuma menambah ruang kosong di kanan baris
-         * tanpa memberi informasi apa pun.
+         * yang belum punya kelas, yang cuma menambah ruang kosong tanpa
+         * memberi informasi apa pun.
          */
         $this->assertStringNotContainsString('ad-konten-lencana', $isi);
         $this->assertStringNotContainsString('Kelas belum ditentukan', $isi);
@@ -321,9 +344,13 @@ class KontenPembelajaranTest extends TestCase
          * kelas yang sama, admin tidak bisa membedakan draft dari yang sudah
          * tayang hanya dari warna — dan warna itu justru pembeda utama di
          * daftar ini.
+         *
+         * Lencana status di kartu ini milik "Karya Saya" (karya-status--*).
+         * Dipakai apa adanya, jadi warna draft dan terbit di kedua tempat
+         * dijamin sama.
          */
-        $this->assertStringContainsString('ad-konten-status--terbit', $isi);
-        $this->assertStringContainsString('ad-konten-status--draft', $isi);
+        $this->assertStringContainsString('karya-status--draft', $isi);
+        $this->assertStringContainsString('karya-status--terbit', $isi);
     }
 
     public function test_menu_aksi_sesuai_status_tidak_menampilkan_publish_dua_kali(): void
@@ -826,34 +853,24 @@ class KontenPembelajaranTest extends TestCase
         $this->assertStringContainsString('background-image: none', $ambil('.ad-konten-alat-kotak'));
 
         /*
-         * Hover baris tidak boleh sama dengan wadahnya: begitu kotak daftar
-         * punya warna sendiri, hover yang sama berarti tidak terlihat sama
-         * sekali dan admin kehilangan tanda tetikus sedang lewat baris mana.
-         */
-        $hover = $ambil('.ad-konten-baris:hover, .ad-konten-baris:focus-within');
-
-        $this->assertStringContainsString('background-color: var(--ad-cucian-ungu)', $hover);
-        $this->assertNotSame($warna('.ad-konten-kotak'), $hover);
-
-        /*
-         * Menu aksi sengaja tetap putih: menayang di atas kartu, jadi
-         * "yang lebih tinggi" harus lebih terang, bukan sewarna. Kalau ikut
-         * mengambil warna kartu, popup-nya hilang di dalam kartu.
+         * Menu aksi menayang di atas kartu, jadi isinya harus lebih terang
+         * dari kartu di bawahnya — bukan sewarnanya. Kalau ikut mengambil
+         * warna kartu, popover-nya hilang di dalam kartu.
          */
         $this->assertSame('var(--ad-permukaan)', $warna('.ad-konten-menu__isi'));
     }
 
     /*
-     * Bentuk kartu aksi harus sama dengan kartu "Karya Saya" milik pengguna dan
-     * dengan kartu di halaman Materi/Quiz admin — potret, bukan mendatar.
+     * Kartu aksi ("Tambah Materi" / "Tambah Kuis") sengaja mendatar, bukan
+     * potret seperti kartu-kartu daftar di bawahnya.
      *
-     * Yang dijaga bukan hanya gayanya, tapi juga bahwa ia memakai kelas yang
-     * sama. Kalau bentuknya ditulis ulang di .ad-konten-aksi__kartu, kartu ini
-     * akan menyimpang dari kartu-kartu lain setiap kali salah satunya berubah,
-     * dan test ini tidak akanARD apa-apa karena keduanya akan tetap punya
-     * "warna" yang sama.
+     * Yang dijaga bukan hanya gayanya, tapi juga bahwa kelas potret yang pernah
+     * dipakai di sini benar-benar tidak lagi menempel. Kalau .ad-kartu-daftar
+     * masih ada di kartu aksi, bentuknya jadi setengah-setengah: ada blok
+     * gambar 16:9 tapi kartu tetap mendatar — dan test warna di sebelahnya
+     * tetap lolos karena warnanya tidak berubah.
      */
-    public function test_kartu_aksi_memakai_kartu_potret_yang_sama_dengan_karya_saya(): void
+    public function test_kartu_aksi_mendatar_dan_tidak_pakai_kartu_potret(): void
     {
         $admin = $this->buatAdmin();
         $this->buatPelajaran();
@@ -863,43 +880,33 @@ class KontenPembelajaranTest extends TestCase
             ->assertOk()
             ->baseResponse->getContent();
 
-        // Dua kartu, dan keduanya memakai kelas kartu potret area admin.
-        $this->assertSame(
-            2,
-            substr_count($halaman, 'ad-kartu-daftar ad-konten-aksi__kartu'),
-            'Kedua kartu aksi harus memakai .ad-kartu-daftar.'
-        );
+        // Mendatar: ikon di kiri, isi di kanan, tombol di dalam isi.
+        $this->assertSame(2, substr_count($halaman, 'class="ad-konten-aksi__ikon"'));
+        $this->assertSame(2, substr_count($halaman, 'class="ad-konten-aksi__isi"'));
+        $this->assertSame(2, substr_count($halaman, 'class="ad-konten-aksi__judul"'));
 
-        // Potret berarti ada blok gambar di atas dan kaki tombol di bawah.
-        $this->assertSame(2, substr_count($halaman, 'class="ad-kartu-daftar__gambar"'));
-        $this->assertSame(2, substr_count($halaman, 'class="ad-kartu-daftar__kaki"'));
-        $this->assertSame(2, substr_count($halaman, 'class="ad-kartu-daftar__aksen" aria-hidden="true"'));
+        // Tidak ada sisa kelas potret.
+        $this->assertStringNotContainsString('ad-kartu-daftar', $halaman);
 
-        // Kelas lama yang mendatar harus benar-benar hilang, kalau tidak masih
-        // ada yang menempel dan bentuknya jadi setengah-setengah.
-        foreach (['ad-konten-aksi__ikon', 'ad-konten-aksi__isi', 'ad-konten-aksi__judul'] as $lama) {
-            $this->assertStringNotContainsString($lama, $halaman);
-        }
-
-        // Gradasi blok gambar dan garis aksennya ikut warna kartu.
-        $this->assertStringContainsString('--k: #35b779', $halaman);
-        $this->assertStringContainsString('--k: #6d4aff', $halaman);
-
-        // .ad-kartu-daftar harus benar-benar potret, bukan cuma namanya.
+        // .ad-konten-aksi__kartu harus benar-benar mendatar di CSS.
         $css = $this->tanpaKomentar(file_get_contents(resource_path('css/admin.css')));
 
-        $kartu = preg_match('/\.ad-kartu-daftar\s*\{([^}]*)\}/', $css, $cocok) ? $cocok[1] : '';
-        $gambar = preg_match('/\.ad-kartu-daftar__gambar\s*\{([^}]*)\}/', $css, $cocok) ? $cocok[1] : '';
+        preg_match('/\.ad-konten-aksi__kartu\s*\{([^}]*)\}/', $css, $cocok);
 
-        $this->assertStringContainsString('flex-direction: column', $kartu);
-        $this->assertStringContainsString('aspect-ratio: 16 / 9', $gambar);
+        $this->assertNotEmpty($cocok, 'Aturan .ad-konten-aksi__kartu tidak ada di admin.css.');
+        $this->assertStringContainsString('display: flex', $cocok[1]);
+        $this->assertStringContainsString('align-items: flex-start', $cocok[1]);
 
-        // Tombolnya melebar penuh supaya baris bawah kartu rata; kalau tidak,
-        // justify-content: space-between pada kaki akan menempelkannya ke kiri.
+        /*
+         * Tombolnya menempel ke kiri isinya dan tidak melebar. Kalau ikut
+         * melebar, kartu jadi punya satu elemen besar di kiri yang tidak ada
+         * gunanya, dan di layar sempit tombol sebesar itu jadi sulit ditekan.
+         */
         preg_match('/\.ad-konten-aksi__tombol\s*\{([^}]*)\}/', $css, $cocok);
 
         $this->assertNotEmpty($cocok, 'Aturan .ad-konten-aksi__tombol tidak ada di admin.css.');
-        $this->assertStringContainsString('width: 100%', $cocok[1]);
+        $this->assertStringContainsString('align-self: flex-start', $cocok[1]);
+        $this->assertStringNotContainsString('width: 100%', $cocok[1]);
     }
 
     /**

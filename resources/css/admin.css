@@ -7793,23 +7793,35 @@ body.tubuh-admin {
 }
 
 /*
- * Kartu aksi tidak punya bentuknya sendiri: view-nya memakai .ad-kartu-daftar,
- * kartu potret yang sama dengan halaman Materi dan Quiz di area admin. Bentuk
- * itu sudah sama dengan kartu "Karya Saya" milik pengguna — blok gambar 16:9 di
- * atas, garis aksen, judul dua baris, isi, lalu kaki tombol yang menempel di
- * dasar karena margin-top: auto pada __badan dan __kaki.
+ * Kartu aksi bercorak mendatar: ikon di kiri, isi di kanan, tombol di bawah
+ * isinya.
  *
- * Menuliskannya lagi di sini hanya akan membuat versi kedua yang bisa
- * menyimpang. Yang tersisa untuk kelas ini adalah warnanya, dan itu pun
- * selalu ditulis setelah .ad-kartu-daftar di file ini, jadi aturan yang sama
- * dengan satu kelas sudah cukup untuk menimpanya.
+ * Sengaja TIDAK potret seperti kartu-kartu daftar di bawahnya. Kartu daftar
+ * berisi hal yang perlu dibaca, jadi bentuk potretnya bekerja: ada tempat
+ * untuk thumbnail, dan judul serta metadatanya terbaca dalam satu lintasan
+ * mata ke bawah. Kartu aksi di sini berisi satu perintah, dan memaksanya
+ * potret justru memisahkan ikon dari tombol yang embody perintah itu, jadi
+ * admin harus melompati blok kosong untuk sampai ke tombolnya.
  *
- * Warnanya: hijau untuk materi, ungu untuk kuis. Warna dasar lavender hanya
- * nilai cadangan, supaya kartu yang somehow kehilangan modifier-nya tetap punya
- * warna yang masuk akal dan bukan putih polos di tengah halaman.
+ * Warnanya tetap berbeda: hijau untuk materi, ungu untuk kuis. Warna dasar
+ * lavender hanya nilai cadangan, supaya kartu yang somehow kehilangan
+ * modifier-nya tetap punya warna yang masuk akal dan bukan putih polos di
+ * tengah halaman.
  */
 .ad-konten-aksi__kartu {
+    display: flex;
+    min-width: 0;
+    align-items: flex-start;
+    gap: 1rem;
+    border: 1px solid var(--ad-garis);
+    border-radius: 20px;
     background-color: var(--ad-permukaan-lavender);
+    padding: 1.25rem 1.35rem;
+    box-shadow: var(--ad-bayangan);
+    transition:
+        border-color 0.18s ease,
+        box-shadow 0.18s ease,
+        transform 0.18s ease;
 }
 
 .ad-konten-aksi__kartu--materi {
@@ -7821,28 +7833,65 @@ body.tubuh-admin {
 }
 
 /*
- * Satu kalimat saja, dibatasi dua baris supaya kartu setinggi kartu sebelahnya
- * walau kalimatnya panjang. Nilai tipografinya mengikuti
- * .ad-kartu-daftar__judul yang di atasnya.
+ * Kotak ikon jadi putih di kedua kartu. Kalau ikut warna kartunya, kotak ikon
+ * ungu di atas kartu kuis yang juga ungu lenyap tidak terlihat, dan di kartu
+ * materi jadi warna ketiga yang tidak ada maksudnya. Kotak putih berlapis teks
+ * berwarna membuat ikon terbaca sebagai lencana kecil di atas kartu berwarna
+ * apa pun.
  */
-.ad-konten-aksi__pesan {
-    margin-top: 0.3rem;
-    font-size: 0.75rem;
-    line-height: 1.6;
-    color: color-mix(in oklab, var(--ad-teks) 62%, transparent);
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
+.ad-konten-aksi__kartu--materi .ad-konten-aksi__ikon {
+    background-color: var(--ad-white);
+    color: var(--ad-sukses);
 }
 
-/*
- * Tombolnya melebar penuh. Kaki kartu cuma berisi satu tombol, dan
- * justify-content: space-between pada .ad-kartu-daftar__kaki akan menempelkannya
- * ke kiri — jadi melebar penuh di sini yang membuat baris bawah kartu rata.
- */
+.ad-konten-aksi__kartu--kuis .ad-konten-aksi__ikon {
+    background-color: var(--ad-white);
+    color: var(--ad-teks-ungu-terang);
+}
+
+.ad-konten-aksi__kartu:hover,
+.ad-konten-aksi__kartu:focus-within {
+    border-color: color-mix(in oklab, var(--ad-primary) 38%, var(--ad-garis));
+    box-shadow: var(--ad-bayangan-naik);
+    transform: translateY(-2px);
+}
+
+.ad-konten-aksi__ikon {
+    display: grid;
+    width: 2.85rem;
+    height: 2.85rem;
+    flex-shrink: 0;
+    place-items: center;
+    border-radius: 0.95rem;
+    background-color: var(--ad-cucian-ungu);
+    color: var(--ad-teks-ungu-terang);
+}
+
+.ad-konten-aksi__isi {
+    display: flex;
+    min-width: 0;
+    flex: 1;
+    flex-direction: column;
+    gap: 0.3rem;
+}
+
+.ad-konten-aksi__judul {
+    font-size: 1rem;
+    font-weight: 800;
+    letter-spacing: -0.01em;
+    color: var(--ad-teks);
+}
+
+.ad-konten-aksi__pesan {
+    font-size: 0.8125rem;
+    line-height: 1.55;
+    color: var(--ad-teks-2);
+}
+
+/* Tombolnya menempel ke kiri isi dan tidak ikut melebar. */
 .ad-konten-aksi__tombol {
-    width: 100%;
+    margin-top: 0.5rem;
+    align-self: flex-start;
 }
 
 /* ---------- Tab dengan garis bawah ---------- */
@@ -8042,12 +8091,13 @@ body.tubuh-admin {
     }
 }
 
-/* ---------- Kontainer daftar ---------- */
+/* ---------- Wadah state tanpa isi ---------- */
 /*
- * Permukaannya lavender, sama dengan kartu aksi dan kotak daftar, supaya
- * keempat kotak di halaman ini terbaca sebagai satu kelompok. Kotak ini
- * juga jadi wadah untuk state lain — daftar, kerangka, gagal, dan kosong —
- * jadi warnanya ikut menentukan keempatnya, bukan cuma state's yang berisi.
+ * Dipakai untuk state gagal dan kosong saja, yang tidak punya kartu untuk
+ * ditampilkan. Daftar yang berisi kartu tidak dibungkus kotak ini: kartu di
+ * halaman "Karya Saya" juga berdiri langsung di atas latar halaman, dan
+ * membungkusnya hanya menambah satu garis dan satu radius yang tidak ada
+ * gunanya.
  */
 .ad-konten-kotak {
     overflow: hidden;
@@ -8057,189 +8107,42 @@ body.tubuh-admin {
     box-shadow: var(--ad-bayangan);
 }
 
+/* ---------- Grid daftar ---------- */
+/*
+ * Grid, bukan kolom. Empat kolom di layar lebar karena konten di sini adalah
+ * kartu potret dengan blok gambar 16:9: makin banyak kolom, makin kecil
+ * setiap kartu, dan blok gambar itulah yang pertama tidak terbaca. Di bawah
+ * itu jumlah kolom dikurangi satu per satu supaya kartu tidak pernah lebih
+ * sempit dari yang masih enak dibaca.
+ *
+ * minmax(0, 1fr), bukan 1fr: 1fr punya min-width auto, jadi satu judul tanpa
+ * spasi atau satu kata yang sangat panjang akan memaksa kolom melebar dan
+ * halaman ikut punya gulir horizontal.
+ */
 .ad-konten-daftar {
-    display: flex;
-    min-width: 0;
-    flex-direction: column;
-}
-
-/* ---------- Baris konten ---------- */
-.ad-konten-baris {
-    position: relative;
-    display: flex;
-    min-width: 0;
-    align-items: center;
-    gap: 0.95rem;
-    padding: 0.95rem 1.1rem;
-    transition: background-color 0.18s ease;
-}
-
-.ad-konten-baris + .ad-konten-baris {
-    border-top: 1px solid color-mix(in oklab, var(--ad-primary) 14%, var(--ad-garis));
-}
-
-/*
- * Hover memakai --ad-cucian-ungu, bukan --ad-permukaan-lavender. Wadah
- * barisnya sekarang lavender, jadi lavender untuk hover sama sekali tidak
- * terlihat dan admin kehilangan tanda tetikus sedang lewat baris mana.
- * Cucian-ungu masih satu keluarga warna dengan lavender dan sudah dipakai
- * di halaman ini untuk lencana status dan kotak thumbnail.
- */
-.ad-konten-baris:hover,
-.ad-konten-baris:focus-within {
-    background-color: var(--ad-cucian-ungu);
-}
-
-/* ---------- Thumbnail ---------- */
-/*
- * Kotak 52px, radius 12px. Kalau ada thumbnail, gambar dipotong penuh
- * (object-fit: cover) supaya semua baris punya tinggi yang sama persis dan
- * judulnya tetap sejajar. Kalau tidak ada, yang tampil ikon jenis konten
- * di atas dasar lavender — bukan kotak kosong, supaya baris tanpa gambar
- * tidak terlihat seperti gagal dimuat.
- */
-.ad-konten-baris__gambar {
     display: grid;
-    width: 3.25rem;
-    height: 3.25rem;
-    flex-shrink: 0;
-    place-items: center;
-    overflow: hidden;
-    border-radius: 12px;
-    background-color: var(--ad-cucian-ungu);
-    color: var(--ad-teks-ungu-terang);
+    grid-template-columns: minmax(0, 1fr);
+    gap: 1rem;
 }
 
-.ad-konten-baris__foto {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-}
-
-/* ---------- Teks baris ---------- */
-.ad-konten-baris__isi {
-    display: flex;
-    min-width: 0;
-    flex: 1;
-    flex-direction: column;
-    gap: 0.2rem;
-}
-
-.ad-konten-baris__judul {
-    font-size: 0.9375rem;
-    font-weight: 700;
-    line-height: 1.35;
-    color: var(--ad-teks);
-    overflow-wrap: anywhere;
-}
-
-.ad-konten-baris__judul a {
-    transition: color 0.18s ease;
-}
-
-.ad-konten-baris__judul a:hover {
-    color: var(--ad-teks-ungu-terang);
-}
-
-.ad-konten-baris__meta {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 0.4rem;
-    font-size: 0.75rem;
-    line-height: 1.5;
-    color: var(--ad-teks-2);
-}
-
-.ad-konten-baris__meta-item {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.3rem;
-}
-
-.ad-konten-baris__meta-item svg {
-    width: 0.85rem;
-    height: 0.85rem;
-    opacity: 0.75;
-}
-
-/* Pemisah antar butir metadata. Ditulis dengan border-left supaya tidak
-   menambah elemen di markup, dan otomatis hilang kalau butirnya tidak ada. */
-.ad-konten-baris__meta-item + .ad-konten-baris__meta-item::before {
-    content: "•";
-    margin-right: 0.4rem;
-    color: var(--ad-soft);
-}
-
-/* ---------- Lencana status ---------- */
-/*
- * Published hijau soft, Draft oranye soft. Keduanya teksnya gelap di atas
- * cucian pastel supaya tetap terbaca di mode terang dan mode gelap, dan
- * keduanya intensitasnya sama: tidak ada status yang terlihat "lebih
- * mendesak" hanya karena warnanya beda.
- */
-.ad-konten-status {
-    display: inline-flex;
-    flex-shrink: 0;
-    align-items: center;
-    gap: 0.35rem;
-    border-radius: 9999px;
-    padding: 0.24rem 0.6rem;
-    font-size: 0.6875rem;
-    font-weight: 700;
-    white-space: nowrap;
-}
-
-.ad-konten-status__titik {
-    width: 0.4rem;
-    height: 0.4rem;
-    flex-shrink: 0;
-    border-radius: 9999px;
-}
-
-.ad-konten-status--terbit {
-    background-color: var(--ad-cucian-sukses);
-    color: var(--ad-teks-sukses);
-}
-
-.ad-konten-status--terbit .ad-konten-status__titik {
-    background-color: var(--ad-sukses);
-}
-
-.ad-konten-status--draft {
-    background-color: var(--ad-cucian-peringatan);
-    color: var(--ad-teks-peringatan);
-}
-
-.ad-konten-status--draft .ad-konten-status__titik {
-    background-color: var(--ad-peringatan);
-}
-
-/* ---------- Bagian kanan baris ---------- */
-/*
- * Di desktop: tanggal di atas lencana status, keduanya rata kanan.
- * Sembunyi di layar sempit supaya tidak battling dengan judul di baris yang
- * sama — status dan tombolnya tetap tampil.
- */
-.ad-konten-baris__kanan {
-    display: flex;
-    flex-shrink: 0;
-    flex-direction: column;
-    align-items: flex-end;
-    gap: 0.35rem;
-}
-
-.ad-konten-baris__tanggal {
-    font-size: 0.6875rem;
-    white-space: nowrap;
-    color: var(--ad-teks-2);
-}
-
-@media (max-width: 767px) {
-    .ad-konten-baris__kanan {
-        display: none;
+@media (min-width: 640px) {
+    .ad-konten-daftar {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 }
+
+@media (min-width: 1024px) {
+    .ad-konten-daftar {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+}
+
+@media (min-width: 1440px) {
+    .ad-konten-daftar {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+}
+
 
 /* ---------- Menu aksi (•••) ---------- */
 .ad-konten-menu {
@@ -8353,45 +8256,26 @@ body.tubuh-admin {
     background-color: var(--ad-cucian-bahaya);
 }
 
-/* ---------- Layout baris di layar sempit ---------- */
-/*
- * Di bawah 768px metadata ditata menjadi dua baris: judul tetap satu baris
- * penuh, dan jenis/jumlah/kategori pindah ke baris berikutnya. Tombol •••
- * tetap di kanan dan tetap sebesar 2.25rem, jadi tidak pernah jadi target
- * yang terlalu kecil untuk ditekan dengan jari.
- */
-@media (max-width: 767px) {
-    .ad-konten-baris {
-        gap: 0.75rem;
-        padding: 0.85rem 0.9rem;
-    }
-
-    .ad-konten-baris__gambar {
-        width: 2.75rem;
-        height: 2.75rem;
-    }
-
-    .ad-konten-baris__judul {
-        font-size: 0.875rem;
-    }
-}
-
 /* ---------- Kerangka saat memuat ---------- */
 /*
- * Bentuknya sengaja sama dengan baris konten yang asli — kotak gambar,
- * judul, dan metadata — supaya halaman tidak melompat saat datanya tiba.
- * Jumlah barisnya satu blok penuh, bukan satu-duanya, karena daftar yang
- * benar-benar kosong punya empty state sendiri.
+ * Bentuknya kartu, sama seperti yang akan menggantikannya — blok gambar
+ * 16:9 di atas, lalu garis judul dan garis metadata — supaya halaman tidak
+ * melompat dan tidak terlihat sedang berganti tata letak ketika datanya tiba.
+ * Kerangka ini berdiri di grid yang sama dengan daftarnya, jadi empat kolom
+ * di layar lebar terisi sama cepatnya.
+ */
+
+
+/*
+ * Wadah kerangka.
  */
 .ad-konten-kerangka {
     display: flex;
-    align-items: center;
-    gap: 0.95rem;
-    padding: 0.95rem 1.1rem;
-}
-
-.ad-konten-kerangka + .ad-konten-kerangka {
-    border-top: 1px solid color-mix(in oklab, var(--ad-primary) 6%, var(--ad-garis));
+    overflow: hidden;
+    flex-direction: column;
+    border: 1px solid var(--ad-garis);
+    border-radius: 1rem;
+    background-color: var(--ad-white);
 }
 
 .ad-konten-kerangka__kotak,
@@ -8407,11 +8291,12 @@ body.tubuh-admin {
     animation: ad-atur-bergerak 1.4s ease infinite;
 }
 
+/* Blok gambar kerangka: 16:9, sama seperti kartu yang akan menggantikannya. */
 .ad-konten-kerangka__kotak {
-    width: 3.25rem;
-    height: 3.25rem;
+    width: 100%;
+    aspect-ratio: 16 / 9;
     flex-shrink: 0;
-    border-radius: 12px;
+    border-radius: 0;
 }
 
 .ad-konten-kerangka__garis {
@@ -8433,6 +8318,7 @@ body.tubuh-admin {
     flex: 1;
     flex-direction: column;
     gap: 0.45rem;
+    padding: 0.875rem 1rem 1rem;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -8476,14 +8362,22 @@ body.tubuh-admin {
     color: var(--ad-teks-2);
 }
 
-/* ---------- Lencana status ---------- */
+/* ---------- Ringkasan jumlah ---------- */
+/*
+ * Dulu ini strip di dalam kotak daftar, jadi hanya butuh garis bawah. Sekarang
+ * daftar kartu berdiri sendiri di atas latar halaman tanpa kotak pembungkus,
+ * jadi strip ini harus bisa berdiri sendiri juga: kotak sendiri dengan radius
+ * sendiri, bukan setengah kotak.
+ */
 .ad-konten-info {
     display: flex;
     flex-wrap: wrap;
     align-items: center;
     justify-content: space-between;
     gap: 0.6rem 1rem;
-    border-bottom: 1px solid var(--ad-garis);
+    margin-bottom: 1rem;
+    border: 1px solid var(--ad-garis);
+    border-radius: 1rem;
     background-color: var(--ad-permukaan-lembut);
     padding: 0.7rem 1.1rem;
 }
@@ -8516,7 +8410,7 @@ body.tubuh-admin {
 }
 
 @media (prefers-reduced-motion: reduce) {
-    .ad-konten-baris,
+
     .ad-konten-aksi__kartu,
     .ad-konten-menu__tombol,
     .ad-konten-menu__aksi,

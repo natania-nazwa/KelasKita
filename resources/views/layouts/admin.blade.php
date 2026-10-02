@@ -182,18 +182,38 @@
     ];
 
     /*
-     * Topbar punya dua bentuk. Pengaturan dan semua sub-halamannya memakai
-     * bentuk ringkas: tombol buka sidebar saja.
+     * Topbar punya dua bentuk. Bentuk penuh berisi kotak pencarian, lonceng
+     * notifikasi, dan menu akun; bentuk ringkas hanya tombol buka sidebar.
      *
-     * Dengan bintang, bukan route yang persis sama, supaya /admin/pengaturan
-     * /profil ikut termasuk. Daftar sub-halaman ini akan pernah bertambah, dan
-     * setiap halaman baru itu otomatis ikut mendapat bentuk topbar yang sama
-     * tanpa perlu daftar kedua.
+     * Bentuk ringkas dipakai di enam kelompok halaman: Pengaturan beserta
+     * seluruh sub-halamannya, lalu lima menuarea yang isinya sudah lengkap
+     * tanpa bantuan topbar — Konten Pembelajaran, Verifikasi, Pengguna,
+     * Materi, dan Quiz.
      *
-     * Halaman lain memakai bentuk penuh, yang isinya ada di
-     * components/admin/topbar-kanan.blade.php.
+     * Alasannya sama untuk kelimanya: setiap daftar di area itu sudah punya
+     * kotak pencarian sendiri di dalam halamannya (Lihat x-materi.cari,
+     * x-quiz.cari, dan kotak pencarian di components/admin), notifikasi tidak
+     * ada isinya selama admin sedang manage konten, dan menu akunnya cuma
+     * menautkan ke akun yang sedang dipakai — semuanya sudah ada di sidebar
+     * atau di kaki sidebar. Jadi tidak ada fungsi yang benar-benar hilang.
+     *
+     * Yang tetap memakai bentuk penuh tinggal Dashboard: di sana topbar
+     * bekerja sebagai pusat navigasi, bukan hiasan.
+     *
+     * Daftar ditulis sebagai kelompok route, bukan satu wildcard panjang,
+     * supaya mudah ditambah atau dikurangi tanpa harus membaca ulang seluruh
+     * Blade. Pola "admin.konten*" sengaja ikut dipakai untuk menu Konten
+     * Pembelajaran, karena semua halamannya memang form atau daftar konten
+     * yang punya pencarian sendiri.
      */
-    $topbarRingkas = request()->routeIs('admin.pengaturan*');
+    $topbarRingkas = request()->routeIs([
+        'admin.pengaturan*',
+        'admin.konten*',
+        'admin.verifikasi*',
+        'admin.pengguna',
+        'admin.materi*',
+        'admin.quiz*',
+    ]);
 @endphp
 
 {{--
@@ -318,27 +338,32 @@
             Dua bentuk topbar, dan yang mana dipakai ditentukan lewat
             $topbarRingkas di blok @php atas.
 
-            Bentuk penuh, di semua halaman admin kecuali Pengaturan: kotak
-            pencarian, lonceng notifikasi, dan menu akun.
+            Bentuk penuh, hanya di Dashboard: kotak pencarian, lonceng
+            notifikasi, dan menu akun. Isinya ada di
+            components/admin/topbar-kanan.blade.php.
 
-            Bentuk ringkas, di semua halaman /admin/pengaturan*: tombol buka
-            sidebar saja.
+            Bentuk ringkas, di /admin/pengaturan* dan di lima menuarea Konten
+            Pembelajaran, Verifikasi, Pengguna, Materi, dan Quiz: tombol buka
+            sidebar saja. Daftar lengkapnya ada di $topbarRingkas di blok
+            @php atas.
 
-            Kenapa Pengaturan dibedakan? Karena di halaman itu tiga hal itu memang
-            tidak berguna: setiap daftar sudah punya kotak pencarian sendiri,
-            saklar notifikasi ada tepat di halaman itu, dan tautan Pengaturan di
-            menu akun menunjuk halaman yang sedang dibuka. Tombol Keluar di kaki
+            Kenapa kelompok itu dibedakan? Karena di halaman-halaman itu tiga
+            hal tersebut tidak berguna: setiap daftar sudah punya kotak
+            pencarian sendiri, saklar notifikasi ada tepat di halaman Pengaturan,
+            dan tautan Pengaturan di menu akun menunjuk halaman yang sedang
+            dibuka. Pada halaman form, kotak pencarian justru membuat admin
+            menyela dari isian yang sedang diketik. Tombol Keluar di kaki
             sidebar juga sudah ada, dan posisinya sama di semua halaman.
 
             Notifikasi admin tidak ikut hilang: barisnya tetap dibuat di database
             dan saklarnya tetap mengatur. Hanya tempat membacanya yang tidak ada
-            di halaman ini.
+            di halaman-halaman ini.
 
             Bentuk ringkas disembunyikan di layar lebar, karena satu-satunya
             isinya tombol yang sudah disembunyikan di sana. Kalau tidak, halaman
-            Pengaturan akan memakai strip kosong setinggi topbar di atas judulnya
-            sendiri. Di bawah 1024px tombolnya justru satu-satunya cara membuka
-            sidebar, jadi topbarnya tetap ada.
+            Pengaturan dan halaman-halaman lain itu memakai strip kosong
+            setinggi topbar di atas judulnya sendiri. Di bawah 1024px tombolnya
+            justru satu-satunya cara membuka sidebar, jadi topbarnya tetap ada.
         --}}
         <header @class(['ad-atas', 'ad-atas--ringkas' => $topbarRingkas])>
             <div class="ad-atas__baris">
