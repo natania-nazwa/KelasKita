@@ -1155,9 +1155,14 @@ class KontenPembelajaranTest extends TestCase
  * supaya menu sidebar yang menyala tetap Konten Pembelajaran. Yang tidak
  * boleh berbeda adalah isi halamannya: form, pemecah, dan view-nya sama.
  * Test di bawah membandingkan keduanya byte per byte setelah sidebar
-     * dibuang — kalau ada view atau controller yang mulai ditulis ulang di
-     * salah satu route, test ini yang menangkapnya lebih dulu.
-     */
+ * dibuang — kalau ada view atau controller yang mulai ditulis ulang di
+ * salah satu route, test ini yang menangkapnya lebih dulu.
+ *
+ * Ada satu perbedaan yang sengaja dikecualikan: tujuan tombol "Kembali ke
+ * Materi". Halaman konten harus kembali ke /admin/konten?tab=materi dan
+ * halaman katalog ke /admin/materi, jadi tautannya ditukar dulu sebelum
+ * keduanya dibandingkan — sisanya wajib identik.
+ */
     public function test_detail_konten_identik_dengan_detail_materi(): void
     {
         $admin = $this->buatAdmin();
@@ -1182,7 +1187,55 @@ class KontenPembelajaranTest extends TestCase
             $this->actingAs($admin)->get(route('admin.materi.show', $materi->slug))->assertOk()->getContent()
         );
 
-        $this->assertSame($katalog, $konten);
+        $tujuanKonten = route('admin.konten', ['tab' => 'materi']);
+        $tujuanKatalog = route('admin.materi');
+
+        $this->assertStringContainsString('href="'.$tujuanKonten.'"', $konten);
+        $this->assertStringNotContainsString('href="'.$tujuanKatalog.'"', $konten);
+
+        $this->assertStringContainsString('href="'.$tujuanKatalog.'"', $katalog);
+        $this->assertStringNotContainsString('href="'.$tujuanKonten.'"', $katalog);
+
+        $this->assertSame(
+            $katalog,
+            str_replace($tujuanKonten, $tujuanKatalog, $konten)
+        );
+    }
+
+    /*
+     * =============================================================
+     * DAFTAR ISI: MATERI BUATAN FORM JUGA PUNYA PENANDA SEKSI
+     * =============================================================
+     * Form Tambah Materi menyusun babnya jadi "Bab 1: Judul", bukan "# Judul"
+     * (lihat susunIsi di resources/js/materi-tambah.js). App\Support\BabMateri
+     * membaca keduanya — itu sebabnya kartu bisa menulis "2 Bab" — tetapi
+     * pemecah halaman detail (App\Support\IsiMateri) dulu hanya mengenal "#".
+     *
+     * Akibatnya materi yang dibuat lewat form selalu jatuh jadi satu seksi:
+     * Daftar Isi tidak pernah muncul dan seluruh babnya menumpuk di satu kartu,
+     * padahal jumlah babnya lebih dari satu. Materi buatan admin adalah materi
+     * yang paling sering dibuka dari menu Konten Pembelajaran, jadi gejalanya
+     * terasa sebagai "Daftar Isi-nya mana?".
+     */
+    public function test_daftar_isi_muncul_untuk_materi_buatan_form(): void
+    {
+        $admin = $this->buatAdmin();
+
+        $materi = $this->buatMateri($admin, Materi::STATUS_PUBLISHED, 'Materi Buatan Form');
+        $materi->update([
+            'isi' => "Bab 1: Pendahuluan\n\nIsi bab pertama.\n\nBab 2: Latihan Dasar\n\nIsi bab kedua.",
+        ]);
+
+        $this->actingAs($admin)
+            ->get(route('admin.konten.materi.show', $materi->slug))
+            ->assertOk()
+            ->assertSee('Daftar Isi', false)
+            ->assertSee('1. Pendahuluan')
+            ->assertSee('2. Latihan Dasar')
+            ->assertSee('id="pendahuluan"', false)
+            ->assertSee('data-bab-nav', false)
+            // Nomor bab tidak ikut jadi judul, jadi tidak ada "Bab 1:" dobel.
+            ->assertDontSee('Bab 1: Pendahuluan');
     }
 
     /*

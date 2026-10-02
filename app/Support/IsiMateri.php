@@ -13,6 +13,7 @@ use Illuminate\Support\Str;
  * baca yang enak, IsiMateri mengenali beberapa penanda sederhana:
  *
  *   # Judul Seksi      -> seksi baru (bikin entri Daftar Isi + id untuk scroll)
+ *   Bab N: Judul       -> seksi baru, penanda yang ditulis form Tambah Materi
  *   ## Subjudul        -> subjudul di dalam seksi
  *   ```bahasa         -> blok kode, ditutup ``` di baris berikutnya
  *   - butir            -> daftar berbutir
@@ -173,6 +174,31 @@ final class IsiMateri
             // Baris kosong menutup paragraf, daftar, dan catatan yang berjalan.
             if (trim($barisNow) === '') {
                 $tutupSemua();
+
+                continue;
+            }
+
+            /*
+             * Dua penanda seksi baru: "Bab N: Judul" ditulis form Tambah
+             * Materi (lihat susunIsi di resources/js/materi-tambah.js), dan
+             * "# Judul" ditulis pengarang yang mengetik Markdown. Keduanya
+             * sudah dibaca App\Support\BabMateri untuk form edit dan untuk
+             * Materi::jumlahBab(). Kalau parser ini hanya mengenal "#",
+             * materi buatan form tidak pernah punya Daftar Isi karena seluruh
+             * babnya jatuh jadi satu seksi, padahal jumlah babnya lebih dari
+             * satu. Nomor "Bab N" tidak ikut jadi judul supaya yang tampil di
+             * kartu Daftar Isi nama babnya saja, sama seperti di form edit.
+             */
+            if (preg_match('/^Bab\s+\d+\s*:\s*(.*)$/u', $barisNow, $muka) === 1) {
+                $tutupSemua();
+                $tutupSeksi();
+
+                $judul = trim($muka[1]);
+
+                $kelompok[] = [
+                    'judul' => $judul !== '' ? $judul : 'Bab '.(count($kelompok) + 1),
+                    'blok' => [],
+                ];
 
                 continue;
             }
