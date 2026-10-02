@@ -214,6 +214,38 @@ class KaryaSayaTest extends TestCase
             ->assertSee(route('user.quiz.tambah'), false);
     }
 
+    /*
+     * Pratinjau pada form materi milik pengguna dilayani route-nya sendiri,
+     * bukan route admin. Yang dijaga di sini bukan hanya(route-nya) masih ada,
+     * tapi juga bahwa formnya benar-benar menyebutkannya: tab Preview di form
+     * admin dan form pengguna memakai modul JavaScript yang sama, jadi kalau
+     * route anggota hilang, pratinjau di form miliknya akan kosong tanpa
+     * penjelasan apa pun.
+     */
+    public function test_pratinjau_form_materi_punya_endpoint_sendiri(): void
+    {
+        $user = $this->buatPengguna();
+        $pelajaran = $this->buatPelajaran();
+
+        $form = $this->actingAs($user)
+            ->get(route('user.materi.tambah'))
+            ->assertOk()
+            ->getContent();
+
+        $this->assertStringContainsString(route('user.materi.pratinjau'), $form);
+
+        $this->actingAs($user)
+            ->post(route('user.materi.pratinjau'), [
+                'nama' => 'Materi Pratinjau',
+                'isi' => "# Pendahuluan\n\nSelamat datang.\n\n# Isi Materi\n\nParagraf kedua.",
+                'pelajaran_id' => $pelajaran->id,
+            ])
+            ->assertOk()
+            ->assertSee('Daftar Isi', false)
+            ->assertSee('Pendahuluan')
+            ->assertSee('Isi Materi');
+    }
+
     public function test_pencarian_menyaring_karya_pribadi(): void
     {
         $user = $this->buatPengguna();

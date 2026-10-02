@@ -746,6 +746,97 @@ class MateriKelolaHalamanTest extends TestCase
 
     /*
      * =============================================================
+     * MENU TIGA TITIK DI BARIS TANGGAL
+     * =============================================================
+     * Menu tiga titik pindah ke sebelah kanan tanggal, bukan lagi berdiri di
+     * kaki kartu. Yang dijaga di sini bukan posisi visualnya, tapi dua hal
+     * yang diam-diam rusak kalau baris tanggalnya berubah lagi: menu tetap
+     * di dalam satu wadah baris tanggal, dan tombol Edit naik jadi tombol
+     * yang terlihat — hanya untuk materi milik admin yang sedang login.
+     */
+
+    public function test_menu_tiga_tik_berada_di_baris_tanggal(): void
+    {
+        $admin = $this->buatAdmin();
+        $this->buatTerbit($this->buatPengguna(), 'Dasar HTML');
+
+        $html = $this->actingAs($admin)->get('/admin/materi')->assertOk()->getContent();
+
+        $this->assertStringContainsString('ad-kartu-daftar__tanggal-baris', $html);
+
+        /*
+         * Menu tiga titik harus muncul sebelum kaki kartu. Kalau urutannya
+         * dibalik, berarti menu itu masih berdiri di baris tombol — tempat
+         * yang baru dipindahkannya.
+         */
+        $menu = strpos($html, 'ad-titik"');
+        $kaki = strpos($html, 'ad-kartu-daftar__kaki');
+
+        $this->assertNotFalse($menu, 'Menu tiga titik tidak ada di kartu.');
+        $this->assertNotFalse($kaki, 'Kaki kartu tidak ada.');
+        $this->assertLessThan($kaki, $menu);
+    }
+
+    public function test_tombol_edit_muncul_untuk_materi_admin_sendiri(): void
+    {
+        $admin = $this->buatAdmin();
+        $milikAdmin = $this->buatTerbit($admin, 'Materi Admin Sendiri');
+
+        $html = $this->actingAs($admin)->get('/admin/materi')->assertOk()->getContent();
+
+        $this->assertStringContainsString(route('admin.materi.edit', $milikAdmin->slug), $html);
+    }
+
+    public function test_tombol_edit_tidak_muncul_untuk_materi_pengguna_lain(): void
+    {
+        $admin = $this->buatAdmin();
+        $milikPengguna = $this->buatTerbit($this->buatPengguna(), 'Materi Pengguna');
+
+        $html = $this->actingAs($admin)->get('/admin/materi')->assertOk()->getContent();
+
+        $this->assertStringNotContainsString(route('admin.materi.edit', $milikPengguna->slug), $html);
+    }
+
+    /*
+ * =============================================================
+ * BARIS META DI KARTU KATALOG
+ * =============================================================
+ * Kartu katalog menampilkan kategori dan jumlah bab. Yang TIDAK ikut di sini
+ * adalah perubahan dari kebocoran isi materi mentah: itu masalah kartu Konten
+ * Pembelajaran (yang tidak punya isian deskripsi sama sekali) dan sudah
+ * dijaga test-nya di KontenPembelajaranTest.
+ */
+
+    public function test_kartu_katalog_menampilkan_kategori_dan_jumlah_bab(): void
+    {
+        $admin = $this->buatAdmin();
+        $materi = $this->buatTerbit($this->buatPengguna(), 'Dasar HTML', $this->buatPelajaran(), $this->isiEmpatBab());
+
+        $html = $this->actingAs($admin)->get('/admin/materi')->assertOk()->getContent();
+
+        $this->assertStringContainsString(
+            $materi->pelajaran->nama.' &middot; '.$materi->jumlahBab().' Bab',
+            $html
+        );
+
+        // Isi materi mentah tidak pernah ikut ke kartu mana pun.
+        $this->assertStringNotContainsString('Bab 1: Pendahuluan', $html);
+    }
+
+    /**
+     * Isi dengan penanda "Bab N:", sama seperti yang ditulis form Tambah
+     * Materi, jadi empat bab.
+     */
+    private function isiEmpatBab(): string
+    {
+        return "Bab 1: Pendahuluan\n\nIsi bab pertama.\n\n"
+            ."Bab 2: Pembuka\n\nIsi bab kedua.\n\n"
+            ."Bab 3: Isi\n\nIsi bab ketiga.\n\n"
+            ."Bab 4: Penutup\n\nIsi bab keempat.";
+    }
+
+    /*
+     * =============================================================
      * BENTUK KARTU: VERTIKAL, SEPERTI KARTU MILIK PENGGUNA
      * =============================================================
      */

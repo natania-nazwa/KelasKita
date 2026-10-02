@@ -109,6 +109,20 @@ Route::middleware('auth')
         Route::post('/materi/tambah', [User\MateriTambahController::class, 'store'])->name('materi.tambah.store');
 
         /*
+         * Pratinjau materi yang sedang disusun, untuk tab Preview pada form
+         * Tambah/Edit Materi milik pengguna. Mengembalikan fragment HTML dari
+         * view yang sama dengan halaman detail admin (materi-detail-isi),
+         * karena isinya memang sama: Daftar Isi dan kartu seksi.
+         *
+         * Dipakai juga form edit, jadi yang didaftarkan adalah action
+         * MateriTambahController, bukan MateriKelolaController — form edit
+         * membuka view yang sama dan endpoint-nya pun tidak butuh tahu
+         * materi mana yang sedang disunting.
+         */
+        Route::post('/materi/pratinjau', [User\MateriTambahController::class, 'pratinjau'])
+            ->name('materi.pratinjau');
+
+        /*
          * Halaman baca materi memakai segmen "materi-detail", bukan
          * "materi". Kalau memakai "/materi/{slug}", URL baca harus berbagi
          * prefix dengan segmen literal "/materi/tambah" dan dengan
@@ -519,6 +533,36 @@ Route::middleware(['auth', 'admin'])
             ->name('konten.materi.tambah');
         Route::post('/konten/materi/tambah', [Admin\KontenMateriController::class, 'store'])
             ->name('konten.materi.tambah.store');
+
+        /*
+         * Pratinjau materi yang sedang disusun, untuk tab Preview pada form
+         * Tambah/Edit Materi. Mengembalikan fragment HTML dari view yang sama
+         * dengan halaman detail (admin.materi-detail-isi), bukan halaman utuh,
+         * karena pemanggilnya cuma menukar isi satu wadah.
+         *
+         * Didaftarkan di sini, sebelum route berparameter /konten/materi/{materi},
+         * karena segmen "pratinjau" dan slug materi bisa sama-sama berupa
+         * satu barek teks.
+         */
+        Route::post('/konten/materi/pratinjau', [Admin\KontenMateriController::class, 'pratinjau'])
+            ->name('konten.materi.pratinjau');
+
+        /*
+         * Halaman baca materi dari ruang kerja admin.
+         *
+         * Controller, view, dan datanya sama persis dengan
+         * admin.materi.show di bawah — satu halaman detail, bukan dua
+         * salinan. Yang dibedakan cuma nama route-nya, dan itu sudah cukup:
+         * penanda aktif di sidebar memakai admin.konten*, jadi menekan
+         * "Lihat" pada kartu di /admin/konten tidak memindahkan menu yang
+         * menyala dari Konten Pembelajaran ke Materi.
+         *
+         * Segmen literal ("tambah") didaftarkan lebih dulu di atas,
+         * mengikuti pola yang sama dengan /materi dan /quiz.
+         */
+        Route::get('/konten/materi/{materi}', Admin\MateriDetailController::class)
+            ->name('konten.materi.show');
+
         Route::get('/konten/materi/{materi}/edit', [Admin\KontenMateriController::class, 'edit'])
             ->name('konten.materi.edit');
         Route::put('/konten/materi/{materi}', [Admin\KontenMateriController::class, 'update'])
@@ -534,6 +578,14 @@ Route::middleware(['auth', 'admin'])
             ->name('konten.quiz.tambah');
         Route::post('/konten/quiz/tambah', [Admin\KontenQuizController::class, 'store'])
             ->name('konten.quiz.tambah.store');
+
+        /* Sama seperti admin.konten.materi.show di atas: satu halaman detail
+         * yang sama dengan admin.quiz.show, dibedakan hanya nama route-nya
+         * supaya tombol "Lihat" di /admin/konten tidak memindahkan menu yang
+         * menyala dari Konten Pembelajaran ke Quiz. */
+        Route::get('/konten/quiz/{quiz}', Admin\QuizDetailController::class)
+            ->name('konten.quiz.show');
+
         Route::get('/konten/quiz/{quiz}/edit', [Admin\KontenQuizController::class, 'edit'])
             ->name('konten.quiz.edit');
         Route::put('/konten/quiz/{quiz}', [Admin\KontenQuizController::class, 'update'])

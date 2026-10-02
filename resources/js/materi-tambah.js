@@ -67,7 +67,7 @@ function initTambahMateri(akar) {
      * Kartu "Isi Materi" mengikuti isi daftar bab.
      *
      * Satu aturan saja: kartu tampil kalau daftar babnya tidak kosong. Jadi
-     * form yang baru dibuka — yang daftar babnya masih kosong — belum
+     * form yang baru dibuka â€” yang daftar babnya masih kosong â€” belum
      * menampilkan editor, dan baru menampilkannya setelah admin menekan
      * "+ Tambah Bab". Sebaliknya, materi yang sudah punya bab (mode edit, atau
      * kiriman yang gagal validasi lalu diulang) langsung menampilkan editornya
@@ -94,17 +94,22 @@ function initTambahMateri(akar) {
     }
 
     /*
-     * Elemen pratinjau. Semuanya memakai komponen halaman detail yang
-     * sama (x-materi.detail-kepala dan kartu seksi), jadi yang ada di sini
-     * hanya titik tempat isinya ditimpa: judul, badge, thumbnail, dan isi
-     * bab.
+     * Elemen pratinjau.
+     *
+     * Kepala pratinjau dirender sekali oleh Blade (x-materi.detail-kepala)
+     * dan hanya perlu ditimpa isinya: judul, kategori, tingkat kesulitan, dan
+     * thumbnail. Semuanya milik form dan masih hidup di browser, jadi tidak
+     * pernah dikirim ke server.
+     *
+     * Badan pratinjau â€” Daftar Isi, kartu seksi, blok kode, navigasi antar
+     * bab â€” tidak dirender di sini. App\Support\IsiMateri dan
+     * App\Support\SorotKode bekerja di PHP, jadi badannya diambil dari
+     * endpoint pratinjau dan ditukar ke wadah di bawah setiap kali isian
+     * berubah. See Admin\KontenMateriController::pratinjau.
      */
     const p = {
         indeks: $("[data-preview-indeks]"),
         bar: $("[data-preview-bar]"),
-        posisi: $("[data-preview-posisi]"),
-        prev: $("[data-preview-prev]"),
-        next: $("[data-preview-next]"),
 
         judul: $("[data-pratinjau-judul]"),
         kategori: $("[data-pratinjau-kategori]"),
@@ -113,10 +118,19 @@ function initTambahMateri(akar) {
         thumbnail: $("[data-pratinjau-thumbnail]"),
         thumbIkon: $("[data-pratinjau-thumb-ikon]"),
         waktu: $("[data-pratinjau-waktu]"),
-
-        bab: $("[data-preview-bab]"),
-        isi: $("[data-preview-isi]"),
     };
+
+    /*
+     * Wadah badan pratinjau, dan endpoint yang mengisinya.
+     *
+     * URL-nya dibaca dari komponen x-materi.preview (dipasang sebagai
+     * data-pratinjau-url) dan bukan dari elemen akar, karena modul ini dipakai
+     * oleh form admin dan form pemilik yang pratinjunya dilayani route
+     * berbeda. Halaman yang tidak punya endpoint (mis. pratinjau dimatikan)
+     * hanya akan menampilkan kepala pratinjau saja — bukan error.
+     */
+    const wadahPratinjau = $("[data-preview-isi-wadah]");
+    const urlPratinjau = $("[data-pratinjau-url]")?.dataset.pratinjauUrl ?? "";
 
     /* Warna lencana tingkat kesulitan, sama dengan yang dipakai
        components/materi/detail-kepala.blade.php. */
@@ -143,11 +157,12 @@ function initTambahMateri(akar) {
     let urlThumbnail = "";
     let menungguHapus = null;
     let idSeret = null;
-    let tundaPreview = null;
+    let tundaPratinjau = null;
     let rentangKursor = null;
+    let batalPratinjau = null;
 
     /**
-     * Potongan thumbnail: zoom 100%–300% plus posisi geser yang
+     * Potongan thumbnail: zoom 100%â€“300% plus posisi geser yang
      * disimpan relatif (nx, ny antara -1 dan 1) supaya tetap cocok
      * walau bingkai preview berbeda ukuran dengan bingkai form.
      */
@@ -199,6 +214,20 @@ function initTambahMateri(akar) {
         // Bingkai preview tadinya display:none, jadi posisi potongan
         // thumbnail dihitung ulang begitu tabnya terbuka.
         terapkanPotongan();
+
+        /*
+         * Badannya baru diambil dari server saat tab ini dibuka, dan diambil
+         * langsung — bukan lewat jadwalPratinjau() — karena admin sedang
+         * menunggu halaman pratinjau muncul, bukan sedang mengetik sesuatu.
+         *
+         * isian editor juga belum tentu sudah masuk ke daftar bab: admin
+         * bisa saja mengetik lalu langsung menekan tab Preview tanpa
+         * memindahkan kursor, jadi isian editor yang aktif disimpan dulu.
+         */
+        if (diPreview) {
+            simpanAktif();
+            muatPratinjau();
+        }
     }
 
     tabBab.addEventListener("click", () => pilihTab("bab"));
@@ -256,7 +285,7 @@ function initTambahMateri(akar) {
         const sekarang = aktif();
 
         /*
-         * Daftar bab bisa kosong — itulah keadaan awal form baru, dan juga
+         * Daftar bab bisa kosong â€” itulah keadaan awal form baru, dan juga
          * hasil yang mungkin dari menghapus bab terakhir. Editor dikosongkan
          * supaya isian bab yang sudah dihapus tidak ikut tersimpan lagi, dan
          * kartu "Isi Materi" yang sedang disembunyikan tidak menyimpan isian
@@ -288,7 +317,7 @@ function initTambahMateri(akar) {
         aktifId = id;
         muatEditor();
         renderBab();
-        renderPratinjau();
+        muatPratinjau();
     }
 
     function tambahBab() {
@@ -305,7 +334,7 @@ function initTambahMateri(akar) {
 
         muatEditor();
         renderBab();
-        renderPratinjau();
+        muatPratinjau();
         perbaruiKartuIsian();
 
         judulBab.focus();
@@ -329,7 +358,7 @@ function initTambahMateri(akar) {
 
         muatEditor();
         renderBab();
-        renderPratinjau();
+        muatPratinjau();
         perbaruiKartuIsian();
     }
 
@@ -342,7 +371,7 @@ function initTambahMateri(akar) {
         bab.splice(ke, 0, pindah);
 
         renderBab();
-        renderPratinjau();
+        muatPratinjau();
     }
 
     function bukaDialogHapus(id) {
@@ -386,7 +415,7 @@ function initTambahMateri(akar) {
         }
 
         renderBab();
-        renderPratinjau();
+        muatPratinjau();
         perbaruiKartuIsian();
     }
 
@@ -436,15 +465,7 @@ function initTambahMateri(akar) {
                             </div>
                         </div>`;
                 })
-                .join("") +
-            `
-                <button type="button" class="bab-tambah-chip" data-bab-tambah-chip>
-                    <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2.4" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-                    </svg>
-
-                    Tambah Bab
-                </button>`;
+                .join("");
 
         jumlahBab.textContent = bab.length === 0 ? "Belum ada bab" : `${bab.length} Bab`;
 
@@ -452,7 +473,9 @@ function initTambahMateri(akar) {
         badgeBab.textContent = `Bab ${indeksAktif() + 1}`;
 
         if (labelTambah) {
-            labelTambah.textContent = bab.length > 1 ? "+ Tambah Bab Berikutnya" : "+ Tambah Bab";
+            // Tanpa "+" di depan: ikon plus di dalam tombol sudah menandainya,
+            // jadi "+ Tambah Bab" di teksnya hanya membuat "+ +Tambah Bab".
+            labelTambah.textContent = bab.length > 1 ? "Tambah Bab Berikutnya" : "Tambah Bab";
         }
     }
 
@@ -512,11 +535,6 @@ function initTambahMateri(akar) {
             return;
         }
 
-        if (event.target.closest("[data-bab-tambah-chip]")) {
-            tambahBab();
-            return;
-        }
-
         const chip = event.target.closest(".bab-chip");
         if (chip) {
             pilih(chip.dataset.id);
@@ -567,7 +585,7 @@ function initTambahMateri(akar) {
 
         idSeret = null;
         renderBab();
-        renderPratinjau();
+        muatPratinjau();
     });
 
     tombolTambah.addEventListener("click", tambahBab);
@@ -601,7 +619,7 @@ function initTambahMateri(akar) {
         simpanAktif();
         hitungKarakter();
         perbaruiStatusAlat();
-        jadwalPreview();
+        jadwalPratinjau();
     }
 
     function perbaruiStatusAlat() {
@@ -677,7 +695,7 @@ function initTambahMateri(akar) {
     editor.addEventListener("input", () => {
         simpanAktif();
         hitungKarakter();
-        jadwalPreview();
+        jadwalPratinjau();
     });
 
     judulBab.addEventListener("input", () => {
@@ -686,7 +704,7 @@ function initTambahMateri(akar) {
 
         sekarang.title = judulBab.value.trim() || "Bab Baru";
         renderBab();
-        jadwalPreview();
+        jadwalPratinjau();
     });
 
     judulBab.addEventListener("keydown", (event) => {
@@ -726,7 +744,7 @@ function initTambahMateri(akar) {
                 document.execCommand("insertImage", false, pembaca.result);
                 simpanAktif();
                 hitungKarakter();
-                jadwalPreview();
+                jadwalPratinjau();
             };
             pembaca.readAsDataURL(berkasTunggal);
         });
@@ -734,13 +752,25 @@ function initTambahMateri(akar) {
         gambarInput.value = "";
     });
 
-    /* ============================================================
-       PREVIEW
-       ============================================================ */
+/* ============================================================
+       PRATINJAU
+       ============================================================
+       Kepala pratinjau dirender sekali oleh Blade dan hanya perlu ditimpa
+       isinya. Badannya — Daftar Isi, kartu seksi, blok kode, navigasi antar
+       seksi — datang dari server, karena App\Support\IsiMateri dan
+       App\Support\SorotKode bekerja di PHP dan aturannya tidak bisa
+       ditulis ulang di sini tanpa membuat versi kedua yang pasti
+       menyimpang. Lihat Admin\KontenMateriController::pratinjau. */
 
-    function jadwalPreview() {
-        window.clearTimeout(tundaPreview);
-        tundaPreview = window.setTimeout(renderPratinjau, 140);
+    function jadwalPratinjau() {
+        window.clearTimeout(tundaPratinjau);
+
+        /*
+         * 450ms, bukan jeda pendek seperti penandaan di editor. Yang di
+         * sini berakhir sebagai permintaan ke server, jadi jeda pendek
+         * hanya berarti satu kalimat yang diketik akan dibaca beberapa kali.
+         */
+        tundaPratinjau = window.setTimeout(muatPratinjau, 450);
     }
 
     /*
@@ -770,7 +800,9 @@ function initTambahMateri(akar) {
         const nilai = kesulitan.value;
 
         p.kesulitan.textContent = nilai;
-        p.kesulitan.className = "lencana capitalize " + (WARNA_KESULITAN[String(nilai).toLowerCase()] || "bg-lavender text-dark/60");
+        p.kesulitan.className =
+            "lencana capitalize " +
+            (WARNA_KESULITAN[String(nilai).toLowerCase()] || "bg-lavender text-dark/60");
     }
 
     /*
@@ -784,40 +816,192 @@ function initTambahMateri(akar) {
         p.waktu.textContent = angka ? `${Number(angka[0])} menit baca` : "Belum diisi";
     }
 
-    function renderPratinjau() {
-        const index = indeksAktif();
-        const total = bab.length;
-        const sekarang = aktif();
-        if (!sekarang || index < 0) return;
-
+    /*
+     * Kepala pratinjau selalu dikerjakan lebih dulu dan selalu lokal.
+     * Kategori, tingkat kesulitan, dan thumbnail belum pernah menyentuh
+     * server dan tidak akan pernah dikirim ke sana, jadi bagian ini tidak
+     * boleh ikut menunggu permintaan yang bisa saja gagal.
+     */
+    function renderKepalaPratinjau() {
         p.judul.textContent = judulMateri.value.trim() || "Judul materi belum diisi";
         terangkanKategori();
         terangkanKesulitan();
         terangkanWaktuBaca();
-
-        p.bab.textContent = `${index + 1}. ${sekarang.title}`;
-
-        const isi = sekarang.content || "";
-        if (p.isi.innerHTML !== isi) {
-            p.isi.innerHTML = isi;
-        }
-
-        p.indeks.textContent = `${index + 1} / ${total}`;
-        p.bar.style.width = `${Math.round(((index + 1) / total) * 100)}%`;
-        p.posisi.textContent = `Bab ${index + 1} dari ${total}`;
-        p.prev.disabled = index <= 0;
-        p.next.disabled = index >= total - 1;
     }
 
-    p.prev.addEventListener("click", () => {
-        const index = indeksAktif();
-        if (index > 0) pilih(bab[index - 1].id);
-    });
+    async function muatPratinjau() {
+        renderKepalaPratinjau();
 
-    p.next.addEventListener("click", () => {
-        const index = indeksAktif();
-        if (index < bab.length - 1) pilih(bab[index + 1].id);
-    });
+        // Tanpa bab tidak ada yang untuk dipratinjau, dan tanpa tab Preview
+        // tidak ada yang melihatnya — jadi tidak ada yang perlu diunduh.
+        if (!wadahPratinjau || !urlPratinjau || bab.length === 0 || tabAktif !== "preview") {
+            return;
+        }
+
+        // Permintaan yang sedang jalan sudah tidak benar lagi.
+        batalPratinjau?.abort();
+
+        const pembatal = new AbortController();
+        batalPratinjau = pembatal;
+
+        const kirim = new URLSearchParams();
+
+        kirim.set("nama", judulMateri.value.trim());
+        kirim.set("isi", susunIsi());
+        kirim.set("tingkat_kesulitan", kesulitan.value);
+        kirim.set("pelajaran_id", kategori.value);
+
+        try {
+            const respons = await fetch(urlPratinjau, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8",
+                    "X-Requested-With": "XMLHttpRequest",
+                },
+                body: kirim.toString(),
+                signal: pembatal.signal,
+            });
+
+            if (!respons.ok) return;
+
+            const html = await respons.text();
+
+            // Balasan yang telat sudah dibatalkan di atas; pemeriksaannya
+            // diulang supaya isi yang lebih lama tidak pernah menimpa isi
+            // yang lebih baru.
+            if (batalPratinjau !== pembatal) return;
+
+            wadahPratinjau.innerHTML = html;
+            pasangPemilihSeksi();
+        } catch {
+            /*
+             * Dibatalkan karena isian berubah lagi, atau jaringan gagal.
+             * Isi pratinjau yang terakhir dibiarkan apa adanya: lebih baik
+             * pratinjau yang sedikit tertinggal daripada yang kosong tanpa
+             * penjelasan.
+             */
+        }
+    }
+
+    /*
+     * Pemilih seksi untuk pratinjau.
+     *
+     * Bentuknya sama persis dengan halaman detail: [data-bab] untuk tiap
+     * seksi, [data-daftar-isi-tautan] untuk baris Daftar Isi, dan
+     * [data-bab-nav] untuk tombol Sebelumnya/Berikutnya. Atributnya sama
+     * karena markup-nya memang dari view yang sama; yang berbeda hanya
+     * tempat mencari elemen dan tidak adanya penulisan ke URL — hash URL
+     * halaman form bukan tempat menyimpan apa pun.
+     */
+    function pasangPemilihSeksi() {
+        const seksi = $$("[data-bab]", wadahPratinjau);
+        const tautan = $$("[data-daftar-isi-tautan]", wadahPratinjau);
+
+        if (seksi.length === 0) {
+            p.indeks.textContent = "0 / 0";
+            p.bar.style.width = "0%";
+
+            return;
+        }
+
+        const nav = $("[data-bab-nav]", wadahPratinjau);
+        const tombolSebelum = $("[data-bab-sebelum]", wadahPratinjau);
+        const tombolSikut = $("[data-bab-sikut]", wadahPratinjau);
+        const judulSebelum = $("[data-bab-sebelum-judul]", wadahPratinjau);
+        const judulSikut = $("[data-bab-sikut-judul]", wadahPratinjau);
+
+        /*
+         * Label tombol diambil dari baris Daftar Isi, bukan dari judul di
+         * dalam kartu seksi: judul kartu latihan berbentuk kalimat
+         * pertanyaan dan akan terlalu panjang untuk sebuah tombol.
+         */
+        const labelSeksi = (slug) => {
+            const baris = tautan.find((item) => item.dataset.daftarIsiTautan === slug);
+
+            if (!baris) return "";
+
+            const bagian = baris.querySelectorAll("span");
+
+            return [bagian[0]?.textContent.trim(), bagian[1]?.textContent.trim()]
+                .filter(Boolean)
+                .join(". ");
+        };
+
+        const terapkan = (slug) => {
+            const posisi = seksi.findIndex((item) => item.dataset.bab === slug);
+
+            if (posisi < 0) return;
+
+            seksi.forEach((item, index) => {
+                item.hidden = index !== posisi;
+            });
+
+            tautan.forEach((item) => {
+                item.classList.toggle("is-aktif", item.dataset.daftarIsiTautan === slug);
+            });
+
+            nav?.classList.add("is-aktif");
+
+            const sebelum = seksi[posisi - 1];
+            const sikut = seksi[posisi + 1];
+
+            if (tombolSebelum) {
+                tombolSebelum.hidden = !sebelum;
+
+                if (sebelum && judulSebelum) {
+                    judulSebelum.textContent = labelSeksi(sebelum.dataset.bab);
+                }
+            }
+
+            if (tombolSikut) {
+                tombolSikut.hidden = !sikut;
+
+                if (sikut && judulSikut) {
+                    judulSikut.textContent = labelSeksi(sikut.dataset.bab);
+                }
+            }
+
+            const total = seksi.length;
+
+            p.indeks.textContent = `${posisi + 1} / ${total}`;
+            p.bar.style.width = `${Math.round(((posisi + 1) / total) * 100)}%`;
+        };
+
+        tautan.forEach((item) => {
+            item.addEventListener("click", (peristiwa) => {
+                peristiwa.preventDefault();
+                terapkan(item.dataset.daftarIsiTautan);
+            });
+        });
+
+        tombolSebelum?.addEventListener("click", () => {
+            const posisi = seksi.findIndex((item) => !item.hidden);
+
+            if (posisi > 0) terapkan(seksi[posisi - 1].dataset.bab);
+        });
+
+        tombolSikut?.addEventListener("click", () => {
+            const posisi = seksi.findIndex((item) => !item.hidden);
+
+            if (posisi >= 0 && posisi < seksi.length - 1) terapkan(seksi[posisi + 1].dataset.bab);
+        });
+
+        /*
+         * Seksi yang ditampilkan mengikuti bab yang sedang dipilih di daftar
+         * bab di atas. Tanpa ini, memilih bab lain hanya mengubah editor
+         * dan pratinjau tetap menampilkan seksi yang sama.
+         *
+         * Pasangan bab-seksi tidak selalu satu-satu: penanda "Bab 2: ..."
+         * dibaca BabMateri, sedangkan penanda seksi "# Judul" dibaca
+         * IsiMateri, dan keduanya bisa tidak ada. Karena itu yang dipakai
+         * adalah posisi, dijepit supaya tidak keluar dari daftar — kalau
+         * materinya belum punya penanda seksi sama sekali, seluruh isinya
+         * memang jadi satu seksi dan itu juga yang tampil setelah disimpan.
+         */
+        const posisi = Math.min(Math.max(indeksAktif(), 0), seksi.length - 1);
+
+        terapkan(seksi[posisi].dataset.bab);
+    }
 
     /* ============================================================
        FORM: counter, unggah, submit
@@ -838,12 +1022,12 @@ function initTambahMateri(akar) {
      */
     judulMateri.addEventListener("input", () => {
         hitungJudul();
-        jadwalPreview();
+        jadwalPratinjau();
     });
 
-    kategori.addEventListener("change", jadwalPreview);
-    kesulitan.addEventListener("change", jadwalPreview);
-    estimasiWaktu.addEventListener("input", jadwalPreview);
+    kategori.addEventListener("change", jadwalPratinjau);
+    kesulitan.addEventListener("change", jadwalPratinjau);
+    estimasiWaktu.addEventListener("input", jadwalPratinjau);
     tips.addEventListener("input", hitungTips);
 
     /* --- Thumbnail: unggah, zoom, geser --- */
@@ -861,7 +1045,7 @@ function initTambahMateri(akar) {
             return { x: 0, y: 0 };
         }
 
-        // object-fit: cover → skala dasar yang mengisi seluruh bingkai.
+        // object-fit: cover â†’ skala dasar yang mengisi seluruh bingkai.
         const dasar = Math.max(kotak.width / lebarAsli, kotak.height / tinggiAsli);
         const lebar = lebarAsli * dasar * potong.zoom;
         const tinggi = tinggiAsli * dasar * potong.zoom;
@@ -1107,7 +1291,7 @@ function initTambahMateri(akar) {
      * Alasannya, semua elemen di modul ini dicari di dalam akar form
      * (data-tambah-materi), sementara dialog hapus diletakkan di luar akar itu
      * di sebagian halaman. Tanpa penjagaan, satu baris ini sudah cukup untuk
-     * menghentikan seluruh modul — termasuk hal-hal yang tidak ada hubungannya
+     * menghentikan seluruh modul â€” termasuk hal-hal yang tidak ada hubungannya
      * dengan dialog, seperti daftar bab, editor, dan baris tombol simpan.
      */
     if (dialog && dialogBatal && dialogHapus) {
@@ -1214,7 +1398,9 @@ function initTambahMateri(akar) {
     muatAwal();
     muatEditor();
     renderBab();
-    renderPratinjau();
+    muatPratinjau();
     hitungJudul();
     hitungTips();
 }
+
+

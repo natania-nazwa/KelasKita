@@ -39,8 +39,7 @@
         $adaFilter = filled($kategoriAktif) || filled($statusAktif)
             || $urutAktif !== 'terbaru';
 
-        $bahanKonten = $tab === 'quiz' ? 'kuis' : 'materi';
-        $jumlahBaris = $daftar->count();
+        $bahanKonten = $tab === 'quiz' ? 'quiz' : 'materi';
     @endphp
 
     {{-- =====================
@@ -60,7 +59,7 @@
                     <h1 class="ad-konten-kepala__judul">Konten Pembelajaran</h1>
 
                     <p class="ad-konten-kepala__sub">
-                        Kelola materi dan kuis untuk mendukung proses pembelajaran di Kelas Kita.
+                        Kelola materi dan quiz untuk mendukung proses pembelajaran di Kelas Kita.
                     </p>
                 </div>
             </div>
@@ -95,15 +94,15 @@
          untuk membuat konten baru. Potret justru membuat jarak antara ikon dan
          tombol, padahal di sini keduanya adalah satu perintah.
 
-         Warnanya tetap berbeda: kartu "Tambah Materi" hijau dan "Tambah Kuis"
+         Warnanya tetap berbeda: kartu "Tambah Materi" hijau dan "Tambah Quiz"
          ungu, tombolnya sepadan dengan kartunya. Dua tombol ungu di atas dua
          kartu berbeda justru menghilangkan pembedaan yang dibawa warnanya. --}}
     <div class="ad-seksi">
         <div class="ad-konten-aksi">
             {{--
-                Modifier --materi dan --kuis bukan hiasan: keduanya yang
-                membedakan warna kedua kartu ini. Tanpa modifier, "Tambah
-                Materi" dan "Tambah Kuis" akan terlihat seperti dua kartu
+Modifier --materi dan --kuis bukan hiasan: keduanya yang
+                 membedakan warna kedua kartu ini. Tanpa modifier, "Tambah
+                 Materi" dan "Tambah Quiz" akan terlihat seperti dua kartu
                 yang sama persis padahal isinya beda jenis.
             --}}
             <div class="ad-konten-aksi__kartu ad-konten-aksi__kartu--materi">
@@ -133,17 +132,17 @@
                 </span>
 
                 <div class="ad-konten-aksi__isi">
-                    <h2 class="ad-konten-aksi__judul">Tambah Kuis</h2>
+                    <h2 class="ad-konten-aksi__judul">Tambah Quiz</h2>
 
                     <p class="ad-konten-aksi__pesan">
-                        Buat kuis untuk menguji pemahaman peserta didik.
+                        Buat quiz untuk menguji pemahaman peserta didik.
                     </p>
 
                     <a href="{{ route('admin.konten.quiz.tambah') }}"
                         class="ad-tombol ad-tombol--utama ad-tombol--kecil ad-konten-aksi__tombol">
                         <x-admin.ikon nama="tambah" ukuran="w-4 h-4" :tebal="2.4" />
 
-                        Tambah Kuis
+                        Tambah Quiz
                     </a>
                 </div>
             </div>
@@ -350,7 +349,7 @@
             <a href="{{ route('admin.konten', ['tab' => 'quiz']) }}"
                 class="{{ $tab === 'quiz' ? 'ad-konten-tab__item ad-konten-tab__item--aktif' : 'ad-konten-tab__item' }}"
                 @if ($tab === 'quiz') aria-current="page" @endif>
-                Kuis
+                Quiz
 
                 <span class="ad-konten-tab__jumlah">{{ $jumlahQuiz }}</span>
             </a>
@@ -451,16 +450,16 @@
                                 <x-admin.ikon nama="buku-centang" ukuran="w-6 h-6" />
                             </span>
 
-                            <p class="ad-konten-gagal__judul">Belum ada kuis</p>
+                            <p class="ad-konten-gagal__judul">Belum ada quiz</p>
 
                             <p class="ad-konten-gagal__teks">
-                                Belum ada kuis yang dibuat.
+                                Belum ada quiz yang dibuat.
                             </p>
 
                             <a href="{{ route('admin.konten.quiz.tambah') }}" class="ad-tombol ad-tombol--utama">
                                 <x-admin.ikon nama="tambah" ukuran="w-4 h-4" :tebal="2.4" />
 
-                                Tambah Kuis
+                                Tambah Quiz
                             </a>
                         </div>
                     @else
@@ -494,22 +493,16 @@
                      hanya menambah satu garis dan satu radius yang tidak ada gunanya.
                      Kotak .ad-konten-kotak tetap dipakai untuk state gagal dan kosong,
                      yang memang butuh tempat sendiri karena tidak ada isinya untuk
-                     ditampilkan. --}}
-                <div class="ad-konten-info">
-                    <p class="ad-konten-info__jumlah">
-                        Menampilkan <strong>{{ $jumlahBaris }}</strong>
-                        {{ $bahanKonten }}
-                        @if ($paginasi && $paginasi->total() > $jumlahBaris)
-                            dari <strong>{{ $paginasi->total() }}</strong>
-                        @endif
-                    </p>
+                     ditampilkan.
 
-                    <p class="ad-konten-info__jumlah">
-                        <x-admin.ikon nama="jam" ukuran="w-3.5 w-3.5" class="inline" />
-                        Terakhir diperbarui sesuai tanggal di setiap kartu
-                    </p>
-                </div>
-
+                     Tidak ada baris ringkasan di atas daftar lagi. Baris
+                     "Menampilkan N materi dari M" dan pengingat "Terakhir
+                     diperbarui sesuai tanggal di setiap kartu" pernah berdiri
+                     di sini, tapi keduanya bukan kontrol dan bukan informasi
+                     baru: jumlah kartu sudah terbaca dari kartu-kartu di
+                     bawahnya, dan tanggal tiap konten sudah tercetak di
+                     informatics pada kartu itu sendiri. Yang tersisa dari
+                     baris itu cuma ruang kosong yang sia-sia. --}}
                 <div class="ad-konten-daftar" data-konten-daftar>
                     @foreach ($daftar as $baris)
                         <x-admin.konten-kartu :kartu="$baris" />

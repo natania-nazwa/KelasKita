@@ -8,7 +8,10 @@ use App\Models\Materi;
 use App\Models\Pelajaran;
 use App\Support\BerkasMateri;
 use App\Support\NotifikasiAdmin;
+use App\Support\PratinjauMateri;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 use Illuminate\Support\Str;
 use Illuminate\View\View;
 
@@ -24,6 +27,40 @@ class MateriTambahController extends Controller
     {
         return view('user.materi-tambah', [
             'kategori' => Pelajaran::query()->aktif()->orderBy('nama')->get(),
+        ]);
+    }
+
+    /**
+     * Pratinjau materi yang sedang disusun.
+     *
+     * Satu-satunya alasan action ini ada di sini dan bukan di
+     * Admin\KontenMateriController: pratinjaunya dilayani route area
+     * pengguna, dan tautan di kepala pratinjau harus mengarah ke daftar
+     * milik pengguna, bukan ke daftar admin.
+     *
+     * Yang dikerjakan keduanya sama persis — merakit model lalu memanggil
+     * pemecah yang sama dengan halaman detail — jadi tidak ada aturan
+     * pratinjau yang ditulis dua kali.
+     */
+    public function pratinjau(Request $request): Response
+    {
+        $nama = (string) $request->input('nama', '');
+        $isi = (string) $request->input('isi', '');
+
+        if (PratinjauMateri::melebihiBatas($nama, $isi)) {
+            return response('', 422);
+        }
+
+        return response()->view('admin.materi-detail-isi', [
+            'detail' => PratinjauMateri::detail(
+                $nama,
+                $isi,
+                tautanDaftar: route('user.materi'),
+                tautanLatihan: route('user.quiz'),
+                tingkatKesulitan: $request->input('tingkat_kesulitan'),
+                pelajaran: Pelajaran::query()->find($request->input('pelajaran_id')),
+                pembuat: $request->user(),
+            ),
         ]);
     }
 

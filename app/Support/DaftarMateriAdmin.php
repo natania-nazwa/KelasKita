@@ -48,6 +48,11 @@ final class DaftarMateriAdmin
      *   pembuat  => [nama, inisial, warna, warna_gelap],
      *   tautan_detail, tautan_edit, tautan_hapus
      *
+     * Isi materi tidak ikut dipetakan di sini. Kartu di daftar menampilkan
+     * kategori, jumlah bab, pembuat, tanggal, dan status; isi lengkapnya ada
+     * di halaman detail, jadi memetakannya hanya menambah pekerjaan tanpa
+     * dipakai.
+     *
      * Tidak ada deskripsi materi di sini: kartu di daftar admin tidak
      * menampilkannya (isi lengkapnya ada di halaman detail), jadi memetakannya
      * hanya menambah pekerjaan tanpa dipakai.

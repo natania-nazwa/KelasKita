@@ -12,8 +12,10 @@ use App\Support\BerkasMateri;
 use App\Support\DaftarKonten;
 use App\Support\NotifikasiAdmin;
 use App\Support\NotifikasiKonten;
+use App\Support\PratinjauMateri;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 use Illuminate\View\View;
 
 /**
@@ -107,6 +109,43 @@ class KontenMateriController extends Controller
             // Daftar bab dipecah lagi dari isi tersimpan, supaya editor dibuka
             // dengan bab yang sama seperti waktu materi dibuat.
             'bab' => BabMateri::dariIsi($item->isi),
+        ]);
+    }
+
+    /**
+     * Pratinjau materi yang sedang disusun.
+     *
+     * Menerima dua isian yang sudah disusun JavaScript (judul dan isi gabung
+     * seluruh bab) dan mengembalikan fragment HTML — Daftar Isi plus kartu
+     * seksi — dari view yang sama dengan halaman detail. Yang dikirim balik
+     * bukan halaman utuh karena pemanggilnya hanya menukar isi satu wadah di
+     * dalam form.
+     *
+     * Endpoint ini yang membuat pratinjau bisa sama persis dengan halaman
+     * detail, termasuk blok kode yang diwarnai dan Daftar Isi. Menyalin
+     * aturan pemecahan isi ke JavaScript hanya akan menghasilkan versi kedua
+     * yang pasti menyimpang begitu salah satu sisi berubah; merakit model dan
+     * memanggil pemecah yang sama membuat keduanya tidak mungkin berbeda.
+     */
+    public function pratinjau(Request $request): Response
+    {
+        $nama = (string) $request->input('nama', '');
+        $isi = (string) $request->input('isi', '');
+
+        if (PratinjauMateri::melebihiBatas($nama, $isi)) {
+            return response('', 422);
+        }
+
+        return response()->view('admin.materi-detail-isi', [
+            'detail' => PratinjauMateri::detail(
+                $nama,
+                $isi,
+                tautanDaftar: route('admin.konten', ['tab' => 'materi']),
+                tautanLatihan: route('admin.quiz'),
+                tingkatKesulitan: $request->input('tingkat_kesulitan'),
+                pelajaran: Pelajaran::query()->find($request->input('pelajaran_id')),
+                pembuat: $request->user(),
+            ),
         ]);
     }
 

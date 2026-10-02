@@ -3655,10 +3655,18 @@ body.tubuh-admin {
     color: var(--ad-teks-ungu);
 }
 
+/*
+ * Menu keluar ke ATAS, bukan ke bawah.
+ *
+ * Tombolnya berdiri di baris paling bawah dari informasi kartu, jadi menu
+ * yang terbuka ke bawah keluar dari kartu dan langsung tertutup kartu di
+ * baris berikutnya — tombolnya kelihatan seperti tidak bekerja. Ke atas,
+ * ruang kosongnya justru milik kartu itu sendiri.
+ */
 .ad-titik__menu {
     position: absolute;
     z-index: 40;
-    top: calc(100% + 0.4rem);
+    bottom: calc(100% + 0.4rem);
     right: 0;
     width: 10.5rem;
     border-radius: 0.9rem;
@@ -4077,6 +4085,17 @@ body.tubuh-admin {
 }
 
 /*
+ * Kasus yang tidak Tertangkap dua aturan di atas: menu dibuka lewat
+ * keyboard dan tetikus sudah pindah ke kartu lain, jadi kartu ini tidak
+ * lagi di-hover maupun di-fokus — tapi menunya masih terbuka. Tanpa
+ * z-index di sini, popovernya ketimpa kartu di bawahnya dan tombolnya
+ * terlihat seperti tidak bekerja.
+ */
+.ad-kartu-daftar:has(.ad-titik[open]) {
+    z-index: 1;
+}
+
+/*
  * Blok gambar. Selalu berisi sesuatu: kalau materinya atau quiznya tidak
  * punya thumbnail, gradasi warna kategori + ikon mapel menggantikannya.
  * Tinggi dikunci lewat aspect-ratio supaya semua kartu dalam satu baris punya
@@ -4243,6 +4262,35 @@ body.tubuh-admin {
     font-weight: 500;
     font-variant-numeric: tabular-nums;
     color: color-mix(in oklab, var(--ad-teks) 48%, transparent);
+}
+
+/*
+ * Baris tanggal + menu tiga titik.
+ *
+ * Tanggal tetap anak langsungnya .ad-kartu-daftar__badan (dalam <p>, dengan
+ * margin-top miliknya sendiri); pembungkus ini cuma menaruh tanggal itu
+ * bersama menu tiga titik dalam satu baris — tanggal di kiri, menu menempel
+ * di kanan. space-between-lah yang mendorong menu ke kanan; margin-left: auto
+ * tidak bisa dipakai karena yang harus terdorong ke kanan adalah anak
+ * terakhirnya, yaitu menu-nya.
+ *
+ * Tombol tiga titik dikecilkan sedikit supaya setinggi baris teksnya, bukan
+ * menambah tinggi kartu. Popovernya tetap keluar ke bawah seperti
+ * sebelumnya; kartu ini memang sengaja tidak memakai overflow: hidden.
+ */
+.ad-kartu-daftar__tanggal-baris {
+    display: flex;
+    min-width: 0;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+}
+
+.ad-kartu-daftar__tanggal-baris .ad-titik__tombol {
+    width: 1.85rem;
+    min-height: 1.85rem;
+    flex-shrink: 0;
+    color: var(--ad-teks-2);
 }
 
 /*
@@ -8181,11 +8229,19 @@ body.tubuh-admin {
 /*
  * Menu disembunyikan lewat display, bukan visibility atau opacity, supaya
  * tidak pernah bisa difokus lewat keyboard sebelum dibuka.
+ *
+ * Arahnya ke atas, bukan ke bawah: tombolnya berdiri di baris informasi
+ * paling bawah kartu, jadi menu yang keluar ke bawah langsung tertutup
+ * kartu di baris berikutnya dan terlihat seperti tombol yang tidak
+ * bekerja. Ke atas, ruang kosongnya milik kartu itu sendiri. Sebelumnya
+ * kartu ini sengaja tidak memakai overflow: hidden justru supaya menu
+ * boleh keluar dari tepinya — itu sebabnya arah ke atas cukup untuk
+ * menyelesaikannya.
  */
 .ad-konten-menu__isi {
     position: absolute;
     z-index: 30;
-    top: calc(100% + 0.35rem);
+    bottom: calc(100% + 0.35rem);
     right: 0;
     display: none;
     width: 12.5rem;
@@ -8360,36 +8416,6 @@ body.tubuh-admin {
     font-size: 0.8125rem;
     line-height: 1.6;
     color: var(--ad-teks-2);
-}
-
-/* ---------- Ringkasan jumlah ---------- */
-/*
- * Dulu ini strip di dalam kotak daftar, jadi hanya butuh garis bawah. Sekarang
- * daftar kartu berdiri sendiri di atas latar halaman tanpa kotak pembungkus,
- * jadi strip ini harus bisa berdiri sendiri juga: kotak sendiri dengan radius
- * sendiri, bukan setengah kotak.
- */
-.ad-konten-info {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    justify-content: space-between;
-    gap: 0.6rem 1rem;
-    margin-bottom: 1rem;
-    border: 1px solid var(--ad-garis);
-    border-radius: 1rem;
-    background-color: var(--ad-permukaan-lembut);
-    padding: 0.7rem 1.1rem;
-}
-
-.ad-konten-info__jumlah {
-    font-size: 0.75rem;
-    color: var(--ad-teks-2);
-}
-
-.ad-konten-info__jumlah strong {
-    color: var(--ad-teks);
-    font-variant-numeric: tabular-nums;
 }
 
 /* ---------- Empty state ---------- */

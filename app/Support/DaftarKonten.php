@@ -89,9 +89,25 @@ final class DaftarKonten
             'id' => $item->getKey(),
             'jenis' => $materi ? 'materi' : 'quiz',
             'judul' => $materi ? $item->nama : $item->judul,
-            'deskripsi' => $materi
-                ? $item->ringkasan(120)
-                : (string) $item->deskripsi,
+
+            /*
+             * Hanya kolom deskripsi, tidak lewat Materi::ringkasan().
+             *
+             * ringkasan() sengaja jatuh ke isi materi kalau deskripsinya
+             * kosong, supaya materi lama yang tidak pernah punya deskripsi
+             * tetap punya sesuatu untuk ditampilkan. Di daftar ini itu
+             * justru salah: form Tambah Materi tidak punya isian deskripsi
+             * sama sekali, jadi setiap materi yang dibuat dari Konten
+             * Pembelajaran akan memamerkan 120 karakter pertama isi
+             * materinya sendiri — termasuk penanda babnya ("Bab 1: …").
+             * Itu bukan ringkasan, dan admin membacanya sebagai kalau
+             * kartu ini rusak.
+             *
+             * Kalau deskripsinya memang kosong, kartu tidak menampilkannya
+             * (lihat components/admin/konten-kartu). Materi tanpa deskripsi
+             * tetap terbaca dari judul, jumlah bab, durasi, dan tanggalnya.
+             */
+            'deskripsi' => $item->deskripsi,
             'jumlah' => $materi ? $item->jumlahBab() : $item->jumlahSoal(),
             'satuan' => $materi ? 'Bab' : 'Soal',
             'menit' => $materi ? $item->waktuBaca() : (int) $item->durasi,
@@ -134,17 +150,18 @@ final class DaftarKonten
     /**
      * Tautan aksi untuk satu konten.
      *
-     * Semuanya memakai route milik "Konten Pembelajaran", bukan route admin
-     * yang sudah ada: daftar ini mengelola seluruh konten, bukan hanya yang
-     * sudah tayang, jadi jalurnya tidak boleh sama dengan halaman "Materi" dan
-     * "Quiz" yang tetap mengelola katalog konten published saja.
+     * Semuanya memakai route milik "Konten Pembelajaran", termasuk "lihat".
+     * Daftar ini mengelola seluruh konten, bukan hanya yang sudah tayang,
+     * jadi jalurnya tidak boleh sama dengan halaman "Materi" dan "Quiz"
+     * yang tetap mengelola katalog konten published saja.
      *
-     * Satu-satunya pengecualian adalah "lihat". Menulis ulang halaman detail
-     * hanya supaya tombol "Lihat" di sini kembali ke daftar ini akan menjadi
-     * dua salinan dari komponen yang sama; kedua halaman detail admin sudah
-     * merender komponen tampilan milik pengguna dan tidak memeriksa status,
-     * jadi satu pun sudah cukup untuk membaca materi maupun quiz dari status
-     * mana pun.
+     * "Lihat" punya route-nya sendiri di dalam /admin/konten, meskipun
+     * controller, view, dan datanya sama persis dengan admin.materi.show dan
+     * admin.quiz.show. Yang dibedakan hanya nama route-nya, karena penanda
+     * aktif di sidebar memakai admin.konten*: lewat route katalog, menekan
+     * "Lihat" di sini akan memindahkan menu yang menyala dari Konten
+     * Pembelajaran ke Materi atau Quiz — persis yang tidak boleh terjadi
+     * saat admin masih membaca karyanya sendiri.
      *
      * @return array{lihat: string, edit: string, hapus: string, publish: string, duplikat: string}
      */
@@ -152,7 +169,7 @@ final class DaftarKonten
     {
         if ($item instanceof Materi) {
             return [
-                'lihat' => route('admin.materi.show', $item->slug),
+                'lihat' => route('admin.konten.materi.show', $item->slug),
                 'edit' => route('admin.konten.materi.edit', $item->slug),
                 'hapus' => route('admin.konten.materi.destroy', $item->slug),
                 'publish' => route('admin.konten.materi.publish', $item->slug),
@@ -161,7 +178,7 @@ final class DaftarKonten
         }
 
         return [
-            'lihat' => route('admin.quiz.show', $item->getKey()),
+            'lihat' => route('admin.konten.quiz.show', $item->getKey()),
             'edit' => route('admin.konten.quiz.edit', $item->getKey()),
             'hapus' => route('admin.konten.quiz.destroy', $item->getKey()),
             'publish' => route('admin.konten.quiz.publish', $item->getKey()),

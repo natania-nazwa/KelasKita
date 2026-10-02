@@ -548,15 +548,17 @@ class PengaturanTampilanTest extends TestCase
     }
 
     /**
-     * Lima menuarea yang memakai topbar ringkas: Koten Pembelajaran (daftar
-     * dan form), Verifikasi, Pengguna, Materi, dan Quiz (daftar, detail, dan
-     * form edit).
+     * Tidak ada halaman admin yang lagi memakai topbar penuh.
      *
-     * Yang diuji per halaman bukan hanya "tombol buka sidebar masih ada",
-     * tapi juga bahwa pencarian, lonceng, dan menu akun benar-benar tidak
-     * dirender — termasuk panel isinya, bukan cuma tombolnya.
+     * Kotak pencarian, lonceng notifikasi, dan menu akun tidak dirender di
+     * satu pun halaman area admin — termasuk Dashboard. Yang tersisa hanya
+     * tombol buka sidebar.
+     *
+     * Daftar URL-nya sengaja ditulis satu per satu: satu per menu, dengan
+     * sub-halaman yang paling mudah terlupa (detail dan form edit), supaya
+     * halaman baru yang nanti ditambahkan ikut tertangkap di sini.
      */
-    public function test_topbar_lima_menuarea_cuma_punya_tombol_buka_sidebar(): void
+    public function test_tidak_ada_halaman_admin_yang_menampilkan_topbar_penuh(): void
     {
         $admin = $this->buatAdmin();
         $this->buatPelajaran();
@@ -584,11 +586,16 @@ class PengaturanTampilanTest extends TestCase
         ]);
 
         $halaman = [
+            // Dashboard.
+            route('admin.dashboard'),
+
             // Konten Pembelajaran: daftar, tab quiz, dan kedua form.
             route('admin.konten'),
             route('admin.konten', ['tab' => 'quiz']),
             route('admin.konten.materi.tambah'),
             route('admin.konten.quiz.tambah'),
+            route('admin.konten.materi.edit', $materi->slug),
+            route('admin.konten.quiz.edit', $quiz),
 
             // Verifikasi dan Pengguna.
             route('admin.verifikasi'),
@@ -620,23 +627,10 @@ class PengaturanTampilanTest extends TestCase
                 $this->assertStringNotContainsString(
                     $harusTidakAda,
                     $html,
-                    "Topbar {$url} masih memuat {$harusTidakAda} padahal harusnya ringkas."
+                    "Topbar {$url} masih memuat {$harusTidakAda} padahal topbar penuh sudah tidak dipakai."
                 );
             }
         }
-    }
-
-    public function test_topbar_dashboard_tetap_punya_pencarian_lonceng_dan_akun(): void
-    {
-        $admin = $this->buatAdmin();
-
-        $this->actingAs($admin)
-            ->get(route('admin.dashboard'))
-            ->assertOk()
-            ->assertSee('ad-atas__cari', false)
-            ->assertSee('data-admin-notif', false)
-            ->assertSee('data-akun-tombol', false)
-            ->assertSee('data-sisi-buka', false);
     }
 
     public function test_halaman_pengaturan_tidak_menjalankan_query_lonceng_notifikasi(): void
@@ -644,13 +638,14 @@ class PengaturanTampilanTest extends TestCase
         $admin = $this->buatAdmin();
 
         /*
-         * Lonceng sengaja tidak dirender di Pengaturan, jadi dua query
-         * notifikasi tidak boleh jalan di sana. Kalau topbar penuh tanpa
-         * sengaja ikut dirender, test ini gagal.
+         * Lonceng sengaja tidak dirender di mana pun di area admin, jadi query
+         * notifikasi tidak boleh jalan di halaman mana pun. Kalau topbar penuh
+         * tanpa sengaja ikut dirender lagi, test ini gagal.
          */
         DB::enableQueryLog();
 
         $this->actingAs($admin)->get(route('admin.pengaturan'))->assertOk();
+        $this->actingAs($admin)->get(route('admin.dashboard'))->assertOk();
 
         $query = DB::getQueryLog();
 
@@ -664,11 +659,20 @@ class PengaturanTampilanTest extends TestCase
         $this->assertSame(
             [],
             array_values($iniNotifikasi),
-            'Halaman Pengaturan tidak perlu notifikasi, jadi tidak boleh querying tb_notifikasi.'
+            'Tidak ada halaman admin yang perlu notifikasi, jadi tidak boleh querying tb_notifikasi.'
         );
     }
 
-    public function test_lonceng_admin_menampilkan_daftar_notifikasi(): void
+    /**
+     * Notifikasi admin tetap dibuat dan tetap bisa dibaca, meski loncengnya
+     * sudah tidak dirender di halaman mana pun.
+     *
+     * Yang diuji sejak ini adalah datanya (NotifikasiAdmin::daftar), bukan
+     * markup lonceng: isi notifikasi, tautannya, dan waktunya masih jadi
+     * data yang dipakai bagian lain, dan tidak boleh hilang hanya karena
+     * loncengnya tidak lagi ditampilkan.
+     */
+    public function test_notifikasi_admin_menampilkan_daftar_konten_menunggu(): void
     {
         $admin = $this->buatAdmin();
         $materi = Materi::create([
@@ -680,15 +684,14 @@ class PengaturanTampilanTest extends TestCase
 
         NotifikasiAdmin::kontenMenunggu($materi);
 
-        $this->actingAs($admin)
-            ->get(route('admin.dashboard'))
-            ->assertOk()
-            ->assertSee('data-admin-notif', false)
-            ->assertSee('Konten menunggu ditinjau')
-            ->assertSee(route('admin.verifikasi'), false);
+        $notifikasi = NotifikasiAdmin::daftar($admin)->first();
+
+        $this->assertNotNull($notifikasi, 'Notifikasi konten menunggu harus terbaca untuk admin.');
+        $this->assertSame('Konten menunggu ditinjau', $notifikasi['judul']);
+        $this->assertSame(route('admin.verifikasi'), $notifikasi['tautan']);
     }
 
-    public function test_lonceng_admin_menautkan_karyanya_sendiri_ke_form_edit(): void
+    public function test_notifikasi_admin_menautkan_karyanya_sendiri_ke_form_edit(): void
     {
         $admin = $this->buatAdmin();
         $materi = Materi::create([
@@ -700,13 +703,13 @@ class PengaturanTampilanTest extends TestCase
 
         NotifikasiAdmin::kontenDiterbitkan($materi, $admin);
 
-        $this->actingAs($admin)
-            ->get(route('admin.dashboard'))
-            ->assertOk()
-            ->assertSee(route('admin.konten.materi.edit', $materi->slug), false);
+        $notifikasi = NotifikasiAdmin::daftar($admin)->first();
+
+        $this->assertNotNull($notifikasi);
+        $this->assertSame(route('admin.konten.materi.edit', $materi->slug), $notifikasi['tautan']);
     }
 
-    public function test_lonceng_admin_menampilkan_waktu_notifikasi(): void
+    public function test_notifikasi_admin_menampilkan_waktu_notifikasi(): void
     {
         $admin = $this->buatAdmin();
         $materi = Materi::create([
@@ -722,20 +725,10 @@ class PengaturanTampilanTest extends TestCase
 
         $this->assertNotNull($notifikasi->created_at, 'Notifikasi yang ditulis harus punya waktu dibuat.');
 
-        /*
-         * Yang diuji hanya bahwa waktunya terisi, bukan teks persisnya.
-         * diffForHumans() bisa melompat dari "beberapa detik yang lalu" ke
-         * "1 menit yang lalu" di antara penulisan notifikasi dan render
-         * halaman, jadi membandingkan kalimatnya akan jadi test yang gagal
-         * tanpa sebab.
-         */
-        $html = $this->actingAs($admin)->get(route('admin.dashboard'))->assertOk()->getContent();
+        $baris = NotifikasiAdmin::daftar($admin)->first();
 
-        $this->assertMatchesRegularExpression(
-            '/ad-atas__notif-item-waktu">\s*\S/',
-            $html,
-            'Waktu notifikasi di lonceng tidak terisi.'
-        );
+        $this->assertNotNull($baris);
+        $this->assertNotSame('', $baris['waktu_label'], 'Waktu notifikasi tidak boleh kosong.');
     }
 
     public function test_lonceng_admin_tidak_menampilkan_judul_notifikasi_di_halaman_pengaturan(): void

@@ -25,13 +25,16 @@
         hanya berlaku untuk konten yang menunggu keputusan admin, dan konten
         di daftar ini memang milik admin sendiri.
 
-    Aksi di kaki kartu dibagi dua. "Lihat" dan "Edit" tombolnya terlihat, karena
-    itu dua hal yang paling sering dilakukan dan mencarinya di dalam menu
-    hanya menambah satu langkah. Sisanya — Duplikat, Publish/Batalkan, dan Hapus
-    — tetap di menu tiga titik: ketiganya jarang dipakai, dan Hapus tidak
-    sebaiknya selalu satu klik saja dari kartu. Menu itu sudah ada di area admin
-    (.ad-konten-menu) dan dikendalikan resources/js/konten-daftar.js, jadi
-    tidak ada perilaku baru yang harus dibuat untuknya.
+    Aksi di kartu dibagi tiga tingkat supaya tiap baris punya satu jenis
+    informasi. Baris paling bawah ("kaki") hanya berisi "Lihat" dan "Edit" —
+    dua hal yang paling sering dilakukan, jadi keduanya dibiarkan berupa
+    tombol yang kelihatan, tidak disembunyikan di balik menu. Baris
+    informasi menutup dengan tanggal, dan menu tiga titik berdiri tepat di
+    sebelah kanannya: Duplikat, Publish/Batalkan, dan Hapus tetap di dalam
+    menu, karena ketiganya jarang dipakai dan Hapus tidak sebaiknya selalu
+    satu klik saja dari kartu. Menu itu dikendalikan
+    resources/js/konten-daftar.js, jadi tidak ada perilaku baru yang harus
+    dibuat untuknya.
 
     Pengganti baris mendatar yang pernah dipakai di sini. Baris itu memang
     bisa memindai empat hal sekaligus tanpa membaca satu per satu, tapi daftar
@@ -77,7 +80,16 @@
             <a href="{{ $kartu['tautan']['lihat'] }}">{{ $kartu['judul'] }}</a>
         </h2>
 
-        <p class="kartu-materi__deskripsi">{{ $kartu['deskripsi'] }}</p>
+        {{--
+            Deskripsi hanya ditulis kalau pengarangnya memang mengisinya.
+            Form Tambah Materi tidak punya isian deskripsi, jadi sebagian
+            besar materi di sini tidak memilikinya — dan menampilkan baris
+            kosong hanya akan menyisakan ruang kosong di antara judul dan
+            baris informasi.
+        --}}
+        @if (filled($kartu['deskripsi']))
+            <p class="kartu-materi__deskripsi">{{ $kartu['deskripsi'] }}</p>
+        @endif
 
         {{-- Jumlah bab atau soal, perkiraan waktu, dan tanggal. --}}
         <div class="karya-info mt-3.5">
@@ -99,6 +111,13 @@
                 </span>
             @endif
 
+            {{--
+                Tanggal menyusul jumlah dan durasi, jadi ketiganya terbaca
+                sebagai satu baris dari kiri ke kanan. Dulu tanggal ikut
+                dorongan ke kanan baris itu — dan baris yang paling penting
+                (kapan konten ini diperbarui) justru jadi satu-satunya yang
+                paling jauh dari judulnya.
+            --}}
             <span class="karya-info__butir karya-info__butir--sepuh">
                 <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" stroke-width="1.9" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 0 1 2.25-2.25h13.5A2.25 2.25 0 0 1 21 7.5v11.25m-18 0A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75m-18 0v-7.5A2.25 2.25 0 0 1 5.25 9h13.5A2.25 2.25 0 0 1 21 11.25v7.5" />
@@ -106,12 +125,90 @@
 
                 {{ $kartu['tanggal_label'] }}
             </span>
+
+            {{--
+                Menu tiga titik, satu-satunya hal di baris ini yang bukan
+                informasi: deshalb ia yang didorong ke ujung kanan, supaya
+                tidak berebut tempat dengan baris tanggal di sebelah kirinya.
+
+                .ad-konten-menu sudah position: relative, jadi tidak perlu
+                pembungkus lain untuk menjadikannya jangkar popover. Isinya
+                dibaca resources/js/konten-daftar.js: menu yang terbuka
+                ditutup lagi saat tetikus menekan di luar .ad-konten-menu.
+            --}}
+            <div class="kartu-konten__akhir">
+                <div class="ad-konten-menu" data-konten-menu>
+                    <button type="button" class="ad-konten-menu__tombol" data-konten-menu-tombol
+                        aria-expanded="false" aria-haspopup="menu"
+                        aria-label="Aksi untuk {{ $nama }} {{ $kartu['judul'] }}">
+                        <x-admin.ikon nama="titik-tiga" ukuran="w-4 h-4" :tebal="2.2" />
+                    </button>
+
+                    <div class="ad-konten-menu__isi" data-konten-menu-isi role="menu"
+                        aria-label="Aksi untuk {{ $nama }} {{ $kartu['judul'] }}">
+
+                        {{-- Duplikat lewat form: ia mengubah database, jadi bukan tautan. --}}
+                        <form method="POST" action="{{ $kartu['tautan']['duplikat'] }}">
+                            @csrf
+
+                            <button type="submit" class="ad-konten-menu__aksi" role="menuitem">
+                                <x-admin.ikon nama="salin" ukuran="w-4 h-4" />
+
+                                Duplikat
+                            </button>
+                        </form>
+
+                        {{--
+                            Satu tombol untuk dua arah, jadi yang ditampilkan
+                            tergantung status: draft mendapat "Publish", yang sudah
+                            terbit mendapat "Batalkan Publikasi" — sehingga
+                            "Publish" tidak pernah muncul pada konten yang sudah
+                            tayang.
+
+                            Atribut data-konten-terbit-* dibaca
+                            resources/js/konten-publish.js untuk mengisi judul,
+                            pesan, dan nama tombol dialog — jadi kalimatnya berbeda
+                            antara menerbitkan dan menarik kembali.
+                        --}}
+                        <button type="button" class="ad-konten-menu__aksi" data-konten-publish="publish"
+                            data-konten-terbit-buka
+                            data-konten-aksi="{{ $kartu['tautan']['publish'] }}"
+                            data-konten-nama="{{ $nama }} &quot;{{ $kartu['judul'] }}&quot;"
+                            data-konten-terbit-judul="{{ $terbit ? 'Batalkan publikasi?' : 'Publish konten?' }}"
+                            data-konten-terbit-pesan="{{ $terbit
+                                ? $nama . ' ini akan ditarik dari halaman pengguna dan kembali menjadi draft.'
+                                : 'Konten ini akan langsung tersedia untuk pengguna dan notifikasi akan dikirim.' }}"
+                            data-konten-terbit-tombol="{{ $terbit ? 'Batalkan Publikasi' : 'Publish Sekarang' }}"
+                            data-konten-terbit-bahaya="{{ $terbit ? '1' : '0' }}"
+                            role="menuitem">
+                            <x-admin.ikon :nama="$terbit ? 'silang-polos' : 'unggah'" ukuran="w-4 h-4" />
+
+                            {{ $terbit ? 'Batalkan Publikasi' : 'Publish' }}
+                        </button>
+
+                        <span class="ad-konten-menu__pisah" role="separator"></span>
+
+                        <button type="button" class="ad-konten-menu__aksi ad-konten-menu__aksi--bahaya"
+                            data-hapus-buka
+                            data-hapus-judul="Hapus {{ strtolower($nama) }}?"
+                            data-hapus-meta="{{ $kategori['nama'] }} &middot; {{ $kartu['ringkasan'] }} &middot; {{ $kartu['tanggal_label'] }}"
+                            data-hapus-aksi="{{ $kartu['tautan']['hapus'] }}"
+                            data-hapus-pesan="{{ $terbit
+                                ? $nama . ' ini sudah tayang untuk pengguna. Menghapusnya akan menaruhnya dari halaman pengguna dan tidak dapat dikembalikan.'
+                                : $nama . ' ini akan dihapus dan tidak dapat dikembalikan.' }}"
+                            role="menuitem">
+                            <x-admin.ikon nama="sampah" ukuran="w-4 h-4" />
+
+                            Hapus
+                        </button>
+                    </div>
+                </div>
+            </div>
         </div>
 
         {{--
-            Kaki kartu. "Lihat" melebar penuh seperti di kartu pengguna, lalu
-            "Edit" dan menu tiga titik di sebelahnya.
-
+            Kaki kartu. Hanya "Lihat" dan "Edit" — dua hal yang paling sering
+            dilakukan, jadi keduanya dibiarkan berupa tombol yang kelihatan.
             Publish dan hapus lewat dialog konfirmasi lebih dulu (dikerjakan di
             resources/js/konten-publish.js dan .konten-admin.js).
         --}}
@@ -134,79 +231,6 @@
 
                 Edit
             </a>
-
-            {{--
-                Menu tiga titik. .ad-konten-menu sudah position: relative, jadi
-                tidak perlu pembungkus lain untuk menjadikannya jangkar popover.
-                contents-nya dibaca resources/js/konten-daftar.js: menu yang
-                terbuka ditutup lagi saat tetikus menekan di luar .ad-konten-menu.
-            --}}
-            <div class="ad-konten-menu" data-konten-menu>
-                <button type="button" class="ad-konten-menu__tombol" data-konten-menu-tombol
-                    aria-expanded="false" aria-haspopup="menu"
-                    aria-label="Aksi untuk {{ $nama }} {{ $kartu['judul'] }}">
-                    <x-admin.ikon nama="titik-tiga" ukuran="w-4 h-4" :tebal="2.2" />
-                </button>
-
-                <div class="ad-konten-menu__isi" data-konten-menu-isi role="menu"
-                    aria-label="Aksi untuk {{ $nama }} {{ $kartu['judul'] }}">
-
-                    {{-- Duplikat lewat form: ia mengubah database, jadi bukan tautan. --}}
-                    <form method="POST" action="{{ $kartu['tautan']['duplikat'] }}">
-                        @csrf
-
-                        <button type="submit" class="ad-konten-menu__aksi" role="menuitem">
-                            <x-admin.ikon nama="salin" ukuran="w-4 h-4" />
-
-                            Duplikat
-                        </button>
-                    </form>
-
-                    {{--
-                        Satu tombol untuk dua arah, jadi yang ditampilkan
-                        tergantung status: draft mendapat "Publish", yang sudah
-                        terbit mendapat "Batalkan Publikasi" — sehingga
-                        "Publish" tidak pernah muncul pada konten yang sudah
-                        tayang.
-
-                        Atribut data-konten-terbit-* dibaca
-                        resources/js/konten-publish.js untuk mengisi judul,
-                        pesan, dan nama tombol dialog — jadi kalimatnya berbeda
-                        antara menerbitkan dan menarik kembali.
-                    --}}
-                    <button type="button" class="ad-konten-menu__aksi" data-konten-publish="publish"
-                        data-konten-terbit-buka
-                        data-konten-aksi="{{ $kartu['tautan']['publish'] }}"
-                        data-konten-nama="{{ $nama }} &quot;{{ $kartu['judul'] }}&quot;"
-                        data-konten-terbit-judul="{{ $terbit ? 'Batalkan publikasi?' : 'Publish konten?' }}"
-                        data-konten-terbit-pesan="{{ $terbit
-                            ? $nama . ' ini akan ditarik dari halaman pengguna dan kembali menjadi draft.'
-                            : 'Konten ini akan langsung tersedia untuk pengguna dan notifikasi akan dikirim.' }}"
-                        data-konten-terbit-tombol="{{ $terbit ? 'Batalkan Publikasi' : 'Publish Sekarang' }}"
-                        data-konten-terbit-bahaya="{{ $terbit ? '1' : '0' }}"
-                        role="menuitem">
-                        <x-admin.ikon :nama="$terbit ? 'silang-polos' : 'unggah'" ukuran="w-4 h-4" />
-
-                        {{ $terbit ? 'Batalkan Publikasi' : 'Publish' }}
-                    </button>
-
-                    <span class="ad-konten-menu__pisah" role="separator"></span>
-
-                    <button type="button" class="ad-konten-menu__aksi ad-konten-menu__aksi--bahaya"
-                        data-hapus-buka
-                        data-hapus-judul="Hapus {{ strtolower($nama) }}?"
-                        data-hapus-meta="{{ $kategori['nama'] }} &middot; {{ $kartu['ringkasan'] }} &middot; {{ $kartu['tanggal_label'] }}"
-                        data-hapus-aksi="{{ $kartu['tautan']['hapus'] }}"
-                        data-hapus-pesan="{{ $terbit
-                            ? $nama . ' ini sudah tayang untuk pengguna. Menghapusnya akan menaruhnya dari halaman pengguna dan tidak dapat dikembalikan.'
-                            : $nama . ' ini akan dihapus dan tidak dapat dikembalikan.' }}"
-                        role="menuitem">
-                        <x-admin.ikon nama="sampah" ukuran="w-4 h-4" />
-
-                        Hapus
-                    </button>
-                </div>
-            </div>
         </div>
     </div>
 </article>

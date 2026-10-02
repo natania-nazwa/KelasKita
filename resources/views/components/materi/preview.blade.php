@@ -1,21 +1,30 @@
 {{--
-    Isi tab "Preview" pada kartu Daftar Bab: pratinjau tampilan siswa.
+    Isi tab "Preview" pada kartu Daftar Bab: pratinjau tampilan pembaca.
 
-    Komponen ini sengaja memakai komponen halaman detail yang sama
-    (x-materi.detail-kepala dan kelas kartu yang dipakai
-    x-materi.detail-seksi), supaya yang terlihat di sini persis seperti
-    halaman yang nanti dibaca siswa. Bedanya hanya sumber isinya: di sini
-    semuanya berasal dari form dan diisi ulang oleh
-    resources/js/materi-tambah.js setiap kali bab, judul, atau kategori
-    berubah.
+    Pratinjau ini bukan tiruan halaman detail. Kepala pratinjau memakai
+    komponen yang sama dengan halaman detail (x-materi.detail-kepala), dan
+    badannya diambil dari server lewat endpoint pratinjau yang merakit model
+    Materi lalu memanggil pemecah yang sama dengan halaman detail — jadi Daftar
+    Isi, kartu seksi, blok kode yang diwarnai, dan navigasi antar bab di sini
+    benar-benar keluaran komponen yang sama, bukan salinan yang bisa
+    menyimpang begitu salah satu sisi berubah.
 
-    Dua bagian halaman detail yang tidak ikut ditiru:
-      - Daftar Isi: saat materi baru disusun, daftar babnya masih ikut
-        berganti setiap kali bab ditambah atau dihapus, jadi belum bisa
-        dipakai sebagai navigasi. Yang menggantikannya adalah tombol
-        Sebelumnya / Selanjutnya di bawah.
-      - Tombol Simpan: materi yang sedang disusun belum punya slug, jadi
-        belum bisa disimpan.
+    Badannya tidak bisa dirakit di JavaScript: App\Support\IsiMateri dan
+    App\Support\SorotKode bekerja di PHP. Menyalin aturannya ke JavaScript
+    hanya akan menghasilkan versi kedua yang pasti menyimpang. Yang tetap
+    dikerjakan di sisi klien cuma bagian yang benar-benar milik form: judul,
+    kategori, tingkat kesulitan, dan thumbnail — semuanya masih berupa berkas
+    di browser dan belum pernah menyentuh server.
+
+    Endpoint-nya mengembalikan fragment (Daftar Isi + kartu seksi), bukan
+    halaman utuh, dan ukurannya kecil: pemanggilnya cuma menukar isi satu
+    wadah di dalam form.
+
+    Dua kontrol milik pembaca disembunyikan di dalam pratinjau lewat
+    .pratinjau-kotak di app.css: tombol salin kode dan tombol lipatkan Daftar
+    Isi. Keduanya bergantung pada penyimpan atau pengukuran yang hanya ada di
+    halaman detail, dan di sini tidak ada yang bisa dilayani — lebih baik tidak
+    tampil daripada tampil sebagai tombol yang kelihatan bisa diklik tapi mati.
 
     Data placeholder untuk kepala pratinjau dirakit di dalam komponen ini,
     jadi pemanggil cukup menulis <x-materi.preview :kategori="$kategori" :materi="$materi" />.
@@ -26,6 +35,11 @@
     // yang sama dengan isian form.
     'kategori' => [],
     'materi' => null,
+
+    // Endpoint yang merender badan pratinjau. Wajib diisi oleh pemanggil:
+    // form admin dan form pemilik menunjuki route-nya masing-masing, jadi
+    // komponen ini tidak boleh menebak-nebak.
+    'pratinjauUrl',
 ])
 
 @php
@@ -76,8 +90,8 @@
     ];
 @endphp
 
-<div {{ $attributes->class(['pratinjau-kotak']) }}>
-    {{-- Progress bab + posisi bab yang sedang aktif --}}
+<div {{ $attributes->class(['pratinjau-kotak']) }} data-pratinjau-url="{{ $pratinjauUrl }}">
+    {{-- Progress seksi + posisi seksi yang sedang aktif. --}}
     <div class="mb-3 flex items-center gap-3">
         <div class="h-1.5 flex-1 overflow-hidden rounded-full bg-ungu-bg" role="presentation">
             <div data-preview-bar class="h-full rounded-full bg-ungu transition-[width] duration-300"
@@ -94,38 +108,13 @@
     <x-materi.detail-kepala :detail="$detailPratinjau" pratinjau />
 
     {{--
-        Isi bab aktif. Strukturnya meniru x-materi.detail-seksi: kartu
-        yang sama, judul bernomor yang sama, dan kelas .isi-materi yang
-        sama untuk tipografinya. Bedanya isi bab belum dipecah jadi blok
-        seperti di halaman detail, jadi masih ditampilkan apa adanya
-        seperti yang tertulis di editor.
+        Badan pratinjau. Kosong sampai tab ini dibuka: isinya datang dari
+        server setiap kali isian form berubah, dan server baru bisa tahu
+        bentuk akhirnya setelah seluruh bab digabung menjadi satu teks.
+
+        resources/js/materi-tambah.js yang mengisi wadah ini, lalu memasang
+        pemilih seksi di atas hasilnya — sama seperti materi-detail.js
+        melakukan pada halaman detail.
     --}}
-    <section class="kartu-detail materi-seksi mt-4 p-5 sm:p-6 lg:p-7">
-        <h2 class="materi-seksi__judul" data-preview-bab>1. Bab Baru</h2>
-
-        <div class="isi-materi mt-4" data-preview-isi></div>
-    </section>
-
-    {{-- Navigasi preview: pengganti Daftar Isi yang belum bisa dipakai. --}}
-    <div class="mt-3 flex items-center justify-between gap-2">
-        <button type="button" data-preview-prev
-            class="tombol-garis px-3 py-1.5 text-xs disabled:cursor-not-allowed disabled:opacity-40">
-            <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5 8.25 12l7.5-7.5" />
-            </svg>
-
-            Sebelumnya
-        </button>
-
-        <span data-preview-posisi class="text-[11px] font-bold text-muted">Bab 1 dari 1</span>
-
-        <button type="button" data-preview-next
-            class="tombol-garis px-3 py-1.5 text-xs disabled:cursor-not-allowed disabled:opacity-40">
-            Selanjutnya
-
-            <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                <path stroke-linecap="round" stroke-linejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" />
-            </svg>
-        </button>
-    </div>
+    <div class="mt-4" data-preview-isi-wadah></div>
 </div>

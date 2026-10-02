@@ -288,7 +288,20 @@ final class StatistikAdmin
             'kategori_ikon' => $kategori['ikon'],
             'kategori_warna' => $kategori['warna'],
             'dibuat_pada' => $materi->created_at,
-            'tautan' => route('admin.materi'),
+            /*
+             * Tautan "Tinjau" harus membuka halaman Verifikasi, bukan katalog
+             * Materi.
+             *
+             * Katalog Materi dan Quiz hanya menampilkan konten yang sudah
+             * tayang (scopeTerbit), sedangkan baris di sini justru konten
+             * yang MENUNGGU keputusan — jadi tautan ke sana mendarat di
+             * halaman yang tidak memuat konten itu. Verifikasi juga menerima
+             * query "pilih" dengan bentuk "jenis:id" (lihat
+             * Admin\VerifikasiController::rincianTerpilih), jadi panel
+             * review-nya langsung terbuka untuk konten yang ditekan tanpa
+             * admin mencari-cari di daftar.
+             */
+            'tautan' => route('admin.verifikasi', ['pilih' => 'materi:'.$materi->getKey()]),
             'tautan_setujui' => route('admin.materi.setujui', $materi->slug),
             'tautan_tolak' => route('admin.materi.tolak', $materi->slug),
         ];
@@ -321,7 +334,8 @@ final class StatistikAdmin
             'kategori_ikon' => $kategori['ikon'],
             'kategori_warna' => $kategori['warna'],
             'dibuat_pada' => $quiz->created_at,
-            'tautan' => route('admin.quiz'),
+            // Sama seperti materi: tautannya ke Verifikasi, bukan katalog Quiz.
+            'tautan' => route('admin.verifikasi', ['pilih' => 'quiz:'.$quiz->getKey()]),
             'tautan_setujui' => route('admin.quiz.setujui', $quiz->getKey()),
             'tautan_tolak' => route('admin.quiz.tolak', $quiz->getKey()),
         ];

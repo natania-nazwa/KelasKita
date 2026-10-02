@@ -74,25 +74,13 @@
              ISI MATERI
         ======================
 
-        Struktur grid dan syarat menampilkan Daftar Isi disalin apa adanya
-        dari user/materi-detail.blade.php: proporsi 27 : 73, min-w-0 di
-        kedua kolom supaya blok kode yang lebar tidak mendorong halaman, dan
-        Daftar Isi baru muncul kalau materi punya lebih dari satu seksi.
+        Grid dan Daftar Isi ada di view terpisah
+        (resources/views/admin/materi-detail-isi.blade.php) karena potongan yang
+        sama dipakai lagi oleh pratinjau pada form Tambah/Edit Materi. Satu
+        definisi, dua pemanggil — jadi pratinjau tidak mungkin terlihat seperti
+        halaman ini sekarang lalu berbeda lagi nanti.
     --}}
-    @if (count($detail['seksi']) > 1)
-        <div class="ad-seksi grid items-start gap-6 lg:grid-cols-[minmax(0,27fr)_minmax(0,73fr)]">
-
-            <div class="min-w-0">
-                <x-materi.detail-daftar-isi :seksi="$detail['seksi']" />
-            </div>
-
-            <div class="min-w-0">
-                <x-materi.detail-konten :seksi="$detail['seksi']" :detail="$detail" />
-            </div>
-        </div>
-    @else
-        <div class="ad-seksi min-w-0">
-            <x-materi.detail-konten :seksi="$detail['seksi']" :detail="$detail" />
-        </div>
-    @endif
+    <div class="ad-seksi">
+        @include('admin.materi-detail-isi')
+    </div>
 @endsection

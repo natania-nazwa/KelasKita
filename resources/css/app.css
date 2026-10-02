@@ -3604,28 +3604,6 @@ html {
         color: #c2414a;
     }
 
-    .bab-tambah-chip {
-        display: inline-flex;
-        align-items: center;
-        gap: 0.4rem;
-        flex-shrink: 0;
-        border-radius: 0.85rem;
-        border: 1.5px dashed var(--color-ungu-soft);
-        background-color: var(--color-ungu-bg);
-        padding: 0.5rem 0.85rem;
-        font-size: 0.8125rem;
-        font-weight: 700;
-        color: var(--color-ungu-dark);
-        transition:
-            border-color 0.2s ease,
-            background-color 0.2s ease;
-    }
-
-    .bab-tambah-chip:hover {
-        border-color: var(--color-ungu);
-        background-color: #fff;
-    }
-
     /* ---------- Tab kartu bab (Daftar Bab / Preview) ---------- */
     .tab-unsur {
         display: inline-flex;
@@ -3808,12 +3786,25 @@ html {
     }
 
     /* ---------- Preview ----------
-       Pratinjau memakai komponen halaman detail (kartu-kepala, kartu-detail,
-       materi-seksi, isi-materi), jadi styles-nya ikut dari blok detail
-       materi. Yang dipakai dari blok ini hanya .pratinjau-kotak, yaitu
-       penjaga min-width supaya kolom pratinjau tidak ikut melebar. */
+       Pratinjau memakai komponen halaman detail (kepala materi, Daftar Isi,
+       kartu seksi, isi-materi, kode-blok), jadi styles-nya ikut dari blok
+       detail materi. Yang dipakai dari blok ini hanya .pratinjau-kotak,
+       yaitu penjaga min-width supaya kolom pratinjau tidak ikut melebar. */
     .pratinjau-kotak {
         min-width: 0;
+    }
+
+    /*
+     * Dua kontrol milik pembaca disembunyikan di pratinjau: tombol salin kode
+     * dan tombol lipatkan Daftar Isi. Keduanya terlihat seperti tombol yang
+     * bisa diklik, tapi tidak punya handler di sini — listener-nya dipasang
+     * resources/js/materi-detail.js satu kali waktu halaman dimuat, sedangkan
+     * isi pratinjau datang jauh sesudah itu. Menampilkan yang mati lebih buruk
+     * daripada tidak menampilkannya sama sekali.
+     */
+    .pratinjau-kotak [data-salin-kode],
+    .pratinjau-kotak .daftar-isi__alih {
+        display: none;
     }
 
     /* ---------- Action bar ----------
@@ -6395,19 +6386,15 @@ html {
 
     /* ---------- Baris aksi kartu Konten Pembelajaran ----------
      *
-     * Kartu "Konten Pembelajaran" punya lima tombol aksi, bukan tiga seperti
-     * kartu "Karya Saya".
+     * Kartu "Konten Pembelajaran" punya dua tombol aksi di kakinya, bukan
+     * tiga seperti kartu "Karya Saya". Menu tiga titik pindah ke baris
+     * informasi, menempel di kanan tanggal (lihat .kartu-konten__akhir),
+     * jadi di kaki tinggal "Lihat" dan "Edit".
      *
-     * Di kartu pengguna tombol "Lihat" yang mengisi ruang sisa itu terlihat
-     * seimbang: tiga tombol membagi baris rata. Di sini lima tombol tidak
-     * akan membagi rata — ruang sisa jadi jauh lebih besar dari tombol mana
-     * pun, sehingga "Lihat" melebar jadi oval panjang yang tidak proporsional
-     * dengan empat tombol di sebelahnya.
-     *
-     * Jadi peregangannya dimatikan di kartu ini: setiap tombol selebar isinya
-     * sendiri, dan baris aksinya jadi grid dua kolom supaya lima tombol
-     * tersusun rapi (2-2-1), bukan mengalir bebas yang bisa berakhir dengan
-     * satu tombol sendirian di baris terakhir.
+     * Dua tombol membagi lebar baris rata persis seperti di kartu pengguna,
+     * jadi peregangannya tidak dimatikan di sini: grid dua kolom seperti
+     * versi lima tombol hanya akan membuat "Edit" melebar jadi oval panjang
+     * di bawah "Lihat" yang sama lebarnya.
      */
     .kartu-konten .karya-aksi {
         display: grid;
@@ -6423,10 +6410,51 @@ html {
         flex: 0 0 auto;
     }
 
-    /* Tombol terakhir melebar penuh: baris paling bawah jadi memakai seluruh
-       lebar kartu dan tidak ada tombol yang menggantung di situ. */
-    .kartu-konten .karya-aksi > *:last-child {
-        grid-column: 1 / -1;
+    /* ---------- Ujung baris informasi: menu tiga titik ----------
+     *
+     * Tanggal tetap mengalir di baris .karya-info seperti butir lain, jadi
+     * baris itu dibaca dari kiri: jumlah, durasi, tanggal. Satu-satunya yang
+     * didorong ke ujung kanan adalah menu tiga titik, karena itu bukan
+     * informasi — dan karena popovernya keluar ke atas (lihat
+     * .ad-konten-menu__isi di admin.css) di sebelah kanan baris paling
+     * bawah kartu ada lebih banyak ruang kosong di atasnya.
+     *
+     * Wadah ini juga yang membiarkan menu keluar dari kartu: .kartu-materi
+     * memakai overflow: hidden untuk membulatkan sudut thumbnail, jadi
+     * popover yang diposisikan absolute di dalamnya akan terpotong tepat di
+     * tepi kartu. Karena itu kartu Konten Pembelajaran melepas overflow itu
+     * dan membulatkan sudut blok gambarnya sendiri (lihat .kartu-konten di
+     * bawah), persis seperti kartu katalog di admin.css sudah melakukannya.
+     */
+    .kartu-konten__akhir {
+        display: inline-flex;
+        align-items: center;
+        margin-left: auto;
+    }
+
+    .kartu-konten__akhir .ad-konten-menu__tombol {
+        width: 1.85rem;
+        height: 1.85rem;
+    }
+
+    /* ---------- Kartu Konten Pembelajaran boleh melepas popover ---------- */
+    .kartu-konten {
+        overflow: visible;
+    }
+
+    .kartu-konten .kartu-materi__gambar {
+        border-radius: 1rem 1rem 0 0;
+    }
+
+    /* Kartu yang sedang menjadi tempat menu terbuka harus melayang di atas
+     * kartu-kartu sesudahnya, sama seperti .ad-kartu-daftar:hover di
+     * admin.css. Tanpa ini popovernya terbuka tapi ketimpa kartu berikutnya.
+     * :focus-within menutup kasus klik lewat keyboard, :has() menutup kasus
+     * menu yang masih terbuka setelah tetikus berpindah ke kartu lain. */
+    .kartu-konten:hover,
+    .kartu-konten:focus-within,
+    .kartu-konten:has(.ad-konten-menu__isi.is-buka) {
+        z-index: 2;
     }
 
     /* ---------- Judul kartu yang jadi tautan ---------- */
@@ -9958,7 +9986,6 @@ html {
         .bab-chip,
         .bab-menu,
         .bab-nav__tombol,
-        .bab-tambah-chip,
         .daftar-isi__alih,
         .alat-editor,
         .alat-pilih,

@@ -182,38 +182,31 @@
     ];
 
     /*
-     * Topbar punya dua bentuk. Bentuk penuh berisi kotak pencarian, lonceng
-     * notifikasi, dan menu akun; bentuk ringkas hanya tombol buka sidebar.
+     * Topbar area admin tidak lagi punya isi: tidak ada kotak pencarian,
+     * tidak ada lonceng notifikasi, dan tidak ada menu akun. Yang tersisa
+     * hanya tombol buka sidebar, dan tombol itu sendiri disembunyikan di layar
+     * lebar — jadi di desktop area admin berjalan tanpa strip apa pun di atas
+     * judul halaman.
      *
-     * Bentuk ringkas dipakai di enam kelompok halaman: Pengaturan beserta
-     * seluruh sub-halamannya, lalu lima menuarea yang isinya sudah lengkap
-     * tanpa bantuan topbar — Konten Pembelajaran, Verifikasi, Pengguna,
-     * Materi, dan Quiz.
+     * Kenapa tidak ada satu pun dari tiga hal itu:
      *
-     * Alasannya sama untuk kelimanya: setiap daftar di area itu sudah punya
-     * kotak pencarian sendiri di dalam halamannya (Lihat x-materi.cari,
-     * x-quiz.cari, dan kotak pencarian di components/admin), notifikasi tidak
-     * ada isinya selama admin sedang manage konten, dan menu akunnya cuma
-     * menautkan ke akun yang sedang dipakai — semuanya sudah ada di sidebar
-     * atau di kaki sidebar. Jadi tidak ada fungsi yang benar-benar hilang.
+     *   - Pencarian. Setiap daftar sudah punya kolom cari sendiri di dalam
+     *     halamannya (x-materi.cari, x-quiz.cari, dan kotak pencarian di
+     *     components/admin), jadi kotak di topbar hanya jadi kembaran yang
+     *     menulis "Cari materi, quiz, pengguna" padahal isinya satu daftar.
+     *     Di halaman form, kotak itu justru menyela admin dari isian yang
+     *     sedang diketik.
+     *   - Notifikasi. Saklarnya yang masih hidup ada di Pengaturan, dan baris
+     *     notifikasinya tetap dibuat di database; yang hilang hanya tempat
+     *     membacanya, karena lonceng tidak pernah menampilkan apa-apa yang
+     *     tidak sudah terlihat di halaman yang baru saja dibuka admin.
+     *   - Menu akun. Isinya tautan ke akun yang sedang dipakai plus tombol
+     *     Keluar, dan keduanya sudah ada di kaki sidebar. Nama akunnya juga
+     *     sudah tertulis di kaki sidebar itu.
      *
-     * Yang tetap memakai bentuk penuh tinggal Dashboard: di sana topbar
-     * bekerja sebagai pusat navigasi, bukan hiasan.
-     *
-     * Daftar ditulis sebagai kelompok route, bukan satu wildcard panjang,
-     * supaya mudah ditambah atau dikurangi tanpa harus membaca ulang seluruh
-     * Blade. Pola "admin.konten*" sengaja ikut dipakai untuk menu Konten
-     * Pembelajaran, karena semua halamannya memang form atau daftar konten
-     * yang punya pencarian sendiri.
+     * Jadi tidak ada fungsi yang benar-benar hilang, dan tidak ada satu pun
+     * query notifikasi yang perlu dijalankan di setiap halaman admin.
      */
-    $topbarRingkas = request()->routeIs([
-        'admin.pengaturan*',
-        'admin.konten*',
-        'admin.verifikasi*',
-        'admin.pengguna',
-        'admin.materi*',
-        'admin.quiz*',
-    ]);
 @endphp
 
 {{--
@@ -335,46 +328,30 @@
 
         {{-- ---------- TOPBAR ---------- --}}
         {{--
-            Dua bentuk topbar, dan yang mana dipakai ditentukan lewat
-            $topbarRingkas di blok @php atas.
+            Topbar area admin sekarang hanya tombol buka sidebar. Kotak
+            pencarian, lonceng notifikasi, dan menu akun tidak lagi dirender di
+            halaman mana pun di area ini; alasannya ada di blok @php di atas
+            file ini.
 
-            Bentuk penuh, hanya di Dashboard: kotak pencarian, lonceng
-            notifikasi, dan menu akun. Isinya ada di
-            components/admin/topbar-kanan.blade.php.
+            Header memakai kelas .ad-atas--ringkas karena itu yang
+            menyembunyikannya di layar lebar: isinya cuma tombol yang sudah
+            disembunyikan di sana, jadi render tanpa kelas itu akan memakai
+            strip kosong setinggi 4rem di atas judul setiap halaman. Di bawah
+            1024px tombolnya justru satu-satunya cara membuka sidebar, jadi
+            topbarnya tetap ada.
 
-            Bentuk ringkas, di /admin/pengaturan* dan di lima menuarea Konten
-            Pembelajaran, Verifikasi, Pengguna, Materi, dan Quiz: tombol buka
-            sidebar saja. Daftar lengkapnya ada di $topbarRingkas di blok
-            @php atas.
-
-            Kenapa kelompok itu dibedakan? Karena di halaman-halaman itu tiga
-            hal tersebut tidak berguna: setiap daftar sudah punya kotak
-            pencarian sendiri, saklar notifikasi ada tepat di halaman Pengaturan,
-            dan tautan Pengaturan di menu akun menunjuk halaman yang sedang
-            dibuka. Pada halaman form, kotak pencarian justru membuat admin
-            menyela dari isian yang sedang diketik. Tombol Keluar di kaki
-            sidebar juga sudah ada, dan posisinya sama di semua halaman.
-
-            Notifikasi admin tidak ikut hilang: barisnya tetap dibuat di database
-            dan saklarnya tetap mengatur. Hanya tempat membacanya yang tidak ada
-            di halaman-halaman ini.
-
-            Bentuk ringkas disembunyikan di layar lebar, karena satu-satunya
-            isinya tombol yang sudah disembunyikan di sana. Kalau tidak, halaman
-            Pengaturan dan halaman-halaman lain itu memakai strip kosong
-            setinggi topbar di atas judulnya sendiri. Di bawah 1024px tombolnya
-            justru satu-satunya cara membuka sidebar, jadi topbarnya tetap ada.
+            x-admin.topbar-kanan sengaja tidak dipanggil. Komponennya masih
+            ada di resources/views/components/admin/topbar-kanan.blade.php
+            supaya tidak ikut hilang kalau topbar ini dipakai lagi; selama
+            tidak dipanggil, ia tidak merender apa pun dan query notifikasi
+            pun tidak jalan.
         --}}
-        <header @class(['ad-atas', 'ad-atas--ringkas' => $topbarRingkas])>
+        <header class="ad-atas ad-atas--ringkas">
             <div class="ad-atas__baris">
                 <button type="button" class="ad-atas__buka" data-sisi-buka aria-controls="sisi-admin"
                     aria-expanded="false" aria-label="Buka menu">
                     <x-admin.ikon nama="menu" ukuran="w-5 h-5" />
                 </button>
-
-                @unless ($topbarRingkas)
-                    <x-admin.topbar-kanan :admin="$admin" />
-                @endunless
             </div>
         </header>
 

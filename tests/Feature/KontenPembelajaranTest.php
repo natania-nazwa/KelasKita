@@ -155,17 +155,17 @@ class KontenPembelajaranTest extends TestCase
             ->get(route('admin.konten'))
             ->assertOk()
             ->assertSee('Konten Pembelajaran')
-            ->assertSee('Kelola materi dan kuis untuk mendukung proses pembelajaran di Kelas Kita.')
+            ->assertSee('Kelola materi dan quiz untuk mendukung proses pembelajaran di Kelas Kita.')
             ->assertSee('Tambah Materi')
             ->assertSee('Buat materi pembelajaran untuk peserta didik.')
-            ->assertSee('Tambah Kuis')
-            ->assertSee('Buat kuis untuk menguji pemahaman peserta didik.')
+            ->assertSee('Tambah Quiz')
+            ->assertSee('Buat quiz untuk menguji pemahaman peserta didik.')
             ->baseResponse->getContent();
 
         /*
          * Dua kartu aksi harus berdampingan dengan lebar sama di desktop,
          * dan susunannya vertikal di mobile. Tanpa ini, "Tambah Materi" dan
-         * "Tambah Kuis" bisa tetap muncul tapi tidak berdampingan — dan itu
+         * "Tambah Quiz" bisa tetap muncul tapi tidak berdampingan — dan itu
          * justru bagian yang paling kelihatan dari halaman ini.
          */
         $this->assertStringContainsString('ad-konten-aksi__kartu', $halaman);
@@ -246,6 +246,63 @@ class KontenPembelajaranTest extends TestCase
             ->assertSee('Materi Sudah Tayang')
             ->assertSee('Draft')
             ->assertSee('Published');
+    }
+
+    public function test_daftar_tidak_menampilkan_ringkasan_jumlah_atau_pengingat_tanggal(): void
+    {
+        $admin = $this->buatAdmin();
+        $this->buatMateri($admin, Materi::STATUS_DRAFT, 'Materi Mentah');
+
+        $halaman = $this->actingAs($admin)->get(route('admin.konten'))->assertOk();
+
+        /*
+         * Baris "Menampilkan N materi dari M" dan "Terakhir diperbarui sesuai
+         * tanggal di setiap kartu" dicabut. Keduanya bukan kontrol dan bukan
+         * informasi baru: jumlah kartu sudah terbaca dari kartu-kartu di
+         * bawahnya, dan tanggal tiap konten tercetak di baris informasinya.
+         */
+        $halaman->assertDontSee('Menampilkan', false)
+            ->assertDontSee('Terakhir diperbarui sesuai tanggal', false)
+            ->assertDontSee('ad-konten-info', false);
+    }
+
+    public function test_menu_tiga_tik_berdiri_di_sebelah_tanggal(): void
+    {
+        $admin = $this->buatAdmin();
+        $this->buatMateri($admin, Materi::STATUS_DRAFT, 'Materi Mentah');
+
+        $html = $this->actingAs($admin)->get(route('admin.konten'))->assertOk()->getContent();
+
+        /*
+         * Menu tiga titik pindah ke ujung baris informasi, tepat di sebelah
+         * kanan tanggal. Kaki kartu sekarang hanya "Lihat" dan "Edit", jadi
+         * urutan kemunculannya di HTML juga berubah: menu harus muncul
+         * sebelum kaki kartu.
+         */
+        $this->assertStringContainsString('kartu-konten__akhir', $html);
+
+        $menu = strpos($html, 'data-konten-menu');
+        $kaki = strpos($html, 'karya-aksi"');
+
+        $this->assertNotFalse($menu, 'Menu tiga titik tidak ada di kartu.');
+        $this->assertNotFalse($kaki, 'Kaki kartu tidak ada.');
+        $this->assertLessThan($kaki, $menu);
+    }
+
+    /*
+     * Kartu Konten Pembelajaran tidak boleh memotong menu tiga titiknya.
+     * .kartu-materi memakai overflow: hidden untuk membulatkan sudut
+     * thumbnail, dan itulah yang membuat popover menu terpotong tepat di tepi
+     * kartu: tombolnya kelihatan, tapi isinya tidak pernah terlihat.
+     */
+    public function test_kartu_konten_tidak_memotong_menu_tiga_titik(): void
+    {
+        $css = $this->tanpaKomentar(file_get_contents(resource_path('css/app.css')));
+
+        preg_match('/\.kartu-konten\s*\{([^}]*)\}/', $css, $cocok);
+
+        $this->assertNotEmpty($cocok, 'Aturan .kartu-konten tidak ada di app.css.');
+        $this->assertStringContainsString('overflow: visible', $cocok[1]);
     }
 
     public function test_daftar_berupa_grid_kartu_sama_seperti_karya_saya(): void
@@ -390,16 +447,23 @@ class KontenPembelajaranTest extends TestCase
          * Blade menuliskan label di baris sendiri sehingga pola ">Lihat<"
          * tidak pernah cocok, dan URL-nya justru yang benar-benar dipakai
          * admin — kalau salah di situ, aksinya akan menuju tempat lain.
+         *
+         * "Lihat" memakai route di dalam /admin/konten, bukan admin.materi.show
+         * atau admin.quiz.show: dari sana penanda aktif sidebar ikut pakai
+         * admin.konten*, jadi membaca karya sendiri tidak memindahkan menu
+         * yang menyala ke Materi atau Quiz.
          */
-        $halamanMateri->assertSee(route('admin.materi.show', $materi->slug), false)
+        $halamanMateri->assertSee(route('admin.konten.materi.show', $materi->slug), false)
             ->assertSee(route('admin.konten.materi.edit', $materi->slug), false)
             ->assertSee(route('admin.konten.materi.duplikat', $materi->slug), false)
-            ->assertSee(route('admin.konten.materi.publish', $materi->slug), false);
+            ->assertSee(route('admin.konten.materi.publish', $materi->slug), false)
+            ->assertDontSee(route('admin.materi.show', $materi->slug), false);
 
-        $halamanQuiz->assertSee(route('admin.quiz.show', $quiz), false)
+        $halamanQuiz->assertSee(route('admin.konten.quiz.show', $quiz), false)
             ->assertSee(route('admin.konten.quiz.edit', $quiz), false)
             ->assertSee(route('admin.konten.quiz.duplikat', $quiz), false)
-            ->assertSee(route('admin.konten.quiz.publish', $quiz), false);
+            ->assertSee(route('admin.konten.quiz.publish', $quiz), false)
+            ->assertDontSee(route('admin.quiz.show', $quiz), false);
     }
 
     public function test_menu_aksi_dibuka_dengan_tombol_titik_tiga(): void
@@ -966,7 +1030,7 @@ class KontenPembelajaranTest extends TestCase
         $this->actingAs($admin)
             ->get(route('admin.konten', ['tab' => 'quiz']))
             ->assertOk()
-            ->assertSee('Cari kuis...', false);
+            ->assertSee('Cari quiz...', false);
     }
 
     public function test_urutan_az_dan_za_tersedia(): void
@@ -978,6 +1042,249 @@ class KontenPembelajaranTest extends TestCase
             ->assertOk()
             ->assertSee('A–Z', false)
             ->assertSee('Z–A', false);
+    }
+
+    /*
+     * =============================================================
+     * PRATINJAU: ISI MATERI DITARIK DARI SERVER
+     * =============================================================
+     * Pratinjau tidak lagi merakit isi materinya sendiri di JavaScript. Badannya
+     * diambil dari endpoint yang memakai pemecah yang sama dengan halaman
+     * detail, jadi Daftar Isi, kartu seksi, dan blok kode yang diwarnai di
+     * pratinjau benar-benar keluaran komponen yang sama. Yang diuji di bawah
+     * adalah sifat yang paling mudah hilang kalau prosesnya dipecah lagi:
+     * pratinjau harus sama dengan halaman detail, dan harus menolak isian yang
+     * route-nya sendiri akan menolak.
+     */
+
+    public function test_pratinjau_mengembalikan_daftar_isi_dan_kartu_seksi(): void
+    {
+        $admin = $this->buatAdmin();
+        $pelajaran = $this->buatPelajaran();
+
+        $isi = "# Pendahuluan\n\nSelamat datang.\n\n# Isi Materi\n\nParagraf kedua.";
+
+        $this->actingAs($admin)
+            ->post(route('admin.konten.materi.pratinjau'), [
+                'nama' => 'Materi Pratinjau',
+                'isi' => $isi,
+                'pelajaran_id' => $pelajaran->id,
+                'tingkat_kesulitan' => 'Mudah',
+            ])
+            ->assertOk()
+            ->assertSee('Daftar Isi', false)
+            ->assertSee('Pendahuluan')
+            ->assertSee('Isi Materi')
+            ->assertSee('data-bab-nav', false);
+    }
+
+    public function test_pratinjau_menampilkan_blok_kode_dengan_penanda_bahasa(): void
+    {
+        $admin = $this->buatAdmin();
+
+        $this->actingAs($admin)
+            ->post(route('admin.konten.materi.pratinjau'), [
+                'nama' => 'Materi Kode',
+                'isi' => "Intro\n\n```php\n<?php echo 1;\n```",
+            ])
+            ->assertOk()
+            ->assertSee('kode-blok', false)
+            ->assertSee('data-bahasa="php"', false);
+    }
+
+    public function test_pratinjau_sama_dengan_halaman_detail_materi(): void
+    {
+        $admin = $this->buatAdmin();
+        $isi = "# Pendahuluan\n\nSelamat datang.\n\n```php\n<?php echo 1;\n```\n\n# Isi Materi\n\nParagraf kedua.";
+
+        $materi = $this->buatMateri($admin, Materi::STATUS_PUBLISHED, 'Materi Sama');
+        $materi->update(['isi' => $isi]);
+
+        $pratinjau = $this->actingAs($admin)
+            ->post(route('admin.konten.materi.pratinjau'), ['nama' => 'Materi Sama', 'isi' => $isi])
+            ->assertOk()
+            ->getContent();
+
+        $detail = $this->actingAs($admin)
+            ->get(route('admin.materi.show', $materi->slug))
+            ->assertOk()
+            ->getContent();
+
+        /*
+         * Yang dibandingkan adalah badan isinya saja, bukan seluruh halaman.
+         * Halaman detail memakai layout admin dan punya baris "Kembali ke
+         * Materi" yang memang tidak ada di pratinjau, jadi membandingkan
+         * keduanya secara utuh akan selalu gagal karena itu.
+         */
+        $badan = static function (string $html): string {
+            $mulai = strpos($html, 'data-bab-wadah');
+            $selesai = strpos($html, '</div>', strrpos($html, 'data-bab-nav')) ?: strlen($html);
+
+            return preg_replace('/\s+/', ' ', substr($html, $mulai, $selesai - $mulai));
+        };
+
+        $this->assertNotSame(false, strpos($detail, 'data-bab-wadah'));
+        $this->assertSame($badan($detail), $badan($pratinjau));
+    }
+
+    public function test_pratinjau_menolak_isi_yang_terlalu_besar(): void
+    {
+        $admin = $this->buatAdmin();
+
+        $this->actingAs($admin)
+            ->post(route('admin.konten.materi.pratinjau'), [
+                'nama' => 'Materi Raksasa',
+                'isi' => str_repeat('a', 512 * 1024 + 1),
+            ])
+            ->assertStatus(422);
+    }
+
+    public function test_pratinjau_menolak_tamu(): void
+    {
+        $this->post(route('admin.konten.materi.pratinjau'), [
+            'nama' => 'Materi',
+            'isi' => 'Isi.',
+        ])->assertRedirect(route('login'));
+    }
+
+    /*
+ * =============================================================
+ * HALAMAN DETAIL: SAMA DENGAN MENU MATERI
+ * =============================================================
+ * Kartu Konten Pembelajaran punya URL sendiri (/admin/konten/materi/{slug})
+ * supaya menu sidebar yang menyala tetap Konten Pembelajaran. Yang tidak
+ * boleh berbeda adalah isi halamannya: form, pemecah, dan view-nya sama.
+ * Test di bawah membandingkan keduanya byte per byte setelah sidebar
+     * dibuang — kalau ada view atau controller yang mulai ditulis ulang di
+     * salah satu route, test ini yang menangkapnya lebih dulu.
+     */
+    public function test_detail_konten_identik_dengan_detail_materi(): void
+    {
+        $admin = $this->buatAdmin();
+
+        $materi = $this->buatMateri($admin, Materi::STATUS_PUBLISHED, 'Materi Sama');
+        $materi->update([
+            'isi' => "# Pendahuluan\n\nSelamat datang.\n\n# Isi Materi\n\nParagraf kedua.",
+        ]);
+
+        $tanpaSidebar = static function (string $html): string {
+            $mulai = strpos($html, '<main');
+            $selesai = strrpos($html, '</main>');
+
+            return preg_replace('/\s+/', ' ', substr($html, $mulai, $selesai - $mulai));
+        };
+
+        $konten = $tanpaSidebar(
+            $this->actingAs($admin)->get(route('admin.konten.materi.show', $materi->slug))->assertOk()->getContent()
+        );
+
+        $katalog = $tanpaSidebar(
+            $this->actingAs($admin)->get(route('admin.materi.show', $materi->slug))->assertOk()->getContent()
+        );
+
+        $this->assertSame($katalog, $konten);
+    }
+
+    /*
+         * =============================================================
+         * TANGGAL DI KIRI, MENU TITIK TIGA KE ATAS
+         * =============================================================
+         * Dua hal kecil yang kalau dibalik lagi akan langsung terlihat salah di
+         * layar: tanggal harus mengalir di baris informasi seperti butir lain
+         * (yang didorong ke kanan hanya menu tiga titik), dan isi menu harus
+         * keluar ke atas supaya tidak tertutup kartu di baris berikutnya.
+         */
+    public function test_tanggal_di_kartu_konten_mengalir_di_baris_informasi(): void
+    {
+        $admin = $this->buatAdmin();
+        $this->buatMateri($admin, Materi::STATUS_DRAFT, 'Materi Mentah');
+
+        $html = $this->actingAs($admin)->get(route('admin.konten'))->assertOk()->getContent();
+
+        $tanggal = strpos($html, 'karya-info__butir karya-info__butir--sepuh');
+        $akhir = strpos($html, 'kartu-konten__akhir');
+
+        $this->assertNotFalse($tanggal, 'Baris tanggal tidak ada di kartu.');
+        $this->assertNotFalse($akhir, 'Wadah menu tiga titik tidak ada di kartu.');
+        $this->assertLessThan($akhir, $tanggal, 'Tanggal harus tampil sebelum menu tiga titik.');
+    }
+
+    public function test_menu_tiga_titik_keluar_ke_atas(): void
+    {
+        $css = $this->tanpaKomentar(file_get_contents(resource_path('css/admin.css')));
+
+        foreach (['.ad-titik__menu', '.ad-konten-menu__isi'] as $kelas) {
+            preg_match('/'.preg_quote($kelas, '/').'\s*\{([^}]*)\}/', $css, $cocok);
+
+            $this->assertNotEmpty($cocok, "Aturan {$kelas} tidak ada di admin.css.");
+            $this->assertStringContainsString('bottom: calc(100%', $cocok[1]);
+            $this->assertStringNotContainsString('top: calc(100%', $cocok[1]);
+        }
+    }
+
+    public function test_tombol_tambah_bab_tidak_menuliskan_tanda_plus_dua_kali(): void
+    {
+        /*
+         * Tombolnya sudah punya ikon plus di sebelah kiri, jadi "+" di dalam
+         * teks labelnya membuat "+ +Tambah Bab" terbaca di layar. Yang diperiksa
+         * hanya isi <span> labelnya — kalimat petunjuk di bawah daftar tetap
+         * boleh menulis "+ Tambah Bab" karena di situ yang ditulis adalah teks
+         * yang harus diklik, bukan nama tombolnya.
+         */
+        $html = $this->actingAs($this->buatAdmin())
+            ->get(route('admin.konten.materi.tambah'))
+            ->assertOk()
+            ->getContent();
+
+        preg_match('/<span data-bab-tambah-label>(.*?)<\/span>/s', $html, $cocok);
+
+        $this->assertNotEmpty($cocok, 'Label tombol tambah bab tidak ada di form.');
+        $this->assertSame('Tambah Bab', trim($cocok[1]));
+    }
+
+    /*
+ * =============================================================
+ * DESKRIPSI KARTU: TIDAK BOLEH JATUH KE ISI MATERI
+ * =============================================================
+ * Form Tambah Materi tidak punya isian deskripsi, jadi materi yang dibuat dari
+ * sini hampir selalu deskripsinya kosong. Kalau kartu memakai
+ * Materi::ringkasan() — yang sengaja jatuh ke isi materi kalau deskripsi
+ * kosong — yang tampil di bawah judul adalah 120 karakter pertama isi materi
+ * beserta penanda babnya: "Bab 1: Pendahuluan …". Itu bukan ringkasan, dan
+ * admin membacanya sebagai kartu yang rusak.
+     */
+    public function test_kartu_tidak_menampilkan_isi_materi_sebagai_deskripsi(): void
+    {
+        $admin = $this->buatAdmin();
+
+        $materi = $this->buatMateri($admin, Materi::STATUS_DRAFT, 'Materi Tanpa Deskripsi');
+        $materi->update([
+            'deskripsi' => null,
+            'isi' => "Bab 1: Pendahuluan\n\ndfdfsdf\n\nBab 2: Bab Baru\n\nafdafra",
+        ]);
+
+        $html = $this->actingAs($admin)->get(route('admin.konten'))->assertOk()->getContent();
+
+        $this->assertStringNotContainsString('Bab 1: Pendahuluan', $html);
+        $this->assertStringNotContainsString('kartu-materi__deskripsi', $html);
+
+        // Judul dan informasinya tetap tampil; hanya deskripsi yang hilang.
+        $this->assertStringContainsString('Materi Tanpa Deskripsi', $html);
+        $this->assertStringContainsString('2 Bab', $html);
+    }
+
+    public function test_kartu_tetap_menampilkan_deskripsi_yang_ada(): void
+    {
+        $admin = $this->buatAdmin();
+
+        $this->buatMateri($admin, Materi::STATUS_DRAFT, 'Materi Berdeskripsi')->update([
+            'deskripsi' => 'Ringkasan singkat yang ditulis pengarangnya.',
+        ]);
+
+        $this->actingAs($admin)
+            ->get(route('admin.konten'))
+            ->assertOk()
+            ->assertSee('Ringkasan singkat yang ditulis pengarangnya.');
     }
 
     public function test_kelas_tujuan_sudah_dihapus_dari_form_materi_dan_quiz(): void

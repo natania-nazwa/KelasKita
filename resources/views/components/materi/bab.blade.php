@@ -6,14 +6,25 @@
     Kepala kartu berisi dua tab — "Daftar Bab" dan "Preview" — supaya
     pratinjau tidak perlu jadi kartu terpisah yang panjang.
 
-    Daftar bab dirender oleh JavaScript (resources/js/materi-tambah.js),
+Daftar bab dirender oleh JavaScript (resources/js/materi-tambah.js),
     komponen ini hanya menyediakan kerangka + tombol tambah.
+
+    Tombol tambah bab sekarang hanya ada satu, di kanan header kartu ini.
+    Dulu baris chip juga ditutupi chip "+ Tambah Bab" yang menempel setelah
+    bab terakhir, jadi satu halaman punya dua tombol yang melakukan hal yang
+    persis sama. Yang di baris chip dihapus supaya admin tidak pernah
+    menekan salah satu dan mengira tombolnya tidak bekerja.
 --}}
 @props([
     // Hanya diteruskan ke tab Preview, yang butuh nilai yang sama dengan
     // form supaya kepala pratinjau dimulai dari isian yang sudah ada.
     'kategori' => [],
     'materi' => null,
+
+    // Endpoint pratinjau milik form yang sedang dibuka. Tidak ditebak di
+    // sini: admin dan pemilik punya route-nya masing-masing, dan pemanggil
+    // yang tahu yang mana.
+    'pratinjauUrl',
 ])
 
 <section {{ $attributes->class(['kartu-form']) }}>
@@ -42,7 +53,10 @@
                 <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
             </svg>
 
-            <span data-bab-tambah-label>+ Tambah Bab</span>
+            {{-- Labelnya tanpa "+" di depan: tanda plus sudah ada sebagai ikon di
+                 sebelah kiri, jadi menuliskan "+" lagi membuat tombolnya
+                 terbaca "+ +Tambah Bab". --}}
+            <span data-bab-tambah-label>Tambah Bab</span>
         </button>
     </header>
 
@@ -67,7 +81,7 @@
         {{-- Panel: preview materi --}}
         <div id="panel-preview" role="tabpanel" aria-labelledby="tab-preview" class="hidden"
             data-panel-preview>
-            <x-materi.preview :kategori="$kategori" :materi="$materi" />
+            <x-materi.preview :kategori="$kategori" :materi="$materi" :pratinjau-url="$pratinjauUrl" />
         </div>
     </div>
 </section>

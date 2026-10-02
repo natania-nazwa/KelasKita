@@ -1,4 +1,4 @@
-@extends('layouts.admin')
+﻿@extends('layouts.admin')
 
 @section('title', 'Edit '.$materi->nama.' | KelasKita')
 
@@ -94,7 +94,7 @@
             <div class="grid min-w-0 gap-4">
                 <x-materi.informasi :kategori="$kategori" :materi="$materi" />
 
-                <x-materi.bab :kategori="$kategori" :materi="$materi" />
+                <x-materi.bab :kategori="$kategori" :materi="$materi" :pratinjau-url="route('admin.konten.materi.pratinjau')" />
 
                 <x-materi.editor :isi="$materi->isi" />
             </div>
@@ -126,3 +126,4 @@
         </form>
     </div>
 @endsection
+

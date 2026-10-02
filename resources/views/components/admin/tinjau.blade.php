@@ -1,6 +1,8 @@
 @props([
     // "materi" atau "quiz": menentukan ikon, warna, dan di halaman mana
-    // tombol "Tinjau" akan membuka.
+    // tombol "Tinjau" akan membuka. Di dashboard adminsinya selalu
+    // Verifikasi, dan tautannya sudah membawa query "pilih" sehingga panel
+    // review konten itu langsung terbuka.
     'jenis',
     'judul',
     'pembuat',

@@ -92,7 +92,14 @@ function initWizardQuiz(akar) {
     const areaThumbnail = $("[data-wizard-thumbnail-area]");
     const isiThumbnail = $("[data-wizard-thumbnail-isi]");
     const gambarThumbnail = $("[data-wizard-thumbnail-img]");
-    const tombolPilihGambar = $("[data-wizard-thumbnail-pilih]");
+    /*
+     * Ada dua tombol yang membuka pemilih berkas: "Pilih gambar" di area
+     * kosong dan "Ganti gambar" di area terisi. Keduanya memakai atribut yang
+     * sama, jadi semuanya diambil sekaligus — bukan hanya yang pertama,
+     * karena tombol kedua akan diam saja kalau hanya yang pertama yang
+     * punya listener.
+     */
+    const tombolPilihGambar = $$("[data-wizard-thumbnail-pilih]");
     const tombolHapusGambar = $("[data-wizard-thumbnail-hapus]");
     const namaGambar = $("[data-wizard-thumbnail-nama]");
     const galatGambar = $("[data-wizard-thumbnail-galat]");
@@ -573,8 +580,8 @@ function initWizardQuiz(akar) {
             pembaca.readAsDataURL(berkas);
         });
 
-        tombolPilihGambar?.addEventListener("click", () =>
-            inputThumbnail.click(),
+        tombolPilihGambar.forEach((tombol) =>
+            tombol.addEventListener("click", () => inputThumbnail.click()),
         );
         tombolHapusGambar?.addEventListener("click", kosongkanThumbnail);
     }

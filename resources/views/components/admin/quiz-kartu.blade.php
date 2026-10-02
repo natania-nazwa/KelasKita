@@ -108,17 +108,77 @@
             {{ $kategori['nama'] }} &middot; {{ $quiz['jumlah_soal'] }} Soal
         </p>
 
-        <p class="ad-kartu-daftar__tanggal">
-            {{ $quiz['tanggal_label'] }}
-            @if (filled($quiz['tanggal_jam']))
-                &middot; {{ $quiz['tanggal_jam'] }}
-            @endif
-        </p>
+        {{--
+            Tanggal dan menu tiga titik berbagi satu baris: tanggal di kiri,
+            menu menempel di kanan. Baris pembungkus ini hanya flex; jarak ke
+            atas tetap datang dari margin-top .ad-kartu-daftar__tanggal
+            supaya baris ini punya jarak yang sama dengan "Dibuat oleh" dan
+            baris meta di atasnya.
+        --}}
+        <div class="ad-kartu-daftar__tanggal-baris">
+            <p class="ad-kartu-daftar__tanggal">
+                {{ $quiz['tanggal_label'] }}
+                @if (filled($quiz['tanggal_jam']))
+                    &middot; {{ $quiz['tanggal_jam'] }}
+                @endif
+            </p>
+
+            {{--
+                Menu tiga titik memakai <details>, bukan tombol + <div>:
+                buka/tutup-nya dari browser, jadi tetap jalan tanpa
+                JavaScript.
+
+                Isinya hanya aksi yang memang ada di aplikasi: Lihat,
+                Edit, dan Hapus. Tidak ada "Arsipkan" karena tidak ada
+                status arsip di database.
+
+                Edit hanya untuk quiz yang dibuat admin yang sedang login
+                (boleh_edit). Quiz buatan pengguna lain tetap punya Lihat
+                dan Hapus; soalnya bukan hak admin untuk diubah, dan
+                Admin\QuizKelolaController akan menolak 403 kalau URL-nya
+                diketik manual.
+            --}}
+            <details class="ad-titik" data-tutup-luar>
+                <summary class="ad-titik__tombol" aria-label="Opsi lain untuk {{ $quiz['judul'] }}">&vellip;</summary>
+
+                <div class="ad-titik__menu" role="menu">
+                    <a class="ad-titik__item" role="menuitem" href="{{ $quiz['tautan_detail'] }}">
+                        <x-admin.ikon nama="mata" />
+
+                        Lihat
+                    </a>
+
+                    @if ($quiz['boleh_edit'])
+                        <a class="ad-titik__item" role="menuitem" href="{{ $quiz['tautan_edit'] }}">
+                            <x-admin.ikon nama="pena" />
+
+                            Edit
+                        </a>
+                    @endif
+
+                    <button type="button" class="ad-titik__item ad-titik__item--bahaya" role="menuitem"
+                        data-hapus-buka
+                        data-hapus-judul="Hapus Quiz?"
+                        data-hapus-meta="{{ $kategori['nama'] }} &middot; {{ $quiz['jumlah_soal'] }} soal &middot; {{ $quiz['durasi_label'] }} &middot; oleh {{ $quiz['pembuat']['nama'] }}"
+                        data-hapus-aksi="{{ $quiz['tautan_hapus'] }}">
+                        <x-admin.ikon nama="sampah" />
+
+                        Hapus
+                    </button>
+                </div>
+            </details>
+        </div>
 
         {{--
             Status + aksi. Tombolnya terdorong ke bawah kartu lewat
             margin-top: auto pada .ad-kartu-daftar__kaki, jadi semua kartu
             dalam satu baris tetap sejajar walaupun judulnya beda panjang.
+
+            Edit berdiri sebagai tombol, bukan hanya isi menu: quiz milik
+            admin yang sedang login adalah hal yang paling sering diubah
+            setelah dibaca, dan mencarinya di dalam menu tiga titik menambah
+            satu langkah tanpa alasan. Syaratnya tetap boleh_edit yang sama
+            seperti di dalam menu.
         --}}
         <div class="ad-kartu-daftar__kaki">
             <x-admin.lencana-materi :status="$quiz['status']" :label="$quiz['status_label']" />
@@ -130,50 +190,13 @@
                     Lihat
                 </a>
 
-                {{--
-                    Menu tiga titik memakai <details>, bukan tombol + <div>:
-                    buka/tutup-nya dari browser, jadi tetap jalan tanpa
-                    JavaScript.
+                @if ($quiz['boleh_edit'])
+                    <a href="{{ $quiz['tautan_edit'] }}" class="ad-tombol ad-tombol--halus ad-tombol--kecil">
+                        <x-admin.ikon nama="pena" ukuran="w-3.5 h-3.5" />
 
-                    Isinya hanya aksi yang memang ada di aplikasi: Lihat,
-                    Edit, dan Hapus. Tidak ada "Arsipkan" karena tidak ada
-                    status arsip di database.
-
-                    Edit hanya untuk quiz yang dibuat admin yang sedang login
-                    (boleh_edit). Quiz buatan pengguna lain tetap punya Lihat
-                    dan Hapus; soalnya bukan hak admin untuk diubah, dan
-                    Admin\QuizKelolaController akan menolak 403 kalau URL-nya
-                    diketik manual.
-                --}}
-                <details class="ad-titik" data-tutup-luar>
-                    <summary class="ad-titik__tombol" aria-label="Opsi lain untuk {{ $quiz['judul'] }}">&vellip;</summary>
-
-                    <div class="ad-titik__menu" role="menu">
-                        <a class="ad-titik__item" role="menuitem" href="{{ $quiz['tautan_detail'] }}">
-                            <x-admin.ikon nama="mata" />
-
-                            Lihat
-                        </a>
-
-                        @if ($quiz['boleh_edit'])
-                            <a class="ad-titik__item" role="menuitem" href="{{ $quiz['tautan_edit'] }}">
-                                <x-admin.ikon nama="pena" />
-
-                                Edit
-                            </a>
-                        @endif
-
-                        <button type="button" class="ad-titik__item ad-titik__item--bahaya" role="menuitem"
-                            data-hapus-buka
-                            data-hapus-judul="Hapus Quiz?"
-                            data-hapus-meta="{{ $kategori['nama'] }} &middot; {{ $quiz['jumlah_soal'] }} soal &middot; {{ $quiz['durasi_label'] }} &middot; oleh {{ $quiz['pembuat']['nama'] }}"
-                            data-hapus-aksi="{{ $quiz['tautan_hapus'] }}">
-                            <x-admin.ikon nama="sampah" />
-
-                            Hapus
-                        </button>
-                    </div>
-                </details>
+                        Edit
+                    </a>
+                @endif
             </div>
         </div>
     </div>

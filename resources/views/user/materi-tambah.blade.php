@@ -1,4 +1,4 @@
-@extends('layouts.app')
+﻿@extends('layouts.app')
 
 @section('title', ($materi ?? null ? 'Edit' : 'Tambah').' Materi | KelasKita')
 
@@ -29,7 +29,7 @@
              HEADER HALAMAN
         ==========================
              Breadcrumb "Home / Karya Saya / Tambah Materi" dihapus: top bar
-             halaman ini sudah disembunyikan, jadi jalur pulang-nya теперь
+             halaman ini sudah disembunyikan, jadi jalur pulang-nya Ñ‚ÐµÐ¿ÐµÑ€ÑŒ
              ditangani tombol "Kembali" di kanan judul. --}}
         <header class="flex flex-wrap items-start justify-between gap-4">
             {{-- Ikon + judul + penjelas jadi satu blok, supaya justify-between
@@ -103,7 +103,7 @@
                 <x-materi.informasi :kategori="$kategori" :materi="$materi" />
 
                 {{-- Daftar bab + preview (tab) --}}
-                <x-materi.bab :kategori="$kategori" :materi="$materi" />
+                <x-materi.bab :kategori="$kategori" :materi="$materi" :pratinjau-url="route('user.materi.pratinjau')" />
 
                 {{-- Editor isi materi --}}
                 <x-materi.editor :isi="$modeEdit ? $materi->isi : null" />
@@ -321,3 +321,4 @@
         </div>
     </div>
 @endsection
+

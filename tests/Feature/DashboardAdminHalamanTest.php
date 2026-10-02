@@ -462,6 +462,47 @@ class DashboardAdminHalamanTest extends TestCase
         $this->assertSame(4, substr_count($daftar, 'ad-tinjau__item'));
     }
 
+    public function test_tombol_tinjau_menuju_verifikasi_dan_membuka_panel_konten_nya(): void
+    {
+        $admin = $this->buatAdmin();
+        $siswa = $this->buatPengguna(['nama' => 'Sari', 'email' => 'sari@example.com']);
+        $pelajaran = $this->buatPelajaran('Pemrograman');
+
+        $materi = $this->buatMateri($pelajaran, $siswa, 'Materi Menunggu', Materi::STATUS_PENDING);
+        $quiz = $this->buatQuiz($pelajaran, $siswa, 'Quiz Menunggu', Quiz::STATUS_PENDING);
+
+        $halaman = $this->actingAs($admin)->get('/admin/dashboard')->assertOk();
+        $daftar = self::potongDaftarTinjau($halaman->getContent());
+
+        $tautanMateri = route('admin.verifikasi', ['pilih' => 'materi:'.$materi->getKey()]);
+        $tautanQuiz = route('admin.verifikasi', ['pilih' => 'quiz:'.$quiz->getKey()]);
+
+        /*
+         * Tombol "Tinjau" harus membuka Verifikasi, masing-masing dengan
+         * konten yang ditekan.
+         *
+         * Tujuannya tidak boleh katalog Materi atau Quiz: kedua halaman itu
+         * hanya menampilkan konten yang sudah tayang, sedangkan antrean di
+         * sini justru konten yang menunggu, jadi admin akan mendarat di
+         * halaman yang tidak memuat konten itu.
+         */
+        $this->assertStringContainsString($tautanMateri, $daftar);
+        $this->assertStringContainsString($tautanQuiz, $daftar);
+        $this->assertStringNotContainsString(route('admin.materi'), $daftar);
+        $this->assertStringNotContainsString(route('admin.quiz'), $daftar);
+
+        // Tujuan tautan itu harus benar-benar berguna: panel review kontennya terbuka.
+        $this->actingAs($admin)->get($tautanMateri)
+            ->assertOk()
+            ->assertSee('data-vf-id="'.$materi->getKey().'"', false)
+            ->assertSee('Materi Menunggu');
+
+        $this->actingAs($admin)->get($tautanQuiz)
+            ->assertOk()
+            ->assertSee('data-vf-id="'.$quiz->getKey().'"', false)
+            ->assertSee('Quiz Menunggu');
+    }
+
     /**
      * Potong HTML dashboard hanya bagian daftar "Perlu Ditinjau".
      *
