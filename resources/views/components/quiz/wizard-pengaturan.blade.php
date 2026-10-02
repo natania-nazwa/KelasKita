@@ -8,14 +8,22 @@
     'terlihat' => false,
 
     /*
-     * Apakah form ini dipakai admin (admin.quiz-edit).
+     * Apakah form ini dipakai admin (admin.quiz-edit dan
+     * admin.konten-quiz).
      *
-     * Blok "Ajukan Persetujuan Admin" milik alur pemilik menuju admin, jadi
-     * di form admin blok itu tidak dirender sama sekali: admin adalah pihak
-     * yang menyetujui, dan save()-nya tidak pernah menurunkan status quiz
-     * (lihat Admin\QuizKelolaController::update). Dimatikan lewat prop,
-     * bukan disembunyikan dengan CSS, supaya isian publikasikan yang tidak
-     * ada tidak pernah ikut terkirim.
+     * Dua hal milik alur pemilik menuju admin tidak dirender di form admin:
+     *
+     *   - blok "Ajukan Persetujuan Admin", karena admin adalah pihak yang
+     *     menyetujui dan save()-nya tidak pernah menurunkan status quiz
+     *     (lihat Admin\QuizKelolaController::update);
+     *   - pilihan cara publikasi dan kolom kode akses, karena konten dari
+     *     area admin selalu terbit untuk semua pengguna — tidak ada kode yang
+     *     perlu dibagikan. Field "visibilitas" tetap dikirim sebagai "public"
+     *     supaya aturan validasi QuizIsianRequest yang sama dengan form
+     *     pemilik tetap berlaku utuh.
+     *
+     * Keduanya dimatikan lewat prop, bukan disembunyikan dengan CSS, supaya
+     * isian yang tidak ada tidak pernah ikut terkirim.
      */
     'admin' => false,
 ])
@@ -35,6 +43,10 @@
      * Saklar "Ajukan Persetujuan" hanya berarti sesuatu untuk quiz mode
      * publik. Quiz mode kode tidak pernah tayang untuk semua pengguna, jadi
      * tidak ada yang perlu disetujui admin dan saklarnya disembunyikan.
+     *
+     * Pada form admin, blok cara publikasi dan kode akses tidak dirender sama
+     * sekali (lihat prop $admin): isinya digantikan input tersembunyi
+     * "public" supaya aturan validasinya tetap sama.
      */
     $terpilih = old('visibilitas', $quiz?->visibilitas ?? \App\Models\Quiz::VISIBILITAS_PUBLIK);
     $kode = old('kode_akses', $kodeAwal);
@@ -97,70 +109,97 @@
         </div>
 
         <div class="kartu-form__badan space-y-6">
-            {{-- =========================
-                 CARA PUBLIKASI
-            ========================== --}}
-            <fieldset>
-                <legend class="label-form mb-2.5">Pilih Cara Publikasi <span class="wajib">*</span></legend>
+            @if ($admin)
+                {{-- =========================
+                     CARA PUBLIKASI — FORM ADMIN
+                ==========================
+                     Tidak ada pilihan di sini, dan itu disengaja: konten dari
+                     area admin selalu terbit untuk semua pengguna, jadi tidak
+                     ada kode yang perlu dibagikan dan tidak ada yang perlu
+                     disetujui. Field "visibilitas" tetap dikirim supaya
+                     aturan validasi yang sama dengan form pemilik berlaku
+                     utuh, dan controller memaksa nilainya "public" saat
+                     menyimpan (lihat Admin\KontenQuizController).
 
-                <div class="grid gap-3 sm:grid-cols-2">
-                    @foreach ([
-                        ['nilai' => \App\Models\Quiz::VISIBILITAS_PUBLIK, 'judul' => 'Publikasikan', 'ikon' => \App\Support\Ikon::path('dunia'), 'pesan' => 'Quiz tayang di halaman Quiz untuk semua pengguna, setelah disetujui admin.'],
-                        ['nilai' => \App\Models\Quiz::VISIBILITAS_PRIVAT, 'judul' => 'Gunakan Kode', 'ikon' => \App\Support\Ikon::path('gembok'), 'pesan' => 'Hanya yang mengetik kodenya yang bisa masuk. Tidak perlu persetujuan admin.'],
-                    ] as $opsi)
-                        <label class="publikasi-pilih" data-publikasi="{{ $opsi['nilai'] }}">
-                            <input type="radio" name="visibilitas" value="{{ $opsi['nilai'] }}" class="sr-only"
-                                @checked($terpilih === $opsi['nilai'])>
+                     Yang menggantikan pilihan itu cuma penjelasan, supaya
+                     ketiadaan dua kartu itu tidak terbaca sebagai form yang
+                     gagal dimuat --}}
+                <input type="hidden" name="visibilitas" value="{{ \App\Models\Quiz::VISIBILITAS_PUBLIK }}">
 
-                            <span class="publikasi-pilih__ikon" aria-hidden="true">
-                                <svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="{{ $opsi['ikon'] }}" />
-                                </svg>
-                            </span>
+                <div class="kartu-tips">
+                    <p class="kartu-tips__judul">Terbit untuk semua pengguna</p>
 
-                            <span class="min-w-0 flex-1">
-                                <span class="publikasi-pilih__radio" aria-hidden="true"></span>
-                                <span class="publikasi-pilih__judul">{{ $opsi['judul'] }}</span>
-                                <span class="publikasi-pilih__pesan">{{ $opsi['pesan'] }}</span>
-                            </span>
-                        </label>
-                    @endforeach
+                    <p class="mt-1.5 text-sm leading-relaxed text-muted">
+                        Quiz dari menu ini tidak memakai kode akses. Tekan Publish Sekarang untuk
+                        menayangkannya di halaman Quiz, atau Simpan Draft untuk menyimpan dulu.
+                    </p>
                 </div>
-            </fieldset>
+            @else
+                {{-- =========================
+                     CARA PUBLIKASI
+                ========================== --}}
+                <fieldset>
+                    <legend class="label-form mb-2.5">Pilih Cara Publikasi <span class="wajib">*</span></legend>
 
-            {{-- =========================
-                 KODE QUIZ
-            ========================== --}}
-            <div data-wizard-kode-area
-                @if ($terpilih !== \App\Models\Quiz::VISIBILITAS_PRIVAT) hidden @endif>
-                <label for="kode_akses" class="label-form">
-                    Kode Quiz <span class="wajib" data-wizard-kode-wajib
-                        @if ($terpilih !== \App\Models\Quiz::VISIBILITAS_PRIVAT) hidden @endif>*</span>
-                </label>
+                    <div class="grid gap-3 sm:grid-cols-2">
+                        @foreach ([
+                            ['nilai' => \App\Models\Quiz::VISIBILITAS_PUBLIK, 'judul' => 'Publikasikan', 'ikon' => \App\Support\Ikon::path('dunia'), 'pesan' => 'Quiz tayang di halaman Quiz untuk semua pengguna, setelah disetujui admin.'],
+                            ['nilai' => \App\Models\Quiz::VISIBILITAS_PRIVAT, 'judul' => 'Gunakan Kode', 'ikon' => \App\Support\Ikon::path('gembok'), 'pesan' => 'Hanya yang mengetik kodenya yang bisa masuk. Tidak perlu persetujuan admin.'],
+                        ] as $opsi)
+                            <label class="publikasi-pilih" data-publikasi="{{ $opsi['nilai'] }}">
+                                <input type="radio" name="visibilitas" value="{{ $opsi['nilai'] }}" class="sr-only"
+                                    @checked($terpilih === $opsi['nilai'])>
 
-                <div class="kode-bungkus mt-1.5">
-                    <input id="kode_akses" name="kode_akses" type="text" value="{{ $kode }}" maxlength="20"
-                        autocomplete="off" spellcheck="false" placeholder="K7F3P9" class="kolom-form kode-bungkus__kolom"
-                        data-wizard-kode @if ($terpilih === \App\Models\Quiz::VISIBILITAS_PRIVAT) required @endif>
+                                <span class="publikasi-pilih__ikon" aria-hidden="true">
+                                    <svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="{{ $opsi['ikon'] }}" />
+                                    </svg>
+                                </span>
 
-                    <button type="button" class="kode-bungkus__tombol" data-wizard-kode-acak
-                        data-abjad="{{ \App\Support\KodeQuiz::ABJAD }}" data-panjang="{{ \App\Support\KodeQuiz::PANJANG }}">
-                        <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"
-                            aria-hidden="true">
-                            <path stroke-linecap="round" stroke-linejoin="round"
-                                d="M16.023 9.348h4.992V4.356m-4.992 5.001V21M4.031 9.349a8.25 8.25 0 0 1 13.803-3.7M4.031 14.65a8.25 8.25 0 0 0 13.803 3.7" />
-                        </svg>
+                                <span class="min-w-0 flex-1">
+                                    <span class="publikasi-pilih__radio" aria-hidden="true"></span>
+                                    <span class="publikasi-pilih__judul">{{ $opsi['judul'] }}</span>
+                                    <span class="publikasi-pilih__pesan">{{ $opsi['pesan'] }}</span>
+                                </span>
+                            </label>
+                        @endforeach
+                    </div>
+                </fieldset>
 
-                        Generate Kode
-                    </button>
+                {{-- =========================
+                     KODE QUIZ
+                ========================== --}}
+                <div data-wizard-kode-area
+                    @if ($terpilih !== \App\Models\Quiz::VISIBILITAS_PRIVAT) hidden @endif>
+                    <label for="kode_akses" class="label-form">
+                        Kode Quiz <span class="wajib" data-wizard-kode-wajib
+                            @if ($terpilih !== \App\Models\Quiz::VISIBILITAS_PRIVAT) hidden @endif>*</span>
+                    </label>
+
+                    <div class="kode-bungkus mt-1.5">
+                        <input id="kode_akses" name="kode_akses" type="text" value="{{ $kode }}" maxlength="20"
+                            autocomplete="off" spellcheck="false" placeholder="K7F3P9" class="kolom-form kode-bungkus__kolom"
+                            data-wizard-kode @if ($terpilih === \App\Models\Quiz::VISIBILITAS_PRIVAT) required @endif>
+
+                        <button type="button" class="kode-bungkus__tombol" data-wizard-kode-acak
+                            data-abjad="{{ \App\Support\KodeQuiz::ABJAD }}" data-panjang="{{ \App\Support\KodeQuiz::PANJANG }}">
+                            <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"
+                                aria-hidden="true">
+                                <path stroke-linecap="round" stroke-linejoin="round"
+                                    d="M16.023 9.348h4.992V4.356m-4.992 5.001V21M4.031 9.349a8.25 8.25 0 0 1 13.803-3.7M4.031 14.65a8.25 8.25 0 0 0 13.803 3.7" />
+                            </svg>
+
+                            Generate Kode
+                        </button>
+                    </div>
+
+                    <p class="galat-baris" id="kode_akses-galat">@error('kode_akses') {{ $message }} @enderror</p>
+
+                    <p class="kolom-form__petunjuk">
+                        Huruf dan angka acak, maksimal 20 karakter. Tekan Generate Kode untuk membuat yang baru.
+                    </p>
                 </div>
-
-                <p class="galat-baris" id="kode_akses-galat">@error('kode_akses') {{ $message }} @enderror</p>
-
-                <p class="kolom-form__petunjuk">
-                    Huruf dan angka acak, maksimal 20 karakter. Tekan Generate Kode untuk membuat yang baru.
-                </p>
-            </div>
+            @endif
 
             {{-- =========================
                  AJUKAN PERSETUJUAN
@@ -292,8 +331,13 @@
                 </div>
             </div>
 
-            {{-- Ringkasan singkat isi quiz sebelum disimpan. --}}
-            <div class="kartu-tips" data-wizard-ringkasan>
+            {{-- Ringkasan singkat isi quiz sebelum disimpan.
+
+                 Penanda data-wizard-ringkasan-admin membuat
+                 resources/js/quiz-tambah.js memakai kalimat status milik form
+                 admin: di sana tidak ada pengajuan yang menunggu keputusan
+                 siapa pun, jadi "Menunggu persetujuan admin" akan menyesatkan. --}}
+            <div class="kartu-tips" data-wizard-ringkasan @if ($admin) data-wizard-ringkasan-admin @endif>
                 <p class="kartu-tips__judul">Siap disimpan</p>
                 <ul class="kartu-tips__daftar" data-wizard-ringkasan-daftar></ul>
             </div>

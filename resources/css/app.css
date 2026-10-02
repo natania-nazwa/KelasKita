@@ -4701,7 +4701,27 @@ html {
         box-shadow: 0 1px 2px rgba(49, 46, 129, 0.04);
     }
 
-    .panel-aksi .tombol-utama {
+    /*
+     * Dua tombol di kanan baris ini adalah satu pasangan: "Draft" lalu
+     * "Lanjut ke Pengaturan". Wadah ini menjaga mereka berdampingan, jadi
+     * "Draft" selalu tepat di kiri "Lanjut" dan tidak pernah terpisah oleh
+     * ruang kosong di layar lebar maupun tersusun ke bawah di layar sempit.
+     */
+    .panel-aksi__grup {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 0.65rem;
+        margin-left: auto;
+    }
+
+    /*
+     * Tombol utama tetap didorong ke kanan, tapi hanya kalau berada langsung
+     * di dalam baris. Di dalam .panel-aksi__grup yang dorongan dipindah ke
+     * wadahnya, supaya celah di antara "Draft" dan "Lanjut" sama dengan celah
+     * di antara tombol lainnya.
+     */
+    .panel-aksi > .tombol-utama {
         margin-left: auto;
     }
 
@@ -5277,6 +5297,25 @@ html {
             margin-left: 0;
         }
 
+        /*
+         * Kecualian pasangan "Draft" + "Lanjut ke Pengaturan": keduanya tetap
+         * satu baris dan membagi lebar sama, karena dua aksi itu dibaca
+         * bersama-sama. Kalau dipisah jadi dua baris, "Draft" akan terlihat
+         * seperti tombol milik langkah sebelumnya.
+         */
+        .panel-aksi__grup {
+            width: 100%;
+            margin-left: 0;
+            flex-wrap: nowrap;
+        }
+
+        .panel-aksi__grup > .tombol-garis,
+        .panel-aksi__grup > .tombol-utama {
+            flex: 1 1 0;
+            width: auto;
+            margin-left: 0;
+        }
+
         .builder-soal__kepala {
             gap: 0.5rem;
             padding: 0.7rem 0.9rem;
@@ -5699,6 +5738,37 @@ html {
         .wizard-navigasi > .tombol-garis,
         .wizard-navigasi > .tombol-utama {
             width: 100%;
+        }
+    }
+
+    /*
+     * Bentuk kartu untuk baris tombol di langkah 1 dan 3 form admin.
+     *
+     * kartu aksi langkah 2 (.panel-aksi) sudah memakai bentuk ini, jadi di
+     * sini kartu itu ditulis ulang untuk elemen <nav> milik baris navigasi:
+     * ketiga langkah lalu punya satu bentuk baris tombol, dan perpindahan
+     * langkah tidak lagi terasa seperti pindah ke form yang berbeda.
+     *
+     * Yang tidak ikut ditulis di sini:
+     *   - jarak ke atas, itu urusan pembungkus baris navigasi di halaman
+     *     (lihat [data-wizard-nav] di resources/css/admin.css);
+     *   - jarak antar tombol, sudah diatur .wizard-navigasi di atas.
+     */
+    .wizard-navigasi--karta {
+        border-radius: 1rem;
+        border: 1px solid var(--color-ungu-line);
+        background-color: #fff;
+        box-shadow: 0 1px 2px rgba(49, 46, 129, 0.04);
+        padding: 0.85rem 1.15rem;
+    }
+
+    .wizard-navigasi--karta .tombol-utama {
+        margin-left: auto;
+    }
+
+    @media (max-width: 639px) {
+        .wizard-navigasi--karta {
+            padding: 0.75rem 0.85rem;
         }
     }
 
@@ -9856,6 +9926,14 @@ html {
         .dash-akses,
         .kartu-detail,
         .kartu-form,
+        /*
+         * Kartu baris tombol wizard: .panel-aksi dipakai di langkah 2 dan
+         * .wizard-navigasi--karta di langkah 1 dan 3 form admin. Keduanya
+         * menulis #fff secara harfiah, jadi ikut didaftarkan di sini supaya
+         * tidak ada kartu putih yang melayang di atas latar gelap.
+         */
+        .panel-aksi,
+        .wizard-navigasi--karta,
         .hasil-kartu,
         .hasil-panel,
         .hasil-item,

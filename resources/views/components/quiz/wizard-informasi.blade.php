@@ -1,16 +1,6 @@
 @props([
     'kategori',
     'quiz' => null,
-
-    /*
-     * Munculkan kolom durasi dan saklar "tampilkan jawaban".
-     *
-     * Dua-duanya milik form pemilik, tapi diletakkan di langkah
-     * "Pengaturan" yang tidak ada di form admin. Karena form admin hanya punya
-     * dua tahap, keduanya ikut dipindah ke tahap pertama di sana — lewat prop
-     * ini, bukan dengan menyalin komponennya.
-     */
-    'durasi' => false,
 ])
 
 @php
@@ -125,56 +115,6 @@
                     <p class="kolom-form__petunjuk">Berlaku untuk keseluruhan quiz ini.</p>
                 </div>
             </div>
-
-            @if ($durasi)
-                {{--
-                    Durasi dan saklar jawaban. Markupnya sama persis dengan
-                    yang dipakai langkah Pengaturan di form pemilik, supaya
-                    nilai yang tersimpan tidak pernah berbeda tergantung form
-                    mana yang membukanya — termasuk input tersembunyi yang
-                    membuat form tetap mengirim 0 ketika saklarnya dimatikan.
-                --}}
-                <div class="grid gap-4 sm:grid-cols-2 sm:items-start">
-                    <div>
-                        <label for="durasi" class="label-form">
-                            Durasi Pengerjaan <span class="opsional">(menit, opsional)</span>
-                        </label>
-
-                        <input id="durasi" name="durasi" type="number" min="1" max="600"
-                            value="{{ old('durasi', $quiz?->durasi ?? 15) }}" inputmode="numeric"
-                            class="kolom-form mt-1.5 @error('durasi') kolom-form--salah @enderror">
-
-                        <p class="galat-baris" id="durasi-galat">@error('durasi') {{ $message }} @enderror</p>
-                        <p class="kolom-form__petunjuk">1 sampai 600 menit. Kosongkan untuk tanpa batas waktu.</p>
-                    </div>
-
-                    <div class="pengaturan-saklar">
-                        <div class="min-w-0 flex-1">
-                            <label class="pengaturan-saklar__judul" for="saklar-jawaban">
-                                Tampilkan Jawaban Setelah Selesai
-                            </label>
-
-                            <p class="pengaturan-saklar__pesan">
-                                Siswa dapat melihat jawaban yang benar setelah mengerjakan.
-                            </p>
-                        </div>
-
-                        @php
-                            $tampilkanJawaban = filter_var(
-                                old('tampilkan_jawaban', $quiz?->tampilkan_jawaban ?? true),
-                                FILTER_VALIDATE_BOOLEAN
-                            );
-                        @endphp
-
-                        <input type="hidden" name="tampilkan_jawaban" value="{{ $tampilkanJawaban ? '1' : '0' }}">
-
-                        <button type="button" id="saklar-jawaban" class="saklar" role="switch"
-                            aria-checked="{{ $tampilkanJawaban ? 'true' : 'false' }}"
-                            aria-label="Tampilkan jawaban setelah selesai"
-                            data-wizard-saklar-jawaban></button>
-                    </div>
-                </div>
-            @endif
 
             {{-- =========================
                  THUMBNAIL

@@ -40,23 +40,6 @@
                 Batal
             </button>
 
-            {{--
-                type="submit" supaya tanpa JavaScript tombolnya tetap bekerja
-                sebagai tombol kirim biasa. resources/js/konten-publish.js yang
-                menahan pengiriman lebih dulu, membuka dialog ini, lalu
-                melanjutkan dengan requestSubmit() kalau admin menyetujuinya.
-
-                Label tombolnya diganti dari data-* pemicu, karena aksi ini
-                punya dua arah: "Publish Sekarang" untuk menerbitkan, "Batalkan
-                Publikasi" untuk menarik kembali. Tanpa itu, admin yang hanya
-                ingin membatalkan akan menekan tombol bertuliskan "Publish
-                Sekarang" tanpa diberi tahu bahwa ia sedang menarik konten,
-                bukan menerbitkannya.
-
-                Warnanya tetap hijau untuk keduanya: yang berubah adalah
-                perbuatannya, dan warna merah di sini akan menyiratkan
-                sesuatu yang tidak terjadi.
-            --}}
             <button type="submit" class="ad-tombol ad-tombol--sukses" data-konten-publish-konfirmasi
                 form="form-konten-publish">
                 <x-admin.ikon nama="tanda-centang" ukuran="w-4 h-4" :tebal="2.4" />
@@ -65,12 +48,6 @@
             </button>
         </footer>
 
-        {{--
-            Form terpisah supaya tombol konfirmasi bisa memakai atribut
-            form=, sama seperti dialog hapus yang sudah ada. action-nya diisi
-            JavaScript dari data-* tombol pemicu; form yang belum punya action
-            tidak mungkin terkirim.
-        --}}
         <form method="POST" id="form-konten-publish" data-konten-publish-form hidden>
             @csrf
         </form>

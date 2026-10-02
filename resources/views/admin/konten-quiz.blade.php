@@ -3,43 +3,43 @@
 @section('title', ($quiz ? 'Edit' : 'Tambah').' Quiz | KelasKita')
 
 @section('content')
-    {{--
-        Form quiz untuk admin, sekaligus untuk tambah dan untuk edit.
-
-        Dua tahap saja: Informasi Dasar, lalu Buat Soal. Yang tidak ikut
-        adalah tahap "Pengaturan" milik form pemilik, karena isinya dua hal
-        yang sama-sama tidak berlaku di sini: memakai kode (tidak ada kode
-        yang perlu dibagikan dari konten yang tayang untuk semua) dan saklar
-        "Ajukan Persetujuan" (tidak ada persetujuan).
-
-        Semua isian dan builder soalnya bukan ditulis ulang. Form ini memakai
-        komponen wizard yang sama dengan form Quiz milik pengguna
-        (x-quiz.wizard-informasi, .wizard-soal) dan JavaScript yang sama
-        (resources/js/quiz-tambah.js, resources/js/quiz-builder.js), termasuk
-        pratinjau thumbnail dan pratinjau gambar di dalam editor. Kalau
-        formnya dibuat terpisah, aturan gambar thumbnail-nya dan pemeriksaannya
-        pasti akan menyimpang pada satu versi.
-
-        Yang berbeda dari form pemilik:
-
-          1. Jumlah tahap. resources/js/quiz-tambah.js membaca jumlah tahap
-             dari atribut data-langkah-total, jadi yang berubah hanya angka
-             itu, bukan logikanya.
-          2. Visibilitasnya dipaksa "public" dan dikirim sebagai input
-             tersembunyi, supaya aturan validasi yang sama dengan form
-             pemilik tetap berlaku utuh tanpa perlu menolaknya di lapisan
-             lain.
-          3. Baris tombol di langkah "Buat Soal" berarti Simpan Draft dan
-             Publish Sekarang, bukan Draft dan Lanjut ke Pengaturan. Itu
-             diteruskan lewat prop $admin pada x-quiz.wizard-soal.
-          4. Tidak ada tombol hapus thumbnail. Berkas lama justru dibuang di
-             controller hanya kalau ada berkas baru yang menggantikannya,
-             supaya gambar yang sedang dipakai tidak pernah hilang karena satu
-             klik.
-
-        Tanpa JavaScript tahap kedua tetap terlihat (atribut hidden-nya
-        dilepas di <noscript> di bawah) dan "Simpan Draft" tetap mengirim form
-        apa adanya, jadi isi form tidak pernah terkunci.
+{{--
+        /*
+         * Form quiz untuk admin, sekaligus untuk tambah dan untuk edit.
+         *
+         * Tiga tahapnya sama persis dengan form Quiz milik pengguna
+         * (user/quiz-tambah.blade.php): Informasi Dasar, Buat Soal, lalu
+         * Pengaturan. Form ini memakai komponen wizard yang sama
+         * (x-quiz.stepper, .wizard-informasi, .wizard-soal, .wizard-pengaturan,
+         * .wizard-navigasi) dan JavaScript yang sama
+         * (resources/js/quiz-tambah.js, resources/js/quiz-builder.js),
+         * termasuk pratinjau thumbnail, pratinjau gambar di dalam editor, dan
+         * pemeriksaan isian per langkah. Kalau formnya dibuat terpisah, aturan
+         * gambar thumbnail-nya dan pemeriksaannya pasti akan menyimpang pada
+         * satu versi.
+         *
+         * Yang berbeda dari form pemilik, semuanya soal siapa yang
+         * menerbitkan:
+         *
+         *   1. Blok "Ajukan Persetujuan Admin" tidak dirender sama sekali
+         *      (prop $admin pada x-quiz.wizard-pengaturan). Admin adalah pihak
+         *      yang menerbitkan, jadi tidak ada yang perlu diajukan ke siapa
+         *      pun — dan status quiz tidak pernah diturunkan ke "menunggu".
+         *   2. Baris tombol langkah terakhir tidak memakai "Selesai & Simpan"
+         *      milik form pemilik, melainkan Simpan Draft dan Publish Sekarang
+         *      (prop $admin pada x-quiz.wizard-navigasi). Status konten di
+         *      ruang kerja ini hanya "draft" dan "published", jadi kedua arah
+         *      itu harus bisa dipilih dari form.
+         *
+         * ISIANNYA tidak berbeda sama sekali dari form pemilik: tidak ada
+         * field admin saja. Field yang dulu hanya ada di sini (kelas tujuan)
+         * sudah dihapus dari seluruh aplikasi.
+         *
+         * Karena tidak ada kode yang perlu dibagikan, cara publikasi juga
+         * tidak bisa dipilih di sini: komponen x-quiz.wizard-pengaturan
+         * mengirim "public" sebagai input tersembunyi (prop $admin), dan
+         * controller memaksa nilainya lagi saat menyimpan.
+         */
     --}}
 
     @php
@@ -56,7 +56,7 @@
         $langkahAwal = \App\Support\IsianSoalQuiz::langkahAwal($errors);
     @endphp
 
-    <div data-wizard-quiz data-langkah="{{ $langkahAwal }}" data-langkah-total="2"
+    <div data-wizard-quiz data-langkah="{{ $langkahAwal }}"
         data-abjad="{{ \App\Support\KodeQuiz::ABJAD }}" data-panjang="{{ \App\Support\KodeQuiz::PANJANG }}">
         {{-- =========================
              HEAD HALAMAN
@@ -91,13 +91,9 @@
         {{-- =========================
              STEP PER
         ==========================
-             Bentuknya sama persis dengan wizard quiz, hanya jumlah tahapnya
-             dua: Informasi Dasar, lalu Buat Soal. --}}
+             Tiga tahap yang sama dengan form Quiz milik pengguna. --}}
         <div class="ad-seksi">
-            <x-quiz.stepper :aktif="$langkahAwal" :langkah="[
-                ['nama' => 'Informasi Dasar', 'keterangan' => 'Judul, kategori, durasi'],
-                ['nama' => 'Buat Soal', 'keterangan' => 'Soal dan jawaban benar'],
-            ]" />
+            <x-quiz.stepper :aktif="$langkahAwal" />
         </div>
 
         {{-- Status quiz saat ini, supaya admin tahu apakah soal yang
@@ -137,7 +133,7 @@
         {{-- =========================
              FORM
         ==========================
-             Satu <form> untuk kedua tahap, jadi hanya ada satu tombol kirim.
+             Satu <form> untuk ketiga tahap, jadi hanya ada satu tombol kirim.
              Isian tahap sebelumnya tetap utuh karena semuanya ada di dalam
              form yang sama dan tidak pernah di-unmount, cuma disembunyikan.
         ========================== --}}
@@ -150,70 +146,52 @@
             @endif
 
             {{--
-                Konten dari form ini selalu tayang untuk semua pengguna, jadi
-                visibilitasnya dikunci di "public". Field tetap dikirim supaya
-                aturan validasi QuizIsianRequest — yang sama dengan form
-                pemilik — tetap dijalankan utuh, termasuk aturan kode akses
-                yang hanya berlaku untuk quiz mode kode.
-            --}}
-            <input type="hidden" name="visibilitas" value="{{ \App\Models\Quiz::VISIBILITAS_PUBLIK }}">
-
-            {{--
-                Niat simpan. Nilainya diisi wizard (resources/js/quiz-tambah.js)
-                tepat sebelum form dikirim: "draft" dari tombol Simpan Draft,
-                "publish" dari tombol Publish Sekarang.
-
-                Sengaja input tersembunyi, bukan name pada tombol: tombolnya
-                bertipe button supaya pengirimannya bisa diperiksa langkah demi
-                langkah lebih dulu, dan name-nya tidak ikut terkirim kalau
-                tombolnya diklik lewat keyboard tanpa masuk ke sana.
+                /*
+                 * Niat simpan. Nilainya diisi wizard (resources/js/quiz-tambah.js)
+                 * tepat sebelum form dikirim: "draft" dari tombol Simpan Draft,
+                 * "publish" dari tombol Publish Sekarang.
+                 *
+                 * Sengaja input tersembunyi, bukan name pada tombol: tombolnya
+                 * bertipe button supaya pengirimannya bisa diperiksa langkah demi
+                 * langkah lebih dulu, dan name-nya tidak ikut terkirim kalau
+                 * tombolnya diklik lewat keyboard tanpa masuk ke sana.
+                 */
             --}}
             <input type="hidden" name="aksi" value="draft" data-konten-aksi>
 
             {{-- =========================
                  TAHAP 1 — INFORMASI DASAR
             ==========================
-                 Komponen yang sama dengan form pemilik, ditambah durasi yang
-                 di form pemilik diletakkan di langkah Pengaturan. Di sini tidak
-                 ada langkah Pengaturan, jadi durasi ikut masuk ke tahap pertama
-                 supaya tidak ada kolom yang hilang.
+                 Komponen yang sama dengan form pemilik, tanpa isian tambahan
+                 apa pun.
             ========================== --}}
-            <x-quiz.wizard-informasi :kategori="$kategori" :quiz="$quiz" :durasi="true" />
-
-            {{--
-                Kelas tujuan, di panel terpisah setelah Informasi Dasar.
-
-                Bukan field di dalam x-quiz.wizard-informasi: komponen itu
-                dipakai bersama dengan form Quiz milik pengguna, dan halaman
-                pengguna tidak punya konsep kelas tujuan. Memasangnya di sini
-                membuat form admin berbeda dari form pemilik tanpa mengubah
-                isi isian yang memang harus sama.
-            --}}
-            <div class="kartu-form mt-5 overflow-hidden">
-                <header class="kartu-form__kepala">
-                    <span class="kartu-form__ikon" aria-hidden="true">
-                        <x-admin.ikon nama="grup" ukuran="w-5 h-5" />
-                    </span>
-
-                    <h2 class="kartu-form__judul">Kelas Tujuan</h2>
-                </header>
-
-                <div class="kartu-form__badan">
-                    <x-admin.konten-kelas field="kelas" :pilihan="$kelas" :nilai="$quiz?->kelas" />
-                </div>
-            </div>
+            <x-quiz.wizard-informasi :kategori="$kategori" :quiz="$quiz" />
 
             {{-- =========================
                  TAHAP 2 — BUAT SOAL
             ==========================
                  Builder-nya sama persis dengan form pemilik, termasuk lima
                  tipe soal, pilihan dinamis, pembahasan, dan tingkat kesulitan per
-                 soal. Yang berubah hanya baris aksinya: Simpan Draft dan Publish
-                 Sekarang menggantikan Draft dan Lanjut ke Pengaturan (prop
-                 $admin).
+                 soal. Yang berubah hanya teks tombol yang mengirim form lebih
+                 awal: "Draft" menjadi "Simpan Draft", karena di ruang kerja
+                 admin setiap isian bisa langsung disimpan sebagai draft.
             ========================== --}}
             <x-quiz.wizard-soal :baris="$baris" :terlihat="$langkahAwal === 2"
-                :batal="route('admin.konten', ['tab' => 'quiz'])" :admin="true" />
+                :batal="route('admin.konten', ['tab' => 'quiz'])" teks-draft="Simpan Draft" />
+
+            {{-- =========================
+                 TAHAP 3 — PENGATURAN
+            ==========================
+                 :admin="true" mematikan dua isian milik alur pemilik: blok
+                 "Ajukan Persetujuan Admin" (admin adalah pihak yang menyetujui,
+                 jadi tidak ada yang perlu diajukan dan status quiz tidak pernah
+                 diturunkan ke "menunggu") serta pilihan cara publikasi dan kolom
+                 kode aksesnya. Yang tersisa di sini sama dengan form pemilik:
+                 durasi, saklar "Tampilkan Jawaban Setelah Selesai", dan
+                 ringkasan isi quiz sebelum disimpan.
+            ========================== --}}
+            <x-quiz.wizard-pengaturan :quiz="$quiz" :kode-awal="$kodeAwal"
+                :terlihat="$langkahAwal === 3" :admin="true" />
 
             {{-- =========================
                  ISIAN SOAL
@@ -229,23 +207,29 @@
             {{-- =========================
                  NAVIGASI
             ==========================
-                 Dipakai tahap 1. Selama tahap 2 terbuka seluruh blok ini
+                 Dipakai tahap 1 dan 3. Selama tahap 2 terbuka seluruh blok ini
                  disembunyikan, karena tahap itu punya kartu aksinya sendiri
-                 berisi Kembali, Batal, Simpan Draft, dan Publish Sekarang.
+                 berisi Kembali, Batal, Simpan Draft, dan Lanjut.
+
+                 :admin="true" mengganti tombol "Selesai & Simpan" milik form
+                 pemilik dengan Simpan Draft dan Publish Sekarang. Keduanya
+                 hanya muncul di tahap terakhir, dan Publish Sekarang memakai
+                 tombol utama karena menerbitkannya memang tujuan akhir dari
+                 form ini.
             ========================== --}}
             <div class="ad-seksi" data-wizard-nav>
-                <x-quiz.wizard-navigasi :batal="route('admin.konten', ['tab' => 'quiz'])" />
+                <x-quiz.wizard-navigasi :batal="route('admin.konten', ['tab' => 'quiz'])" :admin="true" />
             </div>
         </form>
     </div>
 
     {{--
         Dialog konfirmasi terbitan. Dipakai tombol "Publish Sekarang" di baris
-        aksi tahap 2. Wizard mendaftarkan funcinya di
+        navigasi tahap 3. Wizard mendaftarkan funcinya di
         window.kelasKitaKontenKirim (lihat resources/js/quiz-tambah.js), dan
         dialog ini memanggilnya.
     --}}
-    <x-admin.dialog-terbitkan />
+    <x-admin.dialog-terbit />
 
     <x-admin.toast :judul="session('sukses')" :pesan="session('suksesDetail')" />
 @endsection

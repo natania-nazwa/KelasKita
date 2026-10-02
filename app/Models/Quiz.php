@@ -38,7 +38,6 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 #[Fillable([
     'dibuat_oleh',
     'pelajaran_id',
-    'kelas',
     'judul',
     'slug',
     'deskripsi',
@@ -460,39 +459,6 @@ class Quiz extends Model
     public function jumlahSoal(): int
     {
         return (int) ($this->jumlah_soal_termuat ?? $this->soal()->aktif()->count());
-    }
-
-    /**
-     * Filter kelas tujuan, dipakai filter "Semua Kelas" di daftar Konten
-     * Pembelajaran.
-     *
-     * Bentuknya sama persis dengan App\Models\Materi::scopeKelas() supaya
-     * materi dan quiz menyaring kelas dengan cara yang sama.
-     */
-    public function scopeKelas(Builder $query, ?string $kelas): Builder
-    {
-        $kelas = trim((string) $kelas);
-
-        if ($kelas === '') {
-            return $query;
-        }
-
-        $operator = $this->getConnection()->getDriverName() === 'pgsql' ? 'ilike' : 'like';
-
-        return $query->where('kelas', $operator, addcslashes($kelas, '%_\\'));
-    }
-
-    /**
-     * Nama kelas tujuan, atau null kalau belum ditentukan.
-     *
-     * Sumbernya sama dengan Materi::labelKelas() supaya lencana kelas pada
-     * materi dan pada quiz selalu ditulis dengan aturan yang sama.
-     */
-    public function labelKelas(): ?string
-    {
-        $kelas = trim((string) $this->kelas);
-
-        return $kelas === '' ? null : $kelas;
     }
 
     /**

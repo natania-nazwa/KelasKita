@@ -7,22 +7,22 @@
     Satu baris di daftar "Konten Pembelajaran".
 
     Bentuknya baris, bukan kartu. Alasannya isi yang harus dipindai admin di
-    setiap entri cuma empat: judul, jenis dan jumlahnya, kelas, dan status.
-    Empat hal itu jauh lebih cepat dibaca dalam satu kolom yang sejajar
-    daripada di dalam kartu yang harus dibaca satu per satu.
+    setiap entri cuma tiga: judul, jenis dan jumlahnya, dan status. Tiga hal
+    itu jauh lebih cepat dibaca dalam satu kolom yang sejajar daripada di
+    dalam kartu yang harus dibaca satu per satu.
 
     Tiga bagian, dari kiri ke kanan:
 
       1. Thumbnail 52px, atau ikon jenis konten kalau tidak punya thumbnail.
       2. Judul di atas, metadata di bawahnya ("Materi • 3 bab • Pemrograman").
-      3. Lencana kelas, tanggal, lencana status, lalu menu aksi.
+      3. Tanggal, lencana status, lalu menu aksi.
 
     Aksi tidak lagi berupa lima tombol yang selalu terbuka. Semuanya masuk ke
     satu menu di kanan, karena di layar laptop lima tombol per baris membuat
     daftar jadi penuh tombol dan judulnya yang penting jadi tenggelam. Isi
-    menu Depends status: draft mendapat "Publish", konten yang sudah terbit
-    mendapat "Batalkan Publikasi" — jadi "Publish" tidak pernah muncul pada
-    konten yang sudah tayang.
+    menu bergantung pada status: draft mendapat "Publish", konten yang sudah
+    terbit mendapat "Batalkan Publikasi" — jadi "Publish" tidak pernah muncul
+    pada konten yang sudah tayang.
 
     Dua aksi berat (Publish dan Hapus) tetap lewat dialog konfirmasi lebih
     dulu, keduanya mewarisi mekanisme yang sudah ada:
@@ -40,7 +40,6 @@
     $materi = $kartu['jenis'] === 'materi';
     $nama = $materi ? 'Materi' : 'Quiz';
     $terbit = $kartu['status'] === \App\Models\Materi::STATUS_PUBLISHED;
-    $kelas = $kartu['kelas'] ?? null;
 
     /*
      * Ikon thumbnail. Kalau materi, dokumen; kalau quiz, papan periksa.
@@ -91,17 +90,8 @@
         </div>
     </div>
 
-    {{-- 3. Kelas, tanggal, status --}}
+    {{-- 3. Tanggal + status --}}
     <div class="ad-konten-baris__kanan">
-        @if (filled($kelas))
-            <span class="ad-konten-lencana">{{ $kelas }}</span>
-        @else
-            {{-- Konten yang belum ditentukkan kelasnya tidak diberi lencana
-                 kosong: kotak kosong di kanan baris hanya menambah ruang
-                 kosong tanpa memberi informasi apa pun. --}}
-            <span class="sr-only">Kelas belum ditentukan</span>
-        @endif
-
         <span class="ad-konten-baris__tanggal">
             <time datetime="{{ $kartu['terbit']?->toDateString() }}">{{ $kartu['tanggal_label'] }}</time>
         </span>
@@ -151,7 +141,7 @@
             {{--
                 Satu tombol untuk dua arah, jadi yang ditampilkan tergantung
                 status: draft mendapat "Publish", yang sudah terbit mendapat
-                "Batalkan Publikasi". "Publish" karena itu tidak pernah muncul
+                "Batalkan Publikasi" — sehingga "Publish" tidak pernah muncul
                 pada konten yang sudah tayang.
 
                 Atribut data-konten-terbit-* dibaca

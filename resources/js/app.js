@@ -13,7 +13,7 @@ import "./quiz-tambah.js";
 import "./quiz-builder.js";
 
 /*
- * Area admin "Konten Pembelajaran": konfirmasi terbitan dan perpindahan tahap
+ * Area admin "Konten Pembelajaran": konfirmasi terbitkan dan perpindahan tahap
  * form materi.
  *
  * Diimpor setelah quiz-tambah.js karena tombol "Publish Sekarang" milik
@@ -801,12 +801,12 @@ function initMuatLebih() {
 /**
  * Filter yang langsung mengirim form begitu pilihannya diganti.
  *
- * Halaman "Konten Pembelajaran" punya lima kontrol di satu baris: kotak
- * cari, Kelas, Kategori, Status, dan Urutan. Tanpa ini, memilih "RPL 2"
- * baru berlaku setelah admin juga menekan "Terapkan" — padahal pada tiga
- * select sisanya tidak ada alasan untuk menunggu, dan tombol "Terapkan"
- * yang kelihatan seperti tidak ikut bekerja membuat daftar kosong dengan
- * alasan yang tidak ketahuan.
+ * Halaman "Konten Pembelajaran" punya empat kontrol di satu baris: kotak
+ * cari, Kategori, Status, dan Urutan. Tanpa ini, memilih "Draft" baru berlaku
+ * setelah admin juga menekan "Terapkan" — padahal pada tiga select sisanya
+ * tidak ada alasan untuk menunggu, dan tombol "Terapkan" yang kelihatan
+ * seperti tidak ikut bekerja membuat daftar kosong dengan alasan yang tidak
+ * ketahuan.
  *
  * Kotak cari sengaja TIDAK ikut di sini: isinya belum selesai diketik,
  * jadi mengirim setiap ketikan akan memuat ulang halaman berkali-kali.

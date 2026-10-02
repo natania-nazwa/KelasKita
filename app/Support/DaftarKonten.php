@@ -49,7 +49,7 @@ final class DaftarKonten
      *
      * Bentuk array per kartu:
      *   id, jenis, judul, deskripsi, jumlah, satuan, menit, ringkasan,
-     *   thumbnail, kelas, terbit, tanggal_label, status, warna_status,
+     *   thumbnail, terbit, tanggal_label, status, warna_status,
      *   status_label, status_ringkas,
      *   kategori => [nama, ikon, warna, warna_gelap],
      *   tautan => [lihat, edit, hapus, publish, duplikat]
@@ -101,7 +101,6 @@ final class DaftarKonten
             'thumbnail' => $materi
                 ? BerkasMateri::url($item->thumbnail)
                 : BerkasQuiz::url($item->thumbnail),
-            'kelas' => $item->labelKelas(),
             'kategori' => [
                 'nama' => $kategori['nama'],
                 'ikon' => $kategori['ikon'],
@@ -123,9 +122,9 @@ final class DaftarKonten
      *
      * Berbeda dengan labelStatus() yang dipakai halaman detail dan form
      * ("Dipublikasikan"), lencana di baris perlu dua kata supaya muat
-     * berdampingan dengan lencana kelas dan tanggal tanpa membuat baris
-     * membungkus. Hanya dua status yang bisa muncul di sini: daftar ini
-     * manage karya admin sendiri, yang statusnya cuma draft atau published.
+     * berdampingan dengan tanggal tanpa membuat baris membungkus. Hanya dua
+     * status yang bisa muncul di sini: daftar ini manage karya admin sendiri,
+     * yang statusnya cuma draft atau published.
      */
     private static function statusRingkas(string $status): string
     {

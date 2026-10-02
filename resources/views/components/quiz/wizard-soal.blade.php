@@ -15,20 +15,9 @@
     'batal' => null,
 
     // Teks tombol yang mengirim form lebih awal dari langkah 2. Untuk form
-    // admin tombol itu berarti "simpan", bukan "simpan sebagai draft",
-    // jadi teksnya dikirim berbeda.
+    // admin tombol itu berarti "simpan sebagai draft", jadi teksnya dikirim
+    // berbeda.
     'teksDraft' => 'Draft',
-
-    /*
-     * Form milik admin, bukan form pemilik.
-     *
-     * Bedanya hanya isi baris aksi. Di form pemilik tombol terakhir berarti
-     * "Lanjut ke Pengaturan" — masih ada langkah setelahnya. Di form admin
-     * tidak ada langkah Pengaturan, jadi tombol terakhir berubah menjadi
-     * "Publish Sekarang" dan tombol Draft menjadi "Simpan Draft". Keduanya
-     * sudah jadi keputusan akhir, bukan perpindahan tempat.
-     */
-    'admin' => false,
 ])
 
 @php
@@ -146,14 +135,21 @@
          BARIS TOMBOL
     ==========================
          Empat aksi langkah ini berkumpul di satu kartu: "Kembali" dan
-         "Batal" untuk meninggalkan langkah, "Draft" untuk mengirim form
-         lebih awal, lalu "Lanjut ke Pengaturan" yang didorong ke kanan.
+         "Batal" untuk meninggalkan langkah, lalu sepasang tombol di kanan —
+         "Draft" (mengirim form lebih awal) dan "Lanjut ke Pengaturan".
          Baris navigasi bawah ikut disembunyikan selama langkah ini
          terbuka (resources/js/quiz-tambah.js), jadi tidak ada tombol yang
          muncul dua kali.
 
-         Di form admin tombol terakhir bukan "Lanjut", melainkan "Publish
-         Sekarang" — lihat prop $admin di atas. --}}
+         Dua tombol terakhir diletakkan dalam satu wadah (panel-aksi__grup)
+         supaya mereka selalu berdampingan: "Draft" tepat di kiri "Lanjut ke
+         Pengaturan", dengan jarak yang sama dari tombol di sebelahnya. Tanpa
+         wadah itu, "Lanjut" terdorong ke kanan oleh .tombol-utama dan
+         "Draft" bisa terlihat melayang sendiri di layar sempit.
+
+         Tombol terakhir selalu "Lanjut", termasuk di form admin: bentuk
+         wizard-nya sama dengan form pemilik, dan keputusan terbit/batal
+         diambil di langkah terakhir — bukan di tengah menyusun soal. --}}
     <div class="panel-aksi">
         <button type="button" class="tombol-garis" data-wizard-kembali-alias>
             <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"
@@ -166,44 +162,17 @@
 
         <a href="{{ $batal ?? route('user.karya-saya', ['tab' => 'quiz']) }}" class="tombol-garis" data-wizard-batal>Batal</a>
 
-        <button type="button" class="tombol-garis" data-wizard-draft>
-            <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"
-                aria-hidden="true">
-                <path stroke-linecap="round" stroke-linejoin="round"
-                    d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3" />
-            </svg>
-
-            {{ $admin ? 'Simpan Draft' : $teksDraft }}
-        </button>
-
-        @if ($admin)
-            {{--
-                type="button" dan bukan submit: di form admin tombol ini berarti
-                "terbitkan sekarang", jadi pengirimannya diperiksa lebih dulu
-                oleh wizard (lihat resources/js/quiz-tambah.js) dan butuh
-                konfirmasi.
-
-                Dua atribut data-konten-* itu yang menyalurkan tombolnya ke
-                resources/js/konten-publish.js: yang "publish" menandai ini
-                tombol terbitan, yang "kirim" memberi tahu modul itu cara
-                mengirimnya, yaitu lewat fungsi yang dipasang wizard di
-                window.kelasKitaKontenKirim. Tombol ini berada di luar <form>,
-                jadi modul tidak bisa minta form-nya requestSubmit() sendiri.
-
-                Tanpa JavaScript tombol ini tidak melakukan apa-apa. Jalan yang
-                tersedia tanpa JavaScript adalah "Simpan Draft" di sebelahnya,
-                dan isi form tetap bisa dikirim lewat Enter.
-            --}}
-            <button type="button" class="tombol-utama" data-wizard-terbit
-                data-konten-publish="publish" data-konten-kirim>
+        <span class="panel-aksi__grup">
+            <button type="button" class="tombol-garis" data-wizard-draft>
                 <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24"
                     aria-hidden="true">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="m4.5 12.75 6 6 9-13.5" />
+                    <path stroke-linecap="round" stroke-linejoin="round"
+                        d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3" />
                 </svg>
 
-                Publish Sekarang
+                {{ $teksDraft }}
             </button>
-        @else
+
             <button type="button" class="tombol-utama" data-wizard-lanjut-alias>
                 Lanjut ke Pengaturan
 
@@ -212,7 +181,7 @@
                     <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3" />
                 </svg>
             </button>
-        @endif
+        </span>
     </div>
 
     {{-- Cetakan kartu yang dipakai JavaScript. --}}

@@ -9,7 +9,6 @@ use App\Models\Preferensi;
 use App\Models\Quiz;
 use App\Support\BerkasQuiz;
 use App\Support\DaftarKonten;
-use App\Support\KelasKonten;
 use App\Support\KodeQuiz;
 use App\Support\NotifikasiAdmin;
 use App\Support\NotifikasiKonten;
@@ -19,7 +18,7 @@ use Illuminate\Http\Request;
 use Illuminate\View\View;
 
 /**
- * Tambah, ubah, hapus, duplikat, terbitkan, dan batalkan terbitan quiz milik
+ * Tambah, ubah, hapus, duplikat, terbitkan, dan batalkan terbitkan quiz milik
  * admin sendiri, dari menu "Konten Pembelajaran".
  *
  * Berbeda dari Admin\QuizKelolaController yang sudah ada, dan perbedaannya
@@ -30,19 +29,22 @@ use Illuminate\View\View;
  *   - memakai pembatas "hanya milik admin", sama seperti
  *     Admin\QuizKelolaController dan halaman "Karya Saya" milik pengguna.
  *     Daftar di Konten Pembelajaran hanya berisi karya admin yang sedang
- *     login, jadi form, terbitan, dan hapus di sini juga hanya untuk karya
+ *     login, jadi form, terbitkan, dan hapus di sini juga hanya untuk karya
  *     itu. Quiz buatan pengguna tetap managing lewat Verifikasi dan lewat
  *     katalog Quiz;
- *   - hanya dua tahap, bukan tiga. Langkah "Pengaturan" milik form pemilik
- *     karena di situ pemilik memilih memakai kode atau menerbitkan lewat
- *     persetujuan admin. Admin tidak punya kode yang harus dibagikan dan
- *     tidak perlu meminta izin, jadi dua hal itu tidak punya tempat di sini;
+ *   - memakai tiga tahap wizard yang sama dengan form Quiz milik pengguna,
+ *     termasuk langkah Pengaturan. Dua isian milik alur pemilik tidak
+ *     dirender di sana: blok "Ajukan Persetujuan" (admin adalah pihak yang
+ *     menerbitkan, jadi tidak ada yang perlu diajukan) dan pilihan cara
+ *     publikasi beserta kode aksesnya (konten dari area admin selalu terbit
+ *     untuk semua pengguna, jadi tidak ada kode yang perlu dibagikan);
  *   - statusnya hanya "draft" dan "published". Tidak ada pending, tidak ada
  *     rejected, tidak ada tombol setujui.
  *
  * Builder soalnya bukan ditulis ulang. Form ini memakai komponen wizard yang
- * sama dengan form Quiz milik pengguna (x-quiz.wizard-informasi, .wizard-soal)
- * dan JavaScript yang sama (resources/js/quiz-tambah.js, .quiz-builder.js).
+ * sama dengan form Quiz milik pengguna (x-quiz.wizard-informasi, .wizard-soal,
+ * .wizard-pengaturan) dan JavaScript yang sama (resources/js/quiz-tambah.js,
+ * .quiz-builder.js).
  */
 class KontenQuizController extends Controller
 {
@@ -50,7 +52,6 @@ class KontenQuizController extends Controller
     {
         return view('admin.konten-quiz', [
             'kategori' => Pelajaran::query()->aktif()->orderBy('nama')->get(),
-            'kelas' => KelasKonten::pilihan(),
             'quiz' => null,
             'soal' => null,
             'kodeAwal' => KodeQuiz::unik(),
@@ -62,9 +63,11 @@ class KontenQuizController extends Controller
      *
      * Visibilitasnya dipaksa "public" dan dipanggil dari sini, bukan dibaca
      * dari request: konten yang terbit dari halaman ini selalu tayang untuk
-     * semua pengguna, jadi tidak ada kode akses yang perlu disimpan. Field
-     * tetap dikirim sebagai "public" supaya aturan validasi yang sama dengan
-     * form pemilik tetap berlaku utuh.
+     * semua pengguna, jadi tidak ada kode akses yang perlu disimpan. Form-nya
+     * juga tidak menawarkannya lagi (lihat x-quiz.wizard-pengaturan), tapi
+     * pemaksan di sini tetap perlu supaya isian yang datang dari luar
+     * form — atau dari versi form yang lama — tidak bisa membuat quiz privat
+     * di ruang kerja yang tidak punya cara membagikannya.
      */
     public function store(QuizIsianRequest $request): RedirectResponse
     {
@@ -74,7 +77,6 @@ class KontenQuizController extends Controller
 
         $quiz = Quiz::create([
             'pelajaran_id' => $data['pelajaran_id'],
-            'kelas' => $data['kelas'] ?? null,
             'dibuat_oleh' => $admin->getKey(),
             'judul' => $data['judul'],
             'slug' => DaftarKonten::slugUnik($data['judul'], Quiz::class),
@@ -117,7 +119,6 @@ class KontenQuizController extends Controller
 
         return view('admin.konten-quiz', [
             'kategori' => Pelajaran::query()->aktif()->orderBy('nama')->get(),
-            'kelas' => KelasKonten::pilihan(),
             'quiz' => $quiz,
             // Semua soal, bukan hanya yang aktif: kalau ada soal yang
             // dinonaktifkan, form edit harus tetap bisa melihatnya.
@@ -132,7 +133,13 @@ class KontenQuizController extends Controller
      * Status lama tidak ikut berubah di sini, sama seperti pada materi:
      * menyunting isi quiz yang sudah tayang tidak menariknya dari halaman
      * Quiz, dan tidak menerbitkannya kalau sebelumnya masih draft. Status
-     * hanya berubah lewat tombol terbitkan atau batalkan terbitan di daftar.
+     * hanya berubah lewat tombol terbitkan atau batalkan terbitkan di daftar.
+     *
+     * Visibilitas dan kode akses ikut dipaksa ke "public" dan kosong, sama
+     * seperti di store(). Tujuannya supaya quiz yang dibuat sebelum pilihan
+     * cara publikasi dihapus kembali ikut tayang untuk semua pengguna begitu
+     * disunting di sini, bukan menggantung sebagai quiz privat yang tidak
+     * ada cara membagikannya.
      */
     public function update(QuizIsianRequest $request, Quiz $quiz): RedirectResponse
     {
@@ -153,12 +160,13 @@ class KontenQuizController extends Controller
 
         $quiz->fill([
             'pelajaran_id' => $data['pelajaran_id'],
-            'kelas' => $data['kelas'] ?? null,
             'judul' => $data['judul'],
             'deskripsi' => $data['deskripsi'],
             'tingkat_kesulitan' => $data['tingkat_kesulitan'],
             'durasi' => $data['durasi'] ?? null,
+            'visibilitas' => Quiz::VISIBILITAS_PUBLIK,
             'tampilkan_jawaban' => $data['tampilkan_jawaban'],
+            'kode_akses' => null,
             ...($thumbnailBaru !== null
                 ? ['thumbnail' => $thumbnailBaru]
                 : ($buangThumbnail ? ['thumbnail' => null] : [])),
@@ -186,7 +194,7 @@ class KontenQuizController extends Controller
     }
 
     /**
-     * Terbitkan atau batalkan terbitan.
+     * Terbitkan atau batalkan terbitkan.
      *
      * Satu aksi untuk dua arah, jadi tombolnya cukup satu dan klik ganda tidak
      * pernah menghasilkan dua perubahan.
@@ -204,6 +212,22 @@ class KontenQuizController extends Controller
                 ->with('suksesDetail', 'Quiz "'.$quiz->judul.'" kembali menjadi draft dan tidak muncul di halaman Quiz.');
         }
 
+        /*
+         * Penjaga untuk baris yang masih memakai kode, yaitu quiz yang dibuat
+         * sebelum pilihan cara publikasi dihapus dari form ini. Halaman Quiz
+         * menampilkan semua quiz berstatus published tanpa memeriksa cara
+         * aksesnya, jadi menerbitkannya akan menayangkan quiz privat ke semua
+         * orang. Form di halaman edit sudah mengembalikan baris seperti ini ke
+         * "public"; penjaga ini yang menjawabnya kalau admin menekan
+         * tombol terbit sebelum sempat menyuntingnya.
+         */
+        if ($quiz->pakaiKode()) {
+            return redirect()
+                ->route('admin.konten', ['tab' => 'quiz'])
+                ->with('sukses', 'Quiz ini masih memakai kode, jadi tidak bisa diterbitkan.')
+                ->with('suksesDetail', 'Buka form quiz ini sekali, lalu terbitkan lagi dari daftar.');
+        }
+
         $this->terbitkan($request, $quiz);
 
         return redirect()
@@ -217,10 +241,14 @@ class KontenQuizController extends Controller
      *
      * Duplikat selalu draft, tidak pernah langsung terbit.
      *
-     * Dua hal sengaja tidak ikut disalin: thumbnail, karena kolomnya
+     * Tiga hal sengaja tidak ikut disalin: thumbnail, karena kolomnya
      * menyimpan path berkas di disk dan menyalinnya membuat dua baris menunjuk
-     * berkas yang sama; dan kode akses, karena kode harus unik dan kode yang
-     * sama tidak akan bisa dipakai.
+     * berkas yang sama; kode akses, karena kode harus unik dan kode yang
+     * sama tidak akan bisa dipakai; dan status, karena terbit atau tidaknya
+     * salinan itu keputusan admin sendiri lewat tombolnya.
+     *
+     * Salinan selalu memakai cara publikasi "public" seperti formnya: dari
+     * menu ini tidak ada kode yang perlu dibagikan.
      */
     public function duplikat(Request $request, Quiz $quiz): RedirectResponse
     {

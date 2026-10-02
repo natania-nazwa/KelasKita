@@ -1,16 +1,6 @@
 @props([
     // Tahap yang sedang dibuka (1, 2, atau 3).
     'aktif' => 1,
-
-    /*
-     * Daftar tahap. Bentuk tiap butir ['nama' => ..., 'keterangan' => ...].
-     *
-     * Ada karena stepper-nya bukan milik wizard quiz semata: form materi di
-     * area admin juga memakai komponen yang sama, dan form itu hanya punya
-     * dua tahap. Tanpa prop ini, admin akan melihat tiga tahap yang isinya
-     * tidak ada, dan tahap ketiga tidak akan pernah bisa dibuka.
-     */
-    'langkah' => null,
 ])
 
 @php
@@ -26,7 +16,7 @@
      * Nomor langkah yang sudah dilewati diganti tanda centang, persis
      * seperti rancangan, jadi urutan yang sudah selesai selalu terbaca.
      */
-    $langkah ??= [
+    $langkah = [
         ['nama' => 'Informasi Dasar', 'keterangan' => 'Judul, kategori, thumbnail'],
         ['nama' => 'Buat Soal', 'keterangan' => 'Soal dan jawaban benar'],
         ['nama' => 'Pengaturan', 'keterangan' => 'Publikasi dan jawaban'],

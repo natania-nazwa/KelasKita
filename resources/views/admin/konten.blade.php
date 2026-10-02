@@ -19,9 +19,16 @@
         tetap managing lewat Verifikasi dan lewat katalog Materi / Quiz.
 
         Urutan halaman ini mengikuti urutan Zulu_admin dari bawah: kepala,
-        dua kartu aksi, tab, baris alat, lalu daftar. Setiap bagian punya
+        dua kartu aksi, baris alat, tab, lalu daftar. Setiap bagian punya
         satu wrapper .ad-seksi supaya jaraknya seragam dan tidak perlu
         ditulis ulang di view.
+
+        Baris alat sengaja diletakkan sebelum tab, bukan sesudahnya. Dulu
+        tabnya berdiri sendiri di antara kartu aksi dan baris alat, sehingga
+        tiga bagian itu terbaca sebagai tiga hal terpisah padahal tab dan
+        baris alat sama-sama milik daftar di bawahnya. Dengan baris alat
+        menempel di bawah kartu aksi, yang mengikutinya tinggal satu blok:
+        tab, lalu daftar.
 
         Tab, pencarian, dan filter tetap tautan biasa ke URL yang sama, jadi
         semua ikut bekerja tanpa JavaScript dan tombol "kembali" di browser
@@ -29,7 +36,7 @@
     --}}
 
     @php
-        $adaFilter = filled($kategoriAktif) || filled($kelasAktif) || filled($statusAktif)
+        $adaFilter = filled($kategoriAktif) || filled($statusAktif)
             || $urutAktif !== 'terbaru';
 
         $bahanKonten = $tab === 'quiz' ? 'kuis' : 'materi';
@@ -82,10 +89,22 @@
     ======================
          Dua kartu dengan lebar sama: dua kolom di desktop, satu kolom di
          mobile. Tautan dan kalimatnya ditulis di komponen supaya daftar di
-         bawah dan form yang dibuka dari sini tidak pernah berbeda. --}}
+         bawah dan form yang dibuka dari sini tidak pernah berbeda.
+
+         Tombolnya pun sepadan dengan kartunya: "Tambah Materi" hijau
+         (ad-tombol--sukses) di atas kartu hijau, "Tambah Kuis" ungu
+         (ad-tombol--utama) di atas kartu ungu. Dua tombol ungu di atas dua
+         kartu yang berbeda justru menghilangkan pembedaan yang dibawa
+         warnanya, jadi tombolnya ikut membedakan. --}}
     <div class="ad-seksi">
         <div class="ad-konten-aksi">
-            <div class="ad-konten-aksi__kartu">
+            {{--
+                Modifier --materi dan --kuis bukan hiasan: keduanya yang
+                membedakan warna kedua kartu ini. Tanpa modifier, "Tambah
+                Materi" dan "Tambah Kuis" akan terlihat seperti dua kartu
+                yang sama persis padahal isinya beda jenis.
+            --}}
+            <div class="ad-konten-aksi__kartu ad-konten-aksi__kartu--materi">
                 <span class="ad-konten-aksi__ikon" aria-hidden="true">
                     <x-admin.ikon nama="dokumen" ukuran="w-6 h-6" />
                 </span>
@@ -98,7 +117,7 @@
                     </p>
 
                     <a href="{{ route('admin.konten.materi.tambah') }}"
-                        class="ad-tombol ad-tombol--utama ad-tombol--kecil ad-konten-aksi__tombol">
+                        class="ad-tombol ad-tombol--sukses ad-tombol--kecil ad-konten-aksi__tombol">
                         <x-admin.ikon nama="tambah" ukuran="w-4 h-4" :tebal="2.4" />
 
                         Tambah Materi
@@ -106,7 +125,7 @@
                 </div>
             </div>
 
-            <div class="ad-konten-aksi__kartu">
+            <div class="ad-konten-aksi__kartu ad-konten-aksi__kartu--kuis">
                 <span class="ad-konten-aksi__ikon" aria-hidden="true">
                     <x-admin.ikon nama="buku-centang" ukuran="w-6 h-6" />
                 </span>
@@ -130,47 +149,29 @@
     </div>
 
     {{-- =====================
-         TOAST
-    ======================
-         Hasil aksi setelah redirect: simpan, terbitkan, duplikat, atau
-         hapus. Muncul mengambang di pojok kanan bawah dan menutup dirinya
-         sendiri setelah beberapa detik (resources/js/konten-admin.js). --}}
-    <x-admin.toast :judul="session('sukses')" :pesan="session('suksesDetail')" />
-
-    {{-- =====================
-         TAB DAN BARIS ALAT
-    ======================
-         Tab dan alatnya satu blok karena keduanya selalu menuju halaman yang
-         sama: ganti tab tidak berarti mengganti halaman, dan filter yang
-         aktif ikut terbawa ke tab berikutnya.
-    --}}
-    <div class="ad-seksi">
-        <nav class="ad-konten-tab" aria-label="Jenis konten" data-konten-navigasi>
-            <a href="{{ route('admin.konten', ['tab' => 'materi']) }}"
-                class="{{ $tab === 'materi' ? 'ad-konten-tab__item ad-konten-tab__item--aktif' : 'ad-konten-tab__item' }}"
-                @if ($tab === 'materi') aria-current="page" @endif>
-                Materi
-
-                <span class="ad-konten-tab__jumlah">{{ $jumlahMateri }}</span>
-            </a>
-
-            <a href="{{ route('admin.konten', ['tab' => 'quiz']) }}"
-                class="{{ $tab === 'quiz' ? 'ad-konten-tab__item ad-konten-tab__item--aktif' : 'ad-konten-tab__item' }}"
-                @if ($tab === 'quiz') aria-current="page" @endif>
-                Kuis
-
-                <span class="ad-konten-tab__jumlah">{{ $jumlahQuiz }}</span>
-            </a>
-        </nav>
-    </div>
-
-    {{-- =====================
          PENCARIAN DAN FILTER
     ======================
-         Satu baris lurus di layar lebar: kotak cari, kelas, kategori,
-         status, urutan, dan "Terapkan". Di bawah 1024px pembungkusnya boleh
-         membungkus dan setiap kolom mengambil lebar penuh, jadi tidak ada
-         yang terpotong dan tidak ada gulir horizontal.
+         Diletakkan tepat di bawah dua kartu aksi, bukan di bawah tab.
+         Alasannya jarak: yang paling dekat dengan mata setelah menekan
+         "Tambah Materi" adalah alat untuk mencari hasil pekerjaan itu, dan
+         menaruhnya di bawah tab membuatnya terputus dari kartu aksi oleh
+         satu baris yang tidak ada hubungannya dengan pencarian.
+
+         Satu baris lurus, tidak ada satu pun kontrol yang turun ke baris
+         berikutnya: kotak cari, kategori, status, urutan, "Terapkan", dan
+         "Hapus filter" semuanya sebaris. Yang menjaganya bukan flex tapi
+         grid (lihat .ad-konten-alat-kotak di admin.css) — flex menghitung
+         lebar dari konten sebelum dipendekkan, jadi di layar mana pun ia
+         sudah memutuskan baris: form cari di baris pertama, tombolnya di
+         baris kedua. Grid tidak punya keputusan itu.
+
+         Yang tetap turun ke baris berikutnya hanya baris simpul filter
+         aktif. Itu ringkasan, bukan kontrol, dan pemisahannya dengan garis
+         putus-putus justru hanya terbaca karena ia ada di baris sendiri.
+
+         Di bawah 768px muatannya memang tidak cukup untuk dibaca, jadi
+         barisnya ditumpuk: cari penuh, tiga select berbagi baris, tombol
+         penuh. Tablets dan ke atas tetap satu baris.
 
          Dua form, bukan satu: "Terapkan" mengirim form yang berisi semua
          field, sedangkan "Hapus filter" memakai form sendiri yang isinya
@@ -179,10 +180,10 @@
          pun.
 
          Select ganti langsung mengirim form, jadi admin tidak perlu menekan
-         "Terapkan" lagi setelah memilih kelas atau status. Kotak cari
+         "Terapkan" lagi setelah memilih kategori atau status. Kotak cari
          tetap butuh tombol karena isinya belum selesai diketik. --}}
     <div class="ad-seksi">
-        <div class="ad-kartu ad-alat-kotak">
+        <div class="ad-kartu ad-alat-kotak ad-konten-alat-kotak">
             <form method="GET" action="{{ route('admin.konten') }}" class="ad-konten-alat"
                 data-konten-saring>
                 <input type="hidden" name="tab" value="{{ $tab }}">
@@ -195,28 +196,6 @@
 
                         <input id="cari-konten" name="q" type="search" value="{{ $kataKunci }}"
                             placeholder="Cari {{ $bahanKonten }}..." autocomplete="off">
-                    </div>
-                </div>
-
-                <div class="ad-konten-alat__field">
-                    <label class="sr-only" for="saring-kelas">Saring menurut kelas</label>
-
-                    <div class="ad-pilih__bungkus">
-                        <select id="saring-kelas" name="kelas" class="ad-pilih" data-konten-saring-pilih>
-                            <option value="">Semua Kelas</option>
-
-                            @foreach ($daftarKelas as $nilai => $label)
-                                <option value="{{ $nilai }}" @selected($kelasAktif === $nilai)>
-                                    {{ $label }}
-                                </option>
-                            @endforeach
-                        </select>
-
-                        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"
-                            xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-                            <path stroke-linecap="round" stroke-linejoin="round"
-                                d="{{ \App\Support\Ikon::path('panah-bawah') }}" />
-                        </svg>
                     </div>
                 </div>
 
@@ -312,13 +291,6 @@
                         </span>
                     @endif
 
-                    @if (filled($kelasAktif))
-                        <span class="ad-simpul">
-                            <span class="ad-simpul__label">Kelas</span>
-                            <span class="ad-simpul__nilai">{{ $kelasAktif }}</span>
-                        </span>
-                    @endif
-
                     @if (filled($statusAktif))
                         <span class="ad-simpul">
                             <span class="ad-simpul__label">Status</span>
@@ -344,6 +316,43 @@
                 </div>
             @endif
         </div>
+    </div>
+
+    {{-- =====================
+         TOAST
+    ======================
+         Hasil aksi setelah redirect: simpan, terbitkan, duplikat, atau
+         hapus. Muncul mengambang di pojok kanan bawah dan menutup dirinya
+         sendiri setelah beberapa detik (resources/js/konten-admin.js). --}}
+    <x-admin.toast :judul="session('sukses')" :pesan="session('suksesDetail')" />
+
+    {{-- =====================
+         TAB DAN BARIS ALAT
+    ======================
+         Tab Sendiri saja, dan menjadi pembuka blok daftar: baris alatnya
+         ada di atas, menempel di bawah kartu aksi, bukan di sebelah tab
+         ini. Keduanya tetap menuju halaman yang sama dan filter yang aktif
+         ikut terbawa ke tab berikutnya — cuma tidak lagi berdiri dalam satu
+         wrapper, supaya urutannya bisa mengikuti urutan di atas.
+    --}}
+    <div class="ad-seksi">
+        <nav class="ad-konten-tab" aria-label="Jenis konten" data-konten-navigasi>
+            <a href="{{ route('admin.konten', ['tab' => 'materi']) }}"
+                class="{{ $tab === 'materi' ? 'ad-konten-tab__item ad-konten-tab__item--aktif' : 'ad-konten-tab__item' }}"
+                @if ($tab === 'materi') aria-current="page" @endif>
+                Materi
+
+                <span class="ad-konten-tab__jumlah">{{ $jumlahMateri }}</span>
+            </a>
+
+            <a href="{{ route('admin.konten', ['tab' => 'quiz']) }}"
+                class="{{ $tab === 'quiz' ? 'ad-konten-tab__item ad-konten-tab__item--aktif' : 'ad-konten-tab__item' }}"
+                @if ($tab === 'quiz') aria-current="page" @endif>
+                Kuis
+
+                <span class="ad-konten-tab__jumlah">{{ $jumlahQuiz }}</span>
+            </a>
+        </nav>
     </div>
 
     {{-- =====================
@@ -512,7 +521,7 @@
          Keduanya diisi dari data-* tombol yang ditekan
          (resources/js/konten-publish.js dan resources/js/admin.js), bukan
          dari server. --}}
-    <x-admin.dialog-terbitan />
+    <x-admin.dialog-terbit />
 
     <x-admin.dialog-hapus judul="Hapus konten?" tombol="Hapus Konten" />
 @endsection

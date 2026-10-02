@@ -64,6 +64,36 @@ function initTambahMateri(akar) {
     const panelIsian = $("[data-isian-panel]");
 
     /*
+     * Kartu "Isi Materi" belum muncul saat form dibuka.
+     *
+     * Editor itu yang paling panjang di halaman, jadi halaman baru yang belum
+     * berisi apa-apa tidak perlu menampilkannya: yang perlu ditunjukkan adalah
+     * daftar bab dan tombol "+ Tambah Bab" untuk memulainya. Kartu itu baru
+     * muncul setelah tombol itu ditekan.
+     *
+     * Materi yang sudah punya bab (mode edit, atau kiriman yang gagal validasi
+     * lalu diulang) tetap langsung menampilkan editor-nya, karena di sana isi
+     * yang lalu ada yang perlu disunting.
+     *
+     * isianSiap yang memegang keadaan ini, bukan atribut hidden di HTML:
+     * tanpa JavaScript kartu tetap tampil, jadi isian materi masih bisa diisi
+     * dan form masih bisa dikirim lewat tombolnya.
+     */
+    let isianSiap = false;
+    let tabAktif = "bab";
+
+    /**
+     * Kartu "Isi Materi" hanya tampil kalau dua syaratnya terpenuhi: isiannya
+     * sudah siap ditulis, dan tab yang terbuka bukan Preview.
+     */
+    function perbaruiKartuIsian() {
+        panelIsian?.classList.toggle(
+            "hidden",
+            tabAktif === "preview" || !isianSiap,
+        );
+    }
+
+    /*
      * Elemen pratinjau. Semuanya memakai komponen halaman detail yang
      * sama (x-materi.detail-kepala dan kartu seksi), jadi yang ada di sini
      * hanya titik tempat isinya ditimpa: judul, badge, thumbnail, dan isi
@@ -140,6 +170,8 @@ function initTambahMateri(akar) {
     function pilihTab(nama) {
         const diPreview = nama === "preview";
 
+        tabAktif = nama;
+
         tabBab.classList.toggle("is-aktif", !diPreview);
         tabPreview.classList.toggle("is-aktif", diPreview);
         tabBab.setAttribute("aria-selected", String(!diPreview));
@@ -158,8 +190,11 @@ function initTambahMateri(akar) {
          *-duanya cuma membuat halaman jauh lebih panjang tanpa menambah
          * informasi. Yang disembunyikan hanya tampilannya: isian editor tetap
          * ada dan tetap ikut terkirim saat form disimpan.
+         *
+         * Aturan yang sama juga menjaga kartu ini tetap tersembunyi di form
+         * yang isiannya belum siap (lihat perbaruiKartuIsian di atas).
          */
-        panelIsian?.classList.toggle("hidden", diPreview);
+        perbaruiKartuIsian();
 
         // Bingkai preview tadinya display:none, jadi posisi potongan
         // thumbnail dihitung ulang begitu tabnya terbuka.
@@ -195,6 +230,16 @@ function initTambahMateri(akar) {
 
         bab = pulih && pulih.length ? pulih : [{ id: uid(), title: "Pendahuluan", content: editor.innerHTML }];
         aktifId = bab[0].id;
+
+        /*
+         * Isian siap disunting kalau babnya benar-benar dari form, bukan satu
+         * bab bawaan yang dibuat di atas. Kalau begitu, kartu "Isi Materi"
+         * langsung tampil: materi yang sudah punya isi perlu disunting, bukan
+         * menunggu admin menekan "+ Tambah Bab" dulu.
+         */
+        isianSiap = pulih !== null && pulih.length > 0;
+
+        perbaruiKartuIsian();
     }
 
     function simpanAktif() {
@@ -238,6 +283,10 @@ function initTambahMateri(akar) {
         bab.splice(indeksAktif() + 1, 0, baru);
         aktifId = baru.id;
 
+        // Bab baru berarti admin mulai menulis: kartu isi baru boleh tampil.
+        isianSiap = true;
+        perbaruiKartuIsian();
+
         muatEditor();
         renderBab();
         renderPratinjau();
@@ -261,6 +310,10 @@ function initTambahMateri(akar) {
         bab.splice(asal + 1, 0, salinan);
         aktifId = salinan.id;
 
+        // Sama seperti menambah bab: isiannya sudah jelas mau disunting.
+        isianSiap = true;
+        perbaruiKartuIsian();
+
         muatEditor();
         renderBab();
         renderPratinjau();
@@ -282,6 +335,13 @@ function initTambahMateri(akar) {
         const index = bab.findIndex((item) => item.id === id);
         if (index < 0 || bab.length <= 1) return;
 
+        // Halaman tanpa dialog hapus (lihat blok listener di bawah) langsung
+        // menghapus, bukan mematikan tombolnya.
+        if (!dialog) {
+            hapusBabTerpilih(id);
+            return;
+        }
+
         menungguHapus = id;
         dialogPesan.textContent = `Bab ${index + 1} "${bab[index].title}" akan dihapus dari materi ini.`;
         dialog.classList.add("is-buka");
@@ -290,11 +350,11 @@ function initTambahMateri(akar) {
 
     function tutupDialogHapus() {
         menungguHapus = null;
-        dialog.classList.remove("is-buka");
+        dialog?.classList.remove("is-buka");
     }
 
-    function hapusBabTerpilih() {
-        const index = bab.findIndex((item) => item.id === menungguHapus);
+    function hapusBabTerpilih(id = menungguHapus) {
+        const index = bab.findIndex((item) => item.id === id);
         if (index < 0) {
             tutupDialogHapus();
             return;
@@ -1009,11 +1069,23 @@ function initTambahMateri(akar) {
 
     /* --- Dialog hapus --- */
 
-    dialogBatal.addEventListener("click", tutupDialogHapus);
-    dialogHapus.addEventListener("click", hapusBabTerpilih);
-    dialog.addEventListener("click", (event) => {
-        if (event.target === dialog) tutupDialogHapus();
-    });
+    /*
+     * Dialognya ikut ditangani di sini, tapi seluruh blok ini dilewati kalau
+     * halamannya tidak memilikinya.
+     *
+     * Alasannya, semua elemen di modul ini dicari di dalam akar form
+     * (data-tambah-materi), sementara dialog hapus diletakkan di luar akar itu
+     * di sebagian halaman. Tanpa penjagaan, satu baris ini sudah cukup untuk
+     * menghentikan seluruh modul — termasuk hal-hal yang tidak ada hubungannya
+     * dengan dialog, seperti daftar bab, editor, dan baris tombol simpan.
+     */
+    if (dialog && dialogBatal && dialogHapus) {
+        dialogBatal.addEventListener("click", tutupDialogHapus);
+        dialogHapus.addEventListener("click", hapusBabTerpilih);
+        dialog.addEventListener("click", (event) => {
+            if (event.target === dialog) tutupDialogHapus();
+        });
+    }
 
     document.addEventListener("keydown", (event) => {
         if (event.key !== "Escape") return;

@@ -242,6 +242,23 @@ body.tubuh-admin {
     }
 }
 
+/*
+ * Jarak baris tombol wizard di atas kartu isian.
+ *
+ * Aturan .ad-seksi + .ad-seksi di atas tidak bisa dipakai di sini: baris
+ * tombolnya ada DI DALAM <form>, jadi saudara langsungnya adalah panel
+ * langkah (section.wizard-panel), bukan seksi admin. Tanpa aturan ini,
+ * tombol "Batal" / "Lanjut" di langkah 1 dan tombol "Kembali", "Batal",
+ * "Simpan Draft", "Publish Sekarang" di langkah 3 menempel pada kartu di
+ * atasnya.
+ *
+ * Nilainya sama dengan jarak baris navigasi di form Quiz milik pengguna
+ * (mt-5), supaya kedua form terasa satu.
+ */
+[data-wizard-nav] {
+    margin-top: 1.25rem;
+}
+
 /* Judul seksi (mis. "Menu Cepat") yang berdiri sendiri, tanpa kartu
  * di bawahnya. */
 .ad-seksi__judul {
@@ -6540,7 +6557,7 @@ body.tubuh-admin {
 /* ================================================================
    KONTEN PEMBELAJARAN
    Kartu aksi (Tambah Materi / Tambah Quiz), toast, dan dialog konfirmasi
-   terbitan.
+   terbitkan.
 
    Karakter visual sama dengan halaman admin lain: latar putih, border
    tipis ungu muda, radius besar, bayangan sangat ringan, dan banyak
@@ -6714,7 +6731,7 @@ body.tubuh-admin {
     color: var(--ad-teks-ungu-terang);
 }
 
-/* ---------- Dialog konfirmasi terbitan ---------- */
+/* ---------- Dialog konfirmasi terbitkan ---------- */
 .ad-dialog__pesan {
     font-size: 0.875rem;
     line-height: 1.6;
@@ -7775,7 +7792,16 @@ body.tubuh-admin {
     }
 }
 
-/* Radius 20px, sesuai ukuran kartu yang diminta. */
+/* Radius 20px, sesuai ukuran kartu yang diminta.
+ *
+ * Permukaannya soft, bukan putih: kartu putih di atas latar yang sudah ungu
+ * pucat terlihat seperti lubang terang, dan deretan kartu putih di halaman
+ * yang panjang ini cepat menyilaukan.
+ *
+ * Warna dasar di sini lavender dan dipakai sebagai nilai cadangan. Warna
+ * sebenarnya datang dari modifier di bawah, jadi "Tambah Materi" dan
+ * "Tambah Kuis" tidak terlihat seperti dua kartu yang sama persis.
+ */
 .ad-konten-aksi__kartu {
     display: flex;
     min-width: 0;
@@ -7783,13 +7809,44 @@ body.tubuh-admin {
     gap: 1rem;
     border: 1px solid var(--ad-garis);
     border-radius: 20px;
-    background-color: var(--ad-permukaan);
+    background-color: var(--ad-permukaan-lavender);
     padding: 1.25rem 1.35rem;
     box-shadow: var(--ad-bayangan);
     transition:
         border-color 0.18s ease,
         box-shadow 0.18s ease,
         transform 0.18s ease;
+}
+
+/*
+ * Warna kedua kartu aksi sengaja beda, jadi admin bisa membedakannya tanpa
+ * membaca judulnya: hijau untuk materi, ungu untuk kuis. Warna diambil dari
+ * token cucian yang sudah ada, jadi keduanya ikut mode gelap dan tidak
+ * kelihatan seperti warna yang ditempel terpisah.
+ */
+.ad-konten-aksi__kartu--materi {
+    background-color: var(--ad-cucian-sukses);
+}
+
+.ad-konten-aksi__kartu--kuis {
+    background-color: var(--ad-cucian-ungu);
+}
+
+/*
+ * Kotak ikon jadi putih di kedua kartu. Kalau ikut warna kartunya, kotak
+ * ikon ungu di atas kartu kuis yang juga ungu lenyap tidak terlihat, dan di
+ * kartu materi jadi warna ketiga yang tidak ada maksudnya. Kotak putih
+ * berlapis teks berwarna membuat ikon terbaca sebagai lencana kecil di atas
+ * kartu berwarna apa pun.
+ */
+.ad-konten-aksi__kartu--materi .ad-konten-aksi__ikon {
+    background-color: var(--ad-white);
+    color: var(--ad-sukses);
+}
+
+.ad-konten-aksi__kartu--kuis .ad-konten-aksi__ikon {
+    background-color: var(--ad-white);
+    color: var(--ad-teks-ungu-terang);
 }
 
 .ad-konten-aksi__kartu:hover,
@@ -7905,78 +7962,147 @@ body.tubuh-admin {
     color: var(--ad-teks-ungu-terang);
 }
 
-/* ---------- Baris alat: cari, kelas, kategori, status, urutan ---------- */
+/* ---------- Baris alat: cari, kategori, status, urutan ---------- */
 /*
- * Satu baris lurus di layar lebar, menumpuk vertikal di layar sempit.
+ * Wadah baris alat: GRID, bukan flex.
  *
- * Sengaja tidak memakai .ad-alat-kotak--konten yang ada: aturan di sana
- * melarang barisnya membungkus sama sekali, dan dengan lima kontrol +
- * dua tombol itu membuat select terpotong di layar laptop. Di sini
- * pembungkusnya boleh membungkus, dan setiap kolom punya lebar minimum
- * sendiri supaya tidak ada yang tersempit sampai tidak terbaca.
+ * Kenapa bukan flex: pada flex, keputusan "baris ini cukup atau tidak"
+ * dihitung dari lebar hipotetik tiap anak, yaitu lebar konten SEBELUM
+ * dipendekkan. Isi baris ini (kotak cari + tiga select + dua tombol) punya
+ * lebar hipotetik sekitar 55rem, jadi di layar 1024px pun flex sudah
+ * memutuskan bariscus: form cari turun ke baris pertama dan tombolnya
+ * turun ke baris kedua. Persis yang tidak boleh terjadi di sini.
+ *
+ * Grid tidak begitu: kolomnya benar-benar ada, dan anak cukup memendekkan
+ * diri untuk muat di kolomnya. Karena itu "satu baris" di sini dijamin
+ * strukturnya sendiri, bukan hasil CSS yang bisa rapuh.
+ *
+ * Dua kolom: kolom 1 untuk form cari + filter + "Terapkan" (memenuhi
+ * ruang sisa), kolom 2 untuk form "Hapus filter" (selalu selebar
+ * isinya). Baris simpul filter aktif diberi grid-column penuh supaya
+ * turun ke barisnya sendiri: simpul itu ringkasan, bukan kontrol, dan
+ * pemisahannya dengan garis putus-putus hanya terbaca kalau ia benar-benar
+ * ada di baris lain.
  */
-.ad-konten-alat {
-    display: flex;
-    flex-wrap: wrap;
+.ad-konten-alat-kotak {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
     align-items: center;
-    gap: 0.5rem;
+    column-gap: 0.5rem;
+
+    /*
+     * Permukaannya putih, sama seperti kartu putih di halaman admin lain.
+     * Baris alat ini sengaja tidak diberi warna sendiri: isinya kontrol
+     * (kotak cari, tiga select, dua tombol) yang semuanya sudah berwarna
+     * sendiri lewat isiannya, dan menaruhnya di atas kartu berwarna membuat
+     * halaman ini berlapis-lapis warna. Yang perlu dibaca dari baris ini
+     * adalah kontrolnya, bukan permukaannya.
+     *
+     * Ditulis eksplisit, bukan "biar .ad-kartu yang menangani": kartu ini
+     * ada di view sebagai .ad-kartu, jadi kalau aturannya dihapus
+     * diam-diam gradasi putih .ad-kartu ikut kembali — dan gradasi itu
+     * digambar DI ATAS background-color. Yang ditulis di sini berarti satu
+     * sumber kebenaran untuk halaman ini.
+     */
+    background-color: var(--ad-permukaan);
+    background-image: none;
 }
 
-.ad-konten-alat__cari {
-    flex: 1 1 15rem;
+.ad-konten-alat {
+    display: flex;
+    flex-wrap: nowrap;
+    align-items: center;
+    gap: 0.5rem;
     min-width: 0;
 }
 
-@media (min-width: 1024px) {
-    .ad-konten-alat__cari {
-        flex: 1 1 18rem;
-    }
+.ad-konten-alat__cari {
+    flex: 1 1 14rem;
+    min-width: 0;
 }
 
 /* Select tidak ikut melebar: ruang sisa diberikan ke kotak cari, supaya
-   "Semua Kategori" tidak jadi ladang kosong dan "Semua Kelas" tidak
-   berubah lebar setiap kali daftar kelas bertambah. */
+   "Semua Kategori" tidak jadi ladang kosong dan lebar baris tidak berubah
+   setiap kali pilihan filter bertambah. min-width: 0 yang membuat select
+   boleh menyempit di bawah lebar teksnya kalau ruangnya memang tidak
+   cukup, alih-alih memaksa baris itu membungkus. */
 .ad-konten-alat__field {
     display: flex;
     flex: 0 1 8.5rem;
     min-width: 0;
 }
 
-@media (max-width: 639px) {
-    .ad-konten-alat__field {
-        flex: 1 1 100%;
-    }
-}
-
 .ad-konten-alat__aksi {
     display: flex;
-    flex-shrink: 0;
     align-items: center;
     gap: 0.5rem;
 }
 
-@media (max-width: 639px) {
+.ad-konten-alat-kotak > .ad-alat-baris__simpul {
+    grid-column: 1 / -1;
+}
+
+/*
+ * Di bawah 768px muatannya memang tidak cukup: kotak cari saja sudah
+ * memakan hampir separuh lebar, dan select yang menyusulnya tidak akan
+ * punya teks yang terbaca kalau dipaksa satu baris seperti di desktop.
+ *
+ * Dua form ("Terapkan" dan "Hapus filter") sengaja tidak digabung jadi satu
+ * form, jadi keduanya tidak bisa berbagi sel grid selama masing-masing masih
+ * jadi kotak. display: contents melarotten keduanya: form tetap ada di DOM
+ * dan tetap yang dikirim, tapi tidak lagi membuat kotak, sehingga anak-anaknya
+ * — yaitu kedua tombol — turun satu tingkat dan bisa jadi sel grid berdampingan.
+ * Kolom input[type=hidden] di dalam keduanya tidak ikut jadi sel karena
+ * elemen itu memang tidak pernah digambar.
+ *
+ * Enam kolom, bukan satu: "Terapkan" dan "Hapus filter" masing-masing
+ * mengambil tiga kolom, jadi keduanya benar-benar berdampingan dan sama
+ * lebar. Aturannya ditulis sebagai jumlah kolom yang dipoles, bukan pixel,
+ * supaya yang dijaga posisinya — bukan hasil hitungannya yang sudah pasti
+ * beda antar peramban.
+ *
+ * Urutannya: kotak cari melebar penuh, tiga select berbagi satu baris, lalu
+ * kedua tombol side by side. Yang dijaga di sini kebalikannya: tidak ada
+ * kontrol yang melebar jadi ladang kosong dan tidak ada yang tergotong
+ * placeholder-nya.
+ */
+@media (max-width: 767px) {
+    .ad-konten-alat-kotak {
+        grid-template-columns: repeat(6, minmax(0, 1fr));
+        row-gap: 0.5rem;
+    }
+
+    .ad-konten-alat,
     .ad-konten-alat__aksi {
-        width: 100%;
+        display: contents;
     }
 
-    .ad-konten-alat__aksi > .ad-tombol,
-    .ad-konten-alat__aksi > form {
-        flex: 1;
+    .ad-konten-alat__cari {
+        grid-column: span 6;
     }
 
-    .ad-konten-alat__aksi > form .ad-tombol {
-        width: 100%;
-        justify-content: center;
+    .ad-konten-alat__field {
+        grid-column: span 2;
+    }
+
+    .ad-konten-alat > .ad-tombol,
+    .ad-konten-alat__aksi > .ad-tombol {
+        grid-column: span 3;
     }
 }
 
 /* ---------- Kontainer daftar ---------- */
+/*
+ * Permukaannya lavender, sama dengan kartu aksi dan kotak daftar, supaya
+ * keempat kotak di halaman ini terbaca sebagai satu kelompok. Kotak ini
+ * juga jadi wadah untuk state lain — daftar, kerangka, gagal, dan kosong —
+ * jadi warnanya ikut menentukan keempatnya, bukan cuma state's yang berisi.
+ */
 .ad-konten-kotak {
     overflow: hidden;
     border: 1px solid var(--ad-garis);
     border-radius: 20px;
-    background-color: var(--ad-permukaan);
+    background-color: var(--ad-permukaan-lavender);
     box-shadow: var(--ad-bayangan);
 }
 
@@ -7998,12 +8124,19 @@ body.tubuh-admin {
 }
 
 .ad-konten-baris + .ad-konten-baris {
-    border-top: 1px solid color-mix(in oklab, var(--ad-primary) 6%, var(--ad-garis));
+    border-top: 1px solid color-mix(in oklab, var(--ad-primary) 14%, var(--ad-garis));
 }
 
+/*
+ * Hover memakai --ad-cucian-ungu, bukan --ad-permukaan-lavender. Wadah
+ * barisnya sekarang lavender, jadi lavender untuk hover sama sekali tidak
+ * terlihat dan admin kehilangan tanda tetikus sedang lewat baris mana.
+ * Cucian-ungu masih satu keluarga warna dengan lavender dan sudah dipakai
+ * di halaman ini untuk lencana status dan kotak thumbnail.
+ */
 .ad-konten-baris:hover,
 .ad-konten-baris:focus-within {
-    background-color: var(--ad-permukaan-lavender);
+    background-color: var(--ad-cucian-ungu);
 }
 
 /* ---------- Thumbnail ---------- */
@@ -8087,24 +8220,6 @@ body.tubuh-admin {
     color: var(--ad-soft);
 }
 
-/* ---------- Lencana kelas ---------- */
-/*
- * Bentuk pil ungu muda: kelas adalah penanda tujuan, bukan status, jadi
- * warnanya sengaja tidak ikut meniru hijau/amber lencana status di sebelahnya.
- */
-.ad-konten-lencana {
-    display: inline-flex;
-    flex-shrink: 0;
-    align-items: center;
-    border-radius: 9999px;
-    background-color: var(--ad-cucian-ungu);
-    padding: 0.22rem 0.6rem;
-    font-size: 0.6875rem;
-    font-weight: 700;
-    white-space: nowrap;
-    color: var(--ad-teks-ungu);
-}
-
 /* ---------- Lencana status ---------- */
 /*
  * Published hijau soft, Draft oranye soft. Keduanya teksnya gelap di atas
@@ -8151,9 +8266,9 @@ body.tubuh-admin {
 
 /* ---------- Bagian kanan baris ---------- */
 /*
- * Di desktop: kelas di atas, tanggal di bawahnya, keduanya rata kanan.
- * Keduanya disembunyikan di layar sempit supaya tidak battling dengan
- * judul di baris yang sama — status dan tombolnya tetap tampil.
+ * Di desktop: tanggal di atas lencana status, keduanya rata kanan.
+ * Sembunyi di layar sempit supaya tidak battling dengan judul di baris yang
+ * sama — status dan tombolnya tetap tampil.
  */
 .ad-konten-baris__kanan {
     display: flex;
@@ -8223,6 +8338,14 @@ body.tubuh-admin {
     padding: 0.3rem;
     border: 1px solid var(--ad-garis);
     border-radius: 14px;
+
+    /*
+     * Sengaja tetap putih, tidak ikut jadi lavender bersama kartu dan kotak
+     * daftar. Menu ini menayang di atas kartu, jadi "yang lebih tinggi"
+     * seharusnya lebih terang dari kartu di bawahnya, bukan sewarnanya.
+     * Popover putih di atas kartu ungu pucat justru membuat perbedaan
+     * ketinggiannya lebih terbaca.
+     */
     background-color: var(--ad-permukaan);
     box-shadow: var(--ad-bayangan-naik);
 }

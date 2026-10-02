@@ -10,7 +10,6 @@ use App\Models\Preferensi;
 use App\Support\BabMateri;
 use App\Support\BerkasMateri;
 use App\Support\DaftarKonten;
-use App\Support\KelasKonten;
 use App\Support\NotifikasiAdmin;
 use App\Support\NotifikasiKonten;
 use Illuminate\Http\RedirectResponse;
@@ -18,7 +17,7 @@ use Illuminate\Http\Request;
 use Illuminate\View\View;
 
 /**
- * Tambah, ubah, hapus, duplikat, terbitkan, dan batalkan terbitan materi
+ * Tambah, ubah, hapus, duplikat, terbitkan, dan batalkan terbitkan materi
  * milik admin sendiri, dari menu "Konten Pembelajaran".
  *
  * Berbeda dari Admin\MateriKelolaController yang sudah ada, dan perbedaannya
@@ -29,7 +28,7 @@ use Illuminate\View\View;
  *   - memakai pembatas "hanya milik admin", sama seperti
  *     Admin\MateriKelolaController dan halaman "Karya Saya" milik pengguna.
  *     Daftar di Konten Pembelajaran hanya berisi karya admin yang sedang
- *     login, jadi form, terbitan, dan hapus di sini juga hanya untuk karya
+ *     login, jadi form, terbitkan, dan hapus di sini juga hanya untuk karya
  *     itu. Materi buatan pengguna tetap managing lewat Verifikasi dan lewat
  *     katalog Materi;
  *   - statusnya hanya "draft" dan "published". Tidak ada pending, tidak ada
@@ -50,7 +49,6 @@ class KontenMateriController extends Controller
     {
         return view('admin.konten-materi', [
             'kategori' => Pelajaran::query()->aktif()->orderBy('nama')->get(),
-            'kelas' => KelasKonten::pilihan(),
             'materi' => null,
             'bab' => null,
         ]);
@@ -105,7 +103,6 @@ class KontenMateriController extends Controller
 
         return view('admin.konten-materi', [
             'kategori' => Pelajaran::query()->aktif()->orderBy('nama')->get(),
-            'kelas' => KelasKonten::pilihan(),
             'materi' => $item,
             // Daftar bab dipecah lagi dari isi tersimpan, supaya editor dibuka
             // dengan bab yang sama seperti waktu materi dibuat.
@@ -119,7 +116,7 @@ class KontenMateriController extends Controller
      * Status lama tidak ikut berubah di sini. Mengubah isi materi yang sudah
      * tayang tidak menariknya dari halaman pengguna, dan tidak menerbitkannya
      * kalau sebelumnya masih draft: status hanya berubah lewat tombol
-     * terbitkan atau batalkan terbitan di daftar.
+     * terbitkan atau batalkan terbitkan di daftar.
      */
     public function update(MateriIsianRequest $request, string $materi): RedirectResponse
     {
@@ -164,11 +161,11 @@ class KontenMateriController extends Controller
     }
 
     /**
-     * Terbitkan atau batalkan terbitan.
+     * Terbitkan atau batalkan terbitkan.
      *
      * Satu aksi untuk dua arah, jadi tombolnya cukup satu dan klik ganda tidak
      * pernah menghasilkan dua perubahan. Menerbitkan mengisi tanggal terbit
-     * dan mengirim notifikasi ke pengguna; membatalkan terbitan tidak
+     * dan mengirim notifikasi ke pengguna; membatalkan terbitkan tidak
      * mengirim apa pun, karena tidak ada perubahan yang perlu diberitahukan.
      */
     public function publish(Request $request, string $materi): RedirectResponse

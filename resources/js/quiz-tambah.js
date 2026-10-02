@@ -9,6 +9,8 @@
  *   - validasi tiap langkah sebelum boleh lanjut
  *   - baris aksi langkah 2: Kembali, Batal, Draft, Lanjut ke Pengaturan
  *   - tombol "Draft": mengirim form langsung dari langkah "Buat Soal"
+ *   - tombol "Simpan Draft" dan "Publish Sekarang" milik form admin, yang
+ *     hanya muncul di langkah terakhir
  *   - menitipkan isian ke sessionStorage supaya muat ulang tidak hilang
  *
  * Pembuatan soalnya tidak ada di sini: langkah "Buat Soal" memakai builder
@@ -50,9 +52,28 @@ function initWizardQuiz(akar) {
     const tombolKembali = $("[data-wizard-kembali]");
     const tombolLanjut = $("[data-wizard-lanjut]");
     const tombolSimpan = $("[data-wizard-simpan]");
-    const tombolDraft = $("[data-wizard-draft]");
     const teksLanjut = $("[data-wizard-lanjut-teks]");
     const teksSimpan = $("[data-wizard-simpan-teks]");
+
+    /*
+     * Tombol kirim form yang datang lebih awal dari langkah terakhir.
+     *
+     * Ada dua yang berbeda bentuk: tombol Draft di kartu aksi langkah 2, dan
+     * tombol "Simpan Draft" di baris navigasi bawah milik form admin. Keduanya
+     * satu aksi — periksa semua langkah, lalu kirim form dengan aksi "draft" —
+     * jadi keduanya dipasang pendengarnya di sini. Yang dicari ulang lewat
+     * baris navigasi adalah tombol yang harus disembunyikan selama belum di
+     * langkah terakhir.
+     */
+    const tombolDraft = $$("[data-wizard-draft]");
+    const tombolDraftNav = $("[data-wizard-nav] [data-wizard-draft]");
+
+    /*
+     * Tombol "Publish Sekarang" milik form admin, juga di baris navigasi
+     * bawah. Hanya dia yang memakai data-konten-kirim, jadi form yang tidak
+     * punya tombol ini tidak akan menemukan apa-apa di sini.
+     */
+    const tombolTerbit = $("[data-wizard-nav] [data-wizard-terbit]");
 
     /*
      * Tombol kembar untuk aksi yang sama.
@@ -99,6 +120,18 @@ function initWizardQuiz(akar) {
     const ringkasanDaftar = $("[data-wizard-ringkasan-daftar]");
 
     /*
+     * Ringkasan milik form admin.
+     *
+     * Ditandai dari Blade lewat data-wizard-ringkasan-admin, karena di sana
+     * kalimat statusnya berbeda: admin tidak pernah mengajukan quiz-nya ke
+     * siapa pun untuk ditinjau, jadi "Menunggu persetujuan admin" di
+     * ringkasan akan menyesatkan.
+     */
+    const ringkasanAdmin = Boolean(
+        ringkasanDaftar?.closest("[data-wizard-ringkasan-admin]"),
+    );
+
+    /*
      * Field "aksi" milik form admin. Form milik pemilik tidak punya input
      * ini, jadi setiap penulisan ke sini otomatis tidak berlaku untuk form
      * itu.
@@ -108,9 +141,9 @@ function initWizardQuiz(akar) {
     /*
      * Jumlah langkah wizard, dibaca dari atribut halaman.
      *
-     * Form admin punya dua tahap (Informasi Dasar, Buat Soal) sementara form
-     * pemilik punya tiga, dan keduanya memakai file ini: logikanya sama,
-     * yang berbeda hanya berapa banyak panel yang boleh dibuka.
+     * Semua form yang memakai file ini punya tiga langkah (Informasi Dasar,
+     * Buat Soal, Pengaturan), jadi angka bawaannya tiga dan atribut halaman
+     * hanya perlu diisi kalau suatu form benar-benar punya lebih sedikit.
      */
     const TOTAL_LANGKAH = Number(akar.dataset.langkahTotal) || 3;
 
@@ -133,6 +166,16 @@ function initWizardQuiz(akar) {
     const FORMAT_GAMBAR = ["image/jpeg", "image/png", "image/webp"];
 
     let langkah = 1;
+
+    /*
+     * Cara publikasi yang sedang dipilih: true berarti quiz dipakai lewat
+     * kode, jadi tidak pernah tayang untuk semua pengguna.
+     *
+     * Disimpan sebagai keadaan, bukan hanya dibaca di tempat yang
+     * membutuhkannya, karena dua hal bergantung padanya dari tempat berbeda:
+     * ringkasan langkah 3 dan tombol "Publish Sekarang" milik form admin.
+     */
+    let pakaiKode = false;
 
     /*
      * Builder soal di langkah 2 dibuat modul terpisah, jadi di sini
@@ -402,13 +445,26 @@ function initWizardQuiz(akar) {
 
         const kategori = $("#pelajaran_id");
         const tingkat = $("#tingkat_kesulitan");
-        const privat =
-            form.querySelector("[name='visibilitas']:checked")?.value ===
-            "private";
+        const privat = pakaiKode;
         const tampilJawaban =
             saklarJawaban?.getAttribute("aria-checked") === "true";
         const jumlah = builder()?.jumlah() ?? 0;
         const diajukan = !privat && inputPublikasikan?.value === "1";
+
+        /*
+         * Status di form admin tidak pernah menunggu keputusan siapa pun:
+         * admin yang menerbitkan karyanya sendiri, dan quiz mode kode
+         * memang tidak pernah tayang untuk semua pengguna.
+         */
+        const status = ringkasanAdmin
+            ? privat
+                ? "Draft, hanya dibuka lewat kode"
+                : "Draft, terbit dengan Publish Sekarang"
+            : privat
+              ? "Draft, siap dipakai"
+              : diajukan
+                ? "Menunggu persetujuan admin"
+                : "Draft, belum diajukan";
 
         const baris = [
             ["Judul", nilai("#judul") || "Belum diisi"],
@@ -429,14 +485,7 @@ function initWizardQuiz(akar) {
                     ? `Gunakan kode${nilai("#kode_akses") ? " (" + nilai("#kode_akses") + ")" : ""}`
                     : "Publikasikan",
             ],
-            [
-                "Status",
-                privat
-                    ? "Draft, siap dipakai"
-                    : diajukan
-                      ? "Menunggu persetujuan admin"
-                      : "Draft, belum diajukan",
-            ],
+            ["Status", status],
             ["Tampilkan jawaban", tampilJawaban ? "Ya" : "Tidak"],
         ];
 
@@ -597,32 +646,40 @@ function initWizardQuiz(akar) {
      * yang lain sempat dipilih.
      */
     function terapkanPublikasi() {
-        const privat =
+        pakaiKode =
             form.querySelector("[name='visibilitas']:checked")?.value ===
             "private";
 
         $$("[data-publikasi]", akar).forEach((kartu) => {
             kartu.classList.toggle(
                 "is-terpilih",
-                kartu.dataset.publikasi === (privat ? "private" : "public"),
+                kartu.dataset.publikasi === (pakaiKode ? "private" : "public"),
             );
         });
 
         if (areaKode) {
-            areaKode.hidden = !privat;
+            areaKode.hidden = !pakaiKode;
         }
 
         if (wajibKode) {
-            wajibKode.hidden = !privat;
+            wajibKode.hidden = !pakaiKode;
         }
 
         if (inputKode) {
-            inputKode.required = privat;
+            inputKode.required = pakaiKode;
         }
 
         if (areaPersetujuan) {
-            areaPersetujuan.hidden = privat;
+            areaPersetujuan.hidden = pakaiKode;
         }
+
+        /*
+         * Tombol "Publish Sekarang" ikut hilang untuk mode kode: quiz yang
+         * hanya bisa dibuka lewat kodenya memang tidak pernah tayang untuk
+         * semua pengguna, jadi tidak ada yang bisa diterbitkannya. Yang
+         * tersisa di langkah terakhir adalah menyimpan sebagai draft.
+         */
+        gambarNavigasi();
 
         perbaruiRingkasan();
     }
@@ -711,6 +768,20 @@ function initWizardQuiz(akar) {
 
         if (tombolSimpan) {
             tombolSimpan.hidden = !terakhir;
+        }
+
+        /*
+         * Dua tombol milik form admin, keduanya hanya di langkah terakhir.
+         * "Simpan Draft" selalu ada di sana; "Publish Sekarang" hilang kalau
+         * quiznya memakai kode, karena mode kode tidak pernah tayang untuk
+         * semua pengguna.
+         */
+        if (tombolDraftNav) {
+            tombolDraftNav.hidden = !terakhir;
+        }
+
+        if (tombolTerbit) {
+            tombolTerbit.hidden = !terakhir || pakaiKode;
         }
 
         if (teksLanjut) {
@@ -929,13 +1000,14 @@ function initWizardQuiz(akar) {
     /**
      * Kirim form.
      *
-     * Berlaku untuk tiga tempat: "Selesai & Simpan" di langkah terakhir,
-     * "Draft" di baris aksi langkah 2, dan — di form admin — "Publish
-     * Sekarang". Server memvalidasi seluruh form sekaligus, jadi semuanya
-     * harus memeriksa langkah-langkah yang ada dulu; tombolnya bertipe
-     * button, bukan submit, supaya pengiriman bisa ditahan dan langkah yang
-     * bermasalah dibuka lebih dulu, alih-alih memantulkan halaman ke awal
-     * setiap ada yang salah.
+     * Berlaku untuk beberapa tempat: "Selesai & Simpan" di langkah terakhir
+     * milik form pemilik, "Draft" di baris aksi langkah 2, dan — di form
+     * admin — "Simpan Draft" serta "Publish Sekarang" di baris navigasi
+     * langkah terakhir. Server memvalidasi seluruh form sekaligus, jadi
+     * semuanya harus memeriksa langkah-langkah yang ada dulu; tombolnya
+     * bertipe button, bukan submit, supaya pengiriman bisa ditahan dan
+     * langkah yang bermasalah dibuka lebih dulu, alih-alih memantulkan
+     * halaman ke awal setiap ada yang salah.
      *
      * "aksi" hanya berarti sesuatu di form admin yang punya input
      * [data-konten-aksi]: di situ nilainya menentukan apakah hasil simpan
@@ -956,8 +1028,7 @@ function initWizardQuiz(akar) {
         /*
          * Langkah Pengaturan hanya diperiksa kalau form ini memang punya
          * langkah itu. Satu-satunya isian yang ada di sana dan bisa menolak
-         * kiriman adalah kode akses, jadi form dua tahap tidak pernah
-         * tersangkut di sini.
+         * kiriman adalah kode akses.
          */
         if (TOTAL_LANGKAH >= 3) {
             if (!validasiLangkahTiga()) {
@@ -985,12 +1056,13 @@ function initWizardQuiz(akar) {
         form.requestSubmit();
     }
 
-    /*
-     * Tombol di luar form ini — "Publish Sekarang" di baris aksi langkah 2
-     * dan dialog konfirmasi terbitan — memanggil fungsi yang sama lewat
-     * objek global, persis seperti yang dilakukan builder soal di atas.
-     * Dipasang begitu wizard siap, dan dihapus lagi kalau halaman ini
-     * dilepas, supaya tidak ada sisa wizard lama yang masih bisa dipanggil.
+/*
+     * Tombol di luar form ini — "Publish Sekarang" di baris navigasi
+     * langkah terakhir milik form admin, dan dialog konfirmasi terbitan —
+     * memanggil fungsi yang sama lewat objek global, persis seperti yang
+     * dilakukan builder soal di atas. Dipasang begitu wizard siap, dan
+     * dihapus lagi kalau halaman ini dilepas, supaya tidak ada sisa wizard
+     * lama yang masih bisa dipanggil.
      */
     window.kelasKitaKontenKirim = kirimQuiz;
 
@@ -1007,7 +1079,9 @@ function initWizardQuiz(akar) {
     });
 
     // Simpan sebagai draft tanpa menyelesaikan langkah Pengaturan.
-    tombolDraft?.addEventListener("click", () => kirimQuiz("draft"));
+    tombolDraft.forEach((tombol) =>
+        tombol.addEventListener("click", () => kirimQuiz("draft")),
+    );
 
     /*
      * Mengubah isi form juga harus: (1) menulis ulang input tersembunyi
@@ -1048,9 +1122,9 @@ function initWizardQuiz(akar) {
             tombolSimpan.disabled = true;
         }
 
-        if (tombolDraft) {
-            tombolDraft.disabled = true;
-        }
+        tombolDraft.forEach((tombol) => {
+            tombol.disabled = true;
+        });
     });
 
     /* ============================================================

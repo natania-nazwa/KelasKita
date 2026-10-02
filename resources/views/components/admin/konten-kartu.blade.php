@@ -131,7 +131,7 @@
 
             {{--
                 Satu tombol untuk dua arah. Kalau kontennya sudah terbit, tombol
-                yang sama membatalkan terbitannya. Yang berubah hanya kalimatnya,
+                yang sama membatalkan terbitkanya. Yang berubah hanya kalimatnya,
                 supaya admin tidak perlu mencari tombol berbeda untuk hal yang
                 sebenarnya satu keputusan.
             --}}

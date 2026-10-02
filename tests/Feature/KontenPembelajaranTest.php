@@ -11,6 +11,7 @@ use App\Models\User;
 use App\Support\IsianSoalQuiz;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Schema;
 use Tests\TestCase;
 
 /**
@@ -150,15 +151,85 @@ class KontenPembelajaranTest extends TestCase
     {
         $admin = $this->buatAdmin();
 
-        $this->actingAs($admin)
+        $halaman = $this->actingAs($admin)
             ->get(route('admin.konten'))
             ->assertOk()
             ->assertSee('Konten Pembelajaran')
             ->assertSee('Kelola materi dan kuis untuk mendukung proses pembelajaran di Kelas Kita.')
             ->assertSee('Tambah Materi')
             ->assertSee('Buat materi pembelajaran untuk peserta didik.')
-            ->assertSee('Tambah Quiz')
-            ->assertSee('Buat quiz untuk menguji pemahaman peserta didik.');
+            ->assertSee('Tambah Kuis')
+            ->assertSee('Buat kuis untuk menguji pemahaman peserta didik.')
+            ->baseResponse->getContent();
+
+        /*
+         * Dua kartu aksi harus berdampingan dengan lebar sama di desktop,
+         * dan susunannya vertikal di mobile. Tanpa ini, "Tambah Materi" dan
+         * "Tambah Kuis" bisa tetap muncul tapi tidak berdampingan — dan itu
+         * justru bagian yang paling kelihatan dari halaman ini.
+         */
+        $this->assertStringContainsString('ad-konten-aksi__kartu', $halaman);
+
+        /*
+         * Dihitung dari "kartu" diikuti modifier-nya, bukan dari
+         * "ad-konten-aksi__kartu" polos: nama modifier sudah diawali nama
+         * kartu, jadi menghitung plain-nya akan menghitung tiap kartu dua kali
+         * begitu modifier ditambahkan.
+         */
+        $this->assertSame(2, substr_count($halaman, 'ad-konten-aksi__kartu ad-konten-aksi__kartu--'));
+        $this->assertSame(2, substr_count($halaman, 'ad-konten-aksi__tombol'));
+
+        /*
+         * Masing-masing kartu aksi harus punya modifiernya sendiri, karena
+         * modifier itu yang membedakan warnanya. Kalau salah satu hilang, dua
+         * kartu kembali sama persis padahal isinya beda jenis.
+         */
+        $this->assertStringContainsString('ad-konten-aksi__kartu--materi', $halaman);
+        $this->assertStringContainsString('ad-konten-aksi__kartu--kuis', $halaman);
+    }
+
+    /**
+     * Urutan bagian halaman: kartu aksi, baris alat, tab, daftar.
+     *
+     * Baris alat (cari + filter) menempel di bawah dua kartu aksi, bukan di
+     * bawah tab. Dulu tab berdiri sendiri di antaranya, sehingga baris alat
+     * terputus dari kartu aksi oleh satu baris yang tidak ada hubungannya
+     * dengan pencarian.
+     *
+     * Yang diperiksa posisinya, bukan hanya keberadaannya: keempat bagiannya
+     * memang ada di halaman, jadi tanpa dibandingkan posisinya test ini akan
+     * lolos meski urutannya dibalik lagi.
+     */
+    public function test_baris_alat_tepat_di_bawah_kartu_aksi_dan_di_atas_tab(): void
+    {
+        $admin = $this->buatAdmin();
+        $this->buatMateri($admin, Materi::STATUS_DRAFT, 'Materi Mentah');
+
+        $halaman = $this->actingAs($admin)
+            ->get(route('admin.konten'))
+            ->assertOk()
+            ->baseResponse->getContent();
+
+        $posisi = [
+            'kartu aksi' => strpos($halaman, 'class="ad-konten-aksi"'),
+            'baris alat' => strpos($halaman, 'ad-konten-alat-kotak'),
+            'tab' => strpos($halaman, '<nav class="ad-konten-tab"'),
+            'daftar' => strpos($halaman, 'class="ad-konten-kotak"'),
+        ];
+
+        foreach ($posisi as $bagian => $tempat) {
+            $this->assertNotFalse($tempat, "Bagian {$bagian} tidak ada di halaman.");
+        }
+
+        $this->assertLessThan(
+            $posisi['baris alat'],
+            $posisi['kartu aksi'],
+            'Kartu aksi harus di atas baris alat.'
+        );
+
+        $this->assertLessThan($posisi['tab'], $posisi['baris alat'], 'Baris alat harus di atas tab.');
+
+        $this->assertLessThan($posisi['daftar'], $posisi['tab'], 'Tab harus di atas daftar.');
     }
 
     public function test_daftar_menampilkan_draft_dan_published_bersama(): void
@@ -174,81 +245,198 @@ class KontenPembelajaranTest extends TestCase
             ->assertSee('Materi Mentah')
             ->assertSee('Materi Sudah Tayang')
             ->assertSee('Draft')
-            ->assertSee('Dipublikasikan');
+            ->assertSee('Published');
     }
 
-    public function test_daftar_memakai_kartu_yang_sama_dengan_karya_saya(): void
+    public function test_daftar_berupa_baris_bukan_kartu_grid(): void
     {
         $admin = $this->buatAdmin();
         $this->buatMateri($admin, Materi::STATUS_DRAFT, 'Materi Mentah');
         $this->buatQuiz($admin, Quiz::STATUS_DRAFT, 'Quiz Mentah');
 
-        $grid = 'grid grid-cols-1 gap-5 min-w-0 sm:grid-cols-2 xl:grid-cols-3';
-
         $halaman = $this->actingAs($admin)->get(route('admin.konten'))->assertOk();
-        $halaman->assertSee($grid, false)
-            ->assertSee('kartu-materi karya-kartu', false);
 
-        // Grid sama persis dengan halaman Karya Saya. Kelas kartunya sama, tapi
-        // kartu admin menambah kartu-konten: di situ peregangan tombol
-        // "Lihat" dimatikan karena jumlahnya lima tombol, bukan tiga.
+        /*
+         * Daftar di halaman ini sengaja berupa BARIS, bukan grid kartu seperti
+         * "Karya Saya". Yang diuji bukan cuma kelas barisnya, tapi juga
+         * bahwa grid kartu lama benar-benar tidak dipakai lagi — kalau
+         * keduanya dibiarkan, isi yang sama akan muncul dua kali.
+         */
+        $halaman->assertSee('ad-konten-baris', false)
+            ->assertSee('ad-konten-daftar', false)
+            ->assertDontSee('kartu-konten', false)
+            ->assertDontSee('grid-cols-1 gap-5 min-w-0 sm:grid-cols-2 xl:grid-cols-3', false);
+
+        // "Karya Saya" milik pengguna tidak boleh ikut berubah.
         $karyaSaya = $this->actingAs($admin)
             ->get(route('user.karya-saya'))
             ->assertOk();
 
-        $karyaSaya->assertSee($grid, false)
-            ->assertSee('kartu-materi karya-kartu group min-w-0', false)
-            ->assertDontSee('kartu-konten', false);
+        $karyaSaya->assertSee('grid-cols-1 gap-5 min-w-0 sm:grid-cols-2 xl:grid-cols-3', false)
+            ->assertSee('kartu-materi karya-kartu', false)
+            ->assertDontSee('ad-konten-baris', false);
     }
 
-    public function test_kartu_memakai_kelas_status_dan_aksi_karya_saya(): void
+    public function test_baris_menampilkan_judul_metadata_tanggal_dan_status_tanpa_lencana_kelas(): void
     {
         $admin = $this->buatAdmin();
-        $this->buatMateri($admin, Materi::STATUS_DRAFT, 'Materi Mentah');
-        $this->buatQuiz($admin, Quiz::STATUS_PUBLISHED, 'Quiz Sudah Tayang');
+        $this->buatMateri($admin, Materi::STATUS_PUBLISHED, 'Pengenalan HTML');
 
         $halaman = $this->actingAs($admin)->get(route('admin.konten'))->assertOk();
 
-        // Kelas status, info, dan aksi semuanya milik kartu Karya Saya.
-        $halaman->assertSee('karya-status karya-status--', false)
-            ->assertSee('karya-pojok', false)
-            ->assertSee('kartu-materi__lencana', false)
-            ->assertSee('karya-info__butir', false)
-            ->assertSee('karya-aksi__tombol', false);
+        $halaman->assertSee('Pengenalan HTML')
+            ->assertSee('Materi')
+            ->assertSee('Bab')
+            ->assertSee('Published');
+
+        // Tanggal tampil sebagai elemen <time>, bukan teks bebas.
+        $isi = $halaman->baseResponse->getContent();
+
+        $this->assertStringContainsString('ad-konten-baris__tanggal', $isi);
+        $this->assertStringContainsString('<time datetime="', $isi);
+
+        /*
+         * Kelas tujuan sudah dihapus dari seluruh aplikasi, jadi baris tidak
+         * boleh lagi menaruh lencana kelas — termasuk kotak kosong untuk konten
+         * yang belum punya kelas, yang cuma menambah ruang kosong di kanan baris
+         * tanpa memberi informasi apa pun.
+         */
+        $this->assertStringNotContainsString('ad-konten-lencana', $isi);
+        $this->assertStringNotContainsString('Kelas belum ditentukan', $isi);
     }
 
-    public function test_kartu_aksi_admin_menambah_publish_dan_duplikat(): void
+    public function test_lencana_status_memakai_warna_terbit_dan_draft(): void
+    {
+        $admin = $this->buatAdmin();
+        $this->buatMateri($admin, Materi::STATUS_DRAFT, 'Materi Mentah');
+        $this->buatMateri($admin, Materi::STATUS_PUBLISHED, 'Materi Tayang');
+
+        $isi = $this->actingAs($admin)
+            ->get(route('admin.konten'))
+            ->assertOk()
+            ->baseResponse->getContent();
+
+        /*
+         * Dua warna status harus benar-benar berbeda. Kalau keduanya memakai
+         * kelas yang sama, admin tidak bisa membedakan draft dari yang sudah
+         * tayang hanya dari warna — dan warna itu justru pembeda utama di
+         * daftar ini.
+         */
+        $this->assertStringContainsString('ad-konten-status--terbit', $isi);
+        $this->assertStringContainsString('ad-konten-status--draft', $isi);
+    }
+
+    public function test_menu_aksi_sesuai_status_tidak_menampilkan_publish_dua_kali(): void
     {
         $admin = $this->buatAdmin();
         $materi = $this->buatMateri($admin, Materi::STATUS_DRAFT, 'Materi Mentah');
         $quiz = $this->buatQuiz($admin, Quiz::STATUS_PUBLISHED, 'Quiz Sudah Tayang');
 
-        // Kartu admin menandai dirinya supaya CSS bisa mematikan peregangan
-        // tombol "Lihat": lima tombol tidak bisa membagi ruang rata seperti
-        // tiga tombol di kartu Karya Saya, jadi tanpa ini "Lihat" melebar jadi
-        // oval panjang.
-        $this->actingAs($admin)
-            ->get(route('admin.konten'))
-            ->assertOk()
-            ->assertSee('kartu-materi karya-kartu kartu-konten group min-w-0', false);
-
-        // Draft: tombolnya "Publish".
+        /*
+         * Label aksinya dibaca dari data-konten-terbit-tombol, bukan dari teks
+         * tombol. Ini bukan detail teknis: label itu yang dipakai dialog
+         * konfirmasi, jadi kalau salah di sini, admin menekan "Batalkan
+         * Publikasi" tapi dialognya menawarkan "Publish Sekarang".
+         *
+         * Teks tombolnya sendiri tidak diuji lewat ">Publish<" karena Blade
+         * menuliskan label di baris sendiri, jadi spasi-newline membuat
+         * pola itu tidak pernah cocok.
+         */
         $halamanMateri = $this->actingAs($admin)->get(route('admin.konten'))->assertOk();
 
-        $halamanMateri->assertSee('Duplikat')
-            ->assertSee('Publish')
-            ->assertSee(route('admin.konten.materi.duplikat', $materi->slug), false)
-            ->assertSee(route('admin.konten.materi.publish', $materi->slug), false);
+        $halamanMateri->assertSee('data-konten-terbit-judul="Publish konten?"', false)
+            ->assertSee('data-konten-terbit-tombol="Publish Sekarang"', false)
+            ->assertDontSee('data-konten-terbit-judul="Batalkan publikasi?"', false);
 
-        // Sudah terbit: tombol yang sama jadi "Batalkan".
         $halamanQuiz = $this->actingAs($admin)
             ->get(route('admin.konten', ['tab' => 'quiz']))
             ->assertOk();
 
-        $halamanQuiz->assertSee('Duplikat')
-            ->assertSee('Batalkan')
-            ->assertSee(route('admin.konten.quiz.duplikat', $quiz->getKey()), false)
-            ->assertSee(route('admin.konten.quiz.publish', $quiz->getKey()), false);
+        $halamanQuiz->assertSee('data-konten-terbit-judul="Batalkan publikasi?"', false)
+            ->assertSee('data-konten-terbit-tombol="Batalkan Publikasi"', false)
+            ->assertDontSee('data-konten-terbit-judul="Publish konten?"', false);
+
+        /*
+         * Aksi lain tetap tersedia di kedua status.
+         *
+         * Yang diperiksa lewat URL tujuan, bukan teks tombolnya. Dua alasan:
+         * Blade menuliskan label di baris sendiri sehingga pola ">Lihat<"
+         * tidak pernah cocok, dan URL-nya justru yang benar-benar dipakai
+         * admin — kalau salah di situ, aksinya akan menuju tempat lain.
+         */
+        $halamanMateri->assertSee(route('admin.materi.show', $materi->slug), false)
+            ->assertSee(route('admin.konten.materi.edit', $materi->slug), false)
+            ->assertSee(route('admin.konten.materi.duplikat', $materi->slug), false)
+            ->assertSee(route('admin.konten.materi.publish', $materi->slug), false);
+
+        $halamanQuiz->assertSee(route('admin.quiz.show', $quiz), false)
+            ->assertSee(route('admin.konten.quiz.edit', $quiz), false)
+            ->assertSee(route('admin.konten.quiz.duplikat', $quiz), false)
+            ->assertSee(route('admin.konten.quiz.publish', $quiz), false);
+    }
+
+    public function test_menu_aksi_dibuka_dengan_tombol_titik_tiga(): void
+    {
+        $admin = $this->buatAdmin();
+        $this->buatMateri($admin, Materi::STATUS_DRAFT, 'Materi Mentah');
+
+        $isi = $this->actingAs($admin)
+            ->get(route('admin.konten'))
+            ->assertOk()
+            ->baseResponse->getContent();
+
+        /*
+         * Aksi tidak lagi berupa lima tombol yang selalu terbuka: semuanya
+         * masuk ke satu menu di kanan baris. Pemicunya harus punya
+         * aria-expanded supaya pembaca tahu keadaan terbuka atau tertutup, dan
+         * menunya harus disembunyikan lewat atribut hidden di markup supaya
+         * tidak pernah bisa difokus keyboard sebelum dibuka.
+         */
+        $this->assertStringContainsString('data-konten-menu-tombol', $isi);
+        $this->assertStringContainsString('aria-expanded="false"', $isi);
+        $this->assertStringContainsString('aria-haspopup="menu"', $isi);
+        $this->assertStringContainsString('data-konten-menu-isi', $isi);
+        $this->assertStringContainsString('role="menu"', $isi);
+    }
+
+    public function test_dialog_publish_bicara_tentang_batal_publikasi(): void
+    {
+        $admin = $this->buatAdmin();
+        $this->buatQuiz($admin, Quiz::STATUS_PUBLISHED, 'Quiz Sudah Tayang');
+
+        $isi = $this->actingAs($admin)
+            ->get(route('admin.konten', ['tab' => 'quiz']))
+            ->assertOk()
+            ->baseResponse->getContent();
+
+        /*
+         * Aksi publish punya dua arah. Kalau kalimat dialog-nya tidak ikut
+         * berubah, admin yang hanya ingin menarik konten akan menekan dialog
+         * bertuliskan "Publish konten?" dan tidak pernah diberi tahu bahwa ia
+         * sedang membatalkan.
+         */
+        $this->assertStringContainsString('data-konten-terbit-judul="Batalkan publikasi?"', $isi);
+        $this->assertStringContainsString('data-konten-terbit-tombol="Batalkan Publikasi"', $isi);
+        $this->assertStringContainsString('akan ditarik dari halaman pengguna', $isi);
+    }
+
+    public function test_dialog_hapus_lebih_jelas_untuk_konten_yang_sudah_tayang(): void
+    {
+        $admin = $this->buatAdmin();
+        $this->buatMateri($admin, Materi::STATUS_PUBLISHED, 'Materi Tayang');
+
+        $isi = $this->actingAs($admin)
+            ->get(route('admin.konten'))
+            ->assertOk()
+            ->baseResponse->getContent();
+
+        /*
+         * Menghapus materi yang sudah tayang lebih berbahaya daripada
+         * menghapus draft: yang ikut hilang bukan cuma barisnya di daftar
+         * admin, tapi juga halamannya di sisi pengguna. Kalau kalimatnya
+         * sama untuk keduanya, admin tidak tahu bedanya.
+         */
+        $this->assertStringContainsString('sudah tayang untuk pengguna', $isi);
     }
 
     public function test_kartu_menampilkan_kategori_dan_jumlah_bab_atau_soal(): void
@@ -406,27 +594,378 @@ class KontenPembelajaranTest extends TestCase
             ->assertDontSee('ad-alat-baris__simpul', false);
     }
 
-    public function test_seluruh_kontrol_filter_dalam_satu_baris_lurus(): void
+    public function test_baris_alat_memuat_cari_kategori_status_dan_urut(): void
     {
         $admin = $this->buatAdmin();
         $this->buatMateri($admin, Materi::STATUS_DRAFT, 'Materi Mentah');
 
         $halaman = $this->actingAs($admin)->get(route('admin.konten'))->assertOk();
 
-        // Kotak alatnya satu baris tidak membungkus, dan seluruh kontrolnya
-        // anak langsung dari satu wadah flex yang sama.
-        $halaman->assertSee('ad-alat-kotak ad-alat-kotak--konten', false)
-            ->assertSee('class="ad-alat-zeile"', false)
-            ->assertSee('class="ad-alat-zeile__hapus"', false);
+        /*
+         * Empat kontrol dalam satu wadah: kotak cari, Kategori, Status,
+         * dan Urutan. Semuanya terkirim lewat SATU form supaya "Terapkan"
+         * benar-benar menerapkan semua filter sekaligus — kalau terbagi dua
+         * form, satu tombol hanya berlaku untuk sebagian filter.
+         */
+        $halaman->assertSee('class="ad-konten-alat"', false)
+            ->assertSee('data-konten-saring', false)
+            ->assertSee('name="q"', false)
+            ->assertSee('name="kategori"', false)
+            ->assertSee('name="status"', false)
+            ->assertSee('name="urut"', false)
+            ->assertSee('Semua Kategori', false)
+            ->assertSee('Semua Status', false)
+            ->assertDontSee('Semua Kelas', false);
 
-        // Tidak ada lagi pembungkus .ad-alat-baris yang bikin controls turun
-        // ke baris kedua.
-        $halaman->assertDontSee('class="ad-alat-baris"', false)
-            ->assertDontSee('ad-alat-baris__aksi', false);
+        // "Hapus filter" form-nya sendiri, isinya cuma tab.
+        $halaman->assertSee('class="ad-konten-alat__aksi"', false)
+            ->assertSee('<input type="hidden" name="tab" value="materi">', false);
 
-        // Kedua form tetap satu baris: "Terapkan" di form yang membawa semua
-        // field, "Hapus filter" di form sendiri yang hanya membawa tab.
-        $halaman->assertSee('<input type="hidden" name="tab" value="materi">', false);
+        /*
+         * Select lain boleh langsung mengirim form, tapi kotak cari tidak:
+         * isinya belum selesai diketik, jadi mengirim tiap ketikan akan memuat
+         * ulang halaman berkali-kali.
+         */
+        $this->assertSame(3, substr_count($halaman->baseResponse->getContent(), 'data-konten-saring-pilih'));
+
+        /*
+         * Filter kelas sudah dihapus, jadi query ?kelas= di URL tidak boleh
+         * diam-diam ikut menyaring: kalau tidak, admin yang punya tautan lama
+         * akan melihat daftar kosong tanpa penjelasan apa pun.
+         */
+        $this->actingAs($admin)
+            ->get(route('admin.konten', ['kelas' => 'RPL 2']))
+            ->assertOk()
+            ->assertSee('Materi Mentah');
+    }
+
+    /**
+     * Isi aturan CSS tanpa blok komentar, supaya yang diperiksa benar-benar
+     * deklarasi dan bukan kalimat penjelas yang kebetulan menyebut properti
+     * yang sama.
+     */
+    private function tanpaKomentar(string $aturan): string
+    {
+        return (string) preg_replace('#/\*.*?\*/#s', '', $aturan);
+    }
+
+    /**
+     * Kotak cari dan semua filter harus sebaris, tidak ada yang turun.
+     *
+     * Yang diuji perilakunya, bukan warnanya:(search + tiga select +
+     * "Terapkan" + "Hapus filter" adalah satu baris dari 768px ke atas).
+     * Aturannya diperiksa lewat isi admin.css karena mustahil dibuktikan
+     * dari HTML — yang bisa dibuktikan dari HTML cuma elemennya ada.
+     */
+    public function test_baris_alat_tetap_satu_baris_di_tablet_dan_ke_atas(): void
+    {
+        $css = $this->tanpaKomentar(file_get_contents(resource_path('css/admin.css')));
+
+        $ambil = function (string $selector) use ($css): string {
+            preg_match('/'.preg_quote($selector, '/').'\s*\{([^}]*)\}/', $css, $cocok);
+
+            $this->assertNotEmpty($cocok, "Aturan untuk {$selector} tidak ada di admin.css.");
+
+            return $cocok[1];
+        };
+
+        /*
+         * Wadahnya GRID, bukan flex, dan grid tidak punya aturan yang bisa
+         * membungkus. Flex punya (flex-wrap), dan itulah akar masalahnya:
+         * flex memutuskan baris dari lebar konten SEBELUM dipendekkan,
+         * sehingga isian yang muat kalau dipendekkan tetap diturunkan.
+         */
+        $wadah = $ambil('.ad-konten-alat-kotak');
+
+        $this->assertStringContainsString('display: grid', $wadah);
+        $this->assertStringNotContainsString('flex-wrap', $wadah);
+
+        // Dua kolom: kolom 1 untuk cari + filter + Terapkan, kolom 2 untuk
+        // "Hapus filter". minmax(0, 1fr) yang membuat kolom 1 boleh menyempit
+        // sampai nol; 1fr biasa akan menyisakan ruang untuk isi terpanjang.
+        $this->assertStringContainsString('grid-template-columns: minmax(0, 1fr) auto', $wadah);
+
+        // Isi kolom 1 tidak boleh membungkus, dan anak-anaknya boleh
+        // menyempit di bawah lebar teksnya (min-width: 0) alih-alih
+        // mendorong baris lain turun.
+        $isi = $ambil('.ad-konten-alat');
+
+        $this->assertStringContainsString('flex-wrap: nowrap', $isi);
+
+        foreach (['.ad-konten-alat__cari', '.ad-konten-alat__field'] as $selector) {
+            $this->assertStringContainsString('min-width: 0', $ambil($selector));
+        }
+
+        /*
+         * Yang boleh turun ke baris berikutnya hanya baris simpul filter
+         * aktif, dan itu karena ia diberi grid-column penuh. Tanpa itu, ia
+         * akan ikut berdiri di baris yang sama dengan kontrolnya.
+         */
+        $this->assertStringContainsString(
+            'grid-column: 1 / -1',
+            $ambil('.ad-konten-alat-kotak > .ad-alat-baris__simpul')
+        );
+    }
+
+    /**
+     * Di ponsel, "Terapkan" dan "Hapus filter" harus sebaris.
+     *
+     * Dua-duanya form yang berbeda, dan sengaja tidak digabung: kalau satu
+     * form, tombol Hapus filter ikut mengirim nilai filter yang sedang aktif
+     * sehingga tidak menghapus apa pun. Karena itu di ponsel keduanya tidak
+     * bisa berbagi sel grid selama masing-masing masih jadi kotak — display:
+     * contents yang melarotten keduanya, lalu masing-masing tombolnya
+     * mengambil tiga dari enam kolom.
+     *
+     * Yang dijaga hanya aturan ponsel. Aturan desktop-nya sudah dikunci
+     * test sebelumnya dan tidak boleh ikut berubah oleh yang ini.
+     */
+    public function test_tombol_terapkan_dan_hapus_filter_sebaris_di_ponsel(): void
+    {
+        $css = $this->tanpaKomentar(file_get_contents(resource_path('css/admin.css')));
+
+        // File ini punya beberapa blok "@media (max-width: 767px)", jadi yang
+        // dicari adalah blok yang benar-benar mengatur baris alat Konten —
+        // bukan blok pertama yang kebetulan memuat lebar yang sama.
+        preg_match_all(
+            '/@media \(max-width: 767px\)\s*\{((?:[^{}]|\{[^{}]*\})*)\}/',
+            $css,
+            $blok
+        );
+
+        $ponsel = '';
+
+        foreach ($blok[1] as $isi) {
+            if (str_contains($isi, '.ad-konten-alat-kotak')) {
+                $ponsel = $isi;
+
+                break;
+            }
+        }
+
+        $this->assertNotSame('', $ponsel, 'Aturan ponsel untuk baris alat tidak ada di admin.css.');
+
+        // Enam kolom: tiga untuk tiap tombol, jadi keduanya berdampingan dan
+        // sama lebar.
+        $this->assertStringContainsString('grid-template-columns: repeat(6, minmax(0, 1fr))', $ponsel);
+        $this->assertStringContainsString('grid-column: span 3', $ponsel);
+
+        /*
+         *(display: contents) yang membuat kedua tombol bisa jadi sel grid
+         * yang sama. Tanpa itu, masing-masing form tetap jadi kotak penuh di
+         * barisnya sendiri dan "Hapus filter" turun ke baris keempat.
+         */
+        $this->assertMatchesRegularExpression(
+            '/\.ad-konten-alat,\s*\.ad-konten-alat__aksi\s*\{\s*display: contents;/',
+            $ponsel
+        );
+
+        // Kotak cari tetap penuh, tiga select tetap berbagi satu baris.
+        $this->assertStringContainsString('grid-column: span 6', $ponsel);
+        $this->assertStringContainsString('grid-column: span 2', $ponsel);
+    }
+
+    /**
+     * Warna di Konten Pembelajaran: yang berwarna, yang putih, dan yang
+     * sepadan.
+     *
+     * Dua kartu aksi berwarna dan berbeda: hijau untuk materi, ungu untuk
+     * kuis. Dua permukaan lain sengaja dibiarkan tenang — kotak daftar
+     * lavender karena isinya deretan baris, dan baris alat (cari + filter)
+     * putih karena isinya kontrol yang sudah berwarna sendiri lewat isiannya.
+     * Menaruh baris alat di atas kartu berwarna membuat halaman ini
+     * berlapis-lapis warna tanpa menambah informasi apa pun.
+     *
+     * Yang dijaga di sini bukan nameof warnanya, tapi tiga sifatnya: tidak
+     * ada yang berubah diam-diam, tidak ada dua permukaan berdekatan yang
+     * sama, dan tombolnya sepadan dengan kartunya — tombol ungu di atas
+     * kartu hijau justru menghilangkan pembedaan yang dibawa warnanya.
+     */
+    public function test_warna_konten_bersesadan_dan_tidak_bertumpuk(): void
+    {
+        $css = $this->tanpaKomentar(file_get_contents(resource_path('css/admin.css')));
+
+        $ambil = function (string $selector) use ($css): string {
+            /*
+             * Spasi di selector diganti \s+ karena di admin.css satu daftar
+             * selector boleh ditulis melintasi baris — dan preg_quote membuat
+             * pola itu tidak bisa mencocokkan baris baru sama sekali.
+             */
+            $pola = '/'.str_replace(' ', '\s+', preg_quote($selector, '/')).'\s*\{([^}]*)\}/';
+
+            preg_match($pola, $css, $cocok);
+
+            $this->assertNotEmpty($cocok, "Aturan untuk {$selector} tidak ada di admin.css.");
+
+            return $cocok[1];
+        };
+
+        $warna = function (string $selector) use ($ambil): string {
+            preg_match('/background-color:\s*(var\([^)]*\))/', $ambil($selector), $cocok);
+
+            $this->assertNotEmpty($cocok, "Aturan untuk {$selector} tidak punya background-color.");
+
+            return $cocok[1];
+        };
+
+        // Hijau untuk materi, ungu untuk kuis: dua kartu tidak boleh sama.
+        $this->assertSame('var(--ad-cucian-sukses)', $warna('.ad-konten-aksi__kartu--materi'));
+        $this->assertSame('var(--ad-cucian-ungu)', $warna('.ad-konten-aksi__kartu--kuis'));
+
+        // Kotak daftar lavender: paling tenang, supaya judul barisnya terbaca.
+        $this->assertSame('var(--ad-permukaan-lavender)', $warna('.ad-konten-kotak'));
+
+        /*
+         * Baris alat putih. Dinyatakan eksplisit, bukan dengan/color::white, dan
+         * gradasi .ad-kartu harus tetap dimatikan: gradasi itu digambar DI
+         * ATAS background-color, jadi background-color saja tidak cukup
+         * menentukan apa yang benar-benar terlihat.
+         */
+        $this->assertSame('var(--ad-permukaan)', $warna('.ad-konten-alat-kotak'));
+        $this->assertStringContainsString('background-image: none', $ambil('.ad-konten-alat-kotak'));
+
+        /*
+         * Kotak ikon harus putih di kedua kartu. Kalau ikut warna kartunya,
+         * ikon ungu di atas kartu kuis yang juga ungu lenyap tidak terlihat.
+         */
+        foreach (['--materi', '--kuis'] as $modifier) {
+            $this->assertStringContainsString(
+                'background-color: var(--ad-white)',
+                $ambil('.ad-konten-aksi__kartu'.$modifier.' .ad-konten-aksi__ikon')
+            );
+        }
+
+        /*
+         * Hover baris tidak boleh sama dengan wadahnya: begitu kotak daftar
+         * punya warna sendiri, hover yang sama berarti tidak terlihat sama
+         * sekali dan admin kehilangan tanda tetikus sedang lewat baris mana.
+         */
+        $hover = $ambil('.ad-konten-baris:hover, .ad-konten-baris:focus-within');
+
+        $this->assertStringContainsString('background-color: var(--ad-cucian-ungu)', $hover);
+        $this->assertNotSame($warna('.ad-konten-kotak'), $hover);
+
+        /*
+         * Menu aksi sengaja tetap putih: menayang di atas kartu, jadi
+         * "yang lebih tinggi" harus lebih terang, bukan sewarna. Kalau ikut
+         * mengambil warna kartu, popup-nya hilang di dalam kartu.
+         */
+        $this->assertSame('var(--ad-permukaan)', $warna('.ad-konten-menu__isi'));
+    }
+
+    /**
+     * Tombol "Tambah Materi" hijau, "Tambah Kuis" ungu.
+     *
+     * Tombolnya sepadan dengan kartunya. Dua tombol ungu di atas kartu hijau
+     * dan kartu ungu menghilangkan pembedaan yang dibawa warna kartu, jadi
+     * tombolnya ikut membedakan — dan karena memakai varian .ad-tombol yang
+     * sudah ada, warnanya ikut mode gelap tanpa aturan baru.
+     */
+    public function test_tombol_tambah_materi_hijau_dan_tambah_kuis_ungu(): void
+    {
+        $admin = $this->buatAdmin();
+        $this->buatPelajaran();
+
+        $halaman = $this->actingAs($admin)
+            ->get(route('admin.konten'))
+            ->assertOk()
+            ->baseResponse->getContent();
+
+        // Dicocokkan ke jalur URL, bukan ke nama route: yang benar-benar ada di
+        // HTML adalah hasil route(), yaitu "/admin/konten/materi/tambah".
+        preg_match('/<a[^>]*admin\/konten\/materi\/tambah[^>]*class="([^"]*)"/', $halaman, $materi);
+        preg_match('/<a[^>]*admin\/konten\/quiz\/tambah[^>]*class="([^"]*)"/', $halaman, $kuis);
+
+        $this->assertNotEmpty($materi, 'Tombol Tambah Materi tidak ada di halaman.');
+        $this->assertNotEmpty($kuis, 'Tombol Tambah Kuis tidak ada di halaman.');
+
+        $this->assertStringContainsString('ad-tombol--sukses', $materi[1]);
+        $this->assertStringContainsString('ad-tombol--utama', $kuis[1]);
+
+        // Varian hijau dan ungu harus benar-benar beda, kalau tidak tukar di
+        // view cuma kosmetik.
+        $this->assertStringNotContainsString('ad-tombol--utama', $materi[1]);
+
+        // Varian yang dipakai harus benar-benar ada di CSS, bukan class yang
+        // tidak di_style sehingga tombolnya jadi tanpa warna.
+        $css = $this->tanpaKomentar(file_get_contents(resource_path('css/admin.css')));
+
+        foreach (['.ad-tombol--sukses' => 'var(--ad-sukses)', '.ad-tombol--utama' => 'var(--ad-teks-ungu-terang)'] as $varian => $warna) {
+            preg_match('/'.preg_quote($varian, '/').'\s*\{([^}]*)\}/', $css, $cocok);
+
+            $this->assertNotEmpty($cocok, "Aturan untuk {$varian} tidak ada di admin.css.");
+            $this->assertStringContainsString("background-color: {$warna}", $cocok[1]);
+        }
+    }
+
+    public function test_placeholder_pencarian_ikut_tab(): void
+    {
+        $admin = $this->buatAdmin();
+
+        $this->actingAs($admin)
+            ->get(route('admin.konten'))
+            ->assertOk()
+            ->assertSee('Cari materi...', false);
+
+        $this->actingAs($admin)
+            ->get(route('admin.konten', ['tab' => 'quiz']))
+            ->assertOk()
+            ->assertSee('Cari kuis...', false);
+    }
+
+    public function test_urutan_az_dan_za_tersedia(): void
+    {
+        $admin = $this->buatAdmin();
+
+        $this->actingAs($admin)
+            ->get(route('admin.konten'))
+            ->assertOk()
+            ->assertSee('A–Z', false)
+            ->assertSee('Z–A', false);
+    }
+
+    public function test_kelas_tujuan_sudah_dihapus_dari_form_materi_dan_quiz(): void
+    {
+        $admin = $this->buatAdmin();
+        $pelajaran = $this->buatPelajaran();
+
+        foreach ([
+            route('admin.konten.materi.tambah'),
+            route('admin.konten.quiz.tambah'),
+        ] as $alamat) {
+            $isi = $this->actingAs($admin)->get($alamat)->assertOk()->baseResponse->getContent();
+
+            $this->assertStringNotContainsString('name="kelas"', $isi);
+            $this->assertStringNotContainsString('Kelas Tujuan', $isi);
+        }
+
+        /*
+         * Field-nya tidak lagi ada di form Request mana pun, jadi request lama
+         * yang masih mengirim "kelas" harus tetap bisa disimpan — bukan ditolak
+         * karena tidak dikenal, dan bukan diam-diam disimpan ke kolom yang
+         * sudah tidak ada.
+         */
+        $this->actingAs($admin)
+            ->post(route('admin.konten.materi.tambah.store'), $this->dataMateri($pelajaran, [
+                'kelas' => 'RPL 2',
+            ]))
+            ->assertSessionHasNoErrors();
+
+        $this->actingAs($admin)
+            ->post(route('admin.konten.quiz.tambah.store'), $this->dataQuiz($pelajaran, [
+                'kelas' => 'RPL 3',
+            ]))
+            ->assertSessionHasNoErrors();
+
+        $this->assertFalse(
+            Schema::hasColumn('tb_materi', 'kelas'),
+            'Kolom kelas harus sudah dihapus dari tb_materi.'
+        );
+
+        $this->assertFalse(
+            Schema::hasColumn('tb_quiz', 'kelas'),
+            'Kolom kelas harus sudah dihapus dari tb_quiz.'
+        );
     }
 
     public function test_tab_quiz_menampilkan_daftar_quiz(): void
@@ -470,7 +1009,7 @@ class KontenPembelajaranTest extends TestCase
 
     /* ================= Halaman form ================= */
 
-    public function test_halaman_tambah_materi_memakai_dua_tahap_dan_komponen_pemilik(): void
+    public function test_halaman_tambah_materi_mengikuti_form_pemilik_dan_tanpa_tahapan(): void
     {
         $admin = $this->buatAdmin();
         $this->buatPelajaran();
@@ -479,24 +1018,51 @@ class KontenPembelajaranTest extends TestCase
             ->get(route('admin.konten.materi.tambah'))
             ->assertOk()
             ->assertSee('Tambah Materi')
-            ->assertSee('Informasi Dasar')
-            ->assertSee('Isi Materi')
             ->assertSee('Simpan Draft')
             ->assertSee('Publish Sekarang')
             ->baseResponse->getContent();
 
-        // Komponen yang dipakai form milik pengguna ikut terender, jadi isian
-        // dan editornya bukan versi lain.
+        /*
+         * Form admin memakai komponen yang sama persis dengan form pemilik
+         * (x-materi.informasi, .bab, .editor) dan JavaScript yang sama
+         * (resources/js/materi-tambah.js), jadi isian dan editornya bukan
+         * versi lain. Yang tidak ada lagi adalah tahap: form ini satu halaman
+         * panjang, sama seperti form pemilik.
+         */
         $this->assertStringContainsString('data-tambah-materi', $halaman);
         $this->assertStringContainsString('data-editor', $halaman);
         $this->assertStringContainsString('data-bab-list', $halaman);
         $this->assertStringContainsString('name="isi"', $halaman);
 
+        /*
+         * Baris tombolnya kartu biasa di akhir form, sama seperti baris tombol
+         * di form Quiz milik admin: bukan baris lengket yang menyala dan mati
+         * saat form digulir. Kalau data-action-bar dan penandanya muncul lagi
+         * di sini, form ini akan kembali bergantung pada menggulir halaman
+         * sebelum tombol simpannya terlihat.
+         */
+        $this->assertStringContainsString('panel-aksi', $halaman);
+        $this->assertStringNotContainsString('data-action-bar', $halaman);
+
+        // Tidak ada wizard: panel tahap dan steppernya sudah dihapus.
+        $this->assertStringNotContainsString('data-konten-tahap', $halaman);
+        $this->assertStringNotContainsString('data-konten-stepper', $halaman);
+        $this->assertStringNotContainsString('data-konten-lanjut', $halaman);
+
         // Tidak ada saklar pengajuan persetujuan di area admin.
         $this->assertStringNotContainsString('data-publikasikan', $halaman);
+
+        /*
+         * Isian form admin harus sama persis dengan form pemilik — termasuk
+         * tidak adanya field yang dulu hanya ada di area admin. Kalau kelas
+         * tujuan muncul lagi di sini, form admin dan form pemilik akan
+         * berbeda isi dan pemeriksaan keduanya bisa menyimpang.
+         */
+        $this->assertStringNotContainsString('name="kelas"', $halaman);
+        $this->assertStringNotContainsString('Kelas Tujuan', $halaman);
     }
 
-    public function test_halaman_tambah_quiz_memakai_dua_tahap_tanpa_langkah_pengaturan(): void
+    public function test_halaman_tambah_quiz_memakai_tiga_tahap_seperti_form_pemilik(): void
     {
         $admin = $this->buatAdmin();
         $this->buatPelajaran();
@@ -506,6 +1072,7 @@ class KontenPembelajaranTest extends TestCase
             ->assertOk()
             ->assertSee('Tambah Quiz')
             ->assertSee('Buat Soal')
+            ->assertSee('Pengaturan')
             ->assertSee('Simpan Draft')
             ->assertSee('Publish Sekarang')
             ->baseResponse->getContent();
@@ -514,15 +1081,41 @@ class KontenPembelajaranTest extends TestCase
         $this->assertStringContainsString('data-builder-daftar', $halaman);
         $this->assertStringContainsString('data-builder-input', $halaman);
 
-        // Hanya ada dua panel langkah, dan tidak ada blok pengaturan.
-        $this->assertSame(2, substr_count($halaman, 'data-wizard-panel="'));
-        $this->assertSame(1, substr_count($halaman, 'data-langkah-total="2"'));
-        $this->assertStringNotContainsString('data-wizard-approval-area', $halaman);
-        $this->assertStringNotContainsString('data-wizard-kode-area', $halaman);
+        /*
+         * Tiga panel langkah, sama seperti form Quiz milik pengguna, dan
+         * langkah Pengaturan ikut membawa durasi serta saklar jawaban.
+         */
+        $this->assertSame(3, substr_count($halaman, 'data-wizard-panel="'));
 
-        // Visibilitas terkunci ke public supaya kode akses tidak pernah diisi.
+        $this->assertStringContainsString('name="durasi"', $halaman);
+
+        /*
+         * Dua isian milik alur pemilik tidak dirender di sini: blok pengajuan
+         * dan pilihan cara publikasi beserta kolom kode aksesnya. Konten dari
+         * area admin selalu terbit untuk semua pengguna, jadi tidak ada kode
+         * yang perlu dibagikan; field "visibilitas" tetap dikirim sebagai
+         * "public" supaya aturan validasinya sama dengan form pemilik.
+         */
+        $this->assertStringNotContainsString('data-wizard-approval-area', $halaman);
+        $this->assertStringNotContainsString('name="publikasikan"', $halaman);
+        $this->assertStringNotContainsString('data-wizard-kode-area', $halaman);
+        $this->assertStringNotContainsString('name="kode_akses"', $halaman);
+        $this->assertStringNotContainsString('Gunakan Kode', $halaman);
         $this->assertStringContainsString('name="visibilitas" value="public"', $halaman);
+
+        // Field "aksi" dan tombol terbitan milik ruang kerja admin.
         $this->assertStringContainsString('data-konten-aksi', $halaman);
+        $this->assertStringContainsString('data-wizard-terbit', $halaman);
+        $this->assertStringNotContainsString('data-wizard-simpan', $halaman);
+
+        /*
+         * Isian form admin harus sama persis dengan form Quiz milik pengguna:
+         * tidak ada field admin saja. Slot komponen langkah 1 pun tidak lagi
+         * dipakai, karena satu-satunya isian yang pernah masuk ke sana sudah
+         * dihapus.
+         */
+        $this->assertStringNotContainsString('name="kelas"', $halaman);
+        $this->assertStringNotContainsString('Kelas Tujuan', $halaman);
     }
 
     public function test_halaman_edit_membuka_konten_yang_sudah_ada(): void
@@ -935,6 +1528,94 @@ class KontenPembelajaranTest extends TestCase
 
         $this->assertSame(Quiz::STATUS_PUBLISHED, $quiz->refresh()->status);
         $this->assertSame(1, $this->notifikasiPengguna()->count());
+    }
+
+    /**
+     * Dari menu ini tidak ada kode yang perlu dibagikan, jadi quiz yang
+     * dibuat lewat form Konten Pembelajaran selalu tayang untuk semua pengguna
+     * — termasuk kalau kiriman luar form masih menyebut cara publikasi lain.
+     */
+    public function test_quiz_dari_form_admin_selalu_disimpan_sebagai_publik(): void
+    {
+        $admin = $this->buatAdmin();
+        $pengguna = $this->buatPengguna();
+        $pelajaran = $this->buatPelajaran();
+
+        /*
+         * Field "visibilitas" dan "kode_akses" sudah tidak dirender di form ini,
+         * jadi tidak ada yang bisa mengisinya lewat tombol. Kiriman seperti di
+         * bawah ini tetap harus berakhir sebagai quiz publik, bukan quiz privat
+         * yang tidak ada kodenya.
+         */
+        $this->actingAs($admin)
+            ->post(route('admin.konten.quiz.tambah.store'), $this->dataQuiz($pelajaran, [
+                'visibilitas' => Quiz::VISIBILITAS_PRIVAT,
+                'kode_akses' => 'K7F3P9',
+                'aksi' => 'publish',
+            ]))
+            ->assertSessionHasNoErrors()
+            ->assertRedirect(route('admin.konten', ['tab' => 'quiz']));
+
+        $quiz = Quiz::query()->sole();
+
+        $this->assertSame(Quiz::VISIBILITAS_PUBLIK, $quiz->visibilitas);
+        $this->assertNull($quiz->kode_akses);
+        $this->assertSame(Quiz::STATUS_PUBLISHED, $quiz->status);
+        $this->assertSame(1, $this->notifikasiPengguna()->count());
+
+        $this->actingAs($pengguna)
+            ->get(route('user.quiz'))
+            ->assertOk()
+            ->assertSee('Quiz Dari Form');
+    }
+
+    /**
+     * Quiz yang dibuat sebelum pilihan cara publikasi dihapus masih bisa
+     * private di baris. Satu kali disunting lewat form ini, isiannya ikut
+     * dikembalikan ke "public" supaya tidak menggantung sebagai quiz yang
+     * tidak bisa dibagikan.
+     */
+    public function test_quiz_lama_yang_memakai_kode_kembali_publik_setelah_disunting(): void
+    {
+        $admin = $this->buatAdmin();
+        $pelajaran = $this->buatPelajaran();
+        $quiz = $this->buatQuiz($admin, Quiz::STATUS_PUBLISHED, 'Quiz Lama');
+        $quiz->forceFill([
+            'visibilitas' => Quiz::VISIBILITAS_PRIVAT,
+            'kode_akses' => 'LAMA99',
+        ])->save();
+        $quiz->terbitkan();
+
+        $this->actingAs($admin)
+            ->put(route('admin.konten.quiz.update', $quiz), $this->dataQuiz($pelajaran))
+            ->assertSessionHasNoErrors();
+
+        $quiz->refresh();
+
+        $this->assertSame(Quiz::VISIBILITAS_PUBLIK, $quiz->visibilitas);
+        $this->assertNull($quiz->kode_akses);
+        $this->assertSame(Quiz::STATUS_PUBLISHED, $quiz->status);
+    }
+
+    /**
+     * Penjaga terakhir untuk quiz mode kode yang belum sempat disunting:
+     * menerbitkannya dari daftar akan menayangkannya ke semua orang, karena
+     * halaman Quiz tidak memeriksa cara aksesnya.
+     */
+    public function test_terbitan_quiz_lama_yang_memakai_kode_ditolak(): void
+    {
+        $admin = $this->buatAdmin();
+        $this->buatPengguna();
+        $quiz = $this->buatQuiz($admin, Quiz::STATUS_DRAFT, 'Quiz Kode');
+        $quiz->forceFill(['visibilitas' => Quiz::VISIBILITAS_PRIVAT, 'kode_akses' => 'KODE1'])->save();
+
+        $this->actingAs($admin)
+            ->post(route('admin.konten.quiz.publish', $quiz))
+            ->assertRedirect(route('admin.konten', ['tab' => 'quiz']))
+            ->assertSessionHas('sukses', 'Quiz ini masih memakai kode, jadi tidak bisa diterbitkan.');
+
+        $this->assertSame(Quiz::STATUS_DRAFT, $quiz->refresh()->status);
+        $this->assertSame(0, $this->notifikasiPengguna()->count());
     }
 
     public function test_quiz_duplikat_menyalin_soalnya_dan_tetap_draft(): void

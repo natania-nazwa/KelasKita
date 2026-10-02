@@ -53,8 +53,10 @@
 
             <div class="mt-2 flex flex-wrap items-center justify-between gap-2">
                 <p class="text-[11px] leading-relaxed text-muted">
-                    Klik bab untuk mengedit isinya. Gunakan tombol <span class="font-bold text-ungu">⋮</span>
-                    untuk mengganti nama, menduplikat, mengubah urutan, atau menghapus bab.
+                    Tekan <span class="font-bold text-ungu">+ Tambah Bab</span> untuk mulai menulis isi
+                    materi. Setelah itu, klik bab untuk mengedit isinya, dan gunakan tombol
+                    <span class="font-bold text-ungu">⋮</span> untuk mengganti nama, menduplikat,
+                    mengubah urutan, atau menghapus bab.
                 </p>
 
                 <span data-bab-jumlah

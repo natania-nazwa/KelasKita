@@ -7,7 +7,6 @@ use App\Models\Materi;
 use App\Models\Pelajaran;
 use App\Models\Quiz;
 use App\Support\DaftarKonten;
-use App\Support\KelasKonten;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
@@ -26,7 +25,7 @@ use Throwable;
  *   - "Verifikasi" adalah antrean keputusan untuk karya pengguna: setujui
  *     atau tolak.
  *   - "Konten Pembelajaran" (halaman ini) adalah ruang kerja admin sendiri:
- *     tambah, ubah, hapus, duplikat, terbitkan, dan batalkan terbitan.
+ *     tambah, ubah, hapus, duplikat, terbitkan, dan batalkan terbitkan.
  *
  * Yang tampil di sini hanya karya admin yang sedang login, bukan seluruh isi
  * database: sama seperti "Karya Saya" milik pengguna, daftar ini soal milik
@@ -34,8 +33,8 @@ use Throwable;
  * lewat katalog Materi / Quiz (karya yang sudah tayang).
  *
  * Daftar kontennya berupa baris, bukan kartu besar, supaya admin bisa
- * memindai judul, kelas, dan statusnya tanpa mengejar dekorasi. Barisnya
- * dibangun oleh DaftarKonten, yang juga sudah memasang tautan aksinya.
+ * memindai judul dan statusnya tanpa mengejar dekorasi. Barisnya dibangun oleh
+ * DaftarKonten, yang juga sudah memasang tautan aksinya.
  *
  * Karena admin di aplikasi ini satu role dan dia sendiri yang membuat
  * kontennya, tidak ada tahap persetujuan di sini. Status yang dipakai tetap
@@ -110,7 +109,6 @@ class KontenController extends Controller
         $kataKunci = trim((string) $request->query('q'));
         $status = $this->statusTerpilih($request->query('status'));
         $kategori = trim((string) $request->query('kategori'));
-        $kelas = trim((string) $request->query('kelas'));
         $urut = $this->urutanTerpilih($request->query('urut'));
         $admin = $request->user();
 
@@ -127,7 +125,7 @@ class KontenController extends Controller
         $paginasi = null;
 
         try {
-            $paginasi = $this->daftar($tab, $admin?->getKey(), $kataKunci, $status, $kategori, $kelas, $urut);
+            $paginasi = $this->daftar($tab, $admin?->getKey(), $kataKunci, $status, $kategori, $urut);
             $daftar = collect(DaftarKonten::petikan($paginasi->items()));
         } catch (Throwable $e) {
             report($e);
@@ -143,7 +141,6 @@ class KontenController extends Controller
             'kataKunci' => $kataKunci,
             'statusAktif' => $status,
             'kategoriAktif' => $kategori,
-            'kelasAktif' => $kelas,
             'urutAktif' => $urut,
             'pilihanUrut' => [
                 'terbaru' => 'Terbaru',
@@ -153,7 +150,6 @@ class KontenController extends Controller
             ],
             'pilihanStatus' => $this->pilihanStatus(),
             'daftarKategori' => Pelajaran::query()->aktif()->orderBy('nama')->get(),
-            'daftarKelas' => KelasKonten::pilihan(),
             'jumlahMateri' => Materi::query()->milik($admin?->getKey())->count(),
             'jumlahQuiz' => Quiz::query()->milik($admin?->getKey())->count(),
         ]);
@@ -232,7 +228,6 @@ class KontenController extends Controller
         string $kataKunci,
         string $status,
         string $kategori,
-        string $kelas,
         string $urut
     ): LengthAwarePaginator {
         $model = $tab === self::TAB_QUIZ ? Quiz::class : Materi::class;
@@ -246,7 +241,6 @@ class KontenController extends Controller
             ]))
             ->when($status !== '', fn (Builder $query) => $query->where('status', $status))
             ->when($kategori !== '', fn (Builder $query) => $query->kategori($kategori))
-            ->when($kelas !== '', fn (Builder $query) => $query->kelas($kelas))
             ->when(
                 $kataKunci !== '',
                 fn (Builder $query) => $query->where(
@@ -278,7 +272,6 @@ class KontenController extends Controller
                     $kolom === 'nama',
                     fn (Builder $query) => $query->orWhere('isi', $operator, $pola)
                 )
-                ->orWhere('kelas', $operator, $pola)
                 ->orWhereHas('pelajaran', fn (Builder $pelajaran) => $pelajaran->where('nama', $operator, $pola));
         });
     }

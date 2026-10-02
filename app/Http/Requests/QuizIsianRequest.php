@@ -143,16 +143,6 @@ class QuizIsianRequest extends FormRequest
             'deskripsi' => ['required', 'string', 'max:220'],
             'tingkat_kesulitan' => ['required', Rule::in(Quiz::tingkatKesulitan())],
 
-            /*
-             * Kelas tujuan, diisi dari form Konten Pembelajaran di area admin.
-             *
-             * Nullable dan tidak required, dengan alasan yang sama seperti
-             * MateriIsianRequest: form milik pengguna tidak punya field ini,
-             * jadi quiz yang dibuat pengguna tetap boleh terbit tanpa kelas
-             * dan kolomnya tidak ikut tersentuh saat diedit dari sisi itu.
-             */
-            'kelas' => ['nullable', 'string', 'max:60'],
-
             'thumbnail' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:'.self::MAKSIMAL_THUMBNAIL],
 
             'visibilitas' => ['required', Rule::in([Quiz::VISIBILITAS_PUBLIK, Quiz::VISIBILITAS_PRIVAT])],
@@ -378,7 +368,6 @@ class QuizIsianRequest extends FormRequest
             'deskripsi.required' => 'Deskripsi wajib diisi.',
             'deskripsi.max' => 'Deskripsi maksimal 220 karakter.',
             'tingkat_kesulitan.in' => 'Tingkat kesulitan tidak dikenal.',
-            'kelas.max' => 'Nama kelas maksimal 60 karakter.',
             'thumbnail.image' => 'Thumbnail harus berupa gambar.',
             'thumbnail.mimes' => 'Format thumbnail harus JPG, PNG, atau WEBP.',
             'thumbnail.max' => 'Ukuran thumbnail maksimal 5MB.',
