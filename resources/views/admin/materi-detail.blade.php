@@ -63,6 +63,24 @@
     </div>
 
     {{-- =====================
+         PESAN
+
+         Muncul di sini kalau admin baru saja menyimpan perubahan dari form
+         edit, karena halaman detail adalah tujuan balik setelah simpan
+         (Admin\MateriKelolaController::update). Tanpa blok ini flash-nya
+         hilang begitu saja: redirect-nya memang ke sini, bukan ke daftar.
+    ====================== --}}
+    @if (session('sukses'))
+        <div class="ad-seksi ad-alert ad-alert--sukses" role="status">
+            <span class="ad-alert__ikon" aria-hidden="true">
+                <x-admin.ikon nama="tanda-centang" ukuran="w-3.5 h-3.5" :tebal="2.6" />
+            </span>
+
+            <p class="min-w-0 font-medium">{{ session('sukses') }}</p>
+        </div>
+    @endif
+
+    {{-- =====================
          KEPALA MATERI
     ====================== --}}
     <div class="ad-seksi">
