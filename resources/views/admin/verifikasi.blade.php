@@ -94,6 +94,54 @@
 
         $dari = $paginasi->firstItem();
         $sampai = $paginasi->lastItem();
+
+        /*
+         * Isi pesan daftar kosong.
+         *
+         * Satu pesan untuk semua kondisi pernah membuat tab "Disetujui"
+         * yang kosong tetap mengatakan "tidak ada ... yang menunggu
+         * verifikasi", dan pencarian yang tidak cocok terbaca seperti
+         * "semua sudah diperiksa". Karena itu kalimatnya dipilih sesuai
+         * keadaannya: halaman di luar rentang dulu, lalu pencarian yang
+         * tidak cocok, baru status tab yang sedang dibuka. Hanya kata
+         * yang berubah; komponen, kelas, dan susunannya tetap sama.
+         */
+        $kosong = ($paginasi->total() > 0 && count($daftar) === 0)
+            ? [
+                'judul' => 'Halaman ini kosong',
+                'teks' => 'Kontennya ada di halaman lain. Buka tab lain atau ubah filter untuk kembali ke halaman pertama.',
+            ]
+            : (filled($kataKunci)
+                ? [
+                    'judul' => 'Tidak ditemukan',
+                    'teks' => 'Tidak ada konten yang cocok dengan pencarian Anda.',
+                ]
+                : ($statusAktif === 'menunggu'
+                    ? [
+                        'judul' => 'Semua sudah diperiksa',
+                        'teks' => 'Saat ini tidak ada materi atau quiz yang menunggu verifikasi.',
+                    ]
+                    : [
+                        'judul' => $statusAktif === 'disetujui' ? 'Belum ada yang disetujui' : 'Tidak ada yang ditolak',
+                        'teks' => 'Saat ini tidak ada materi atau quiz berstatus '.$pilihanStatus[$statusAktif].'.',
+                    ]));
+
+        /*
+         * URL halaman ini sendiri, untuk field "kembali_url" pada dua
+         * dialog keputusan.
+         *
+         * Setelah menyetujui atau menolak, admin dilempar ke URL ini supaya
+         * tab, pencarian, kategori, dan halaman yang tadi dibuka tidak
+         * hilang. Tautan baris "pilih" sengaja tidak dibawa: konten yang
+         * barusan diputuskan bukan lagi isi tab yang sedang dibuka.
+         */
+        $tautanKembali = route('admin.verifikasi', array_filter([
+            'jenis' => $jenisAktif,
+            'status' => $statusAktif,
+            'q' => $kataKunci,
+            'kategori' => $kategoriAktif,
+            'page' => $paginasi->currentPage() > 1 ? $paginasi->currentPage() : null,
+        ], fn (mixed $nilai): bool => filled($nilai)));
     @endphp
 
     {{--
@@ -285,8 +333,7 @@
 
                 <div class="ad-vf-daftar__badan" data-vf-daftar>
                     @if ($daftar === [])
-                        <x-admin.kosong ikon="buku-centang" judul="Semua sudah diperiksa"
-                            teks="Saat ini tidak ada materi atau quiz yang menunggu verifikasi." />
+                        <x-admin.kosong ikon="buku-centang" :judul="$kosong['judul']" :teks="$kosong['teks']" />
                     @else
                         @foreach ($daftar as $baris)
                             @php
@@ -431,6 +478,7 @@
 
                     <input type="hidden" name="status" value="{{ \App\Models\Materi::STATUS_PENDING }}">
                     <input type="hidden" name="kembali" value="admin.verifikasi">
+                    <input type="hidden" name="kembali_url" value="{{ $tautanKembali }}">
                 </form>
             </div>
         </div>
@@ -499,6 +547,7 @@
 
                     <input type="hidden" name="status" value="{{ \App\Models\Materi::STATUS_PENDING }}">
                     <input type="hidden" name="kembali" value="admin.verifikasi">
+                    <input type="hidden" name="kembali_url" value="{{ $tautanKembali }}">
                 </form>
             </div>
         </div>

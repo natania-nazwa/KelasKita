@@ -258,56 +258,20 @@
         =====================
              DIALOG HAPUS QUIZ
 
-        Satu dialog untuk semua kartu, diisi dari data-* tombol yang ditekan
-        oleh admin.js, jadi daftar panjang tetap hanya punya satu kotak
-        konfirmasi.
+        Satu dialog untuk semua kartu, dipakai dari komponen bersama
+        x-admin.dialog-hapus, dan isinya diisi dari data-* tombol yang
+        ditekan oleh admin.js, jadi daftar panjang tetap hanya punya satu
+        kotak konfirmasi.
 
         Form-nya memakai @method('DELETE') ke admin.quiz.destroy. Tidak ada
         form yang langsung terkirim: quiznya baru dihapus setelah tombol
         "Hapus Quiz" ditekan.
     ====================== --}}
-    <div class="ad-dialog" data-dialog-hapus role="dialog" aria-modal="true" aria-hidden="true"
-        aria-labelledby="dialog-hapus-judul">
-        <div class="ad-dialog__kartu">
-            <header class="ad-dialog__kepala">
-                <div class="min-w-0 flex-1">
-                    <h2 class="ad-dialog__judul" id="dialog-hapus-judul" data-hapus-judul>Hapus Quiz?</h2>
-
-                    <p class="ad-teks-2 mt-0.5 !text-xs" data-hapus-meta></p>
-                </div>
-
-                <button type="button" class="ad-dialog__tutup" data-hapus-tutup aria-label="Tutup">
-                    <x-admin.ikon nama="silang-polos" ukuran="w-4 h-4" />
-                </button>
-            </header>
-
-            <div class="ad-dialog__badan">
-                <p class="text-sm leading-relaxed text-dark/70">
-                    Quiz ini akan dihapus beserta seluruh soalnya, dan tidak lagi
-                    tersedia untuk pengguna. Riwayat pengerjaan yang sudah ada ikut
-                    terhapus. Tindakan ini tidak dapat dibatalkan.
-                </p>
-            </div>
-
-            <footer class="ad-dialog__kaki">
-                <button type="button" class="ad-tombol ad-tombol--garis" data-hapus-tutup>Batal</button>
-
-                <button type="submit" class="ad-tombol ad-tombol--bahaya" form="form-hapus-quiz">
-                    <x-admin.ikon nama="sampah" />
-
-                    Hapus Quiz
-                </button>
-            </footer>
-
-            {{--
-                Form tidak terlihat, tapi tetap ada di DOM supaya tombolnya
-                bisa memakai atribut form=.
-            --}}
-            <form method="POST" action="" id="form-hapus-quiz" data-hapus-form hidden>
-                @csrf
-
-                @method('DELETE')
-            </form>
-        </div>
-    </div>
+    <x-admin.dialog-hapus
+        judul="Hapus Quiz?"
+        pesan="Quiz ini akan dihapus beserta seluruh soalnya, dan tidak lagi tersedia untuk pengguna. Riwayat pengerjaan yang sudah ada ikut terhapus. Tindakan ini tidak dapat dibatalkan."
+        tombol="Hapus Quiz"
+        id-dialog="dialog-hapus-judul"
+        id-form="form-hapus-quiz"
+        kelas-pesan="text-sm leading-relaxed text-dark/70" />
 @endsection

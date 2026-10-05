@@ -41,7 +41,7 @@ class MateriKelolaController extends Controller
         $item = $this->cariMilik($request, $materi);
 
         return view('admin.materi-edit', [
-            'kategori' => Pelajaran::query()->aktif()->orderBy('nama')->get(),
+            'kategori' => Pelajaran::untukForm($item->pelajaran_id),
             'materi' => $item,
             // Daftar bab dipecah lagi dari isi tersimpan supaya editor bisa
             // dibuka dengan bab yang sama seperti waktu materi dibuat.

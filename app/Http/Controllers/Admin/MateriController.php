@@ -8,6 +8,7 @@ use App\Models\Pelajaran;
 use App\Support\DaftarMateriAdmin;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use Illuminate\View\View;
@@ -61,13 +62,17 @@ class MateriController extends Controller
         ];
     }
 
-    public function __invoke(Request $request): View
+    public function __invoke(Request $request): View|RedirectResponse
     {
         $kataKunci = trim((string) $request->query('q'));
         $kategori = trim((string) $request->query('kategori'));
         $urut = $this->urutanTerpilih($request->query('urut'));
 
         $daftar = $this->daftarMateri($kataKunci, $kategori, $urut);
+
+        if ($this->diLuarRentang($daftar)) {
+            return redirect()->route('admin.materi', array_diff_key($request->query(), ['page' => '']));
+        }
 
         return view('admin.materi', [
             'daftar' => DaftarMateriAdmin::petikan($daftar->items(), $request->user()?->getKey()),
@@ -109,6 +114,27 @@ class MateriController extends Controller
     }
 
     /**
+     * Daftar kosong karena halamannya di luar rentang, bukan karena tidak
+     * ada materi.
+     *
+     * "?page=999" menghasilkan daftar kosong, dan kalau dibiarkan halaman
+     * menampilkan empty state "Belum ada materi" — padahal materinya ada —
+     * sambil paginasinya ikut hilang karena tidak ada baris yang bisa
+     * ditautkan. Admin lalu terjebak sampai query string-nya dihapus
+     * sendiri, dan bisa mengira materinya habis terhapus.
+     *
+     * Ditandai dari total, bukan dari kekosongan daftar saja: total nol
+     * berarti halaman ini memang kosong, dan empty state yang tampil saat
+     * itu sudah benar.
+     */
+    private function diLuarRentang(LengthAwarePaginator $daftar): bool
+    {
+        return $daftar->isEmpty()
+            && $daftar->total() > 0
+            && $daftar->currentPage() > 1;
+    }
+
+    /**
      * Kata kunci dicocokkan ke nama, deskripsi, isi, nama pelajaran, dan
      * identitas pembuat, supaya admin bisa menemukan materi lewat judul,
      * lewat isi, lewat kategori, maupun lewat siapa yang membuatnya.
@@ -136,13 +162,18 @@ class MateriController extends Controller
      * lalu abjad, supaya urutannya tidak ikut berubah setiap kali
      * dipaginasi.
      *
+     * Status aktif tidak ikut disaring. Daftar di halaman ini memuat semua
+     * materi terbit, termasuk yang kategorinya sudah dinonaktifkan lewat
+     * Pengaturan, jadi kategori itu harus tetap ditawarkan — kalau tidak,
+     * jumlahnya hilang dari dropdown sementara materinya tetap ikut
+     * terhitung di "Semua kategori (n)", dan materi itu tak bisa disaring.
+     *
      * @return Collection<int, array<string, mixed>>
      */
     private function daftarKategori(): Collection
     {
         $jumlah = Materi::query()
             ->terbit()
-            ->whereNotNull('pelajaran_id')
             ->selectRaw('pelajaran_id, COUNT(*) as jumlah')
             ->groupBy('pelajaran_id')
             ->pluck('jumlah', 'pelajaran_id');
@@ -152,7 +183,6 @@ class MateriController extends Controller
             ->mapWithKeys(fn (string $slug, int $index) => [$slug => $index]);
 
         return Pelajaran::query()
-            ->aktif()
             ->orderBy('nama')
             ->get()
             ->map(fn (Pelajaran $pelajaran) => [

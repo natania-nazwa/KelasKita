@@ -2,6 +2,18 @@
     'judul' => 'Hapus konten?',
     'pesan' => 'Konten ini akan dihapus dan tidak lagi tersedia untuk pengguna. Tindakan ini tidak dapat dibatalkan.',
     'tombol' => 'Hapus',
+
+    /*
+     * id judul dialog dan id form-nya bisa diganti per halaman, supaya satu
+     * halaman tidak pernah punya dua elemen dengan id sama dan pengujian
+     * yang menunjuk id tertentu tetap bisa menemukannya.
+     */
+    'idDialog' => 'dialog-hapus-konten-judul',
+    'idForm' => 'form-hapus-konten',
+
+    // Kelas paragraf pesan. Bawaannya .ad-dialog__pesan; halaman yang
+    // tulisan badannya ditulis sendiri bisa menentukan kelasnya sendiri.
+    'kelasPesan' => 'ad-dialog__pesan',
 ])
 
 {{--
@@ -19,11 +31,11 @@
 --}}
 
 <div class="ad-dialog" data-dialog-hapus role="dialog" aria-modal="true" aria-hidden="true"
-    aria-labelledby="dialog-hapus-konten-judul">
+    aria-labelledby="{{ $idDialog }}">
     <div class="ad-dialog__kartu">
         <header class="ad-dialog__kepala">
             <div class="min-w-0 flex-1">
-                <h2 class="ad-dialog__judul" id="dialog-hapus-konten-judul" data-hapus-judul>{{ $judul }}</h2>
+                <h2 class="ad-dialog__judul" id="{{ $idDialog }}" data-hapus-judul>{{ $judul }}</h2>
 
                 <p class="ad-teks-2 mt-0.5 !text-xs" data-hapus-meta></p>
             </div>
@@ -41,20 +53,20 @@
                 karena ikut hilang dari halaman pengguna — bukan hanya dari
                 daftar admin.
             --}}
-            <p class="ad-dialog__pesan" data-hapus-pesan>{{ $pesan }}</p>
+            <p class="{{ $kelasPesan }}" data-hapus-pesan>{{ $pesan }}</p>
         </div>
 
         <footer class="ad-dialog__kaki">
             <button type="button" class="ad-tombol ad-tombol--garis" data-hapus-tutup>Batal</button>
 
-            <button type="submit" class="ad-tombol ad-tombol--bahaya" form="form-hapus-konten">
+            <button type="submit" class="ad-tombol ad-tombol--bahaya" form="{{ $idForm }}">
                 <x-admin.ikon nama="sampah" />
 
                 {{ $tombol }}
             </button>
         </footer>
 
-        <form method="POST" action="" id="form-hapus-konten" data-hapus-form hidden>
+        <form method="POST" action="" id="{{ $idForm }}" data-hapus-form hidden>
             @csrf
 
             @method('DELETE')

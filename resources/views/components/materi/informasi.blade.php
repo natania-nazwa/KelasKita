@@ -110,7 +110,7 @@
             </label>
 
             <input type="text" id="estimasi_waktu" name="estimasi_waktu"
-                value="{{ old('estimasi_waktu', '10 menit') }}" required maxlength="40" placeholder="10 menit"
+                value="{{ old('estimasi_waktu', $materi?->estimasi_waktu ?? '10 menit') }}" required maxlength="40" placeholder="10 menit"
                 class="kolom-form mt-1.5">
         </div>
 
@@ -233,7 +233,7 @@
 
                 <textarea id="tips" name="tips" rows="4" maxlength="500"
                     placeholder="Tambahkan catatan atau tips untuk siswa..." data-tips
-                    class="kolom-form bg-white">{{ old('tips') }}</textarea>
+                    class="kolom-form bg-white">{{ old('tips', $materi?->tips) }}</textarea>
 
                 <p class="mt-1.5 text-right text-[11px] font-semibold tabular-nums text-muted" data-tips-count>
                     0/500

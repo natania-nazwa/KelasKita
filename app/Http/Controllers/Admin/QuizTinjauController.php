@@ -68,6 +68,14 @@ class QuizTinjauController extends Controller
      * route ini untuk tombol keputusannya. Kalau diisi dan berupa daftar
      * putih yang dikenal, admin dikembalikan ke halaman itu. Tanpa field ini
      * perilakunya sama persis seperti sebelumnya.
+     *
+     * Halaman Verifikasi mengirim tambahan "kembali_url" berisi URL
+     * halamannya sendiri lengkap dengan tab, pencarian, kategori, dan
+     * halaman yang sedang dibuka, supaya memutuskan satu konten tidak
+     * membuat admin kehilangan tempatnya. URL itu hanya dipakai kalau
+     * benar-benar menunjuk ke route admin.verifikasi dengan skema, host,
+     * port, dan path yang sama -- field ini tidak boleh bisa mengalihkan
+     * admin ke halaman lain.
      */
     private function kembaliKeTinjauan(Request $request, string $pesan): RedirectResponse
     {
@@ -80,11 +88,35 @@ class QuizTinjauController extends Controller
         $kembali = (string) $request->input('kembali', '');
 
         if (in_array($kembali, ['admin.verifikasi'], true)) {
-            return redirect()->route($kembali)->with('sukses', $pesan);
+            return redirect()->to($this->tujuanVerifikasi($request))->with('sukses', $pesan);
         }
 
         return redirect()
             ->route('admin.quiz', $params)
             ->with('sukses', $pesan);
+    }
+
+    /**
+     * URL tujuan halaman Verifikasi, lengkap dengan filter yang tadi dibuka.
+     */
+    private function tujuanVerifikasi(Request $request): string
+    {
+        $tujuan = route('admin.verifikasi');
+        $url = (string) $request->input('kembali_url', '');
+
+        if ($url === '') {
+            return $tujuan;
+        }
+
+        $terurai = parse_url($url);
+        $acuan = parse_url($tujuan);
+
+        $sama = is_array($terurai)
+            && ($terurai['scheme'] ?? null) === ($acuan['scheme'] ?? null)
+            && ($terurai['host'] ?? null) === ($acuan['host'] ?? null)
+            && ($terurai['port'] ?? null) === ($acuan['port'] ?? null)
+            && ($terurai['path'] ?? null) === ($acuan['path'] ?? null);
+
+        return $sama ? $url : $tujuan;
     }
 }

@@ -11,6 +11,7 @@ use App\Support\IsiMateri;
 use App\Support\StatistikAdmin;
 use App\Support\TinjauanMateri;
 use App\Support\TinjauanQuiz;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Pagination\LengthAwarePaginator;
@@ -86,8 +87,8 @@ class VerifikasiController extends Controller
             'daftarPelajaran' => Pelajaran::query()->aktif()->orderBy('nama')->get(),
             'pilihanJenis' => self::JENIS,
             'pilihanStatus' => self::STATUS,
-            'jumlahJenis' => $this->jumlahJenis($status, $kategori),
-            'jumlahStatus' => $this->jumlahStatus($jenis, $kategori),
+            'jumlahJenis' => $this->jumlahJenis($status, $kataKunci, $kategori),
+            'jumlahStatus' => $this->jumlahStatus($jenis, $kataKunci, $kategori),
         ]);
     }
 
@@ -169,11 +170,10 @@ class VerifikasiController extends Controller
      */
     private function materi(string $status, string $kataKunci, string $kategori): Collection
     {
-        return Materi::query()
+        return $this->cariMateri(Materi::query(), $kataKunci)
             ->where('status', $this->statusMateri($status))
             ->with(['pelajaran', 'pembuat'])
             ->kategori($kategori)
-            ->cari($kataKunci)
             ->latest('created_at')
             ->get();
     }
@@ -185,12 +185,11 @@ class VerifikasiController extends Controller
      */
     private function quiz(string $status, string $kataKunci, string $kategori): Collection
     {
-        $quiz = Quiz::query()
+        $quiz = $this->cariQuiz(Quiz::query(), $kataKunci)
             ->where('status', $this->statusQuiz($status))
             ->with(['pelajaran', 'pembuat'])
             ->withCount(['soal' => fn ($soal) => $soal->aktif()])
             ->kategori($kategori)
-            ->cari($kataKunci)
             ->latest('created_at')
             ->get();
 
@@ -205,6 +204,74 @@ class VerifikasiController extends Controller
                 $item->getAttributes() + ['jumlah_soal_termuat' => (int) $item->soal_count]
             )
         );
+    }
+
+    /**
+     * Pencarian materi di halaman Verifikasi.
+     *
+     * Materi::scopeCari() sengaja tidak dipakai: ia tidak mencakup nama
+     * pembuat, sementara label filter halaman ini menuliskan "Cari judul
+     * atau pembuat" dan placeholder-nya menjanjikan hal yang sama. Menambah
+     * pembuat ke scope itu akan diam-diam mengubah pencarian di halaman
+     * Materi, Karya Saya, dan halaman lain yang memakainya, jadi sisipannya
+     * dilakukan di sini saja, tempat janjinya ditulis.
+     *
+     * @return Builder<Materi>
+     */
+    private function cariMateri(Builder $query, string $kataKunci): Builder
+    {
+        $kataKunci = trim($kataKunci);
+
+        if ($kataKunci === '') {
+            return $query;
+        }
+
+        [$operator, $pola] = $this->polaCari($query, $kataKunci);
+
+        return $query->where(function (Builder $query) use ($operator, $pola) {
+            $query->where('nama', $operator, $pola)
+                ->orWhere('deskripsi', $operator, $pola)
+                ->orWhere('isi', $operator, $pola)
+                ->orWhereHas('pelajaran', fn (Builder $pelajaran) => $pelajaran->where('nama', $operator, $pola))
+                ->orWhereHas('pembuat', fn (Builder $pembuat) => $pembuat->where('nama', $operator, $pola));
+        });
+    }
+
+    /**
+     * Pencarian quiz di halaman Verifikasi, pasangan cariMateri().
+     *
+     * @return Builder<Quiz>
+     */
+    private function cariQuiz(Builder $query, string $kataKunci): Builder
+    {
+        $kataKunci = trim($kataKunci);
+
+        if ($kataKunci === '') {
+            return $query;
+        }
+
+        [$operator, $pola] = $this->polaCari($query, $kataKunci);
+
+        return $query->where(function (Builder $query) use ($operator, $pola) {
+            $query->where('judul', $operator, $pola)
+                ->orWhere('deskripsi', $operator, $pola)
+                ->orWhereHas('pelajaran', fn (Builder $pelajaran) => $pelajaran->where('nama', $operator, $pola))
+                ->orWhereHas('pembuat', fn (Builder $pembuat) => $pembuat->where('nama', $operator, $pola));
+        });
+    }
+
+    /**
+     * Operator LIKE sesuai driver dan pola yang sudah meng-escape karakter
+     * wildcard milik pengguna. Aturannya sama dengan scopeCari() di model,
+     * supaya pencarian di sini dan di halaman lain berperilaku seragam.
+     *
+     * @return array{0: string, 1: string}
+     */
+    private function polaCari(Builder $query, string $kataKunci): array
+    {
+        $operator = $query->getConnection()->getDriverName() === 'pgsql' ? 'ilike' : 'like';
+
+        return [$operator, '%'.addcslashes($kataKunci, '%_\\').'%'];
     }
 
     /**
@@ -372,16 +439,20 @@ class VerifikasiController extends Controller
     /**
      * Berapa konten tiap jenis, untuk angka di tab jenis.
      *
+     * Pencarian ikut dihitung supaya angka tab selalu sejalan dengan isi
+     * daftar: kalau pencarian menyaring daftar tapi tidak menyaring angka,
+     * admin melihat tab bercap "12" di atas daftar yang hanya berisi satu.
+     *
      * @return array<string, int>
      */
-    private function jumlahJenis(string $status, string $kategori): array
+    private function jumlahJenis(string $status, string $kataKunci, string $kategori): array
     {
-        $materi = (int) Materi::query()
+        $materi = (int) $this->cariMateri(Materi::query(), $kataKunci)
             ->where('status', $this->statusMateri($status))
             ->kategori($kategori)
             ->count();
 
-        $quiz = (int) Quiz::query()
+        $quiz = (int) $this->cariQuiz(Quiz::query(), $kataKunci)
             ->where('status', $this->statusQuiz($status))
             ->kategori($kategori)
             ->count();
@@ -394,20 +465,27 @@ class VerifikasiController extends Controller
     }
 
     /**
-     * Berapa konten tiap status, untuk angka di tab status.
+     * Berapa konten tiap status, untuk angka di pil status.
      *
-     * Satu query per tabel untuk semua status, jadi tab tidak butuh N
-     * query. Materi dan quiz dijumlahkan karena dua tab status dipakai
-     * bersama oleh dua jenis konten.
+     * Satu query per tabel untuk semua status, jadi pil tidak butuh N
+     * query. Materi dan quiz dijumlahkan karena dua pil status dipakai
+     * bersama oleh dua jenis konten. Pencarian ikut dihitung, sama seperti
+     * jumlahJenis(), supaya angka dan daftar tidak pernah berbeda.
+     *
+     * StatistikAdmin::jumlahPerStatus() mengembalikan hasil yang dikunci
+     * dengan nilai status di tabel ("pending", "published", "rejected"),
+     * bukan dengan kunci tab ("menunggu", "disetujui", "ditolak"). Karena
+     * itu hasilnya dibaca lewat statusMateri() / statusQuiz() -- tanpa
+     * penerjemahan ini semua angka pil akan selalu nol.
      *
      * @return array<string, int>
      */
-    private function jumlahStatus(string $jenis, string $kategori): array
+    private function jumlahStatus(string $jenis, string $kataKunci, string $kategori): array
     {
         $materi = $jenis === 'quiz'
             ? []
             : StatistikAdmin::jumlahPerStatus(
-                Materi::query()->kategori($kategori),
+                $this->cariMateri(Materi::query(), $kataKunci)->kategori($kategori),
                 [
                     Materi::STATUS_PENDING => 'menunggu',
                     Materi::STATUS_PUBLISHED => 'disetujui',
@@ -418,7 +496,7 @@ class VerifikasiController extends Controller
         $quiz = $jenis === 'materi'
             ? []
             : StatistikAdmin::jumlahPerStatus(
-                Quiz::query()->kategori($kategori),
+                $this->cariQuiz(Quiz::query(), $kataKunci)->kategori($kategori),
                 [
                     Quiz::STATUS_PENDING => 'menunggu',
                     Quiz::STATUS_PUBLISHED => 'disetujui',
@@ -429,7 +507,8 @@ class VerifikasiController extends Controller
         $hasil = [];
 
         foreach (self::STATUS as $nilai => $label) {
-            $hasil[$nilai] = ($materi[$nilai] ?? 0) + ($quiz[$nilai] ?? 0);
+            $hasil[$nilai] = ($materi[$this->statusMateri($nilai)] ?? 0)
+                + ($quiz[$this->statusQuiz($nilai)] ?? 0);
         }
 
         return $hasil;

@@ -34,6 +34,8 @@ use Illuminate\Support\Str;
     'isi',
     'thumbnail',
     'tingkat_kesulitan',
+    'estimasi_waktu',
+    'tips',
     'status',
     'catatan_admin',
     'catatan_pengajuan',

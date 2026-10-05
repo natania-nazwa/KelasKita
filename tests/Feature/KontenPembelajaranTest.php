@@ -1640,6 +1640,34 @@ class KontenPembelajaranTest extends TestCase
             ->assertSee('Quiz Disunting');
     }
 
+    public function test_form_edit_konten_mempertahankan_kategori_yang_sudah_tidak_aktif(): void
+    {
+        /*
+         * Menu Konten memakai form yang sama dengan form edit Materi, tapi
+         * kategorinya diambil lewat controller sendiri. Materi yang
+         * kategorinya baru dinonaktifkan lewat Pengaturan harus tetap tampil
+         * terpilih di sana — kalau tidak, pilihannya hilang dari dropdown dan
+         * nilainya diam-diam berpindah ke kategori pertama begitu Simpan
+         * ditekan.
+         */
+        $admin = $this->buatAdmin();
+        $materi = $this->buatMateri($admin, Materi::STATUS_DRAFT, 'Materi Kategori Nonaktif');
+
+        $materi->pelajaran->update(['aktif' => false]);
+
+        $html = $this->actingAs($admin)
+            ->get(route('admin.konten.materi.edit', $materi->slug))
+            ->assertOk()
+            ->getContent();
+
+        $this->assertSame(
+            1,
+            preg_match('/<option value="'.$materi->pelajaran_id.'"[^>]*>/', $html, $opsi),
+            'Kategori materi tidak ikut masuk ke dropdown edit Konten.',
+        );
+        $this->assertStringContainsString('selected', $opsi[0]);
+    }
+
     public function test_halaman_tidak_ditemukan_bila_konten_tidak_ada(): void
     {
         $admin = $this->buatAdmin();

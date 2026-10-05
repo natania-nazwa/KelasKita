@@ -5,6 +5,7 @@ namespace App\Http\Requests;
 use App\Models\Materi;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\Rules\Exists;
 
 /**
  * Isian form materi: dipakai oleh halaman tambah materi dan form edit materi
@@ -32,11 +33,20 @@ class MateriIsianRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'pelajaran_id' => ['required', Rule::exists('tb_pelajaran', 'id')->where('aktif', true)],
+            'pelajaran_id' => ['required', $this->rulePelajaran()],
             'nama' => ['required', 'string', 'max:120'],
             'deskripsi' => ['nullable', 'string', 'max:220'],
             'isi' => ['required', 'string', 'min:20'],
             'tingkat_kesulitan' => ['required', Rule::in(['Mudah', 'Sedang', 'Sulit'])],
+
+            /*
+             * Isian pendukung yang ditampilkan di form tapi sebelumnya tidak
+             * pernah tersimpan: batasnya mengikuti maxlength di form (40 dan
+             * 500), dan keduanya tidak diwajibkan supaya pengajuan lewat
+             * berkas yang tidak mengisinya tetap diterima.
+             */
+            'estimasi_waktu' => ['nullable', 'string', 'max:40'],
+            'tips' => ['nullable', 'string', 'max:500'],
 
             // Tombol publikasi di form tambah dan form edit.
             'publikasikan' => ['nullable', 'boolean'],
@@ -71,6 +81,8 @@ class MateriIsianRequest extends FormRequest
             'isi.required' => 'Isi materi wajib diisi.',
             'isi.min' => 'Isi materi minimal 20 karakter.',
             'tingkat_kesulitan.in' => 'Tingkat kesulitan tidak dikenal.',
+            'estimasi_waktu.max' => 'Estimasi waktu belajar maksimal 40 karakter.',
+            'tips.max' => 'Tips / catatan maksimal 500 karakter.',
             'catatan_pengajuan.required' => 'Tuliskan catatan pendukung supaya admin tahu apa yang sudah diperbaiki.',
             'catatan_pengajuan.max' => 'Catatan pengajuan maksimal 500 karakter.',
             'thumbnail.file' => 'Thumbnail harus berupa file gambar.',
@@ -91,6 +103,26 @@ class MateriIsianRequest extends FormRequest
         unset($isian['publikasikan']);
 
         return $isian;
+    }
+
+    /**
+     * Aturan kategori materi.
+     *
+     * Kategori yang sudah tidak aktif tetap diterima selama nilainya persis
+     * sama dengan yang sudah tersimpan. Menonaktifkan kategori di Pengaturan
+     * tidak boleh membuat materi terbit kehilangan rumahnya lalu berhenti
+     * bisa disimpan; kategori lain tetap harus kategori yang aktif.
+     */
+    private function rulePelajaran(): Exists
+    {
+        $tersimpan = $this->materi()?->pelajaran_id;
+
+        $tetapSama = $tersimpan !== null
+            && (string) $tersimpan === (string) $this->input('pelajaran_id');
+
+        $aturan = Rule::exists('tb_pelajaran', 'id');
+
+        return $tetapSama ? $aturan : $aturan->where('aktif', true);
     }
 
     /**

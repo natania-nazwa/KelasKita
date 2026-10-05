@@ -50,7 +50,7 @@ class KontenMateriController extends Controller
     public function create(): View
     {
         return view('admin.konten-materi', [
-            'kategori' => Pelajaran::query()->aktif()->orderBy('nama')->get(),
+            'kategori' => Pelajaran::untukForm(),
             'materi' => null,
             'bab' => null,
         ]);
@@ -104,7 +104,7 @@ class KontenMateriController extends Controller
         $item = $this->cariMilik($request, $materi);
 
         return view('admin.konten-materi', [
-            'kategori' => Pelajaran::query()->aktif()->orderBy('nama')->get(),
+            'kategori' => Pelajaran::untukForm($item->pelajaran_id),
             'materi' => $item,
             // Daftar bab dipecah lagi dari isi tersimpan, supaya editor dibuka
             // dengan bab yang sama seperti waktu materi dibuat.
@@ -252,6 +252,8 @@ class KontenMateriController extends Controller
             'deskripsi' => $item->deskripsi,
             'isi' => $item->isi,
             'tingkat_kesulitan' => $item->tingkat_kesulitan,
+            'estimasi_waktu' => $item->estimasi_waktu,
+            'tips' => $item->tips,
             'status' => Materi::STATUS_DRAFT,
         ]);
 

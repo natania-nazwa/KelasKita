@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
@@ -150,6 +151,38 @@ class Pelajaran extends Model
     public function scopeAktif(Builder $query): Builder
     {
         return $query->where('aktif', true);
+    }
+
+    /**
+     * Kategori untuk dropdown form tambah dan form edit materi.
+     *
+     * Daftarnya kategori aktif. Tapi materi yang sedang diedit boleh saja
+     * membawa kategori yang sudah dinonaktifkan lewat Pengaturan, dan
+     * kategori itu ikut disisipkan ke daftar: kalau tidak, pilihan yang
+     * tersimpan hilang dari dropdown, nilainya diam-diam berpindah ke
+     * kategori pertama begitu Simpan ditekan, dan validasi menolak
+     * penyimpanannya.
+     *
+     * @return Collection<int, Pelajaran>
+     */
+    public static function untukForm(?int $pelajaranId = null): Collection
+    {
+        $kategori = static::query()->aktif()->orderBy('nama')->get();
+
+        if ($pelajaranId === null) {
+            return $kategori;
+        }
+
+        $milikMateri = static::query()->find($pelajaranId);
+
+        if ($milikMateri === null || $kategori->contains('id', $milikMateri->getKey())) {
+            return $kategori;
+        }
+
+        return $kategori
+            ->push($milikMateri)
+            ->sortBy('nama')
+            ->values();
     }
 
     /**

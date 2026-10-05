@@ -635,4 +635,45 @@ class QuizPersetujuanTest extends TestCase
             ->assertOk()
             ->assertDontSee($quiz->judul);
     }
+
+    /**
+     * Quiz yang sedang menunggu keputusan lalu diganti pemilik menjadi mode
+     * kode keluar dari antrean Verifikasi. Mode kode tidak perlu persetujuan
+     * admin, jadi statusnya kembali ke draft seperti quiz mode kode yang baru
+     * dibuat. Tanpa ini quiznya terjebak "menunggu" tanpa ada admin yang
+     * berhak memutuskannya, dan halaman Verifikasi memperlihatkan konten yang
+     * memang tidak pernah masuk alur persetujuan.
+     */
+    public function test_quiz_pending_yang_dijadi_mode_kode_keluar_dari_antrean_verifikasi(): void
+    {
+        $user = $this->buatPengguna();
+        $admin = $this->buatAdmin();
+        $pelajaran = $this->buatPelajaran();
+        $quiz = $this->buatQuiz($user, Quiz::STATUS_PENDING);
+
+        // Saklar "Ajukan Persetujuan" sengaja dinyalakan: kiriman ber-visibilitas
+        // privat harus ditolak diajukanKeAdmin(), bukan mengembalikannya ke
+        // antrean setelah tarikDariDaftar() menurunkannya ke draft.
+        $this->actingAs($user)
+            ->put(route('user.quiz.update', $quiz), $this->dataForm($pelajaran, [
+                'judul' => 'Quiz Antrean Jadi Kode',
+                'visibilitas' => Quiz::VISIBILITAS_PRIVAT,
+                'kode_akses' => 'K7F3P9',
+                'publikasikan' => '1',
+            ]))
+            ->assertSessionHasNoErrors();
+
+        $quiz->refresh();
+
+        $this->assertTrue($quiz->pakaiKode());
+        $this->assertSame(Quiz::STATUS_DRAFT, $quiz->status);
+        $this->assertFalse($quiz->bolehDiajukan());
+
+        $this->habiskanFlash();
+
+        $this->actingAs($admin)
+            ->get(route('admin.verifikasi'))
+            ->assertOk()
+            ->assertDontSee($quiz->judul);
+    }
 }

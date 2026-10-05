@@ -97,8 +97,9 @@ class QuizKelolaController extends Controller
          * Quiz yang tayang lalu diganti jadi mode kode ditarik dari halaman
          * Quiz. Mode kode hanya bisa dibuka lewat kodenya, jadi
          * membiarkannya tetap tayang akan menayangkan quiz privat ke semua
-         * orang. Quiz::tarikDariDaftar() sudah tidak melakukan apa-apa kalau
-         * statusnya belum published, jadi tidak perlu dicek ulang di sini.
+         * orang. Quiz yang masih menunggu juga ikut ditarik: mode kode tidak
+         * perlu persetujuan, jadi Quiz::tarikDariDaftar() mengembalikannya ke
+         * draft tanpa perlu dicek ulang di sini.
          */
         $menjadiKode = $data['visibilitas'] === Quiz::VISIBILITAS_PRIVAT;
 

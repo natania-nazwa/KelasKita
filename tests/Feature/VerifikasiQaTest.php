@@ -74,11 +74,33 @@ class VerifikasiQaTest extends TestCase
         ]);
     }
 
+    /**
+     * Angka di tab jenis, sesuai urutan tampilnya di halaman:
+     * "Semua" (0), "Materi" (1), "Quiz" (2).
+     */
     private function jumlahTab(string $html, int $urutan = 0): ?int
     {
         preg_match_all('/<span class="ad-tab__jumlah">(\d+)<\/span>/', $html, $cocok);
 
         return isset($cocok[1][$urutan]) ? (int) $cocok[1][$urutan] : null;
+    }
+
+    /**
+     * Angka ketiga pil status, dikunci sesuai nilai pilnya.
+     *
+     * @return array<string, int>
+     */
+    private function jumlahPil(string $html): array
+    {
+        preg_match_all('/class="ad-vf-pil ad-vf-pil--(\w+)[^"]*"[^>]*>.*?<b>(\d+)<\/b>/s', $html, $cocok, PREG_SET_ORDER);
+
+        $hasil = [];
+
+        foreach ($cocok as $butir) {
+            $hasil[$butir[1]] = (int) $butir[2];
+        }
+
+        return $hasil;
     }
 
     /*
@@ -301,8 +323,37 @@ class VerifikasiQaTest extends TestCase
 
         $this->assertSame(
             1,
-            $this->jumlahTab($respons->getContent(), 1),
+            $this->jumlahTab($respons->getContent(), 2),
             'Angka tab "Quiz" harus ikut menyaring sesuai pencarian yang aktif.'
+        );
+    }
+
+    /**
+     * Angka di pil status harus benar-benar jumlah baris di tabel, bukan
+     * selalu nol. Penerjemahan kunci status ("pending") ke kunci pil
+     * ("menunggu") pernah dilewatkan, jadi ketiga pil tertulis "0"
+     * walaupun daftarnya berisi konten.
+     */
+    public function test_angka_pil_status_mencerminkan_data(): void
+    {
+        $pemilik = $this->buatPengguna();
+        $admin = $this->buatAdmin();
+
+        $this->buatMateri($pemilik, Materi::STATUS_PENDING, 'Materi Antre');
+        $this->buatMateri($pemilik, Materi::STATUS_PENDING, 'Materi Antre Dua');
+        $this->buatMateri($pemilik, Materi::STATUS_PUBLISHED, 'Materi Tayang');
+        $this->buatMateri($pemilik, Materi::STATUS_REJECTED, 'Materi Ditolak');
+        $this->buatQuiz($pemilik, Quiz::STATUS_PENDING, 'Quiz Antre');
+        $this->buatQuiz($pemilik, Quiz::STATUS_PUBLISHED, 'Quiz Tayang');
+
+        $respons = $this->actingAs($admin)
+            ->get(route('admin.verifikasi'))
+            ->assertOk();
+
+        $this->assertSame(
+            ['menunggu' => 3, 'disetujui' => 2, 'ditolak' => 1],
+            $this->jumlahPil($respons->getContent()),
+            'Tiap pil status harus menampilkan jumlah konten berstatus itu.'
         );
     }
 
@@ -521,7 +572,7 @@ class VerifikasiQaTest extends TestCase
         $this->actingAs($admin)
             ->get(route('admin.verifikasi'))
             ->assertOk()
-            ->assertSee('Materi Ok disetujui');
+            ->assertSee('disetujui dan sekarang tayang');
     }
 
     public function test_setujui_quiz_dari_verifikasi_menampilkan_sukses(): void
@@ -542,9 +593,9 @@ class VerifikasiQaTest extends TestCase
     }
 
     /**
-     * Setelah memutuskan, admin dikembalikan ke URL telanjang. Tab,
-     * pencarian, kategori, dan halaman yang tadi dibuka hilang semua,
-     * jadi filter harus dipasang ulang satu per satu.
+     * Setelah memutuskan, admin dikembali ke URL halaman Verifikasi yang
+     * sedang dibuka, lengkap dengan tab, pencarian, kategori, dan halaman
+     * yang tadi dipilih. Field "kembali_url" itulah yang membawa filternya.
      */
     public function test_keputusan_mempertahankan_filter_yang_aktif(): void
     {
@@ -564,8 +615,29 @@ class VerifikasiQaTest extends TestCase
             ->post(route('admin.materi.setujui', $materi->slug), [
                 'status' => Materi::STATUS_PENDING,
                 'kembali' => 'admin.verifikasi',
+                'kembali_url' => $tujuan,
             ])
             ->assertRedirect($tujuan);
+    }
+
+    /**
+     * "kembali_url" adalah field kiriman, jadi ia tidak boleh dipakai
+     * untuk mengalihkan admin ke halaman lain. Nilai yang menunjuk ke
+     * luar route Verifikasi diabaikan dan admin tetap ke route bawaan.
+     */
+    public function test_kembali_url_luar_route_verifikasi_diabaikan(): void
+    {
+        $admin = $this->buatAdmin();
+        $materi = $this->buatMateri($this->buatPengguna(), Materi::STATUS_PENDING, 'Materi Ok');
+
+        $this->actingAs($admin)
+            ->from(route('admin.verifikasi'))
+            ->post(route('admin.materi.setujui', $materi->slug), [
+                'status' => Materi::STATUS_PENDING,
+                'kembali' => 'admin.verifikasi',
+                'kembali_url' => 'http://contoh-asing.test/admin/verifikasi?q=penipuan',
+            ])
+            ->assertRedirect(route('admin.verifikasi'));
     }
 
     /*
@@ -637,6 +709,11 @@ class VerifikasiQaTest extends TestCase
     /**
      * Pesan galat harus terbaca di halaman yang dikembalikan, dan alasan
      * yang sempat diketik tidak hilang begitu dialog dibuka lagi.
+     *
+     * Redirect-nya diikuti dalam satu rantai permintaan, sama seperti
+     * peramban. Memisahkannya jadi dua permintaan membuat cookie sesi
+     * tidak ikut terkirim, dan galat yang tadinya sudah ada di sesi tidak
+     * sempat dipulihkan oleh permintaan berikutnya.
      */
     public function test_galat_tolak_terlihat_dan_alasan_lama_dipertahankan(): void
     {
@@ -644,19 +721,18 @@ class VerifikasiQaTest extends TestCase
         $materi = $this->buatMateri($this->buatPengguna(), Materi::STATUS_PENDING, 'Materi Salah');
 
         $respons = $this->actingAs($admin)
+            ->followingRedirects()
             ->from(route('admin.verifikasi'))
             ->post(route('admin.materi.tolak', $materi->slug), [
                 'status' => Materi::STATUS_PENDING,
                 'kembali' => 'admin.verifikasi',
                 'alasan' => str_repeat('x', 501),
             ])
-            ->assertSessionHasErrors('alasan');
-
-        $respons = $this->actingAs($admin)
-            ->get(route('admin.verifikasi'))
             ->assertOk()
             ->assertSee('Belum bisa diputuskan')
             ->assertSee('maksimal 500 karakter');
+
+        $this->assertSame(Materi::STATUS_PENDING, $materi->refresh()->status);
 
         $this->assertStringContainsString(
             'data-awal="'.htmlspecialchars(str_repeat('x', 501), ENT_QUOTES).'"',
@@ -751,7 +827,7 @@ class VerifikasiQaTest extends TestCase
             ->assertOk();
 
         $this->assertStringContainsString(
-            'pilih=materi:'.$materi->id,
+            'pilih=materi%3A'.$materi->id,
             $respons->getContent(),
             'Tanpa JavaScript, baris harus membuka halaman penuh lewat query pilih.'
         );

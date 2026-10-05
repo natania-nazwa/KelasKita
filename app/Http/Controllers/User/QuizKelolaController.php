@@ -81,8 +81,14 @@ class QuizKelolaController extends Controller
 
         /*
          * Quiz yang tayang lalu diganti jadi mode kode ditarik dari halaman
-         * Quiz. Mode kode hanya bisa dibuka lewat kodenya, jadi membiarkannya
-         * tetap tayang akan menayangkan quiz privat ke semua orang.
+         * Quiz: mode kode hanya bisa dibuka lewat kodenya, jadi membiarkannya
+         * tetap tayang akan menayangkan quiz privat ke semua orang. Quiz yang
+         * sedang menunggu keputusan ikut ditarik kembali ke draft, karena
+         * mode kode tidak perlu persetujuan admin sama sekali.
+         *
+         * Saklar "Ajukan Persetujuan" tidak bisa mengembalikannya ke antrean:
+         * diajukanKeAdmin() menolak kiriman ber-visibilitas privat, jadi
+         * quiznya berhenti di draft sampai cara aksesnya dikembalikan publik.
          */
         $menjadiKode = $data['visibilitas'] === Quiz::VISIBILITAS_PRIVAT;
 

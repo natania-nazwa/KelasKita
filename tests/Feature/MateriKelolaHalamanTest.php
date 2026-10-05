@@ -1224,6 +1224,108 @@ class MateriKelolaHalamanTest extends TestCase
         $this->assertSame('Judul Lama', $materi->refresh()->nama);
     }
 
+    /*
+     * =============================================================
+     * KATEGORI YANG SUDAH TIDAK AKTIF
+     * =============================================================
+     * Pengaturan → Pelajaran punya tombol "Nonaktifkan", dan materinya
+     * sengaja tidak ikut hilang. Tapi form edit hanya menawarkan kategori
+     * aktif dan validasinya mewajibkan kategori aktif, jadi materi yang
+     * kategorinya baru dinonaktifkan berhenti bisa disimpan — pilihannya
+     * hilang dari dropdown dan nilainya diam-diam berpindah ke kategori
+     * pertama begitu Simpan ditekan.
+     */
+
+    public function test_form_edit_mempertahankan_kategori_yang_sudah_tidak_aktif(): void
+    {
+        $admin = $this->buatAdmin();
+        $pelajaran = $this->buatPelajaran();
+        $materi = $this->buatTerbit($admin, 'Materi Kategori Nonaktif', $pelajaran);
+
+        $pelajaran->update(['aktif' => false]);
+
+        $html = $this->actingAs($admin)
+            ->get(route('admin.materi.edit', $materi->slug))
+            ->assertOk()
+            ->getContent();
+
+        $this->assertSame(
+            1,
+            preg_match('/<option value="'.$materi->pelajaran_id.'"[^>]*>/', $html, $opsi),
+            'Kategori materi tidak ikut masuk ke dropdown edit.',
+        );
+        $this->assertStringContainsString('selected', $opsi[0]);
+    }
+
+    public function test_update_menerima_kategori_yang_sudah_tidak_aktif_asalkan_tidak_berubah(): void
+    {
+        $admin = $this->buatAdmin();
+        $pelajaran = $this->buatPelajaran();
+        $materi = $this->buatTerbit($admin, 'Judul Lama', $pelajaran);
+
+        $pelajaran->update(['aktif' => false]);
+
+        $this->actingAs($admin)
+            ->put(route('admin.materi.update', $materi->slug), [
+                'pelajaran_id' => $pelajaran->id,
+                'nama' => 'Judul Baru',
+                'isi' => 'Isi materi yang sudah diperbarui oleh admin.',
+                'tingkat_kesulitan' => 'Mudah',
+            ])
+            ->assertRedirect(route('admin.materi.show', $materi->slug));
+
+        $materi->refresh();
+
+        $this->assertSame('Judul Baru', $materi->nama);
+        $this->assertSame($pelajaran->getKey(), $materi->pelajaran_id);
+    }
+
+    public function test_update_menolak_pindah_ke_kategori_lain_yang_tidak_aktif(): void
+    {
+        $admin = $this->buatAdmin();
+        $pelajaran = $this->buatPelajaran();
+        $arsip = $this->buatPelajaran('Arsip', 'arsip');
+        $materi = $this->buatTerbit($admin, 'Judul Lama', $pelajaran);
+
+        $arsip->update(['aktif' => false]);
+
+        $this->actingAs($admin)
+            ->put(route('admin.materi.update', $materi->slug), [
+                'pelajaran_id' => $arsip->id,
+                'nama' => 'Judul Baru',
+                'isi' => 'Isi materi yang sudah diperbarui oleh admin.',
+                'tingkat_kesulitan' => 'Mudah',
+            ])
+            ->assertSessionHasErrors('pelajaran_id');
+
+        $this->assertSame($pelajaran->getKey(), $materi->refresh()->pelajaran_id);
+    }
+
+    public function test_dialog_hapus_materi_mempertahankan_judul_pesan_dan_tombolnya(): void
+    {
+        /*
+         * Dialognya dirender dari komponen bersama x-admin.dialog-hapus,
+         * bukan lagi markup yang ditulis ulang di halaman ini. Yang dijaga:
+         * teks peringatan, judul, dan label tombolnya tetap sama seperti
+         * sebelum dipindah, dan id form-nya tetap yang lama.
+         */
+        $admin = $this->buatAdmin();
+        $this->buatTerbit($this->buatPengguna(), 'Materi Dihapus');
+
+        $html = $this->actingAs($admin)->get('/admin/materi')->assertOk()->getContent();
+
+        $this->assertStringContainsString('id="dialog-hapus-judul"', $html);
+        $this->assertStringContainsString('data-hapus-judul>Hapus Materi?</h2>', $html);
+        $this->assertStringContainsString('data-hapus-tutup>Batal</button>', $html);
+        $this->assertStringContainsString('form="form-hapus-materi"', $html);
+        $this->assertStringContainsString('data-hapus-form', $html);
+        $this->assertStringContainsString(
+            'Materi ini akan dihapus dan tidak lagi tersedia untuk pengguna.',
+            $html,
+        );
+        $this->assertStringContainsString('Tindakan ini tidak dapat dibatalkan.', $html);
+    }
+
     public function test_admin_bisa_menghapus_materi_buatan_pengguna(): void
     {
         $admin = $this->buatAdmin();

@@ -90,6 +90,23 @@ class MateriAdminQaTest extends TestCase
         ], $tambahan);
     }
 
+    /**
+     * Angka di dalam setiap opsi pilihan kategori, berurutan seperti yang
+     * tampil di layar.
+     *
+     * @return array<int, int>
+     */
+    private function jumlahDalamPilihanKategori(string $html): array
+    {
+        $ditemukan = preg_match('/<select id="saring-kategori".*?<\/select>/us', $html, $blok);
+
+        $this->assertSame(1, $ditemukan, 'Pilihan kategori tidak ada di halaman.');
+
+        preg_match_all('/\((\d+)\)/', $blok[0], $cocok);
+
+        return array_map('intval', $cocok[1]);
+    }
+
     /*
      * =============================================================
      * PESAN SUKSES
@@ -237,6 +254,51 @@ class MateriAdminQaTest extends TestCase
             ->assertDontSee('ad-paginasi');
     }
 
+    public function test_halaman_di_luar_rentang_mengembalikan_admin_ke_halaman_pertama(): void
+    {
+        /*
+         * "?page=999" menghasilkan daftar kosong, tapi materinya tetap ada.
+         * Kalau dibiarkan, halaman menampilkan "Belum ada materi" sementara
+         * paginasinya ikut hilang karena tidak ada baris yang bisa
+         * ditautkan — admin lalu terjebak dan bisa mengira materinya habis
+         * terhapus.
+         */
+        $admin = $this->buatAdmin();
+        $this->buatTerbit($this->buatPengguna(), 'Materi Satu');
+
+        $this->actingAs($admin)
+            ->get(route('admin.materi', ['page' => 999]))
+            ->assertRedirect(route('admin.materi'));
+
+        // Saringan yang sedang aktif ikut dibawa, supaya kembali tidak
+        // menghapus kata kunci maupun pilihan kategorinya.
+        $this->actingAs($admin)
+            ->get(route('admin.materi', ['q' => 'Materi', 'kategori' => 'pemrograman', 'page' => 999]))
+            ->assertRedirect(route('admin.materi', ['q' => 'Materi', 'kategori' => 'pemrograman']));
+
+        $this->actingAs($admin)
+            ->get(route('admin.materi'))
+            ->assertOk()
+            ->assertSee('Materi Satu')
+            ->assertDontSee('Belum ada materi');
+    }
+
+    public function test_halaman_yang_benar_benar_kosong_tetap_menampilkan_empty_state(): void
+    {
+        /*
+         * Searah jarum jam dengan perbaikan halaman di luar rentang: yang
+         * kosong karena tidak ada materi sama sekali bukan halaman yang
+         * salah, jadi pesannya tidak boleh ikut berubah.
+         */
+        $admin = $this->buatAdmin();
+        $this->buatTerbit($this->buatPengguna(), 'Materi Satu');
+
+        $this->actingAs($admin)
+            ->get(route('admin.materi', ['q' => 'tidak-ada', 'page' => 999]))
+            ->assertOk()
+            ->assertSee('Materi tidak ditemukan');
+    }
+
     /*
      * =============================================================
      * PILIHAN KATEGORI DAN KARTU
@@ -259,6 +321,66 @@ class MateriAdminQaTest extends TestCase
             ->assertOk()
             ->assertSee('Matematika (2)', false)
             ->assertSee('Biologi (1)', false);
+    }
+
+    public function test_jumlah_setiap_kategori_ditambahkan_sama_dengan_total_materi(): void
+    {
+        /*
+         * "Semua kategori (n)" menghitung semua materi terbit, sementara
+         * angka di tiap opsi dulu hanya menghitung kategori yang masih
+         * aktif — akibatnya jumlahnya tidak pernah berjumlah sama dengan
+         * total begitu sebuah kategori dinonaktifkan, walau materinya tetap
+         * ada di daftar.
+         */
+        $admin = $this->buatAdmin();
+        $pemilik = $this->buatPengguna();
+        $matematika = $this->buatPelajaran('Matematika', 'matematika');
+        $biologi = $this->buatPelajaran('Biologi', 'biologi');
+        $arsip = $this->buatPelajaran('Arsip', 'arsip');
+
+        $this->buatTerbit($pemilik, 'Materi Matematika', $matematika);
+        $this->buatTerbit($pemilik, 'Materi Matematika Dua', $matematika);
+        $this->buatTerbit($pemilik, 'Materi Biologi', $biologi);
+        $this->buatTerbit($pemilik, 'Materi Arsip', $arsip);
+
+        $arsip->update(['aktif' => false]);
+
+        $html = $this->actingAs($admin)
+            ->get(route('admin.materi'))
+            ->assertOk()
+            ->getContent();
+
+        $angka = $this->jumlahDalamPilihanKategori($html);
+        $total = (int) array_shift($angka);
+
+        $this->assertSame(4, $total);
+        $this->assertSame(
+            $total,
+            array_sum($angka),
+            'Jumlah per kategori harus berjumlah sama dengan total materi terbit.',
+        );
+    }
+
+    public function test_filter_tetap_menawarkan_kategori_yang_sudah_tidak_aktif(): void
+    {
+        $admin = $this->buatAdmin();
+        $arsip = $this->buatPelajaran('Arsip', 'arsip');
+
+        $this->buatTerbit($this->buatPengguna(), 'Materi Arsip', $arsip);
+
+        $arsip->update(['aktif' => false]);
+
+        $html = $this->actingAs($admin)
+            ->get(route('admin.materi'))
+            ->assertOk()
+            ->getContent();
+
+        $this->assertStringContainsString('Arsip (1)', $html);
+
+        $this->actingAs($admin)
+            ->get(route('admin.materi', ['kategori' => 'arsip']))
+            ->assertOk()
+            ->assertSee('Materi Arsip');
     }
 
     public function test_kartu_memakai_thumbnail_atau_ikon_kategori(): void

@@ -89,13 +89,11 @@
          menyembunyikannya di balik popover hanya menambah satu klik untuk
          sesuatu yang selalu dipakai.
 
-         Kolom "Cari materi" ada di sini, bukan cuma di topbar. Waktu kolom
-         ini dihapus karena dianggap kembar dengan kotak topbar, hasilnya
-         satu-satunya tempat mencari jadi kotak kecil di layar atas yang
-         menulis "Cari materi, quiz, pengguna" padahal isinya cuma satu
-         daftar — persis di halaman tempat admin sedang menyaring. Sekarang
-         keduanya ada: yang di sini yang tampak jelas di halaman filter, dan
-         yang di topbar yang bisa dipakai tanpa menggulir ke bawah.
+         Kolom "Cari materi" ada di sini, di dalam form filter. Kolom cari
+         di topbar sudah dihapus (lihat layouts/admin), jadi kolom inilah
+         satu-satunya tempat mencari — sekaligus alasannya harus terlihat
+         jelas di halaman tempat admin sedang menyaring, bukan disembunyikan
+         di layar atas.
 
          Karena kolomnya ikut di dalam form ini, tidak ada lagi input tersembunyi
          untuk membawa kata kunci: input yang terlihat itulah yang mengirim
@@ -236,55 +234,21 @@
         =====================
              DIALOG HAPUS MATERI
 
-        Satu dialog untuk semua kartu, diisi dari data-* tombol yang ditekan
-        oleh admin.js, jadi daftar panjang tetap hanya punya satu kotak
-        konfirmasi.
+        Satu dialog untuk semua kartu, dipakai dari komponen bersama
+        x-admin.dialog-hapus, dan isinya diisi dari data-* tombol yang
+        ditekan oleh admin.js, jadi daftar panjang tetap hanya punya satu
+        kotak konfirmasi.
 
         Form-nya memakai @method('DELETE') ke admin.materi.destroy, sama
         seperti form hapus milik pengguna. Tidak ada form yang langsung
-        terkirim: materinya baru dihapus setelah tombol "Hapus Materi" ditekan.
+        terkirim: materinya baru dihapus setelah tombol "Hapus Materi"
+        ditekan.
     ====================== --}}
-    <div class="ad-dialog" data-dialog-hapus role="dialog" aria-modal="true" aria-hidden="true"
-        aria-labelledby="dialog-hapus-judul">
-        <div class="ad-dialog__kartu">
-            <header class="ad-dialog__kepala">
-                <div class="min-w-0 flex-1">
-                    <h2 class="ad-dialog__judul" id="dialog-hapus-judul" data-hapus-judul>Hapus Materi?</h2>
-
-                    <p class="ad-teks-2 mt-0.5 !text-xs" data-hapus-meta></p>
-                </div>
-
-                <button type="button" class="ad-dialog__tutup" data-hapus-tutup aria-label="Tutup">
-                    <x-admin.ikon nama="silang-polos" ukuran="w-4 h-4" />
-                </button>
-            </header>
-
-            <div class="ad-dialog__badan">
-                <p class="text-sm leading-relaxed text-dark/70">
-                    Materi ini akan dihapus dan tidak lagi tersedia untuk pengguna.
-                    Tindakan ini tidak dapat dibatalkan.
-                </p>
-            </div>
-
-            <footer class="ad-dialog__kaki">
-                <button type="button" class="ad-tombol ad-tombol--garis" data-hapus-tutup>Batal</button>
-
-                <button type="submit" class="ad-tombol ad-tombol--bahaya" form="form-hapus-materi">
-                    <x-admin.ikon nama="sampah" />
-
-                    Hapus Materi
-                </button>
-            </footer>
-
-            {{--
-                Form tidak terlihat, tapi tetap ada di DOM supaya tombolnya
-                bisa memakai atribut form=.
-            --}}
-            <form method="POST" action="" id="form-hapus-materi" data-hapus-form hidden>
-                @csrf
-
-                @method('DELETE')
-            </form>
-        </div>
-    </div>
+    <x-admin.dialog-hapus
+        judul="Hapus Materi?"
+        pesan="Materi ini akan dihapus dan tidak lagi tersedia untuk pengguna. Tindakan ini tidak dapat dibatalkan."
+        tombol="Hapus Materi"
+        id-dialog="dialog-hapus-judul"
+        id-form="form-hapus-materi"
+        kelas-pesan="text-sm leading-relaxed text-dark/70" />
 @endsection
