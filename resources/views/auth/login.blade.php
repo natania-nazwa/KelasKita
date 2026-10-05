@@ -116,8 +116,56 @@
                                 required
                                 autocomplete="current-password"
                                 placeholder="••••••••"
-                                class="w-full rounded-xl border border-dark/10 bg-brand-bg py-3 pl-11 pr-4 text-sm text-dark transition placeholder:text-dark/40 focus:border-primary focus:bg-white focus:outline-none focus:ring-2 focus:ring-primary/20"
+                                class="w-full rounded-xl border border-dark/10 bg-brand-bg py-3 pl-11 pr-11 text-sm text-dark transition placeholder:text-dark/40 focus:border-primary focus:bg-white focus:outline-none focus:ring-2 focus:ring-primary/20"
                             />
+
+                            {{--
+                                Tombol mata: type="button" supaya tidak ikut
+                                mengirim form, dan aria-pressed memberi tahu
+                                pembaca layar sedang menampilkan atau
+                                menyembunyikan isi kolom.
+                            --}}
+                            <button
+                                type="button"
+                                data-lihat-sandi
+                                aria-pressed="false"
+                                aria-label="Tampilkan kata sandi"
+                                class="absolute right-2 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-lg text-dark/40 transition hover:bg-lavender/70 hover:text-primary focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
+                            >
+                                <svg
+                                    class="h-4 w-4"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    stroke-width="1.8"
+                                    viewBox="0 0 24 24"
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    aria-hidden="true"
+                                    data-mata-terbuka
+                                >
+                                    <path
+                                        stroke-linecap="round"
+                                        stroke-linejoin="round"
+                                        d="{{ \App\Support\Ikon::path('mata') }}"
+                                    />
+                                </svg>
+
+                                <svg
+                                    class="hidden h-4 w-4"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    stroke-width="1.8"
+                                    viewBox="0 0 24 24"
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    aria-hidden="true"
+                                    data-mata-tertutup
+                                >
+                                    <path
+                                        stroke-linecap="round"
+                                        stroke-linejoin="round"
+                                        d="{{ \App\Support\Ikon::path('mata-tutup') }}"
+                                    />
+                                </svg>
+                            </button>
                         </div>
                     </div>
 

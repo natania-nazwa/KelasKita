@@ -130,12 +130,12 @@
 
         <div class="relative mx-auto max-w-7xl px-6 sm:px-8 lg:px-12">
             <div
-                class="grid lg:grid-cols-2 items-center gap-8 lg:gap-2 min-h-[520px]"
+                class="grid lg:grid-cols-2 items-center gap-6 sm:gap-8 lg:gap-2 min-h-[520px]"
             >
                 {{-- =========================
                  BAGIAN KIRI
             ========================== --}}
-                <div class="relative z-10 py-14 lg:py-20">
+                <div class="relative z-10 py-8 sm:py-14 lg:py-20">
                     {{-- Label --}}
                     <span
                         data-reveal
@@ -149,7 +149,7 @@
                     <h1
                         data-reveal
                         style="--reveal-delay: 140ms"
-                        class="mt-5 text-4xl sm:text-5xl lg:text-[52px] font-extrabold leading-[1.12] text-dark"
+                        class="mt-4 text-[30px] sm:mt-5 sm:text-5xl lg:text-[52px] font-extrabold leading-[1.12] text-dark"
                     >
                         Belajar lebih mudah,
 
@@ -162,18 +162,18 @@
                     <p
                         data-reveal
                         style="--reveal-delay: 220ms"
-                        class="mt-5 max-w-lg text-base sm:text-lg font-light leading-relaxed text-dark/65"
+                        class="mt-4 max-w-lg text-[15px] sm:mt-5 sm:text-lg font-light leading-relaxed text-dark/65"
                     >Pelajari materi dan uji pemahamanmu melalui soal-soal interaktif. Tingkatkan kemampuanmu bersama KelasKita!</p>
 
                     {{-- Button --}}
                     <div
                         data-reveal
                         style="--reveal-delay: 300ms"
-                        class="mt-8 flex flex-wrap items-center gap-3"
+                        class="mt-5 flex flex-wrap items-center gap-3 sm:mt-8"
                     >
                         <a
                             href="{{ url('/register') }}"
-                            class="inline-flex flex-1 items-center justify-center gap-2.5 rounded-2xl bg-primary px-3 py-4 text-sm font-semibold text-white shadow-lg shadow-primary/25 transition hover:bg-primary-dark md:flex-none md:px-8"
+                            class="inline-flex flex-1 items-center justify-center gap-2.5 rounded-2xl bg-primary px-3 py-3.5 text-sm font-semibold text-white shadow-lg shadow-primary/25 transition hover:bg-primary-dark sm:py-4 md:flex-none md:px-8"
                         >
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M15.59 14.37a6 6 0 0 1-5.84 7.38v-4.8m5.84-2.58a14.98 14.98 0 0 0 6.16-12.12A14.98 14.98 0 0 0 9.63 8.41m5.96 5.96a14.926 14.926 0 0 1-5.841 2.58m-.119-8.54a6 6 0 0 0-7.381 5.84h4.8m2.581-5.84a14.927 14.927 0 0 0-2.58 5.841m2.581-5.841a14.927 14.927 0 0 1 5.841-2.58m-.119 8.54a6 6 0 0 0 7.381-5.84h-4.8m-2.581 5.84a14.926 14.926 0 0 0 2.58-5.841m-2.581 5.841a14.926 14.926 0 0 1-5.841 2.58" />
@@ -183,7 +183,7 @@
 
                         <a
                             href="#quiz"
-                            class="inline-flex flex-1 items-center justify-center gap-2.5 rounded-2xl border-2 border-primary/20 bg-white px-3 py-4 text-sm font-semibold text-primary transition hover:border-primary/40 hover:bg-[#f1ecff] md:flex-none md:px-8"
+                            class="inline-flex flex-1 items-center justify-center gap-2.5 rounded-2xl border-2 border-primary/20 bg-white px-3 py-3.5 text-sm font-semibold text-primary transition hover:border-primary/40 hover:bg-[#f1ecff] sm:py-4 md:flex-none md:px-8"
                         >
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
@@ -199,13 +199,13 @@
                 <div
                     data-reveal="zoom"
                     style="--reveal-delay: 180ms"
-                    class="relative mt-6 flex items-end justify-center self-end -mb-1 lg:mt-0 lg:justify-end lg:-mb-2"
+                    class="relative mt-2 flex items-end justify-center self-end -mb-1 sm:mt-6 lg:mt-0 lg:justify-end lg:-mb-2"
                 >
                     {{-- Illustration --}}
                     <img
                         src="{{ asset('images/cover.png') }}"
                         alt="Ilustrasi KelasKita"
-                        class="relative z-10 w-[min(80vw,420px)] lg:w-[760px] xl:w-[850px] h-auto object-contain drop-shadow-xl"
+                        class="relative z-10 w-[min(72vw,290px)] sm:w-[min(80vw,420px)] lg:w-[760px] xl:w-[850px] h-auto object-contain drop-shadow-xl"
                     />
                 </div>
             </div>

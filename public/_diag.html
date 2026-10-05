@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8" />
+        <style>
+            body {
+                font-family: monospace;
+                margin: 0;
+            }
+            iframe {
+                width: 390px;
+                height: 844px;
+                border: 1px solid red;
+            }
+            pre {
+                white-space: pre-wrap;
+            }
+        </style>
+    </head>
+    <body>
+        <iframe id="f" src="/"></iframe>
+        <pre id="out">menunggu…</pre>
+        <script>
+            const f = document.getElementById("f");
+
+            function dump() {
+                const d = f.contentDocument;
+                const out = [];
+                const vw = d.documentElement.clientWidth;
+                out.push("viewport " + vw);
+                out.push("scrollWidth " + d.documentElement.scrollWidth);
+                const list = [];
+                d.querySelectorAll("*").forEach((el) => {
+                    const r = el.getBoundingClientRect();
+                    if (r.right > vw + 1 || r.left < -1) {
+                        list.push(
+                            [
+                                el.tagName.toLowerCase(),
+                                (el.className || "").toString().slice(0, 80),
+                                "l=" + Math.round(r.left),
+                                "r=" + Math.round(r.right),
+                                "w=" + Math.round(r.width),
+                            ].join(" | "),
+                        );
+                    }
+                });
+                out.push("melewati viewport: " + list.length);
+                out.push(list.slice(0, 30).join("\n"));
+                const img = d.querySelector("#beranda img");
+                if (img) {
+                    const r = img.getBoundingClientRect();
+                    out.push(
+                        "IMG " +
+                            JSON.stringify({
+                                top: Math.round(r.top),
+                                left: Math.round(r.left),
+                                w: Math.round(r.width),
+                                h: Math.round(r.height),
+                                natW: img.naturalWidth,
+                                opacity: f.contentWindow.getComputedStyle(img).opacity,
+                            }),
+                    );
+                    const p = img.parentElement;
+                    const pr = p.getBoundingClientRect();
+                    out.push(
+                        "PARENT " +
+                            JSON.stringify({
+                                top: Math.round(pr.top),
+                                h: Math.round(pr.height),
+                                opacity: f.contentWindow.getComputedStyle(p).opacity,
+                                reveal: p.classList.contains("is-reveal"),
+                            }),
+                    );
+                }
+                document.getElementById("out").textContent = out.join("\n");
+            }
+
+            f.addEventListener("load", () => {
+                setTimeout(dump, 800);
+                setTimeout(dump, 3000);
+            });
+            if (f.contentDocument && f.contentDocument.readyState === "complete") {
+                setTimeout(dump, 800);
+            }
+        </script>
+    </body>
+</html>

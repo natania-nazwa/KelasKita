@@ -1,3 +1,6 @@
+// Halaman Masuk dan Daftar (tombol mata pada kolom kata sandi).
+import "./auth.js";
+
 // Halaman "Tambah Materi" (berhenti sendiri kalau halamannya tidak ada).
 import "./materi-tambah.js";
 
