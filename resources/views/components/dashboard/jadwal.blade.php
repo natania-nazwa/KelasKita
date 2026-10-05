@@ -71,7 +71,34 @@
                 </span>
             </div>
         @empty
-            <p class="py-2 text-center text-xs text-dark/45">Tidak ada jadwal hari ini.</p>
+            {{--
+                Pengguna yang belum punya jadwal — termasuk akun baru yang
+                baru mendaftar — mendapat empty state mini di sini, bukan
+                hanya satu baris teks. Bentuknya sengaja ringkas: kartu ini
+                cuma selebar 20rem dan berdiri di samping kartu lain yang
+                padat, jadi ilustrasi penuh seperti halaman Karya Saya atau
+                Simpan akan membuatnya jatuh dari tinggi sidebar.
+
+                Tombolnya memakai komponen yang sama dengan tombol di
+                kepala panel maupun di halaman /user/jadwal.
+            --}}
+            <div class="flex flex-col items-center gap-2 px-4 py-6 text-center">
+                <span class="flex h-10 w-10 items-center justify-center rounded-2xl bg-lavender/70 text-dark/30"
+                    aria-hidden="true">
+                    <svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24"
+                        xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="{{ \App\Support\Ikon::path('jam') }}" />
+                    </svg>
+                </span>
+
+                <p class="text-xs font-semibold text-dark/70">Belum ada jadwal hari ini</p>
+
+                <p class="max-w-[15rem] text-[11px] leading-relaxed text-dark/45">
+                    Tambahkan jadwal pelajaranmu, lalu kartu ini akan langsung terisi.
+                </p>
+
+                <x-jadwal.tambah class="mt-1" />
+            </div>
         @endforelse
     </div>
 

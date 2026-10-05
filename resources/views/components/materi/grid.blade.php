@@ -9,10 +9,19 @@
     - Tablet : 2 kolom
     - Ponsel : 2 kolom (padat, supaya 20 kartu per halaman tidak
                 terasa seperti daftar yang tidak berujung)
+    - Ponsel kecil (di bawah 360px): 1 kolom
 
     Pembagiannya sengaja 2 dan 4: jumlah materi per halaman (lihat
     DaftarMateri::perHalaman) = 20, jadi tidak pernah ada kartu yatim
-    di baris terakhir, baik di ponsel maupun desktop.
+    di baris terakhir, baik di ponsel maupun desktop. 1 ikut habis
+    membagi 20, jadi layar 320px juga tidak menyisakan kartu yatim.
+
+    360px adalah batasnya karena di bawah itu lebar satu kartu tinggal
+    ~130px: thumbnail 16:9 setinggi 72px, judul, deskripsi, dan baris
+    meta (avatar + nama pembuat + chip waktu + chip bab) semuanya harus
+    muat di sana. Satu kolom memberi kartu ~270px di ukuran itu, cukup
+    untuk seluruh baris meta tetap terbaca tanpa nama pembuat dipangkas
+    sampai tersisa dua huruf.
 
     min-w-0 pada tiap kartu membuat kolom menyusut mengikuti ruang yang
     tersedia di samping sidebar, jadi tidak pernah melebar atau membuat
@@ -20,7 +29,7 @@
     ellipsis, jadi kartu tetap rapi walau kolomnya sempit.
 --}}
 
-<div data-reveal-stagger {{ $attributes->class(['grid grid-cols-2 gap-4 min-w-0 sm:gap-5 lg:grid-cols-4']) }}>
+<div data-reveal-stagger {{ $attributes->class(['grid grid-cols-1 min-[360px]:grid-cols-2 gap-4 min-w-0 sm:gap-5 lg:grid-cols-4']) }}>
     @forelse ($daftar as $materi)
         <x-materi.kartu :materi="$materi" :kata-kunci="$kataKunci" />
     @empty

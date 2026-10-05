@@ -38,7 +38,7 @@
             </span>
 
             <div class="min-w-0 flex-1">
-                <p class="font-mono text-[10px] font-bold uppercase tracking-[0.16em] text-primary">
+                <p class="font-mono text-[11px] font-bold uppercase tracking-[0.16em] text-primary lg:text-[10px]">
                     {{ $seksi['nomor'] }}. {{ $seksi['judul'] }}
                 </p>
 

@@ -40,11 +40,11 @@ use Carbon\Carbon;
  *
  * Ditambah status, status_label, lewat, dan sedang oleh hari().
  *
- * Selama pengguna belum punya jadwal di database, kelas ini memakai MINGGUAN
- * dan RUANG sebagai contoh jadwal. Contoh itu hanya dipakai selama tabelnya
- * kosong: begitu pengguna menambah satu baris lewat tombol "Tambah Jadwal",
- * database yang jadi sumber kebenarannya, supaya jadwal tidak setengah-setengah
- * (contoh untuk sebagian hari, data sendiri untuk sebagian hari lain).
+ * Tabel tb_jadwal adalah satu-satunya sumber baris jadwal. Tidak ada jadwal
+ * contoh lagi: pengguna yang belum pernah menambah jadwal mendapat peta hari
+ * yang kosong, dan yang tampil di halaman maupun di dashboard adalah empty
+ * state "Belum Ada Jadwal" dengan tombol menambah, sama seperti halaman
+ * Karya Saya, Hasil, dan Simpan.
  *
  * Nama hari dan bulan ditulis manual dalam bahasa Indonesia karena locale
  * aplikasi masih "en" (lihat config/app.php). Daftar singkatnya sengaja sama
@@ -84,24 +84,6 @@ final class DaftarJadwal
     ];
 
     /**
-     * Slot waktu contoh yang dipakai MINGGUAN.
-     *
-     * Jadwal yang disimpan di database tidak terikat ke slot mana pun: jam
-     * mulai dan jam selesai ditulis bebas di form. Daftar ini cuma pengingat
-     * bahwa contoh jadwal disusun dari jam berapa ke jam berapa.
-     *
-     * @var array<int, array{0: string, 1: string}>
-     */
-    private const SLOT = [
-        ['07:00', '08:30'],
-        ['08:30', '10:00'],
-        ['10:15', '11:45'],
-        ['12:00', '13:30'],
-        ['13:30', '15:00'],
-        ['15:15', '16:45'],
-    ];
-
-    /**
      * Ikon garis untuk tiap mata pelajaran.
      *
      * Pelajaran::KATALOG menyimpan ikon berupa emoji atau teks pendek (mis.
@@ -124,114 +106,30 @@ final class DaftarJadwal
     ];
 
     /**
-     * Contoh jadwal per hari dalam seminggu.
-     *
-     * Dipakai hanya selama tabel tb_jadwal milik pengguna masih kosong.
-     *
-     * Kunci diurutkan dari 0 = Minggu, sama seperti Carbon::dayOfWeek. Minggu
-     * dan Sabtu sengaja kosong, jadi halaman jadwalnya menampilkan empty state
-     * "hari libur", bukan "filter tidak cocok".
-     *
-     * Bentuk satu baris: [slot, pelajaran, judul, pr, tempo].
-     *
-     *   slot      nomor index ke SLOT di atas
-     *   pelajaran slug dari Pelajaran::KATALOG
-     *   judul     nama pelajaran yang tampil di daftar
-     *   pr        isi PR, boleh dikosongkan
-     *   tempo     berapa hari setelah hari pelajaran PR itu harus
-     *             dikumpulkan, boleh dikosongkan
-     *
-     * "tempo" memakai jumlah hari, bukan tanggal, karena contoh jadwal ini
-     * dipakai untuk minggu mana pun. Kalau tanggalnya ditulis mati, contoh
-     * jadwalnya akan kedaluwarsa sendiri setelah beberapa minggu.
-     *
-     * @var array<int, array<int, array{0: int, 1: string, 2: string, 3?: string, 4?: int}>>
-     */
-    private const MINGGUAN = [
-        0 => [],
-        1 => [
-            [0, 'bahasa-indonesia', 'Bahasa Indonesia', 'PR halaman 45-50, tulislah 3 paragraf', 2],
-            [1, 'matematika', 'Matematika', 'Kerjakan latihan 3 dan 4', 1],
-            [2, 'ipa', 'IPA'],
-            [3, 'ppkn', 'PPKN'],
-            [4, 'pemrograman', 'Pemrograman Web', 'Buat satu landing page sederhana', 3],
-            [5, 'pjkr', 'Latihan Basis Data'],
-        ],
-        2 => [
-            [0, 'matematika', 'Matematika'],
-            [1, 'ipa', 'IPA'],
-            [2, 'bahasa-inggris', 'Bahasa Inggris', 'Kerjakan worksheet 2', 2],
-            [3, 'desain-web', 'Desain Web'],
-            [4, 'pemrograman', 'Pemrograman Web', 'Latihan selector CSS', 3],
-            [5, 'ips', 'IPS'],
-        ],
-        3 => [
-            [0, 'ipa', 'IPA'],
-            [1, 'bahasa-indonesia', 'Bahasa Indonesia', 'PR cerita lamaran resmi', 2],
-            [2, 'database', 'Basis Data', 'Normalisasi sampai bentuk 3NF', 5],
-            [3, 'ppkn', 'PPKN'],
-            [4, 'pjkr', 'Praktikum Proyek'],
-        ],
-        4 => [
-            [0, 'bahasa-inggris', 'Bahasa Inggris'],
-            [1, 'matematika', 'Matematika', 'PR soal cerita LIMIT', 2],
-            [2, 'desain-web', 'Desain Web'],
-            [3, 'ipa', 'IPA'],
-            [4, 'pjkr', 'Praktikum Proyek'],
-        ],
-        5 => [
-            [0, 'ppkn', 'PPKN'],
-            [1, 'ips', 'IPS'],
-            [2, 'pemrograman', 'Pemrograman Web', 'Refactoring kode Lukas', 3],
-        ],
-        6 => [],
-    ];
-
-    /**
-     * Kelas dan ruang contoh untuk tiap hari.
-     *
-     * Satu hari cuma punya satu kelas dan satu ruang, jadi disimpan sekali per
-     * hari, bukan ditulis ulang tiap baris jadwal.
-     *
-     * @var array<int, array{kelas: string, ruang: string}>
-     */
-    private const RUANG = [
-        1 => ['kelas' => 'Kelas 11 RPL 2', 'ruang' => 'Lab Komputer 1'],
-        2 => ['kelas' => 'Kelas 11 RPL 2', 'ruang' => 'Lab Komputer 1'],
-        3 => ['kelas' => 'Kelas 11 RPL 2', 'ruang' => 'Lab Komputer 1'],
-        4 => ['kelas' => 'Kelas 11 RPL 2', 'ruang' => 'Ruang Kelas 3B'],
-        5 => ['kelas' => 'Kelas 11 RPL 2', 'ruang' => 'Ruang Kelas 3B'],
-    ];
-
-    /**
      * Seluruh jadwal milik pengguna, sudah dipetakan jadi peta per hari.
      *
      * Hasilnya diindeks 0-6 (Minggu sampai Sabtu) supaya pemanggilnya bisa
      * langsung mengambil hari yang dibutuhkan tanpa cek batas array.
      *
-     * Kalau pengguna belum punya satu pun baris di tb_jadwal, peta diisi dari
-     * MINGGUAN dan RUANG supaya halaman tidak tampak kosong. Peta hasil
-     * contoh ditandai di kunci "contoh" supaya pemanggil bisa memberi tahu
-     * pengguna bahwa jadwal itu masih contoh dan bisa diganti.
+     * Pengguna yang belum punya satu pun baris di tb_jadwal — termasuk akun
+     * baru — mendapat peta yang seluruh harinya kosong. Halaman dan kartu
+     * dashboard yang menangani keadaan itu lewat empty state mereka
+     * sendiri, bukan lewat jadwal contoh.
      *
-     * @return array{contoh: bool, hari: array<int, array<int, array<string, mixed>>>}
+     * @return array<int, array<int, array<string, mixed>>>
      */
     public static function jadwalMinggu(?int $idPengguna): array
     {
         $peta = array_fill(0, 7, []);
 
         if ($idPengguna === null) {
-            return ['contoh' => true, 'hari' => self::dariContoh($peta)];
+            return $peta;
         }
 
         $baris = Jadwal::query()
             ->milik($idPengguna)
             ->urut()
             ->get();
-
-        if ($baris->isEmpty()) {
-            return ['contoh' => true, 'hari' => self::dariContoh($peta)];
-        }
 
         foreach ($baris as $jadwal) {
             $hari = (int) $jadwal->hari;
@@ -243,7 +141,7 @@ final class DaftarJadwal
             $peta[$hari][] = self::petakanModel($jadwal);
         }
 
-        return ['contoh' => false, 'hari' => $peta];
+        return $peta;
     }
 
     /**
@@ -258,14 +156,14 @@ final class DaftarJadwal
     {
         $peta = self::jadwalMinggu($idPengguna);
 
-        return self::hari($peta['hari']);
+        return self::hari($peta);
     }
 
     /**
      * Seluruh pelajaran pada satu tanggal, sudah difilter, dicari, diurutkan
      * berdasarkan jam mulai, dan diberi statusnya.
      *
-     * @param  array<int, array<int, array<string, mixed>>>  $peta  hasil jadwalMinggu()['hari']
+     * @param  array<int, array<int, array<string, mixed>>>  $peta  hasil jadwalMinggu()
      * @return array<int, array<string, mixed>>
      */
     public static function hari(array $peta, ?Carbon $tanggal = null, string $kategori = '', string $kataKunci = ''): array
@@ -300,7 +198,7 @@ final class DaftarJadwal
      * Minggu sekolah di Indonesia dimulai dari Senin, jadi tanggal senin
      * dihitung lebih dulu lalu digeser mundur sebanyak yang diperlukan.
      *
-     * @param  array<int, array<int, array<string, mixed>>>  $peta  hasil jadwalMinggu()['hari']
+     * @param  array<int, array<int, array<string, mixed>>>  $peta  hasil jadwalMinggu()
      * @return array<int, array{hari: string, nama: string, angka: int, tanggal: string, tautan: string, hari_ini: bool, aktif: bool, jumlah: int}>
      */
     public static function minggu(array $peta, ?Carbon $tanggal = null, string $kategori = '', string $kataKunci = ''): array
@@ -336,7 +234,7 @@ final class DaftarJadwal
      * sebelumnya / berikutnya cukup berupa link biasa (?bulan=YYYY-MM) dan
      * tetap jalan walau JavaScript dimatikan.
      *
-     * @param  array<int, array<int, array<string, mixed>>>  $peta  hasil jadwalMinggu()['hari']
+     * @param  array<int, array<int, array<string, mixed>>>  $peta  hasil jadwalMinggu()
      * @return array{nama_bulan: string, nama_hari: array<int, string>, sel: array<int, array<string, mixed>>, sebelumnya: string, berikutnya: string}
      */
     public static function bulan(array $peta, Carbon $bulan, string $kategori = '', string $kataKunci = ''): array
@@ -385,7 +283,7 @@ final class DaftarJadwal
      * Diambil dari sepekan, bukan dari hari yang sedang dibuka, supaya pilihan
      * di dropdown tidak ikut hilang begitu pengguna pindah hari.
      *
-     * @param  array<int, array<int, array<string, mixed>>>  $peta  hasil jadwalMinggu()['hari']
+     * @param  array<int, array<int, array<string, mixed>>>  $peta  hasil jadwalMinggu()
      * @return array<int, array{nama: string, slug: string, jumlah: int}>
      */
     public static function kategori(array $peta): array
@@ -523,16 +421,6 @@ final class DaftarJadwal
     }
 
     /**
-     * Jam pelajaran yang bisa dipilih di form, diambil dari SLOT contoh.
-     *
-     * @return array<int, string>
-     */
-    public static function pilihanJam(): array
-    {
-        return array_values(array_unique(array_merge(...array_column(self::SLOT, 0))));
-    }
-
-    /**
      * Baca parameter ?tanggal=YYYY-MM-DD.
      *
      * Nilai di luar kalender yang nyata dianggap tidak ada, supaya URL yang
@@ -612,51 +500,6 @@ final class DaftarJadwal
     public static function namaBulan(Carbon $tanggal): string
     {
         return self::NAMA_BULAN[(int) $tanggal->month - 1];
-    }
-
-    /**
-     * Peta jadwal contoh, dipakai selama tabel milik pengguna masih kosong.
-     *
-     * @param  array<int, array<int, array<string, mixed>>>  $peta
-     * @return array<int, array<int, array<string, mixed>>
-     */
-    private static function dariContoh(array $peta): array
-    {
-        // Contoh jadwal dipakai untuk minggu mana pun, jadi jangkar_PR-nya
-        // adalah Senin minggu ini: tanggal tenggat PR dihitung dari hari
-        // pelajaran di dalam minggu itu, ditambah jumlah hari yang ditulis di
-        // MINGGUAN. Dengan begitu contoh jadwalnya tidak pernah kedaluwarsa.
-        $senin = now()->startOfWeek(Carbon::MONDAY);
-
-        foreach (array_keys(self::MINGGUAN) as $hari) {
-            $tanggalPelajaran = $senin->copy()->addDays($hari === Carbon::SUNDAY ? 6 : $hari - 1);
-
-            foreach (self::MINGGUAN[$hari] as $urut => $baris) {
-                [$mulai, $selesai] = self::SLOT[$baris[0]];
-                $ruang = self::RUANG[$hari] ?? ['kelas' => 'Kelas 11 RPL 2', 'ruang' => 'Ruang Kelas 3B'];
-
-                $peta[$hari][] = self::bentuk([
-                    'id' => $hari * 100 + $urut + 1,
-                    'hari' => $hari,
-                    'mulai' => $mulai,
-                    'selesai' => $selesai,
-                    'judul' => $baris[2],
-                    'kelas' => $ruang['kelas'],
-                    'ruang' => $ruang['ruang'],
-                    'slug' => $baris[1],
-                    'pr' => $baris[3] ?? null,
-                    'pr_dikumpulkan' => isset($baris[4])
-                        ? $tanggalPelajaran->copy()->addDays($baris[4])->toDateString()
-                        : null,
-                    // Contoh jadwal tidak punya baris di database, jadi tidak
-                    // bisa diedit atau dihapus.
-                    'tautan_edit' => null,
-                    'tautan_hapus' => null,
-                ]);
-            }
-        }
-
-        return $peta;
     }
 
     /**

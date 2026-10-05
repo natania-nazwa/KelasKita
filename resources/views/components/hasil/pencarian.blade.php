@@ -23,7 +23,7 @@
 <form action="{{ route($aksi, $param) }}" method="GET" data-cari-form
     {{ $attributes->class(['flex min-w-0 flex-wrap items-center gap-2.5']) }}>
 
-    <div class="relative min-w-0 flex-1 sm:w-56 sm:flex-none">
+    <div class="relative w-full min-w-0 sm:w-56 sm:flex-none">
         <span
             class="pointer-events-none absolute left-3.5 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full bg-white text-dark/40 shadow-[0_2px_8px_rgba(33,26,58,0.06)]">
             <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
@@ -46,7 +46,7 @@
         @endif
     </div>
 
-    <div class="relative min-w-0 flex-1 sm:w-40 sm:flex-none">
+    <div class="relative w-full min-w-0 sm:w-40 sm:flex-none">
         <span class="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-dark/35" aria-hidden="true">
             <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M3 7.5h12m0 0-3-3m3 3-3 3m-9 9h12m0 0-3 3m3-3-3-3M6 12h.008v.008H6V12Z" />

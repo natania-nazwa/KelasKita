@@ -19,7 +19,7 @@
 --}}
 
 <div data-quiz-rangka hidden aria-hidden="true"
-    class="mt-5 grid grid-cols-2 gap-4 min-w-0 sm:gap-5 lg:grid-cols-3 xl:grid-cols-4">
+    class="mt-5 grid grid-cols-1 min-[360px]:grid-cols-2 gap-4 min-w-0 sm:gap-5 lg:grid-cols-3 xl:grid-cols-4">
     @for ($i = 0; $i < $jumlah; $i++)
         <div class="kartu-quiz kartu-quiz--rangka min-w-0">
             <div class="kartu-quiz__gambar">

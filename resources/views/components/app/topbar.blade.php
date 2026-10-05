@@ -28,7 +28,7 @@
      materi, jadi tidak ada garis sambung antara top bar dan konten di
      bawahnya. --}}
 <header data-app-topbar
-    class="latar-atas sticky top-0 z-30">
+    class="latar-atas sticky top-0 z-30 hidden lg:block">
 
     <div class="flex h-16 items-center gap-3 px-4 sm:gap-4 sm:px-6 lg:px-10">
 

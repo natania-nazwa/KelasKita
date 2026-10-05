@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8" />
+        <style>
+            body { margin: 0; font-family: monospace; background: #111; color: #eee; }
+            iframe { width: 1280px; height: 800px; border: 1px solid #f0f; }
+            pre { font-size: 13px; white-space: pre-wrap; }
+        </style>
+    </head>
+    <body>
+        <pre id="out">menunggu…</pre>
+        <iframe id="f" src="/"></iframe>
+        <script>
+            const f = document.getElementById("f");
+            const durasiMs = 6000;
+
+            f.addEventListener("load", () => setTimeout(ukur, 3000));
+
+            function ukur() {
+                const w = f.contentWindow;
+                const d = f.contentDocument;
+                const out = document.getElementById("out");
+
+                let longTasks = [];
+                let po = null;
+                try {
+                    po = new w.PerformanceObserver((list) => {
+                        list.getEntries().forEach((e) =>
+                            longTasks.push(Math.round(e.duration)),
+                        );
+                    });
+                    po.observe({ entryTypes: ["longtask"] });
+                } catch (e) {
+                    longTasks = ["observer-gagal: " + e.message];
+                }
+
+                // scroll-behavior: smooth bikin scrollTo tidak sinkron dengan
+                // langkah, jadi dimatikan dulu agar pembaruan posisi = tiap frame.
+                d.documentElement.style.scrollBehavior = "auto";
+
+                const deltas = [];
+                let last = w.performance.now();
+                const tick = (t) => {
+                    deltas.push(t - last);
+                    last = t;
+                    w.requestAnimationFrame(tick);
+                };
+                let raf = w.requestAnimationFrame(tick);
+
+                const tinggi = d.documentElement.scrollHeight;
+                let y = 0;
+                const langkah = 48;
+                const timer = setInterval(() => {
+                    y += langkah;
+                    if (y > tinggi) y = 0;
+                    w.scrollTo(0, y);
+                }, 16);
+
+                setTimeout(() => {
+                    clearInterval(timer);
+                    w.cancelAnimationFrame(raf);
+                    if (po) po.disconnect();
+
+                    const bersih = deltas.slice(1).sort((a, b) => a - b);
+                    const p = (q) =>
+                        bersih.length
+                            ? Math.round(bersih[Math.floor(bersih.length * q)])
+                            : -1;
+                    const tanpaLong = longTasks.filter((x) => typeof x === "number");
+                    const totalLong = tanpaLong.reduce((a, b) => a + b, 0);
+                    const buruk = bersih.filter((x) => x > 33).length;
+
+                    out.textContent = [
+                        "durasi ukur       : " + durasiMs + " ms, langkah scroll tiap 16 ms",
+                        "tinggi dokumen    : " + tinggi + " px",
+                        "jumlah frame      : " + bersih.length,
+                        "frame p50/p95/max : " + p(0.5) + " / " + p(0.95) + " / " + p(1) + " ms",
+                        "frame > 33 ms     : " + buruk + " (" + (bersih.length ? Math.round((buruk / bersih.length) * 100) : 0) + "%)",
+                        "long task         : " + tanpaLong.length + " buah, total " + totalLong + " ms",
+                        "rincian long task : " + (tanpaLong.join(", ") || "-"),
+                    ].join("\n");
+                }, durasiMs);
+            }
+        </script>
+    </body>
+</html>

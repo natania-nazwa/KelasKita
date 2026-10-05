@@ -2,7 +2,8 @@
     // Array dari App\Support\DaftarJadwal::hari().
     'daftar' => [],
     // Kenapa daftar kosong, diteruskan ke components/jadwal/kosong:
-    // 'libur' = hari tanpa pelajaran, 'cari' = tidak cocok dengan filter.
+    // 'kosong' = belum ada jadwal untuk hari ini, 'libur' = hari tanpa
+    // pelajaran, 'cari' = tidak cocok dengan filter.
     'alasanKosong' => 'cari',
     'tanggal' => null,
     'kategori' => '',
@@ -105,9 +106,8 @@
                 </svg>
             </span>
 
-            {{-- Aksi edit dan hapus. Hanya untuk baris yang benar-benar
-                 ada di tb_jadwal: contoh jadwal tidak punya baris di
-                 database, jadi tidak bisa diedit atau dihapus.
+            {{-- Aksi edit dan hapus. Semua baris berasal dari tb_jadwal,
+                 jadi semuanya bisa diubah dan dihapus.
 
                  Tombol hapus membuka dialog konfirmasi lebih dulu
                  (dikerjakan initKonfirmasi() di resources/js/app.js) dan

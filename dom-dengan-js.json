@@ -1,0 +1,25 @@
+{
+  "htmlClass": "",
+  "bodyClass": "bg-brand-bg font-sans text-dark antialiased",
+  "jumlahElemen": 399,
+  "elemenDenganStyle": 9,
+  "gaya": [
+    "DIV => transform: scaleX(0);",
+    "SPAN => --reveal-delay: 60ms",
+    "H1 => --reveal-delay: 140ms",
+    "P => --reveal-delay: 220ms",
+    "DIV => --reveal-delay: 300ms",
+    "DIV => --reveal-delay: 180ms",
+    "LI => --reveal-delay: 80ms",
+    "LI => --reveal-delay: 160ms",
+    "LI => --reveal-delay: 240ms"
+  ],
+  "jumlahClass": 340,
+  "isReveal": 5,
+  "htmlAttr": [
+    "lang=id"
+  ],
+  "bodyAttr": [
+    "class=bg-brand-bg font-sans text-dark antialiased"
+  ]
+}

@@ -792,15 +792,18 @@ html {
  * Jarak berhenti scroll saat tautan Daftar Isi diklik, supaya judul seksi
  * tidak tertutup.
  *
- * Di ponsel dan tablet yang menutupi hanya header mobile (baris logo +
- * strip menu), jadi jaraknya mengikuti tinggi header itu.
+ * Di ponsel dan tablet yang menutupi hanya baris logo header mobile
+ * (setinggi 3.5rem): halaman detail materi ada di daftar
+ * $sembunyiTopbar, jadi baris pencarian kedua tidak ikut dirender.
+ * Karena scroll-padding-top di <html> sudah 6rem — lebih dari cukup
+ * untuk menutupi 3.5rem itu — sisanya tinggal ruang lega kecil.
  *
  * Di layar lebar tidak ada apa pun yang menutupi: top bar halaman ini
  * disembunyikan dan header mobile sudah hilang, jadi cukup ruang kecil
  * supaya judul tidak menempel tepi atas.
  */
 .materi-seksi {
-    scroll-margin-top: 7rem;
+    scroll-margin-top: 1rem;
 }
 
 @media (min-width: 1024px) {
@@ -961,6 +964,9 @@ html {
     line-height: 1.25;
     letter-spacing: -0.02em;
     color: var(--color-dark);
+    /* line-clamp hanya memotong tampilan; tanpa overflow-wrap, judul
+       satu kata yang panjang tetap mendorong kolom grid melebar. */
+    overflow-wrap: anywhere;
 }
 
 @media (min-width: 768px) {
@@ -3187,6 +3193,38 @@ html {
     color: var(--teks-isi);
     font-size: 0.875rem;
     line-height: 1.7;
+    /*
+     * Materi boleh menaruh URL atau slug panjang langsung di paragraf.
+     * overflow-wrap: break-word hanya memecah KATA yang memang tidak
+     * muat, jadi kata biasa tetap utuh sementara tautan panjang tidak
+     * lagi mendorong halaman melebar di layar 320px.
+     */
+    overflow-wrap: break-word;
+}
+
+.isi-materi img,
+.isi-materi video,
+.isi-materi iframe,
+.isi-materi table {
+    max-width: 100%;
+}
+
+/* Tabel materi memakai gulir di dalam dirinya sendiri, bukan di seluruh
+   halaman — arah yang sama dengan blok kode. display: block membuat
+   wadahnya selebar kolom teks lalu menggulir isinya; border-collapse
+   diwariskan ke kotak tabel anonim di dalamnya. */
+.isi-materi table {
+    display: block;
+    width: 100%;
+    overflow-x: auto;
+    border-collapse: collapse;
+}
+
+/* Kode inline panjang (URL, path berkas) ikut dipotong di titik mana
+   pun, karena biasanya tidak ada spasi yang bisa dipakai sebagai
+   titik putus. */
+.isi-materi code {
+    overflow-wrap: anywhere;
 }
 
 .isi-materi > p + p {
@@ -3348,6 +3386,7 @@ html {
 
     .thumbnail-kendali {
         display: flex;
+        flex-wrap: wrap;
         align-items: center;
         gap: 0.5rem;
         margin-top: 0.6rem;
@@ -3892,10 +3931,40 @@ html {
         padding: 1.25rem;
         background-color: rgba(33, 26, 58, 0.45);
         backdrop-filter: blur(3px);
+        /*
+         * Layar pendek (320×568 adalah yang paling menekan): panel
+         * "Daftar Soal" berisi seluruh nomor soal dan dengan mudah
+         * lebih tinggi daripada viewport. Tanpa gulir di sini bagian
+         * bawah panel — tempat tombol penutup berada — tidak pernah
+         * bisa dijangkau.
+         */
+        overflow-y: auto;
+        overscroll-behavior: contain;
     }
 
     .dialog-bab.is-buka {
         display: flex;
+    }
+
+    /*
+     * Satu-satunya anak tiap .dialog-bab adalah panelnya (cek
+     * components/app/konfirmasi, materi-tambah, quiz-kerjakan). Dua
+     * pernyataan di bawah bekerja berpasangan:
+     *
+     *   max-height  membatasi panel pada tinggi viewport, lalu
+     *               overflow-y memindahkan gulir ke dalam panel
+     *               sehingga sudut membulat dan bayangannya tetap
+     *               utuh — bukan terpotong tepi layar;
+     *   margin      auto diperlukan karena align-items: center memotong
+     *               bagian ATAS anak yang lebih tinggi dari wadahnya.
+     *               Auto margin tidak memotong, jadi panel tetap
+     *               terpusat saat muat dan tetap dapat digulir penuh
+     *               saat tidak muat.
+     */
+    .dialog-bab > * {
+        max-height: calc(100dvh - 2.5rem);
+        overflow-y: auto;
+        margin: auto;
     }
 
     /* ============================================================
@@ -3969,6 +4038,13 @@ html {
         line-height: 1.25;
         color: color-mix(in oklab, var(--color-dark) 55%, transparent);
         transition: color 0.25s ease;
+        /* Di bawah ~480px tiap langkah hanya kebagian ±56px. Tanpa
+           pemotongan, "Informasi" tumpah ke langkah sebelahnya. Di
+           layar lebar kolomnya lega, jadi elipsis ini tidak pernah
+           muncul. */
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
     }
 
     .stepper-item__keterangan {
@@ -7418,6 +7494,9 @@ html {
         font-weight: 700;
         color: #fff;
         line-height: 1.3;
+        /* tanpa ini judul tanpa spasi menolak mengecil di bawah
+           min-content-nya sendiri dan kepala quiz meleset keluar layar */
+        overflow-wrap: anywhere;
     }
 
     .soal-kepala__meta {
@@ -8046,6 +8125,23 @@ html {
     white-space: nowrap;
 }
 
+/*
+ * Ponsel lebar 320-390px hanya menyisakan sekitar 190px untuk judul di
+ * samping piala, jadi satu baris potong membuat judul kehilangan makna
+ * ("Hasil Ulangan Harian Matema..."). Bungkus jadi dua baris saja —
+ * papan bakunya min-height, bukan height, jadi tingginya aman tumbuh.
+ * Di 640px ke atas potongan satu baris tetap dipakai seperti semula.
+ */
+@media (max-width: 639px) {
+    .hasil-banner__judul {
+        display: -webkit-box;
+        -webkit-box-orient: vertical;
+        -webkit-line-clamp: 2;
+        line-clamp: 2;
+        white-space: normal;
+    }
+}
+
 .hasil-banner__deskripsi {
     margin-top: 0.2rem;
     font-size: 0.8125rem;
@@ -8613,6 +8709,26 @@ html {
 
     .hasil-item__tombol {
         grid-column: auto;
+    }
+}
+
+/*
+ * Ponsel: lingkaran nilai (56px) + badge status yang tidak boleh
+ * terpotong sudah menelan hampir seluruh lebar baris di layar 320px.
+ * Kalau kolomnya tetap auto | 1fr | auto, kolom teks tinggal nol piksel
+ * dan judul quiz terlihat seperti garis. Karena itu nilai dilepas ke
+ * barisnya sendiri: thumbnail + teks sejajar, lalu nilai, lalu tombol.
+ *
+ * Aturan ini berpasangan dengan @media (min-width: 640px) di atas —
+ * rentangnya saling mengunci, jadi tablet dan desktop tidak berubah.
+ */
+@media (max-width: 639px) {
+    .hasil-item {
+        grid-template-columns: auto minmax(0, 1fr);
+    }
+
+    .hasil-item__nilai {
+        grid-column: 1 / -1;
     }
 }
 
@@ -9361,11 +9477,23 @@ html {
     }
 
     .jadwal-hari__item {
-        padding: 0.4rem 0.15rem 0.35rem;
+        padding: 0.55rem 0.15rem;
     }
 
+    /*
+     * Lebar satu kotak di layar 320px cuma ±30px. Label "3 pelajaran"
+     * di 8px tidak akan pernah muat — yang tampil cuma "3 p…" — jadi
+     * ia disembunyikan saja: jumlahnya sudah ada di angka ringkas di
+     * atas. Sebagai gantinya nama hari dinaikkan dari 9px ke 11px
+     * (isinya cuma tiga huruf: "Sen", "Sel", dst) supaya tetap terbaca
+     * dan kotaknya masih menyentuh tinggi sentuh 44px.
+     */
     .jadwal-hari__jumlah {
-        font-size: 0.5rem;
+        display: none;
+    }
+
+    .jadwal-hari__nama {
+        font-size: 0.6875rem;
     }
 }
 
@@ -9525,6 +9653,23 @@ html {
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+}
+
+/*
+ * Di 320-390px kolom judul tinggal sekitar 105px (kotak jam + dua tombol
+ * aksi menempati sisanya), jadi "Bahasa Inggris - Listening" berubah
+ * jadi "Bahasa Inggr...". Versi ponsel diberi dua baris supaya judul
+ * masih terbaca; teks hanya punya title=, tidak ada padanan sentuhnya.
+ * Mulai 640px kolomnya lega lagi dan kembali memakai satu baris.
+ */
+@media (max-width: 639px) {
+    .jadwal-item__judul {
+        display: -webkit-box;
+        -webkit-box-orient: vertical;
+        -webkit-line-clamp: 2;
+        line-clamp: 2;
+        white-space: normal;
+    }
 }
 
 .jadwal-item__kategori {
@@ -10500,25 +10645,6 @@ html {
     min-width: 0;
 }
 
-/* ---------- Catatan "jadwal contoh" ---------- */
-.jadwal-contoh {
-    display: flex;
-    align-items: flex-start;
-    gap: 0.5rem;
-    margin-bottom: 0.9rem;
-    border-radius: 0.7rem;
-    background-color: color-mix(in oklab, #d99a06 9%, white);
-    padding: 0.6rem 0.75rem;
-    font-size: 0.75rem;
-    line-height: 1.6;
-    color: color-mix(in oklab, #8a6208 88%, transparent);
-    box-shadow: inset 0 0 0 1px color-mix(in oklab, #d99a06 22%, transparent);
-}
-
-.jadwal-contoh strong {
-    color: #7a5606;
-}
-
 /* ---------- Aksi di tiap baris jadwal ----------
    Edit dan hapus muncul saat baris itu disorot, jadi daftar tetap
    bersih kalau tidak ada yang sedang dikerjakan. Di layar sentuh
@@ -10610,6 +10736,19 @@ html {
     box-shadow:
         inset 0 0 0 1px color-mix(in oklab, #0f9d76 24%, transparent),
         0 18px 36px -22px rgba(33, 26, 58, 0.6);
+}
+
+/*
+ * Di bawah lg ada navigasi bawah tetap setinggi ±54px + safe-area.
+ * Pesan sukses harus melayang DI ATAS NAVIGASI ITU: selain menutupi
+ * label menu kanan, toast ini tidak punya pointer-events:none jadi
+ * ia benar-benar menelan ketukan di atasnya. z-index 60 > 40 tetap
+ * dipertahankan supaya toast tetap di atas kartu.
+ */
+@media (max-width: 1023px) {
+    .jadwal-sukses {
+        bottom: calc(5rem + env(safe-area-inset-bottom));
+    }
 }
 
 /* ---------- PR di dalam baris jadwal ----------
@@ -10799,6 +10938,9 @@ html {
     line-height: 1.25;
     letter-spacing: -0.02em;
     color: var(--color-dark);
+    /* Judul panjang tanpa spasi (kode quiz, URL) harus ikut membungkus,
+       bukan mendorong lebar halaman sampai muncul scroll horizontal. */
+    overflow-wrap: anywhere;
 }
 
 @media (min-width: 640px) {
@@ -12408,4 +12550,145 @@ html {
     margin-top: 0.1rem;
     font-size: 0.6875rem;
     color: color-mix(in oklab, var(--color-dark) 45%, transparent);
+}
+
+/* ============================================================
+   SENTUH & LAYAR KECIL (di bawah lg)
+   ============================================================
+   Blok ini sengaja TIDAK memakai @layer, sama seperti blok tema
+   gelap: aturan tanpa lapisan menang atas @layer components dan
+   @layer utilities, jadi satu blok cukup untuk menaikkan ukuran
+   target sentuh tanpa harus menyentuh definisi aslinya yang
+   tersebar di seluruh berkas.
+
+   Semuanya dikurung @media (max-width: 1023px) supaya tampilan
+   desktop - di mana ketikan pakai tetikus dan target 26-32px itu
+   sudah cukup - benar-benar tidak berubah.
+
+   Ambang 40px dipakai, bukan 44/48px, karena itulah yang masih
+   muat tanpa mendesak ulang tata letak baris yang sudah padat.
+   ============================================================ */
+
+@media (max-width: 1023px) {
+    /*
+     * Target sentuh. Pilihannya dibuat dari yang paling menentukan:
+     * tombol keluar kuis, navigasi daftar soal, tombol salin, kontrol
+     * editor, sampai tombol kecil di baris jadwal dan kalender.
+     */
+
+    /* Satu-satunya jalan menutup pengerjaan lebih awal; bergaya seperti
+       tautan sehingga tingginya cuma setinggi teks (sekitar 18px). */
+    .soal-keluar {
+        display: inline-flex;
+        align-items: center;
+        min-height: 2.5rem;
+        padding-inline: 0.5rem;
+    }
+
+    .soal-nav__buka,
+    .soal-nav__tutup {
+        min-height: 2.5rem;
+    }
+
+    .soal-nav__tutup {
+        min-width: 2.5rem;
+    }
+
+    /* Tombol lipat Daftar Isi memang hanya dirender di bawah lg. */
+    .daftar-isi__alih {
+        height: 2.5rem;
+        width: 2.5rem;
+    }
+
+    .tombol-salin,
+    .lobi-kode__salin {
+        min-height: 2.5rem;
+        font-size: 0.75rem;
+    }
+
+    /* Toolbar materi: sekitar 12 tombol berukuran 32px dalam satu baris. */
+    .alat-tombol,
+    .alat-pilih {
+        min-height: 2.5rem;
+        min-width: 2.5rem;
+    }
+
+    .tab-unsur__tombol {
+        min-height: 2.5rem;
+    }
+
+    .tipe-pilih__tombol,
+    .builder-tingkat__pilih,
+    .builder-pilihan__hapus {
+        min-height: 2.5rem;
+    }
+
+    /* Lingkaran pemilih jawaban benar hanya 20.8px. Ukuran visualnya
+       tidak boleh berubah (bentuk lingkaran ikut menentukan desain),
+       jadi areanya dilebarkan lewat pseudo-element yang tak terlihat;
+       huruf A/B/C di sebelahnya pun jadi ikut bisa ditekan, yang
+       memang ke arah yang sama harapkan pengguna. */
+    .builder-indikator {
+        position: relative;
+    }
+
+    .builder-indikator::after {
+        content: "";
+        position: absolute;
+        inset: -10px;
+    }
+
+    /* Saklar (role="switch") tingginya 24.8px. Sama seperti di atas:
+       knob digerakkan oleh ::after, jadi penebalan dilakukan dengan
+       bidang tak terlihat agar desainnya tidak bergeser sama sekali. */
+    .saklar::before {
+        content: "";
+        position: absolute;
+        inset: -8px 0;
+    }
+
+    .kendali-zoom {
+        min-height: 2.5rem;
+        min-width: 2.5rem;
+    }
+
+    /* Tombol edit/hapus di tiap baris jadwal selalu tampil di layar
+       sentuh (tanpa hover), jadi ukurannya harus layak ditekan. */
+    .jadwal-item__aksi a,
+    .jadwal-item__aksi button {
+        width: 2.5rem;
+        height: 2.5rem;
+    }
+
+    .kalender-nav a {
+        width: 2.5rem;
+        height: 2.5rem;
+    }
+
+    /* "Lihat Semua" dan tab kategori: dulu sekitar 26px dan 37px. */
+    .dash-lihat,
+    .tab-karya__item {
+        min-height: 2.5rem;
+    }
+
+    /*
+     * Ukuran huruf. Judul, isi, dan angka sudah di atas 12px; yang
+     * masih di bawah itu hanya label dan satuan yang memang ditulis
+     * sangat kecil (8-9px). Semuanya dinaikkan ke 11px di layar
+     * kecil, di mana mata paling dekat dengan layar dan huruf paling
+     * mudah kabur. Di 1024px ke atas ukurannya tetap seperti semula.
+     */
+    .hasil-lingkaran__teks i,
+    .kalender-hari,
+    .jadwal-hari__nama,
+    .jadwal-hari__jumlah,
+    .dash-quiz__milik,
+    .dash-jadwal__selesai,
+    .dash-peringkat__saya,
+    .hasil-donat__label,
+    .jadwal-item__meta dt,
+    .jadwal-sekarang__label,
+    .jadwal-angka dt {
+        font-size: 0.6875rem;
+    }
 }

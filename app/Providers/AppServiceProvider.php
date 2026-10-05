@@ -76,12 +76,24 @@ class AppServiceProvider extends ServiceProvider
          *
          * Diberi di sini, bukan dari controller, karena top bar dipakai
          * hampir semua halaman user dan tidak ada satu pun controller yang
-         * boleh tahu tentang notifikasi. Compose-nya hanya untuk top bar,
-         * jadi halaman yang menyembunyikan top bar (lihat $sembunyiTopbar di
-         * layouts/app) tidak menjalankan query sama sekali.
+         * boleh tahu tentang notifikasi. Compose-nya menempel pada kedua
+         * kepala halaman user — top bar desktop dan header mobile — bukan
+         * pada layout, supaya halaman yang menyembunyikan top bar (lihat
+         * $sembunyiTopbar di layouts/app) tidak menjalankan query sama
+         * sekali. Header mobile hanya me-render lonceng ketika baris
+         * keduanya ada (tampilCari), jadi keputusannya sama: dua daftar
+         * putih jadi satu.
          */
-        View::composer('components.app.topbar', function (ViewContract $view): void {
-            $pengguna = $view->getData()['pengguna'] ?? auth()->user();
+        View::composer(['components.app.topbar', 'components.app.header-mobile'], function (ViewContract $view): void {
+            $data = $view->getData();
+
+            if ($view->name() === 'components.app.header-mobile' && ! ($data['tampilCari'] ?? true)) {
+                $view->with(['notifikasi' => [], 'notifikasiBelumDibaca' => 0]);
+
+                return;
+            }
+
+            $pengguna = $data['pengguna'] ?? auth()->user();
 
             $view->with([
                 'notifikasi' => NotifikasiKonten::daftar($pengguna),

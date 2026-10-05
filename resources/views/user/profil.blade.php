@@ -83,7 +83,7 @@
     <div
         data-toast
         hidden
-        class="pointer-events-none fixed inset-x-4 bottom-5 z-[80] mx-auto w-fit max-w-[calc(100%-2rem)] rounded-2xl border border-lavender bg-white px-4 py-3 text-sm font-medium text-dark shadow-[0_24px_44px_-24px_rgba(33,26,58,0.55)] sm:inset-x-auto sm:right-6"
+        class="pointer-events-none fixed inset-x-4 bottom-24 z-[80] mx-auto w-fit max-w-[calc(100%-2rem)] rounded-2xl border border-lavender bg-white px-4 py-3 text-sm font-medium text-dark shadow-[0_24px_44px_-24px_rgba(33,26,58,0.55)] sm:inset-x-auto sm:right-6 lg:bottom-6"
         role="status"
         aria-live="polite"
     ></div>

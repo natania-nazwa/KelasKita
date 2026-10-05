@@ -1,0 +1,9 @@
+﻿<!DOCTYPE html><html><head><meta charset="utf-8"><title>base</title></head><body style="margin:0;font-family:sans-serif">
+<div id="isi"></div>
+<script>
+let h = "";
+for (let i = 0; i < 400; i++) {
+  h += '<div style="padding:16px 24px;border-bottom:1px solid #eee;background:'+(i%2?'#fff':'#fafafa')+'"><b>Judul '+i+'</b><p style="margin:6px 0 0;color:#444">Paragraf isi statis untuk membandingkan biaya scroll tanpa animasi reveal.</p></div>';
+}
+document.getElementById("isi").innerHTML = h;
+</script></body></html>

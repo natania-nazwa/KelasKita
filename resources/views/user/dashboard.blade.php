@@ -34,7 +34,8 @@
     @endphp
 
     {{--
-        Search dan identitas pengguna sudah ditangani top bar di layout.
+        Search dan identitas pengguna sudah ditangani kepala halaman
+        di layout (top bar desktop / header mobile).
 
         Struktur halaman:
           - Kolom utama (~70-75%): banner, statistik, aksi cepat,
@@ -46,7 +47,14 @@
         jadi kolom utama harus punya minimal ~850px supaya tiap kartunya
         tetap di atas 200px. Kalau sidebar sudah tampil di 1280px, kolom
         utama tinggal ~600px dan empat kartu jadi sempit sekali.
-        Di bawah 2xl sidebar turun ke bawah kolom utama sebagai grid dua kolom.
+        Di bawah 2xl sidebar turun ke bawah kolom utama.
+
+        Di bawah lg (tablet dan ponsel) tidak ada sidebar sama sekali di
+        samping, jadi "Jadwal Hari Ini" dan "Leaderboard" dirender
+        SEKALIGUS di kolom utama tepat setelah aksi cepat — ringkasan yang
+        paling sering dicari di layar kecil. Keduanya berpasangan dengan
+        salinan di sidebar yang memakai hidden lg:block, jadi tidak pernah
+        tampil dua kali maupun tidak pernah sama sekali.
 
         Semua ukuran memakai min-w-0 dan width yang aman, jadi tidak pernah
         muncul scroll horizontal.
@@ -66,7 +74,7 @@
                 <div class="relative max-w-md">
                     <div class="flex flex-wrap items-center gap-2">
                         <span
-                            class="inline-flex items-center gap-1.5 rounded-full bg-white/70 px-2.5 py-1 font-mono text-[10px] font-semibold tracking-[0.14em] text-primary uppercase">
+                            class="inline-flex items-center gap-1.5 rounded-full bg-white/70 px-2.5 py-1 font-mono text-[11px] font-semibold tracking-[0.14em] text-primary uppercase lg:text-[10px]">
                             <svg class="h-3 w-3" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"
                                 xmlns="http://www.w3.org/2000/svg">
                                 <path stroke-linecap="round" stroke-linejoin="round"
@@ -77,7 +85,7 @@
 
                         <span
                             title="Streak {{ $streak['jumlah'] }} hari. Menyala kalau kamu membaca materi atau mengerjakan soal hari ini."
-                            class="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 font-mono text-[10px] font-bold tracking-[0.14em] uppercase {{ $streak['aktif'] ? 'bg-[#fee4e2] text-[#dc2626]' : 'bg-dark/5 text-dark/40' }}">
+                            class="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 font-mono text-[11px] font-bold tracking-[0.14em] uppercase lg:text-[10px] {{ $streak['aktif'] ? 'bg-[#fee4e2] text-[#dc2626]' : 'bg-dark/5 text-dark/40' }}">
                             <svg class="h-3.5 w-3.5 {{ $streak['aktif'] ? 'text-[#ef4444]' : 'text-dark/35' }}"
                                 fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"
                                 xmlns="http://www.w3.org/2000/svg">
@@ -129,14 +137,14 @@
 
             {{-- Statistik --}}
             <div class="mt-6 flex items-center justify-between">
-                <p class="font-mono text-[10px] font-semibold tracking-[0.14em] text-dark/40 uppercase">
+                <p class="font-mono text-[11px] font-semibold tracking-[0.14em] text-dark/40 uppercase lg:text-[10px]">
                     Ringkasan Belajar
                 </p>
 
-                <p class="text-[11px] text-dark/40">Diperbarui hari ini</p>
+                <p class="text-[12px] text-dark/40 lg:text-[11px]">Diperbarui hari ini</p>
             </div>
 
-            <div data-reveal-stagger class="mt-3 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+            <div data-reveal-stagger class="mt-3 grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-4">
                 @foreach ($ringkasan as $stat)
                     @php $warna = $warnaKartu[$stat['warna']]; @endphp
 
@@ -160,7 +168,7 @@
 
                         <p class="relative mt-0.5 text-2xl font-extrabold text-dark">{{ $stat['nilai'] }}</p>
 
-                        <p class="relative mt-1 flex items-center gap-1 text-[11px] text-dark/45">
+                        <p class="relative mt-1 flex items-center gap-1 text-[12px] text-dark/45 lg:text-[11px]">
                             <svg class="h-3.5 w-3.5 shrink-0 text-[#4f9e74]" fill="none" stroke="currentColor" stroke-width="2"
                                 viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                                 <path stroke-linecap="round" stroke-linejoin="round"
@@ -174,6 +182,28 @@
 
             {{-- Aksi cepat, materi terbaru, quiz terbaru --}}
             <x-dashboard.aksi :daftar="$aksiCepat" />
+
+            {{--
+                Jadwal dan leaderboard ikut naik ke kolom utama di layar
+                < 1024px.
+
+                Di sana tidak ada sidebar di samping, jadi kalau kedua panel
+                ini tetap menempel pada <x-dashboard.sidebar>, pengguna
+                mobile baru menemukannya SETELAH materi dan quiz terbaru —
+                dua panel yang justru paling jarang dibuka. Yang diminta
+                layar kecil adalah ringkasan (banner, statistik, aksi), lalu
+                jadwal hari ini, lalu peringkat.
+
+                Duplikasi ini murni urusan tampilan dan dijaga oleh dua
+                kelas yang saling mengunci: salinan di sini lg:hidden, salinan
+                di sidebar hidden lg:block. Jadi tidak pernah ada dua panel
+                yang terlihat bersamaan, maupun tidak ada satu pun.
+            --}}
+            <div class="mt-6 grid gap-4 lg:hidden">
+                <x-dashboard.jadwal :daftar="$jadwal" :tautan="route('user.jadwal')" />
+
+                <x-dashboard.peringkat :daftar="$peringkat" />
+            </div>
 
             <x-dashboard.materi-terbaru :daftar="$materiTerbaru"
                 :tautan="route('user.materi')" />

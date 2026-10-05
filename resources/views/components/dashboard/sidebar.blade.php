@@ -22,14 +22,23 @@
 
     Keempat panelnya dipisah jadi komponen sendiri supaya halaman utama tetap
     ringkas dan tiap panel bisa dipakai ulang di halaman lain.
+
+    Dua panel — Jadwal Hari Ini dan Leaderboard — juga dirender di kolom
+    utama untuk layar < 1024px (lihat user/dashboard). supaya tidak pernah
+    tampil dua kali, keduanya dibungkus hidden lg:block di sini, berpasangan
+    dengan lg:hidden pada salinan di kolom utama.
 --}}
 
 <aside class="grid min-w-0 items-start gap-4 sm:grid-cols-2 lg:gap-5 2xl:grid-cols-1">
     <x-dashboard.akses-cepat :daftar="$aksesCepat" />
 
-    <x-dashboard.jadwal :daftar="$jadwal" :tautan="$tautanJadwal" />
+    <div class="hidden lg:block">
+        <x-dashboard.jadwal :daftar="$jadwal" :tautan="$tautanJadwal" />
+    </div>
 
-    <x-dashboard.peringkat :daftar="$peringkat" />
+    <div class="hidden lg:block">
+        <x-dashboard.peringkat :daftar="$peringkat" />
+    </div>
 
     <x-dashboard.kalender :kalender="$kalender" />
 </aside>

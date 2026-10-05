@@ -17,9 +17,9 @@ use Tests\TestCase;
  *     atau dihapus, dan halaman daftar tidak boleh menampilkannya.
  *  2. Validasi. Jam yang bertumpuk di hari yang sama harus ditolak, dan jam
  *     yang bersentuhan (08:00-09:30 lalu 09:30-10:30) tetap boleh.
- *  3. Pergantian sumber data. Selama tabel kosong, halaman memakai jadwal
- *     contoh. Begitu ada satu baris milik pengguna, contoh itu hilang dan
- *     yang tampil hanya miliknya.
+ *  3. Sumber data tunggal. Halaman hanya menampilkan baris milik pengguna
+ *     dari tb_jadwal; pengguna yang belum pernah menambah jadwal melihat
+ *     empty state "Belum Ada Jadwal", bukan jadwal contoh.
  */
 class JadwalKelolaTest extends TestCase
 {
@@ -137,25 +137,27 @@ class JadwalKelolaTest extends TestCase
             ->assertSee('Praktikum Proyek');
     }
 
-    public function test_jadwal_baru_langsung_menggantikan_jadwal_contoh(): void
+    public function test_jadwal_baru_menggantikan_empty_state_kosong(): void
     {
         $user = $this->buatPengguna();
 
-        // Sebelum ada baris, halaman masih memakai jadwal contoh.
+        // Sebelum ada baris, halaman menampilkan empty state penambah
+        // jadwal, bukan jadwal contoh.
         $this->actingAs($user)
             ->get('/user/jadwal')
             ->assertOk()
-            ->assertSee('jadwal contoh', false);
+            ->assertSee('Belum Ada Jadwal')
+            ->assertDontSee('jadwal contoh', false);
 
         $this->buatJadwal($user, ['judul' => 'Jadwal Milikku']);
 
-        // Setelah ada satu baris, contoh hilang dan yang tampil hanya
+        // Setelah ada satu baris, empty state hilang dan yang tampil hanya
         // jadwal sendiri.
         $this->actingAs($user)
             ->get('/user/jadwal?tanggal='.$this->tanggalSenin())
             ->assertOk()
             ->assertSee('Jadwal Milikku')
-            ->assertDontSee('jadwal contoh', false);
+            ->assertDontSee('Belum Ada Jadwal');
     }
 
     public function test_isian_kosong_ditolak(): void
@@ -328,14 +330,15 @@ class JadwalKelolaTest extends TestCase
             ->assertDontSee('Jadwal Keyla');
     }
 
-    public function test_tombol_aksi_hanya_muncul_untuk_jadwal_yang_bisa_diubah(): void
+    public function test_tombol_edit_dan_hapus_muncul_untuk_jadwal_pengguna(): void
     {
         $user = $this->buatPengguna();
 
-        // Jadwal contoh tidak punya baris di database, jadi tidak boleh
-        // punya tombol edit atau hapus.
-        $contoh = $this->actingAs($user)->get('/user/jadwal')->assertOk();
-        $contoh->assertDontSee(route('user.jadwal.edit', 1), false);
+        // Halaman kosong hanya memuat empty state, jadi tidak ada tautan
+        // edit atau hapus yang mengarah ke jadwal mana pun.
+        $kosong = $this->actingAs($user)->get('/user/jadwal')->assertOk();
+        $kosong->assertDontSee(route('user.jadwal.edit', 1), false);
+        $kosong->assertDontSee(route('user.jadwal.destroy', 1), false);
 
         $jadwal = $this->buatJadwal($user, ['judul' => 'Jadwal Sendiri']);
 

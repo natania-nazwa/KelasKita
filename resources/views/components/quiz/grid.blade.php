@@ -8,9 +8,12 @@
     - Desktop : 4 kolom
     - Tablet  : 3 kolom
     - Ponsel  : 2 kolom, tetap dua agar daftar terasa padat
+    - Ponsel kecil (di bawah 360px): 1 kolom, karena kartu quiz muat
+                thumbnail 16:9, lencana, judul, deskripsi, dan baris
+                meta dalam ~130px yang tersisa di layar 320px
 
-    Jumlah per halaman (12) habis dibagi 2, 3, dan 4, jadi baris terakhir
-    tidak pernah menyisakan kartu yatim di ukuran layar mana pun.
+    Jumlah per halaman (12) habis dibagi 1, 2, 3, dan 4, jadi baris
+    terakhir tidak pernah menyisakan kartu yatim di ukuran layar mana pun.
 
     min-w-0 pada tiap kartu membuat kolom menyusut mengikuti ruang yang
     tersedia di samping sidebar, jadi tidak pernah melebar atau membuat
@@ -19,7 +22,7 @@
 --}}
 
 <div data-reveal-stagger data-quiz-daftar
-    {{ $attributes->class(['grid grid-cols-2 gap-4 min-w-0 sm:gap-5 lg:grid-cols-3 xl:grid-cols-4']) }}>
+    {{ $attributes->class(['grid grid-cols-1 min-[360px]:grid-cols-2 gap-4 min-w-0 sm:gap-5 lg:grid-cols-3 xl:grid-cols-4']) }}>
     @forelse ($daftar as $quiz)
         <x-quiz.kartu :quiz="$quiz" :kata-kunci="$kataKunci" />
     @empty

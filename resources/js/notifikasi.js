@@ -1,5 +1,5 @@
 /*
- * Lonceng notifikasi di top bar halaman user.
+ * Lonceng notifikasi di kepala halaman user.
  *
  * Yang dikerjakan satu hal saja: begitu satu notifikasi diklik, tandanya
  * langsung hilang tanpa menunggu halaman tujuan selesai dimuat.
@@ -12,32 +12,48 @@
  * bekerja; hanya tandanya yang belum hilang. Itu degrade yang wajar: isi
  * notifikasi sudah benar di HTML, tidak ada yang hilang.
  *
- * Berhenti sendiri kalau top bar halaman ini tidak ada.
+ * Kepala halaman dirender DUA KALI — top bar untuk desktop dan header
+ * mobile untuk layar kecil — karena server tidak tahu viewport yang akan
+ * dipakai. Karena itu:
+ *
+ *   - semua instance dijalankan, bukan hanya yang pertama; kalau cuma
+ *     querySelector dipakai, lonceng yang tampil di ponsel tidak pernah
+ *     terpasang listener-nya karena top bar (yang tersembunyi lewat CSS)
+ *     selalu datang lebih dulu di DOM;
+ *   - titik dan tanda "belum dibaca" disinkronkan lintas instance, supaya
+ *     memutar layar tidak menghidupkan lagi tanda yang barusan hilang.
+ *
+ * Berhenti sendiri kalau halaman ini tidak memakai lonceng sama sekali
+ * (lihat $sembunyiTopbar di layouts/app).
  */
 
-const LONTECENG = document.querySelector("[data-notif]");
-
-if (LONTECENG) {
-    initNotifikasi(LONTECENG);
-}
+document.querySelectorAll("[data-notif]").forEach(initNotifikasi);
 
 function initNotifikasi(akar) {
-    const titik = akar.querySelector("[data-notif-titik]");
+    /**
+     * Ambil seluruh baris yang menunjuk ke notifikasi yang sama, di
+     * seluruh dokumen — termasuk kembarannya di kepala halaman lain.
+     *
+     * Filter dipakai, bukan selector atribut, karena isinya URL yang
+     * bisa saja mengandung tanda kutip.
+     */
+    const kembaran = (alamat) =>
+        Array.from(document.querySelectorAll("[data-notif-baca]")).filter(
+            (el) => el.dataset.notifBaca === alamat
+        );
 
     /**
-     * Kurangi angka notifikasi yang belum dibaca, lalu sembunyikan titiknya
-     * kalau sudah tidak ada.
+     * Sembunyikan titik merah di SEMUA lonceng ketika tidak ada lagi
+     * yang belum dibaca.
      */
-    const perbaruiSisa = (sisa) => {
-        if (typeof sisa !== "number") {
+    const perbaruiTitik = (sisa) => {
+        if (typeof sisa !== "number" || sisa > 0) {
             return;
         }
 
-        if (sisa > 0) {
-            return;
-        }
-
-        titik?.remove();
+        document
+            .querySelectorAll("[data-notif-titik]")
+            .forEach((titik) => titik.remove());
     };
 
     akar.addEventListener("click", (event) => {
@@ -59,7 +75,8 @@ function initNotifikasi(akar) {
             return;
         }
 
-        baris.classList.remove("is-belum");
+        const semua = kembaran(alamat);
+        semua.forEach((el) => el.classList.remove("is-belum"));
 
         fetch(alamat, {
             method: "POST",
@@ -75,12 +92,12 @@ function initNotifikasi(akar) {
             body: "{}",
         })
             .then((res) => (res.ok ? res.json() : null))
-            .then((data) => perbaruiSisa(data?.sisa))
+            .then((data) => perbaruiTitik(data?.sisa))
             .catch(() => {
                 // Jaringan gagal atau server menolak: tandanya dikembalikan
                 // supaya tidak hilang notifikasi yang sebenarnya belum
                 // ditandai terbaca.
-                baris.classList.add("is-belum");
+                semua.forEach((el) => el.classList.add("is-belum"));
             });
     });
 }

@@ -42,23 +42,44 @@ class JadwalController extends Controller
         $kataKunci = trim((string) $request->query('q', ''));
 
         $peta = DaftarJadwal::jadwalMinggu($request->user()?->getKey());
-        $kategori = $this->kategoriAktif($request->query('kategori'), $peta['hari']);
+        $kategori = $this->kategoriAktif($request->query('kategori'), $peta);
 
-        $jadwal = DaftarJadwal::hari($peta['hari'], $tanggal, $kategori, $kataKunci);
+        $jadwal = DaftarJadwal::hari($peta, $tanggal, $kategori, $kataKunci);
+        $ringkasan = DaftarJadwal::ringkasan($jadwal, $tanggal);
 
         return view('user.jadwal', [
             'tanggal' => $tanggal,
             'jadwal' => $jadwal,
-            'ringkasan' => DaftarJadwal::ringkasan($jadwal, $tanggal),
-            'minggu' => DaftarJadwal::minggu($peta['hari'], $tanggal, $kategori, $kataKunci),
-            'kalender' => DaftarJadwal::bulan($peta['hari'], $bulan, $kategori, $kataKunci),
-            'kategori' => DaftarJadwal::kategori($peta['hari']),
+            'ringkasan' => $ringkasan,
+            'minggu' => DaftarJadwal::minggu($peta, $tanggal, $kategori, $kataKunci),
+            'kalender' => DaftarJadwal::bulan($peta, $bulan, $kategori, $kataKunci),
+            'kategori' => DaftarJadwal::kategori($peta),
             'kategoriAktif' => $kategori,
             'kataKunci' => $kataKunci,
-            // Masih contoh jadwal, bukan milik pengguna. Halaman memakai ini
-            // untuk memberi tahu dan menawarkan tombol menggantinya.
-            'pakaiContoh' => $peta['contoh'],
+            // Kenapa daftar kosong, dipakai komponen jadwal/kosong untuk
+            // memilih pesan yang tepat: reset filter, hari libur, atau
+            // ajakan menambah jadwal sendiri.
+            'alasanKosong' => $this->alasanKosong($ringkasan, $kataKunci, $kategori),
         ]);
+    }
+
+    /**
+     * Alasan daftar pelajaran kosong untuk hari yang sedang dibuka.
+     *
+     * Urutannya penting: filter yang sedang aktif didahulukan karena pesan
+     * reset filter lebih berguna daripada "belum ada jadwal" untuk pengguna
+     * yang memang sedang mencari. Setelah itu baru hari libur, dan sisanya
+     * berarti pengguna memang belum menambahkan jadwal untuk hari itu.
+     *
+     * @param  array{libur: bool}  $ringkasan
+     */
+    private function alasanKosong(array $ringkasan, string $kataKunci, string $kategori): string
+    {
+        if ($kataKunci !== '' || $kategori !== '') {
+            return 'cari';
+        }
+
+        return $ringkasan['libur'] ? 'libur' : 'kosong';
     }
 
     /**

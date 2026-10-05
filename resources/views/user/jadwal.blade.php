@@ -61,25 +61,8 @@
                     </header>
 
                     <div class="jadwal-panel__badan">
-                        {{-- Selama jadwal masih contoh bawaan, beri tahu
-                             pengguna bahwa itu bukan jadwal miliknya dan
-                             tinggal menggantinya. --}}
-                        @if ($pakaiContoh)
-                            <p class="jadwal-contoh">
-                                <svg class="h-4 w-4 shrink-0" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M11.25 11.25l.041-.02a.75.75 0 0 1 1.063.852l-.708 2.836a.75.75 0 0 0 1.063.853l.041-.021M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9-3.75h.008v.008H12V8.25Z" />
-                                </svg>
-
-                                <span>
-                                    Ini masih <strong>jadwal contoh</strong>. Begitu kamu menambah satu jadwal
-                                    sendiri, daftar ini diganti seluruhnya oleh milikmu dan bisa diedit atau
-                                    dihapus.
-                                </span>
-                            </p>
-                        @endif
-
                         <x-jadwal.daftar :daftar="$jadwal"
-                            :alasan-kosong="$ringkasan['libur'] ? 'libur' : 'cari'"
+                            :alasan-kosong="$alasanKosong"
                             :tanggal="$tanggal" :kategori="$kategoriAktif" :kata-kunci="$kataKunci" />
 
                         @if ($ringkasan['sedang'] !== null)

@@ -14,9 +14,10 @@
     dari menu itu ke halaman ini tidak terasa seperti halaman yang berbeda.
 
     Hanya jumlah kolomnya yang lebih padat: lima kolom di layar besar, tiga di
-    tablet, dua di ponsel. Lima kolom dipilih karena grid lima kali lima
-    (lihat SimpananController::perHalaman) selalu penuh di setiap ukuran
-    layar, jadi tidak pernah ada kartu yatim sendirian di baris terakhir.
+    tablet, dua di ponsel, dan satu kolom di ponsel kecil (di bawah 360px,
+    tempat kartu tinggal ~130px dan baris meta-nya tidak lagi terbaca). Lima
+    kolom dipilih karena grid lima kali lima (lihat SimpananController::
+    perHalaman) selalu penuh di setiap ukuran layar di mana kolomnya genap.
 
     min-w-0 pada tiap kartu membuat kolom menyusut mengikuti ruang yang
     tersedia di samping sidebar, jadi tidak pernah melebar atau membuat
@@ -25,7 +26,7 @@
 --}}
 
 <div data-reveal-stagger data-simpan-grid
-    {{ $attributes->class(['grid min-w-0 grid-cols-2 gap-4 sm:gap-5 lg:grid-cols-3 xl:grid-cols-5']) }}>
+    {{ $attributes->class(['grid min-w-0 grid-cols-1 min-[360px]:grid-cols-2 gap-4 sm:gap-5 lg:grid-cols-3 xl:grid-cols-5']) }}>
     @forelse ($daftar as $item)
         @if ($jenis === 'quiz')
             <x-quiz.kartu :quiz="$item" :kata-kunci="$kataKunci" />

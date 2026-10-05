@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\Jadwal;
 use App\Models\User;
 use App\Support\DaftarJadwal;
 use Carbon\Carbon;
@@ -15,6 +16,11 @@ use Tests\TestCase;
  * Yang diuji di sini adalah perilaku yang harus tetap benar: rute, pemilihan
  * tanggal, filter, pencarian, kalender, top bar yang disembunyikan, dan
  * bahwa kartu dashboard menunjuk ke halaman yang sama.
+ *
+ * Aplikasi tidak punya jadwal contoh lagi, jadi test yang butuh daftar
+ * pelajaran membuat barisnya sendiri lewat buatJadwalMinggu(). Pengguna
+ * tanpa baris sama sekali — seperti akun baru — diuji terpisah lewat
+ * empty state-nya.
  *
  * Baris jadwal yang diuji lewat atribut data (data-jadwal-id pada tiap
  * baris, data-jadwal-hari pada strip tujuh hari), bukan lewat teks judul.
@@ -38,6 +44,52 @@ class JadwalHalamanTest extends TestCase
     }
 
     /**
+     * Isi jadwal milik satu pengguna untuk seluruh minggu.
+     *
+     * Enam baris per hari, judulnya unik per hari, supaya dua hal bisa
+     * diuji sekaligus: kartu dashboard yang hanya memuat empat baris
+     * pertama, dan baris kelima-enam yang tidak boleh ikut muncul di sana.
+     *
+     * Ruangnya sengaja berselang-seling karena satu test mencari jadwal
+     * lewat nama ruangnya.
+     */
+    private function buatJadwalMinggu(User $user): void
+    {
+        $jam = [
+            ['07:00:00', '08:30:00'],
+            ['08:30:00', '10:00:00'],
+            ['10:15:00', '11:45:00'],
+            ['12:00:00', '13:30:00'],
+            ['13:30:00', '15:00:00'],
+            ['15:15:00', '16:45:00'],
+        ];
+
+        $mapel = [
+            ['matematika', 'Matematika'],
+            ['ipa', 'IPA'],
+            ['bahasa-inggris', 'Bahasa Inggris'],
+            ['pemrograman', 'Pemrograman Web'],
+            ['ips', 'IPS'],
+            ['ppkn', 'PPKN'],
+        ];
+
+        foreach (range(0, 6) as $hari) {
+            foreach ($mapel as $urut => [$slug, $judul]) {
+                Jadwal::create([
+                    'dibuat_oleh' => $user->getKey(),
+                    'hari' => $hari,
+                    'mulai' => $jam[$urut][0],
+                    'selesai' => $jam[$urut][1],
+                    'pelajaran' => $slug,
+                    'judul' => $judul,
+                    'kelas' => 'Kelas 11 RPL 2',
+                    'ruang' => $urut % 2 === 0 ? 'Lab Komputer 1' : 'Ruang Kelas 3B',
+                ]);
+            }
+        }
+    }
+
+    /**
      * Tanggal terdekat yang jatuh pada hari sekolah (bukan Minggu), supaya
      * test tidak bergantung pada hari apa yang sedang berjalan waktu test
      * dieksekusi. Kalau hari ini sudah sekolah, hari ini yang dipakai.
@@ -58,17 +110,17 @@ class JadwalHalamanTest extends TestCase
     }
 
     /**
-     * Jadwal pada satu tanggal, dibaca lewat kelas yang sama dengan yang
-     * dipakai halaman.
+     * Jadwal pada satu tanggal untuk satu pengguna, dibaca lewat kelas yang
+     * sama dengan yang dipakai halaman.
      *
      * Dipakai sebagai sumber kebenaran pembanding di test: test memeriksa
      * apa yang dirender halaman, bukan mengulang perhitungan sendiri.
      *
      * @return array<int, array<string, mixed>>
      */
-    private static function jadwalHari(Carbon $tanggal): array
+    private static function jadwalHari(User $user, Carbon $tanggal): array
     {
-        return DaftarJadwal::hari(DaftarJadwal::jadwalMinggu(null)['hari'], $tanggal);
+        return DaftarJadwal::hari(DaftarJadwal::jadwalMinggu($user->getKey()), $tanggal);
     }
 
     /**
@@ -132,18 +184,41 @@ class JadwalHalamanTest extends TestCase
             ->assertSee(route('user.jadwal'), false);
     }
 
+    public function test_akun_baru_melihat_empty_state_di_halaman_jadwal(): void
+    {
+        $tanggal = $this->tanggalSekolah();
+
+        $this->actingAs($this->buatPengguna())
+            ->get('/user/jadwal?tanggal='.$tanggal->toDateString())
+            ->assertOk()
+            ->assertSee('Belum Ada Jadwal')
+            ->assertSee('supaya kartu di dashboard ikut terisi')
+            ->assertSee(route('user.jadwal.tambah', ['tanggal' => $tanggal->toDateString()]), false);
+    }
+
+    public function test_kartu_dashboard_akun_baru_menampilkan_empty_state_mini(): void
+    {
+        $this->actingAs($this->buatPengguna())
+            ->get('/user/dashboard')
+            ->assertOk()
+            ->assertSee('Belum ada jadwal hari ini')
+            ->assertSee('lalu kartu ini akan langsung terisi')
+            ->assertDontSee('Tidak ada jadwal hari ini');
+    }
+
     public function test_kartu_dashboard_menampilkan_paling_empat_jadwal(): void
     {
         $user = $this->buatPengguna();
         $tanggal = $this->tanggalSekolah();
+        $this->buatJadwalMinggu($user);
 
         $dashboard = $this->actingAs($user)->get('/user/dashboard')->assertOk();
         $halaman = $this->actingAs($user)
             ->get('/user/jadwal?tanggal='.$tanggal->toDateString())
             ->assertOk();
 
-        $semua = self::jadwalHari($tanggal);
-        $this->assertGreaterThan(4, count($semua), 'Contoh jadwal harus punya lebih dari empat baris.');
+        $semua = self::jadwalHari($user, $tanggal);
+        $this->assertGreaterThan(4, count($semua), 'Jadwal harus punya lebih dari empat baris.');
 
         $tampil = array_slice($semua, 0, 4);
         $dipotong = array_slice($semua, 4);
@@ -168,20 +243,21 @@ class JadwalHalamanTest extends TestCase
 
     public function test_memilih_tanggal_menampilkan_jadwal_hari_itu(): void
     {
+        $user = $this->buatPengguna();
         $tanggal = $this->tanggalSekolah()->copy()->addWeek();
-        $hari = self::jadwalHari($tanggal);
+        $this->buatJadwalMinggu($user);
 
-        $respons = $this->actingAs($this->buatPengguna())
+        $hari = self::jadwalHari($user, $tanggal);
+
+        $respons = $this->actingAs($user)
             ->get('/user/jadwal?tanggal='.$tanggal->toDateString())
             ->assertOk()
             ->assertSee($hari[0]['judul'])
             /*
              * Tiap baris menampilkan kelas, ruang, dan durasinya. Nilainya
              * diambil dari $hari (sumber kebenaran yang sama dengan
-             * halaman), bukan ditulis mati: ruang contoh berbeda per hari —
-             * Senin-Rabu "Lab Komputer 1", Kamis-Jumat "Ruang Kelas 3B" —
-             * jadi teks hardcoded hanya lulus kalau test kebetulan dijalankan
-             * di awal minggu.
+             * halaman), bukan ditulis mati, karena ruang tiap baris boleh
+             * berbeda dan teks hardcoded hanya lulus pada baris tertentu.
              */
             ->assertSee($hari[0]['ruang'])
             ->assertSee($hari[0]['durasi_label']);
@@ -209,8 +285,9 @@ class JadwalHalamanTest extends TestCase
     {
         $user = $this->buatPengguna();
         $tanggal = $this->tanggalSekolah();
+        $this->buatJadwalMinggu($user);
 
-        $semua = self::jadwalHari($tanggal);
+        $semua = self::jadwalHari($user, $tanggal);
         $satu = $semua[0];
 
         $respons = $this->actingAs($user)
@@ -231,10 +308,13 @@ class JadwalHalamanTest extends TestCase
 
     public function test_filter_pelajaran_asing_diabaikan(): void
     {
+        $user = $this->buatPengguna();
         $tanggal = $this->tanggalSekolah();
-        $semua = self::jadwalHari($tanggal);
+        $this->buatJadwalMinggu($user);
 
-        $respons = $this->actingAs($this->buatPengguna())
+        $semua = self::jadwalHari($user, $tanggal);
+
+        $respons = $this->actingAs($user)
             ->get('/user/jadwal?tanggal='.$tanggal->toDateString().'&kategori=pelajaran-hantu')
             ->assertOk()
             ->assertSee('Semua pelajaran');
@@ -251,7 +331,9 @@ class JadwalHalamanTest extends TestCase
     {
         $user = $this->buatPengguna();
         $tanggal = $this->tanggalSekolah();
-        $semua = self::jadwalHari($tanggal);
+        $this->buatJadwalMinggu($user);
+
+        $semua = self::jadwalHari($user, $tanggal);
 
         // Dicari berdasarkan potongan judul baris pertama.
         $kata = str($semua[0]['judul'])->before(' ')->lower()->value();
