@@ -12465,6 +12465,55 @@ html {
     box-shadow: 0 24px 44px -28px rgba(33, 26, 58, 0.6);
 }
 
+/*
+ * Perbaikan panel lonceng di layar <1024px.
+ *
+ * Di header mobile lonceng berdiri di baris pertama dengan "Menu lainnya"
+ * (2.5rem) dan chip akun (2.5rem) beserta dua gap 0.375rem di sebelah
+ * kanannya — total 5.75rem. Karena .notif dipakai sebagai containing
+ * block, right: 0 berarti sisi kanan panel berhenti 5.75rem + padding
+ * baris sebelum tepi layar, padahal lebarnya min(22rem, 100vw - 2rem).
+ * Pada ponsel 320-430px hasilnya sisi kirinya keluar layar 46-76px,
+ * jadi daftar notifikasi terpotong.
+ *
+ * Dengan .notif dibuat static, <header> (position: sticky, jadi tetap
+ * positioned) menjadi containing block-nya. Sekarang right diukur dari
+ * tepi header sehingga lebar panel selalu muat di layar, dan top: 3.5rem
+ * diukur dari atas header — tepat bawah baris pertama (h-14), posisi
+ * vertikal yang sama persis dengan sebelumnya.
+ *
+ * Guard max-height mencegah panel menyentuh navigasi bawah tetap pada
+ * layar yang sangat pendek: navigasi itu berada di root stacking context
+ * dengan z-index 40, sedangkan seluruh isi header hanya z-index 30, jadi
+ * header tidak akan pernah bisa menutupinya.
+ *
+ * ≥1024px tidak tersentuh: di sana yang tampil top bar desktop, lonceng
+ * berada tepat di dekat tepi kanan, dan .notif harus tetap relative
+ * supaya tampilannya persis seperti sekarang.
+ */
+@media (max-width: 1023px) {
+    .notif {
+        position: static;
+    }
+
+    .notif__panel {
+        top: 3.5rem;
+        right: 1rem;
+    }
+
+    .notif__daftar {
+        max-height: min(22rem, calc(100vh - 11rem));
+        max-height: min(22rem, calc(100dvh - 11rem));
+    }
+}
+
+/* padding baris 1 memakai px-4 di bawah sm: dan sm:px-5 sesudahnya. */
+@media (min-width: 640px) and (max-width: 1023px) {
+    .notif__panel {
+        right: 1.25rem;
+    }
+}
+
 .notif__kepala {
     border-bottom: 1px solid color-mix(in oklab, var(--color-lavender) 70%, transparent);
     padding: 0.7rem 0.9rem;
