@@ -2148,6 +2148,40 @@ html {
     transform: translateX(2px);
 }
 
+/* ============================================================
+   KARTU MATERI & QUIZ DI LAYAR SEMPIT (≤639px)
+   Gridnya tetap dua kolom, jadi satu kartu tinggal ~140-170px di
+   ponsel. Dua hal rusak di ukuran itu:
+
+   1. Lencana kategori (pojok kiri bawah) dan pil "Baca"/"Lihat"
+      (pojok kanan bawah) saling menimpa. Pil itu hanya penanda
+      hover yang aria-hidden; di ponsel tidak ada hover, tapi
+      :hover/:focus-within menempel setelah ketukan sehingga pil
+      muncul menimpa lencana. Karena ruangnya tidak cukup untuk
+      keduanya di kartu seluas ini, pilnya disembunyikan dan
+      lencana dibiarkan memakai lebar penuh.
+
+   2. Thumbnail 16:9 hanya setinggi ~87px, padahal tinggi kartu
+      ±250px dan didominasi badan (judul, deskripsi, baris meta).
+      Rasionya dinaikkan ke 4:3 di sini supaya gambar seimbang
+      dengan tinggi kartunya. Di ≥640px kartu sudah lebar, jadi
+      16:9 aslinya dipertahankan.
+
+   Hanya lebar di bawah 640px yang disentuh: tablet dan desktop
+   tidak berubah.
+   ============================================================ */
+@media (max-width: 639px) {
+    .kartu-materi__aksi,
+    .kartu-quiz__aksi {
+        display: none;
+    }
+
+    .kartu-materi__gambar,
+    .kartu-quiz__gambar {
+        aspect-ratio: 4 / 3;
+    }
+}
+
 /* Garis aksen warna kategori di sisi atas badan kartu. */
 .kartu-quiz__aksen {
     height: 0.25rem;

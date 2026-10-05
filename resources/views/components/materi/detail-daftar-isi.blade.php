@@ -12,9 +12,11 @@
      * supaya tetap masuk akal tanpa JavaScript, sementara JS mengganti
      * perilakunya menjadi pergantian bab.
      *
-     * Di mobile daftar ini jadi strip horizontal yang bisa di-scroll; di
-     * desktop berubah jadi kolom dan menempel (sticky) supaya tetap terlihat
-     * saat user membaca.
+     * Daftar ini selalu disusun ke bawah (satu baris per bab, urut
+     * 1, 2, 3, ...) di semua lebar layar: di mobile strip horizontal
+     * yang di-scroll membuat judul bab terpotong dan sulit dibaca,
+     * sedangkan di desktop kolom sudah sejak awal bentuk yang diinginkan.
+     * Lipatan lewat tombol di kanan judul hanya berlaku di bawah lg.
      *
      * Bentuk array per seksi: nomor, slug, judul.
      */
@@ -37,26 +39,26 @@
     </div>
 
     {{--
-        min-w-0 + overflow-x-auto: di mobile daftarnya meluap ke samping dan
-        bisa di-scroll, bukan membuat halaman ikut melebar.
+        flex-col: daftar selalu turun ke bawah, tanpa overflow-x, jadi
+        tidak ada strip yang bisa di-scroll ke samping di ponsel.
 
         Kelas .daftar-isi__items punya aturan display:none untuk atribut
         hidden, karena kelas utilitas flex di atas akan mengalah kalau
         atribut itu dipakai polos.
     --}}
     <div id="daftar-isi-materi" data-daftar-isi-items
-        class="daftar-isi__items mt-3 flex min-w-0 gap-1.5 overflow-x-auto pb-1 lg:flex-col lg:gap-1 lg:overflow-visible lg:pb-0">
+        class="daftar-isi__items mt-3 flex min-w-0 flex-col gap-1">
 
         @foreach ($seksi as $s)
             <a href="#{{ $s['slug'] }}" data-daftar-isi-tautan="{{ $s['slug'] }}"
-                class="daftar-isi__item min-w-0 shrink-0 lg:w-full"
+                class="daftar-isi__item min-w-0"
                 aria-label="Buka seksi {{ $s['nomor'] }}. {{ $s['judul'] }}">
 
                 <span class="daftar-isi__nomor" aria-hidden="true">{{ $s['nomor'] }}</span>
 
-                {{-- truncate + whitespace-nowrap: judul panjang di mobile
-                     memotong satu baris, bukan menambah tinggi kartu. --}}
-                <span class="truncate whitespace-nowrap lg:overflow-visible lg:whitespace-normal">{{ $s['judul'] }}</span>
+                {{-- min-w-0: judul panjang turun ke baris berikutnya di
+                     kartu sempit, bukan meluber ke luar kartu. --}}
+                <span class="min-w-0">{{ $s['judul'] }}</span>
             </a>
         @endforeach
     </div>

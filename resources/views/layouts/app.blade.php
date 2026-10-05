@@ -148,14 +148,26 @@
             ['route' => 'user.jadwal', 'pola' => ['user.jadwal'], 'label' => 'Jadwal', 'ikon' => \App\Support\Ikon::path('jam'), 'bawah' => false],
             [
                 'route' => 'user.materi',
-                'pola' => ['user.materi'],
+                // Pola memakai wildcard supaya menu Materi tetap ditandai
+                // aktif ketika user membuka detail materi
+                // (user.materi.detail) maupun halaman Tambah/Edit — baik di
+                // sidebar desktop maupun navigasi bawah mobile, karena keduanya
+                // membaca array $menu yang sama. Tanpa wildcard routeIs hanya
+                // cocok persis dengan "user.materi" dan detailnya jadi tidak
+                // menandai menu mana pun.
+                'pola' => ['user.materi*'],
                 'label' => 'Materi',
                 'ikon' => 'M12 6.042A8.967 8.967 0 0 0 6 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 0 1 6 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 0 1 6-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0 0 18 18a8.967 8.967 0 0 0-6 2.292m0-14.25v14.25',
                 'bawah' => true,
             ],
             [
                 'route' => 'user.quiz',
-                'pola' => ['user.quiz', 'user.sesi.*', 'user.judulsoal.*', 'user.uiux.hasil'],
+                // Wildcard sama seperti menu Materi: menu Quiz tetap ditandai
+                // aktif ketika user membuka detail quiz (user.quiz.detail)
+                // maupun Tambah/Edit, di sidebar desktop maupun navigasi bawah
+                // mobile. Pola sesi/judulsoal/uiux tetap dipertahankan karena
+                // namanya tidak berprefix "user.quiz".
+                'pola' => ['user.quiz*', 'user.sesi.*', 'user.judulsoal.*', 'user.uiux.hasil'],
                 'label' => 'Quiz',
                 'ikon' => 'M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z',
                 'bawah' => true,
