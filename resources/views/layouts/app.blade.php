@@ -405,7 +405,14 @@
                     default => [
                         'aksi' => 'user.materi',
                         'placeholder' => 'Cari materi...',
-                        'param' => [],
+                        // Filter kategori halaman Materi ikut dibawa,
+                        // karena kolom cari di dalam papan kepala sudah
+                        // tidak ada: tanpa ini, mengetik di top bar
+                        // diam-diam melepas kategori yang sedang dipilih.
+                        'param' => array_filter(
+                            ['kategori' => request('kategori')],
+                            fn ($nilai) => filled($nilai)
+                        ),
                     ],
                 };
             @endphp

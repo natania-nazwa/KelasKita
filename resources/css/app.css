@@ -1810,6 +1810,35 @@ html {
     color: rgba(255, 255, 255, 0.82);
 }
 
+/* Desktop saja (≥1024px): filter kategori naik ke sebelah kanan teks
+   deskripsi supaya papan kepala tidak bertambah tinggi. Di bawah
+   1024px aturan ini tidak aktif sama sekali, jadi susunannya tetap
+   bertumpuk persis seperti semula.
+
+   Catatan: margin .quiz-kepala__deskripsi dan .quiz-kepala__filter
+   harus dimatikan lewat CSS di sini, bukan lewat utilitas `lg:mt-0`,
+   karena kedua aturannya tidak berada di @layer sehingga utilitas
+   Tailwind tidak dapat menimpanya. */
+@media (min-width: 1024px) {
+    .quiz-kepala__baris {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 2rem;
+        margin-top: 0.5rem;
+    }
+
+    .quiz-kepala__baris .quiz-kepala__deskripsi {
+        margin-top: 0;
+    }
+
+    .quiz-kepala__baris .quiz-kepala__filter {
+        flex: none;
+        width: 13rem;
+        margin-top: 0;
+    }
+}
+
 /* Tiga angka besar: isi ruang kosong hero sekaligus memberi gambaran
    skala isi halaman tanpa perlu menggulir. */
 .quiz-kepala__statistik {
@@ -1871,28 +1900,21 @@ html {
 }
 
 
-/* ---------- Kolom cari + filter di dalam hero ---------- */
-.quiz-kepala .kolom-cari,
+/* ---------- Filter kategori di dalam hero ---------- */
 .quiz-kepala .pilih-kategori {
     border-color: transparent;
     background-color: #fff;
     box-shadow: 0 14px 28px -20px rgba(43, 24, 110, 0.9);
 }
 
-.quiz-kepala .kolom-cari:focus,
 .quiz-kepala .pilih-kategori:focus {
     box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.35);
-}
-
-/* Ikon di dalam kolom cari ikut gelap karena latar putih. */
-.quiz-kepala .kepala-cari__ikon {
-    color: color-mix(in oklab, var(--color-dark) 42%, transparent);
 }
 
 /* ---------- Kepala materi (hero) ----------
    Papan ungu pastel (soft) yang mengisi bagian atas halaman Materi.
    Susunannya sengaja sama dengan kepala Quiz (lencana, angka, judul,
-   deskripsi, kolom cari) supaya berpindah menu terasa mulus; Quiz ungu
+   deskripsi, filter kategori) supaya berpindah menu terasa mulus; Quiz ungu
    pekat dengan teks putih, Materi ungu muda dengan teks ungu tua, jadi
    keduanya tetap mudah dibedakan sekilas.
 
@@ -1973,6 +1995,35 @@ html {
     color: rgba(58, 47, 143, 0.72);
 }
 
+/* Desktop saja (≥1024px): filter kategori naik ke sebelah kanan teks
+   deskripsi supaya papan kepala tidak bertambah tinggi — sama persis
+   dengan kepala Quiz. Di bawah 1024px aturan ini tidak aktif sama
+   sekali, jadi susunannya tetap bertumpuk seperti semula.
+
+   Catatan: margin .materi-kepala__deskripsi dan .materi-kepala__filter
+   harus dimatikan lewat CSS di sini, bukan lewat utilitas `lg:mt-0`,
+   karena kedua aturannya tidak berada di @layer sehingga utilitas
+   Tailwind tidak dapat menimpanya. */
+@media (min-width: 1024px) {
+    .materi-kepala__baris {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 2rem;
+        margin-top: 0.5rem;
+    }
+
+    .materi-kepala__baris .materi-kepala__deskripsi {
+        margin-top: 0;
+    }
+
+    .materi-kepala__baris .materi-kepala__filter {
+        flex: none;
+        width: 13rem;
+        margin-top: 0;
+    }
+}
+
 /* Tiga angka besar: isi ruang kosong hero sekaligus memberi gambaran
    skala isi halaman tanpa perlu menggulir. */
 .materi-kepala__statistik {
@@ -2015,14 +2066,8 @@ html {
     box-shadow: 0 14px 28px -20px rgba(74, 58, 184, 0.55);
 }
 
-.materi-kepala .kolom-cari:focus,
 .materi-kepala .pilih-kategori:focus {
     box-shadow: 0 0 0 4px rgba(90, 72, 200, 0.3);
-}
-
-/* Ikon di dalam kolom cari ikut gelap karena latar putih. */
-.materi-kepala .kepala-cari__ikon {
-    color: color-mix(in oklab, var(--color-dark) 42%, transparent);
 }
 
 /* ---------- Kartu quiz: lapisan warna di banner ----------

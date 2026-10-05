@@ -1,15 +1,18 @@
 {{--
     Kepala halaman Quiz: papan ungu berisi lencana, judul, deskripsi, tiga
-    angka ringkas, lalu kolom cari + filter kategori.
+    angka ringkas, lalu filter kategori.
 
     Angka ringkas sengaja diambil dari seluruh quiz yang tayang, bukan dari
     hasil pencarian atau filter yang sedang aktif, supaya infonya menjadi
     "seberapa besar pustaka quiz ini", bukan "berapa yang kebetulan
     muncul".
 
-    Kolom cari ditaruh di dalam papan ini, bukan di bawahnya, supaya area
-    putih di antara kepala dan daftar quiz hilang dan seluruh bagian atas
-    halaman terbaca sebagai satu blok.
+    Kolom pencarian tidak ada di halaman ini lagi: pencarian memakai kolom
+    cari di top bar (desktop) dan di baris kedua header mobile, jadi tidak
+    ada lagi dua kotak yang menulis "Cari quiz..." dalam satu layar.
+    Filter kategorinya tetap ditaruh di dalam papan ini, bukan di bawahnya,
+    supaya area putih di antara kepala dan daftar quiz hilang dan seluruh
+    bagian atas halaman terbaca sebagai satu blok.
 
     Bentuk lencana, judul, dan deskripsinya sengaja mirip dengan kepala
     halaman Materi supaya berpindah menu tidak terasa seperti halaman
@@ -77,15 +80,24 @@
 
         <h1 class="quiz-kepala__judul">Quiz</h1>
 
-        <p class="quiz-kepala__deskripsi">
-            Uji pemahamanmu dengan berbagai kuis menarik yang dibuat oleh guru maupun teman-temanmu.
-        </p>
+        {{-- Deskripsi dan filter kategori dibungkus satu baris. Di layar
+             lebih kecil blok ini tetap blok biasa, jadi susunannya persis
+             seperti semula: teks lalu filter bertumpuk di bawahnya. Hanya
+             di desktop (≥1024px) blok .quiz-kepala__baris di app.css yang
+             mengubahnya menjadi flex dan menarik filter ke sebelah kanan
+             teks. --}}
+        <div class="quiz-kepala__baris">
+            <p class="quiz-kepala__deskripsi">
+                Uji pemahamanmu dengan berbagai kuis menarik yang dibuat oleh guru maupun teman-temanmu.
+            </p>
 
-        {{-- Pencarian dan filter kategori. Satu form, jadi mengetik di kolom
-             cari ikut membawa kategori yang sedang dipilih. --}}
-        <div class="mt-5">
-            <x-quiz.cari :kategori="$kategori" :kategori-aktif="$kategoriAktif"
-                :kata-kunci="$kataKunci" :total-quiz="$totalQuiz" />
+            {{-- Filter kategori. Masih berbentuk form, dan kata kunci dari
+                 kolom cari top bar ikut dikirim sebagai input tersembunyi,
+                 supaya menyaring kategori tidak menghapus hasil pencarian. --}}
+            <div class="quiz-kepala__filter mt-5">
+                <x-quiz.cari :kategori="$kategori" :kategori-aktif="$kategoriAktif"
+                    :kata-kunci="$kataKunci" :total-quiz="$totalQuiz" />
+            </div>
         </div>
     </div>
 </section>

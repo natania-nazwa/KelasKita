@@ -7,9 +7,16 @@
 ])
 
 {{--
-    Kolom pencarian + dropdown filter kategori dalam satu form.
-    Ketik memicu submit setelah jeda, ganti kategori langsung submit
-    (dikerjakan oleh initCari() di resources/js/app.js).
+    Filter kategori halaman Materi, masih dibungkus <form> supaya
+    ganti kategori langsung submit (dikerjakan oleh initCari() di
+    resources/js/app.js).
+
+    Kolom pencarian sudah tidak ada di sini: pencarian dilakukan lewat
+    kolom cari di top bar desktop maupun baris kedua header mobile,
+    dan keduanya mengirim q ke route yang sama. Kata kunci yang sedang
+    aktif tetap ikut dikirim sebagai input tersembunyi, supaya memilih
+    kategori tidak diam-diam membuang hasil pencarian yang sedang
+    dilihat.
 
     Halaman Materi menampilkan seluruh materi yang ada di aplikasi, jadi
     tidak ada parameter kepemilikan yang perlu dibawa.
@@ -17,32 +24,10 @@
 
 <form action="{{ route($aksi) }}" method="GET" data-cari-form
     {{ $attributes->class(['flex flex-col gap-3 sm:flex-row sm:items-center']) }}>
-    <div class="relative min-w-0 flex-1">
-        {{-- bg-brand-bg, bukan bg-white: lingkaran ikon tetap terlihat
-             di halaman putih maupun di dalam papan hero (inputnya putih). --}}
-        <span
-            class="kepala-cari__ikon pointer-events-none absolute left-4 top-1/2 flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-full bg-brand-bg text-dark/40">
-            <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-                <path stroke-linecap="round" stroke-linejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />
-            </svg>
-        </span>
+    @if ($kataKunci !== '')
+        <input type="hidden" name="q" value="{{ $kataKunci }}">
+    @endif
 
-        <input type="search" name="q" value="{{ $kataKunci }}" data-cari-input autocomplete="off"
-            placeholder="Cari materi..." aria-label="Cari materi"
-            class="kolom-cari w-full pl-14 {{ $kataKunci !== '' ? 'pr-12' : 'pr-4' }}">
-
-        @if ($kataKunci !== '')
-            <a href="{{ route($aksi, array_filter(['kategori' => $kategoriAktif], fn ($n) => filled($n))) }}"
-                class="absolute right-3 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full text-dark/35 transition hover:bg-brand-bg hover:text-dark"
-                aria-label="Hapus kata kunci">
-                <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
-                </svg>
-            </a>
-        @endif
-    </div>
-
-    {{-- Dropdown filter kategori, duduk di samping kolom search. --}}
     <div class="relative min-w-0 sm:w-52">
         <span class="pointer-events-none absolute left-4 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full text-dark/35"
             aria-hidden="true">

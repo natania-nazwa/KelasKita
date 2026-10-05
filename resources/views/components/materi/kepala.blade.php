@@ -1,14 +1,17 @@
 {{--
     Kepala halaman Materi: papan ungu pastel (soft) berisi lencana, judul,
-    deskripsi, tiga angka ringkas, lalu kolom cari + filter kategori.
+    deskripsi, tiga angka ringkas, lalu filter kategori.
 
     Angka ringkas diambil dari seluruh materi yang tayang, bukan dari hasil
     pencarian atau filter yang sedang aktif, supaya infonya menjadi "seberapa
     besar pustaka materi ini", bukan "berapa yang kebetulan muncul".
 
-    Kolom cari ditaruh di dalam papan ini, bukan di bawahnya, supaya area
-    putih di antara kepala dan daftar materi hilang dan seluruh bagian atas
-    halaman terbaca sebagai satu blok.
+    Kolom pencarian tidak ada di halaman ini lagi: pencarian memakai kolom
+    cari di top bar (desktop) dan di baris kedua header mobile, jadi tidak
+    ada lagi dua kotak yang menulis "Cari materi..." dalam satu layar.
+    Filter kategorinya tetap ditaruh di dalam papan ini, bukan di bawahnya,
+    supaya area putih di antara kepala dan daftar materi hilang dan seluruh
+    bagian atas halaman terbaca sebagai satu blok.
 
     Bentuk lencana, judul, dan deskripsinya sengaja mirip dengan kepala
     halaman Quiz supaya berpindah menu tidak terasa seperti halaman yang
@@ -58,15 +61,24 @@
 
         <h1 class="materi-kepala__judul">Materi Pembelajaran</h1>
 
-        <p class="materi-kepala__deskripsi">
-            Temukan dan pelajari berbagai materi yang dibuat oleh guru maupun teman-temanmu.
-        </p>
+        {{-- Deskripsi dan filter kategori dibungkus satu baris. Di layar
+             lebih kecil blok ini tetap blok biasa, jadi susunannya persis
+             seperti semula: teks lalu filter bertumpuk di bawahnya. Hanya
+             di desktop (≥1024px) blok .materi-kepala__baris di app.css yang
+             mengubahnya menjadi flex dan menarik filter ke sebelah kanan
+             teks. --}}
+        <div class="materi-kepala__baris">
+            <p class="materi-kepala__deskripsi">
+                Temukan dan pelajari berbagai materi yang dibuat oleh guru maupun teman-temanmu.
+            </p>
 
-        {{-- Pencarian dan filter kategori. Satu form, jadi mengetik di kolom
-             cari ikut membawa kategori yang sedang dipilih. --}}
-        <div class="mt-5">
-            <x-materi.cari :kategori="$kategori" :kategori-aktif="$kategoriAktif"
-                :kata-kunci="$kataKunci" :total-materi="$totalMateri" />
+            {{-- Filter kategori. Masih berbentuk form, dan kata kunci dari
+                 kolom cari top bar ikut dikirim sebagai input tersembunyi,
+                 supaya menyaring kategori tidak menghapus hasil pencarian. --}}
+            <div class="materi-kepala__filter mt-5">
+                <x-materi.cari :kategori="$kategori" :kategori-aktif="$kategoriAktif"
+                    :kata-kunci="$kataKunci" :total-materi="$totalMateri" />
+            </div>
         </div>
     </div>
 </section>

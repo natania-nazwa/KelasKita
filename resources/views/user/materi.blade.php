@@ -23,12 +23,14 @@
         @endif
 
         {{-- =========================
-             KEPALA + PENCARIAN
+             KEPALA + FILTER KATEGORI
         ==========================
-             Kepala, angka ringkas, kolom cari, dan filter kategori
-             semuanya tinggal di satu papan ungu muda (x-materi.kepala),
-             jadi tidak ada area putih kosong di antara bagian atas
-             halaman dan daftar materi.
+             Kepala, angka ringkas, dan filter kategori semuanya tinggal
+             di satu papan ungu muda (x-materi.kepala), jadi tidak ada
+             area putih kosong di antara bagian atas halaman dan daftar
+             materi. Kolom carinya sendiri sudah pindah ke top bar dan
+             baris kedua header mobile, sehingga tidak ada lagi kotak
+             "Cari materi..." yang menduplikasi pencarian di sini.
 
              Tidak ada tombol tambah di sini: materi dibuat dan dikelola
              lewat menu "Karya Saya". --}}

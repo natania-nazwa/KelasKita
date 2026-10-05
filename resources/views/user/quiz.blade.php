@@ -23,12 +23,14 @@
         @endif
 
         {{-- =========================
-             KEPALA + PENCARIAN
+             KEPALA + FILTER KATEGORI
         ==========================
-             Kepala, angka ringkas, kolom cari, dan filter kategori
-             semuanya tinggal di satu papan ungu (x-quiz.kepala), jadi
-             tidak ada areas putih kosong di antara bagian atas halaman
-             dan daftar quiz. --}}
+             Kepala, angka ringkas, dan filter kategori semuanya tinggal
+             di satu papan ungu (x-quiz.kepala), jadi tidak ada area
+             putih kosong di antara bagian atas halaman dan daftar quiz.
+             Kolom carinya sendiri sudah pindah ke top bar dan baris
+             kedua header mobile, sehingga tidak ada lagi kotak
+             "Cari quiz..." yang menduplikasi pencarian di sini. --}}
         <x-quiz.kepala :total-quiz="$totalQuiz" :total-soal="$totalSoal"
             :jumlah-kategori="count($kategori)" :kategori="$kategori"
             :kategori-aktif="$kategoriAktif" :kata-kunci="$kataKunci" />

@@ -325,9 +325,13 @@ class QuizHalamanTest extends TestCase
 
         $isi = $this->actingAs($user)->get('/user/quiz')->getContent();
 
-        // Kolom cari di toolbar dan di top bar sama-sama berburu quiz.
-        $this->assertStringContainsString('placeholder="Cari quiz..."', $isi);
+        /*
+         * Kolom cari top bar adalah satu-satunya pencarian halaman Quiz:
+         * papan kepala tidak lagi mempunyai kolom carinya sendiri, jadi
+         * "Cari quiz..." tidak boleh tersisa di mana pun di halaman ini.
+         */
         $this->assertStringContainsString('placeholder="Cari kuis..."', $isi);
+        $this->assertStringNotContainsString('placeholder="Cari quiz..."', $isi);
     }
 
     /**
