@@ -113,20 +113,17 @@
             <input type="hidden" name="isi" value="{{ old('isi', $modeEdit ? $materi->isi : '') }}" data-input-isi>
             <input type="hidden" name="bab" value="{{ old('bab', $modeEdit ? json_encode($bab ?? [], JSON_UNESCAPED_UNICODE) : '') }}"
                 data-input-bab>
-
-            {{-- =========================
-                 ACTION BAR
-            ==========================
-                 Baris tombol hanya muncul setelah halaman di-scroll ke
-                 bawah, jadi selama form sedang diisi tidak ada yang
-                 menutupi isian. Yang menandainya sudah sampai bawah
-                 adalah pikuan setinggi 1px tepat di atasnya, diamati
-                 oleh materi-tambah.js.
+            {{--
+                =========================
+                 KARTU BARIS TOMBOL
+                ==========================
+                 Kartu biasa di ujung form — sama seperti baris tombol pada
+                 form Tambah Quiz dan form admin: tidak lengket dan tidak
+                 menyala-matik mengikuti guliran. Karena diletakkan setelah
+                 kartu terakhir, kartu ini baru terlihat begitu halaman
+                 digulir sampai bawah.
             ========================== --}}
-            <div data-action-bar-picu class="h-px" aria-hidden="true"></div>
-
-            <div data-action-bar
-                class="sticky bottom-0 z-30 -mx-6 mt-5 border-t border-ungu-line bg-white/95 px-6 py-4 shadow-[0_-16px_32px_-30px_rgba(49,46,129,0.7)] backdrop-blur lg:-mx-10 lg:px-10">
+            <div data-action-bar class="kartu-form kartu-form__badan mb-6 mt-5 lg:mb-10">
                 @php
                     /*
                      * Status materi yang sedang diedit, dipakai untuk kalimat
@@ -241,7 +238,7 @@
                             Batal
                         </a>
 
-                        <button type="submit" class="tombol-utama justify-center">
+                        <button type="submit" class="tombol-utama justify-center sm:ml-auto">
                             <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2.2"
                                 viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
                                 <path stroke-linecap="round" stroke-linejoin="round"
@@ -265,7 +262,7 @@
                         @endif
                     @else
                         <button type="submit" name="publikasikan" value="0"
-                            class="tombol-garis justify-center">
+                            class="tombol-garis justify-center sm:ml-auto">
                             Simpan Draft
                         </button>
 

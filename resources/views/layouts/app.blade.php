@@ -67,15 +67,6 @@
                 display: block !important;
             }
 
-            /* Baris tombol "Tambah Materi" sengaja disembunyikan sampai
-               halaman di-scroll ke bawah. Tanpa JavaScript tidak ada yang
-               bisa memunculkannya, jadi di sini dikembalikan. */
-            [data-action-bar] {
-                opacity: 1 !important;
-                visibility: visible !important;
-                transform: none !important;
-            }
-
             /* Daftar soal pada halaman detail quiz: baris keenam dan
                seterusnya dikirim tersembunyi oleh server, dan tombol
                "Lihat semua" yang membukanya bergantung pada JS. Tanpa JS
@@ -325,12 +316,13 @@
                 /*
                  * Halaman yang TIDAK memakai navigasi bawah tetap.
                  *
-                 * Di sini ada elemen yang sudah menempel di dasar layar
-                 * sendiri, jadi navigasi bawah hanya menutupinya:
+                 * Di sini ada elemen yang menempel di dasar layar atau
+                 * berdiri di kaki halaman, jadi navigasi bawah hanya
+                 * menutupinya:
                  *
-                 *   - "Tambah/Edit Materi" memakai action bar sticky di
-                 *     bawah (lihat [data-action-bar]); dua baris yang
-                 *     sama-sama menempel akan bertumpuk.
+                 *   - "Tambah/Edit Materi" menutup formnya dengan kartu
+                 *     baris tombol (lihat [data-action-bar]); navigasi
+                 *     bawah akan menutupi tombol Simpan dan Ajukan.
                  *   - "Tambah Quiz" memakai wizard tiga langkah dengan
                  *     navigasi langkah tersendiri di kaki halaman.
                  *   - "Mengerjakan soal" sedang fokus dengan timer

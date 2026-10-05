@@ -132,6 +132,8 @@ function initTambahMateri(akar) {
     const wadahPratinjau = $("[data-preview-isi-wadah]");
     const urlPratinjau = $("[data-pratinjau-url]")?.dataset.pratinjauUrl ?? "";
 
+    const tokenCsrf = () => document.querySelector('meta[name="csrf-token"]')?.content ?? "";
+
     /* Warna lencana tingkat kesulitan, sama dengan yang dipakai
        components/materi/detail-kepala.blade.php. */
     const WARNA_KESULITAN = {
@@ -856,6 +858,7 @@ function initTambahMateri(akar) {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8",
+                    "X-CSRF-TOKEN": tokenCsrf(),
                     "X-Requested-With": "XMLHttpRequest",
                 },
                 body: kirim.toString(),
@@ -1356,40 +1359,6 @@ function initTambahMateri(akar) {
             })),
         );
     });
-
-    /* ============================================================
-       ACTION BAR: SELAMAT DI SCROLL KE BAWAH
-       ============================================================
-       Baris tombol disembunyikan selama form masih diisi, lalu muncul
-       begitu halaman sudah di-scroll ke bawah. Yang diamati adalah pikuan
-       setinggi 1px tepat di atas baris tombol, bukan baris tombolnya
-       sendiri: baris itu menempel di dasar layar, jadi posisinya tidak
-       pernah berubah dan tidak bisa dijadikan penanda.
-
-       "Turun 15% dari bawah" dipakai sebagai batas: tanpa itu baris
-       tombol muncul sebelum pengguna benar-benar sampai ke ujung form. */
-
-    const picuActionBar = $("[data-action-bar-picu]");
-    const actionBar = $("[data-action-bar]");
-
-    function tampilkanActionBar(tampil) {
-        actionBar.classList.toggle("is-terlihat", tampil);
-    }
-
-    if (picuActionBar && actionBar) {
-        if ("IntersectionObserver" in window) {
-            const pengamatActionBar = new IntersectionObserver(
-                ([entri]) => tampilkanActionBar(entri.isIntersecting),
-                { rootMargin: "0px 0px -15% 0px" },
-            );
-
-            pengamatActionBar.observe(picuActionBar);
-        } else {
-            // Peramban tanpa IntersectionObserver: lebih baik langsung
-            // tampil daripada membiarkan form tanpa tombol simpan.
-            tampilkanActionBar(true);
-        }
-    }
 
     /* ============================================================
        MULAI

@@ -110,7 +110,7 @@
             <div class="karya-hal mt-8">
                 {{ $paginasi->links() }}
             </div>
-        @endif>
+        @endif
 
         {{-- =========================
              DIALOG KONFIRMASI HAPUS

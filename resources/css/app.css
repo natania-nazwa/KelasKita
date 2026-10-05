@@ -3313,7 +3313,7 @@ html {
 /* ============================================================
    TAMBAH MATERI
    Style khusus halaman "Tambah Materi": kartu, form, editor,
-   daftar bab, preview, dan action bar. Semua memakai ungu soft
+   daftar bab, preview, dan kartu baris tombol. Semua memakai ungu soft
    dan tidak memakai warna biru.
    ============================================================ */
 @layer components {
@@ -3925,39 +3925,6 @@ html {
         display: none;
     }
 
-    /* ---------- Action bar ----------
-       Baris tombol hanya muncul setelah halaman di-scroll ke bawah, jadi
-       saat masih mengisi form tidak ada yang menutupi isi di bawahnya.
-
-       Yang disembunyikan cuma opacity + visibility, bukan display: tinggi
-       baris tetap diboccer, sehingga muncul-hilangnya tidak menggeser
-       isi form. Atribut hidden tidak dipakai karena rules .sticky dan
-       utilitas flex di elemen yang sama akan mengalahinya. */
-    [data-action-bar] {
-        opacity: 0;
-        visibility: hidden;
-        transform: translateY(0.75rem);
-        transition:
-            opacity 0.24s ease,
-            transform 0.24s ease,
-            visibility 0.24s;
-    }
-
-    [data-action-bar].is-terlihat {
-        opacity: 1;
-        visibility: visible;
-        transform: none;
-    }
-
-    @media (prefers-reduced-motion: reduce) {
-        [data-action-bar] {
-            transform: none;
-            transition:
-                opacity 0.24s ease,
-                visibility 0.24s;
-        }
-    }
-
     /* ---------- Saklar publikasi ---------- */
     .saklar {
         position: relative;
@@ -4150,6 +4117,69 @@ html {
     @media (min-width: 640px) {
         .stepper-garis {
             width: 2.5rem;
+        }
+    }
+
+    /*
+     * Ponsel (≤639px): ketiga nama langkah harus terbaca utuh, bukan
+     * terpotong jadi "Inf…" / "Bua…".
+     *
+     * Hitungannya keras: di layar 375px lebar dalam kartu cuma ±295px,
+     * dan 48px di antaranya habis untuk dua garis penghubung. Setelah
+     * lingkaran nomor 32px + jarak 8px dikeluarkan dari baris yang sama,
+     * teks tinggal ±34px — tidak muat satu kata pun.
+     *
+     * Dua penyesuaian di bawah ini bekerja bersama:
+     *
+     *   1. Lencana nomor naik ke ATAS teks, jadi nama langkah memakai
+     *      seluruh lebar kolomnya (±78px di 375px). Garis penghubungnya
+     *      TETAP ADA seperti desktop; ia cuma digeser turun lewat
+     *      align-self + margin-top supaya sejajar dengan tengah lingkaran
+     *      nomor yang kini berada di atas, bukan di samping.
+     *   2. Nama langkah dibolehkan turun baris. Elipsis dipertahankan
+     *      untuk layar ≥640px tempat kolomnya lega dan satu baris memang
+     *      lebih rapi.
+     *
+     * align-items: stretch (bukan center) supaya wadah teks melebar
+     * seisi kolom; lingkaran nomor tetap 2rem karena width-nya eksplisit,
+     * jadi ia tetap duduk rata kiri.
+     */
+    @media (max-width: 639px) {
+        .stepper-item {
+            flex-direction: column;
+            align-items: stretch;
+            gap: 0.4rem;
+        }
+
+        .stepper-garis {
+            align-self: flex-start;
+            /* Setengah tinggi lencana (1rem) dikurangi setebal garis. */
+            margin-top: calc(1rem - 1px);
+        }
+
+        .stepper-item__nama {
+            white-space: normal;
+            overflow: visible;
+            text-overflow: clip;
+            overflow-wrap: anywhere;
+        }
+    }
+
+    /*
+     * Ponsel kecil (320–374px, sebiduk dengan pembagi grid
+     * min-[360px] di halaman daftar): kolom tinggal ±71px di 320px,
+     * sementara kata "Pengaturan" sendiri lebarnya ±71px pada 13px.
+     * Garis dipendekkan dan nama diturunkan satu step supaya kata
+     * terpanjang itu tetap muat utuh — bukan terpotong, dan bukan pula
+     * terputus di tengah kata oleh overflow-wrap.
+     */
+    @media (max-width: 374px) {
+        .stepper-garis {
+            width: 0.5rem;
+        }
+
+        .stepper-item__nama {
+            font-size: 0.75rem;
         }
     }
 

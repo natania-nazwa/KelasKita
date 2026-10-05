@@ -133,13 +133,11 @@
                  mereka hilang sampai form habis digulir hanya menambah satu
                  langkah lagi sebelum admin bisa menyimpan.
 
-                 Karena tidak lagi lengket, atribut data-action-bar dan
-                 penandanya (data-action-bar-picu) sengaja tidak dipakai di
-                 sini. resources/js/materi-tambah.js hanya menyalakan baris
-                 seperti itu, jadi tanpa keduanya barisnya tampil begitu saja
-                 dan halaman ini tidak lagi bergantung JavaScript untuk
-                 menampilkan tombolnya. Form milik pengguna tetap memakai baris
-                 lengketnya sendiri.
+                 Karena tidak lagi lengket, atribut data-action-bar sengaja
+                 tidak dipakai di sini: barisnya sekadar kartu biasa di akhir
+                 form, jadi halaman ini tidak bergantung JavaScript untuk
+                 menampilkan tombolnya. Form milik pengguna tetap memakai
+                 baris lengketnya sendiri.
 
                  Tiga tombol, dua sisi. "Batal" berdiri sendiri di kiri karena
                  ia membatalkan, sedangkan "Simpan Draft" dan "Publish Sekarang"
