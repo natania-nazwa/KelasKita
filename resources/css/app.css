@@ -8424,6 +8424,46 @@ html {
     color: #d0505e;
 }
 
+/*
+ * Ponsel: kartu statistik jadi 2x2 (lihat grid di x-hasil.statistik),
+ * jadi lebar satu kartu hanya sekitar 105px. Empat hal diturunkan di
+ * sini supaya tidak ada yang keluar kotak:
+ *
+ *   - padding horizontal 1.05rem -> 0.8rem, menambah sekitar 8px ruang
+ *     teks per kartu;
+ *   - angka 1.6rem -> 1.25rem. Angka "Waktu Belajar" bisa berupa
+ *     "166,7 jam" atau "59 menit", yaitu delapan karakter; pada 1.6rem
+ *     itu lebih lebar dari kolomnya, sedangkan pada 1.25rem masih
+ *     terbaca sebagai angka utama kartu;
+ *   - label 0.75rem -> 0.6875rem, supaya "Total Quiz Dikerjakan"
+ *     pecah paling banyak dua baris di sebelah ikon;
+ *   - jarak ke angka dan catatan dikecilkan supaya kartu tetap pendek
+ *     seperti semula, memang tujuannya mengurangi tinggi halaman.
+ */
+@media (max-width: 639px) {
+    .hasil-kartu {
+        padding: 0.8rem 0.8rem 0.75rem;
+    }
+
+    .hasil-kartu__label {
+        font-size: 0.6875rem;
+    }
+
+    .hasil-kartu__nilai {
+        margin-top: 0.5rem;
+        font-size: 1.25rem;
+    }
+
+    .hasil-kartu__satuan {
+        font-size: 0.75rem;
+    }
+
+    .hasil-kartu__catatan {
+        margin-top: 0.4rem;
+        font-size: 0.625rem;
+    }
+}
+
 /* ---------- Panel (kartu judul + badan) ---------- */
 .hasil-panel {
     overflow: hidden;
@@ -8834,10 +8874,59 @@ html {
 @media (max-width: 639px) {
     .hasil-item {
         grid-template-columns: auto minmax(0, 1fr);
+        /* Baris di ponsel sudah tiga: thumbnail + teks, nilai, lalu
+           tombol. Jarak 0.85rem di desktop membuat baris ketiga terasa
+           longgar; 0.7rem memendekkannya tanpa harus menyentuh
+           spacing kartu mana pun. */
+        gap: 0.7rem 0.85rem;
+        padding: 0.8rem 0.85rem;
     }
 
     .hasil-item__nilai {
         grid-column: 1 / -1;
+    }
+
+    /* Tombol "Lihat Detail" tetap selebar baris — itu satu-satunya
+       lebar yang muat untuk teksnya di 320px — tapi tingginya
+       dinaikkan ke 40px supaya jadi target sentuh yang layak di
+       jari, bukan setinggi tombol teks biasa. */
+    .hasil-item__tombol {
+        min-height: 2.5rem;
+    }
+}
+
+/*
+ * Ponsel: strip tab status jadi grid 2x2, bukan satu baris yang
+ * digeser mendatar.
+ *
+ * .tab-karya sengaja memakai width: fit-content + max-width: 100% +
+ * overflow-x-auto supaya empat tab tidak memaksa halaman melebar.
+ * Di halaman Hasil strip itu justru berakhir jadi masalah: "Dalam
+ * Proses" dan "Gagal" berada di luar layar, dan tidak ada yang
+ * memberi tahu isinya masih ada di sebelah kanan.
+ *
+ * Grid 2x2 membuat keempatnya langsung terlihat. Padding dan huruf
+ * diturunkan sedikit supaya "Dalam Proses", tab terpanjang, tetap
+ * muat di ~110px.
+ */
+@media (max-width: 639px) {
+    .hasil-tab {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        width: 100%;
+        overflow-x: visible;
+    }
+
+    .hasil-tab .tab-karya__item {
+        justify-content: center;
+        gap: 0.35rem;
+        padding: 0.5rem 0.5rem;
+        font-size: 0.75rem;
+    }
+
+    .hasil-tab .tab-karya__jumlah {
+        padding-inline: 0.3rem;
+        font-size: 0.625rem;
     }
 }
 
@@ -10752,6 +10841,57 @@ html {
     flex-wrap: wrap;
     gap: 0.5rem;
     min-width: 0;
+}
+
+/* ---------- Kepala panel & angka ringkas di ponsel (≤639px) ----------
+   Desktop (≥640px) tidak tersentuh, persis seperti aturan ponsel
+   .jadwal-hari dan .jadwal-item di atas. Dua hal yang berantakan di
+   layar 320-390px:
+
+   1. Tiga angka ringkas duduk berdampingan dengan lencana hari dalam
+      satu baris flex justify-between. Di lebar itu cuma muat lencana +
+      dua chip, jadi chip ketiga turun sendirian ke baris berikutnya
+      dan susunannya berubah-ubah tiap lebar layar. Di ponsel ia dibuat
+      lebar penuh tiga kolom seturun dengan lencana: angka di atas,
+      satuannya di bawah, tiga chip tingginya sama.
+
+   2. Kepala panel daftar memampatkan judul tanggal sampai tinggal
+      ikon + lencana (sisa ruang ditarik oleh blok cari), dan kolom
+      cari ikut menyusut. Susunannya dibuat turun ke bawah: judul
+      tanggal satu baris penuh, lalu pencarian, filter, dan tombol
+      "Tambah Jadwal" masing-masing satu baris penuh. */
+@media (max-width: 639px) {
+    .jadwal-kepala__statistik {
+        width: 100%;
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 0.4rem;
+        margin-top: 0;
+    }
+
+    .jadwal-kepala__statistik > div {
+        flex-direction: column;
+        align-items: center;
+        gap: 0.15rem;
+        padding: 0.5rem 0.3rem;
+        text-align: center;
+    }
+
+    .jadwal-panel__kepala {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 0.75rem;
+    }
+
+    /* align-items: stretch di atas sudah melebarkan judul, form
+       cari, dan tombol "Tambah Jadwal" sampai tepi panel; tiga
+       aturan turunannya tidak perlu ditulis ulang di sini. */
+    .jadwal-panel__aksi {
+        width: 100%;
+        flex-direction: column;
+        align-items: stretch;
+        justify-content: flex-start;
+    }
 }
 
 /* ---------- Aksi di tiap baris jadwal ----------

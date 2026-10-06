@@ -18,11 +18,19 @@
 --}}
 
 {{--
+    Ponsel: grid-cols-2, jadi keempatnya jadi 2x2. Satu-satu menumpuk
+    (grid-cols-1) butuh lebih dari satu layar penuh hanya untuk
+    sekilas angka, sebelum daftar riwayat yang justru menjadi isi
+    utama halaman ini belum kelihatan. Ukuran huruf dan padding kartu
+    diturunkan lewat .hasil-kartu di blok media query app.css, karena
+    kolom yang tersisa hanya sekitar 105px dan angka "166,7 jam" pada
+    1,6rem akan keluar kartu.
+
     sm:grid-cols-2 lalu lg:grid-cols-4. minmax(0, 1fr) dan min-w-0
     mencegah kartu melebar sendiri saat angka atau labelnya panjang,
     jadi tidak ada scroll horizontal di ponsel.
 --}}
-<div {{ $attributes->class(['grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4 lg:gap-5']) }}>
+<div {{ $attributes->class(['grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4 lg:gap-5']) }}>
     @foreach ($kartu as $item)
         <article class="hasil-kartu" style="--h: {{ $item['warna'] }};">
 

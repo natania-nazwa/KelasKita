@@ -18,12 +18,20 @@
     (dikerjakan initCari() di resources/js/app.js). Filter status
     sekarang tinggal di tab di bawah header, jadi tidak perlu ikut
     dibawa sebagai hidden.
+
+    Kolom teks disembunyikan sampai 1024px. Di bawah lg, pencarian
+    global dibawa header mobile (x-app.header-mobile) yang mengirim
+    parameter persis sama ke route yang sama — lihat cabang user.hasil*
+    di $cariTopbar pada layouts/app — jadi di layar kecil kolom di sini
+    hanya mengulang kotak yang sama, dua kali dalam satu halaman. Di
+    atas 1024px header mobile sudah hilang dan top bar desktop yang
+    mengambil alih, jadi kolom ini tampil kembali seperti semula.
 --}}
 
 <form action="{{ route($aksi, $param) }}" method="GET" data-cari-form
     {{ $attributes->class(['flex min-w-0 flex-wrap items-center gap-2.5']) }}>
 
-    <div class="relative w-full min-w-0 sm:w-56 sm:flex-none">
+    <div class="relative hidden w-full min-w-0 lg:block lg:w-56 lg:flex-none">
         <span
             class="pointer-events-none absolute left-3.5 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full bg-white text-dark/40 shadow-[0_2px_8px_rgba(33,26,58,0.06)]">
             <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">

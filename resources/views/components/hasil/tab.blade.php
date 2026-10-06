@@ -41,9 +41,14 @@
     ];
 @endphp
 
-{{-- overflow-x-auto supaya tab keempat tidak memaksa halaman melebar di
-     ponsel; min-w-0 menjaga induknya tetap boleh menyusut. --}}
-<div class="tab-karya" role="tablist" aria-label="Saring hasil quiz">
+{{-- .tab-karya memakai max-width: 100% + overflow-x-auto supaya tab
+     keempat tidak memaksa halaman melebar di ponsel. Di halaman ini
+     strip itu tetap menggulir mendatar, dan "Dalam Proses" serta
+     "Gagal" berakhir di luar layar tanpa ada petunjuk apa pun. Karena
+     itu .hasil-tab (lihat blok media query di app.css) mengubahnya
+     jadi grid 2x2 di bawah 640px: keempatnya kelihatan tanpa
+     digeser. --}}
+<div class="tab-karya hasil-tab" role="tablist" aria-label="Saring hasil quiz">
     @foreach ($tab as $item)
         @php $aktif = $statusAktif === $item['nilai']; @endphp
 

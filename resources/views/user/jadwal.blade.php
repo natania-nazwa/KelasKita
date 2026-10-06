@@ -20,8 +20,29 @@
         min-h-[100dvh], bukan 100dvh dikurangi 4rem seperti halaman lain:
         halaman ini tidak memakai top bar, jadi tinggi yang tersedia
         memang satu layar penuh.
+
+        Tombol "Kembali" hanya untuk layar < lg: di sana sidebar tidak
+        ada (keduanya digantikan header mobile + navigasi bawah), jadi
+        halaman ini butuh jalan pulang yang jelas ke dashboard. Di lg ke
+        atas sidebar sudah memegang tugas itu, jadi tombolnya ikut
+        hilang dan tampilan desktop tidak berubah.
     --}}
     <div class="kanvas-jadwal -m-6 min-h-[100dvh] p-5 sm:p-6 lg:-m-10 lg:p-6 xl:p-8">
+
+        {{-- Jalan pulang di ponsel/tablet. tombol-garis, bukan
+             tombol-kembali: di sini ia berdiri sendiri di atas papan
+             kepala ungu, jadi bentuk pil ber-border lebih terbaca
+             sebagai tombol daripada tautan teks. --}}
+        <div class="mb-3 lg:hidden">
+            <a href="{{ route('user.dashboard') }}" class="tombol-garis">
+                <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="{{ \App\Support\Ikon::path('panah-kiri') }}" />
+                </svg>
+
+                Kembali
+            </a>
+        </div>
+
         <div class="grid grid-cols-1 items-start gap-5 xl:grid-cols-[minmax(0,1fr)_20rem]">
 
             {{-- ======================= KOLOM UTAMA ======================= --}}
