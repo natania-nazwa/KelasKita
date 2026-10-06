@@ -12,6 +12,17 @@
      * di halaman Karya Saya. Bentuknya ['tab' => 'quiz'].
      */
     'param' => [],
+    /*
+     * Halaman yang tidak punya yang bisa dicari masih memakai top bar
+     * ini untuk notifikasi dan identitas pengguna, jadi kolom
+     * pencarian yang disembunyikan, bukan seluruh barisnya. Lihat
+     * $sembunyiCari di layouts/app.
+     *
+     * Group ml-auto di bawah sudah menarik sisanya ke kanan, jadi
+     * tanpa form ini lonceng dan chip akun tetap menempel di tepi
+     * kanan tanpa perlu gaya tambahan.
+     */
+    'tampilCari' => true,
 ])
 
 @php
@@ -35,33 +46,35 @@
         {{-- Pencarian: submit ke halaman yang sedang dibuka, jadi typing
              lalu Enter langsung membawa user ke hasil pencarian.
 
-             min-w-0 + flex-1 tanpa batas lebar membuat kolom ini mengisi
-             seluruh ruang kosong di kiri, jadi kolomnya berhenti tepat di
-             sebelah ikon notifikasi. Di layar sempit min-w-0 yang membuatnya
-             ikut menyusut, bukan memaksa halaman melebar. --}}
-        <form action="{{ route($aksi, $param) }}" method="GET" class="min-w-0 flex-1">
-            <label for="cari-topbar" class="sr-only">{{ $placeholder }}</label>
+min-w-0 + flex-1 tanpa batas lebar membuat kolom ini mengisi
+                 seluruh ruang kosong di kiri, jadi kolomnya berhenti tepat di
+                 sebelah ikon notifikasi. Di layar sempit min-w-0 yang membuatnya
+                 ikut menyusut, bukan memaksa halaman melebar. --}}
+        @if ($tampilCari)
+            <form action="{{ route($aksi, $param) }}" method="GET" class="min-w-0 flex-1">
+                <label for="cari-topbar" class="sr-only">{{ $placeholder }}</label>
 
-            {{-- Parameter halaman (mis. tab aktif) ikut dibawa supaya hasil
-                 pencarian tidak memantul ke tab default. --}}
-            @foreach ($param as $kunci => $nilai)
-                <input type="hidden" name="{{ $kunci }}" value="{{ $nilai }}">
-            @endforeach
+                {{-- Parameter halaman (mis. tab aktif) ikut dibawa supaya hasil
+                     pencarian tidak memantul ke tab default. --}}
+                @foreach ($param as $kunci => $nilai)
+                    <input type="hidden" name="{{ $kunci }}" value="{{ $nilai }}">
+                @endforeach
 
-            <div class="relative">
-                <span class="pointer-events-none absolute left-4 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center text-dark/35"
-                    aria-hidden="true">
-                    <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />
-                    </svg>
-                </span>
+                <div class="relative">
+                    <span class="pointer-events-none absolute left-4 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center text-dark/35"
+                        aria-hidden="true">
+                        <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />
+                        </svg>
+                    </span>
 
-                <input id="cari-topbar" type="search" name="q" placeholder="{{ $placeholder }}" autocomplete="off"
-                    value="{{ request('q') }}"
-                    class="kolom-cari w-full py-2 pl-11 pr-4 text-sm"
-                    aria-label="{{ $placeholder }}">
-            </div>
-        </form>
+                    <input id="cari-topbar" type="search" name="q" placeholder="{{ $placeholder }}" autocomplete="off"
+                        value="{{ request('q') }}"
+                        class="kolom-cari w-full py-2 pl-11 pr-4 text-sm"
+                        aria-label="{{ $placeholder }}">
+                </div>
+            </form>
+        @endif
 
         <div class="ml-auto flex shrink-0 items-center gap-1.5 sm:gap-3">
 

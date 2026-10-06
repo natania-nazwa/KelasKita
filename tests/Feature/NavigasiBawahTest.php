@@ -155,6 +155,43 @@ class NavigasiBawahTest extends TestCase
         }
     }
 
+    /**
+     * Menu Hasil memakai wildcard pada polanya, jadi tautannya di "Menu
+     * lainnya" tetap ditandai aktif bukan cuma di /user/hasil, tapi juga
+     * di halamannya yang diturunkan (/user/hasil/quiz/{quiz}).
+     *
+     * Penting karena Hasil tidak ada di navigasi bawah: tanpa penanda itu
+     * peserta yang sedang membuka daftar per quiz tidak punya cara tahu
+     * sedang berada di halaman mana.
+     */
+    public function test_menu_hasil_di_menu_lainnya_terus_aktif_di_halaman_turunan(): void
+    {
+        $pengguna = $this->buatPengguna();
+        $quiz = $this->buatQuiz($pengguna);
+
+        foreach ([route('user.hasil'), route('user.hasil.daftar', $quiz)] as $tujuan) {
+            $html = $this->actingAs($pengguna)
+                ->get($tujuan)
+                ->assertOk()
+                ->getContent();
+
+            // Dipotong dari header mobile supaya class aktif pada sidebar
+            // desktop tidak ikut terhitung sebagai bukti.
+            preg_match(
+                '/<a[^>]*'.preg_quote(route('user.hasil'), '/').'.*?<\/a>/s',
+                $this->headerMobile($html),
+                $item,
+            );
+
+            $this->assertNotSame([], $item, "Tautan Hasil tidak ada di Menu lainnya pada $tujuan.");
+            $this->assertStringContainsString(
+                'bg-lavender text-primary-dark',
+                $item[0],
+                "Tautan Hasil tidak ditandai aktif pada $tujuan.",
+            );
+        }
+    }
+
     public function test_kolom_cari_global_pindah_ke_baris_kedua_header_mobile(): void
     {
         $html = $this->actingAs($this->buatPengguna())

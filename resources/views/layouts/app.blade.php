@@ -164,7 +164,20 @@
                 'bawah' => true,
             ],
             ['route' => 'user.karya-saya', 'pola' => ['user.karya-saya'], 'label' => 'Karya Saya', 'ikon' => \App\Support\Ikon::path('pena'), 'bawah' => true],
-            ['route' => 'user.hasil', 'pola' => ['user.hasil'], 'label' => 'Hasil', 'ikon' => \App\Support\Ikon::path('catatan'), 'bawah' => false],
+            // Wildcard sama seperti menu Materi, Quiz, dan Simpan: tanpa ini
+            // menu Hasil hanya menyala tepat di /user/hasil, lalu padam lagi
+            // di /user/hasil/quiz/{quiz} dan /user/hasil/{pengerjaan}.
+            // Karena Hasil tidak ada di navigasi bawah, dua halaman turunan
+            // itu cuma bisa dicapai lewat "Menu lainnya" — jadi tautannya
+            // yang harus terlihat sedang aktif, kalau tidak peserta tidak
+            // tahu sedang berada di halaman mana.
+            [
+                'route' => 'user.hasil',
+                'pola' => ['user.hasil*'],
+                'label' => 'Hasil',
+                'ikon' => \App\Support\Ikon::path('catatan'),
+                'bawah' => false,
+            ],
             ['route' => 'user.simpanan', 'pola' => ['user.simpanan*'], 'label' => 'Simpan', 'ikon' => \App\Support\Ikon::path('markah'), 'bawah' => false],
             [
                 'route' => 'user.profil',
@@ -310,6 +323,24 @@
                     'user.profil',
                     'user.karya-saya',
                 );
+
+                /*
+                 * Halaman yang masih memakai top bar, tapi tidak punya
+                 * yang bisa dicari. Hanya kolom cari yang hilang;
+                 * notifikasi dan identitas pengguna tetap di tempatnya,
+                 * karena keduanya tidak bergantung pada ada atau tidaknya
+                 * daftar yang bisa disaring.
+                 *
+                 * Satu-satunya halaman di daftar ini adalah detail hasil
+                 * (/user/hasil/{pengerjaan}). Cabang user.hasil* pada
+                 * $cariTopbar di bawah ikut mencakupnya, padahal isinya
+                 * satu pengerjaan dengan rincian jawabannya, bukan daftar
+                 * — mengetik "biologi" di sana tidak menyaring apa pun,
+                 * hanya melempar peserta ke daftar hasil. Lonceng di
+                 * header mobile juga sengaja tetap ada di sini, jadi ia
+                 * dipisah dari $tampilCari (lihat x-app.header-mobile).
+                 */
+                $sembunyiCari = request()->routeIs('user.hasil.detail');
             @endphp
 
             @php
@@ -438,7 +469,7 @@
             --}}
             @unless ($sembunyiTopbar)
                 <x-app.topbar :aksi="$cariTopbar['aksi']" :placeholder="$cariTopbar['placeholder']"
-                    :param="$cariTopbar['param']" />
+                    :param="$cariTopbar['param']" :tampil-cari="! $sembunyiCari" />
             @endunless
 
             {{--
@@ -450,7 +481,8 @@
                 terkunci pada $sembunyiTopbar yang sama.
             --}}
             <x-app.header-mobile :aksi="$cariTopbar['aksi']" :placeholder="$cariTopbar['placeholder']"
-                :param="$cariTopbar['param']" :tampil-cari="! $sembunyiTopbar" :menu="$menu"
+                :param="$cariTopbar['param']" :tampil-cari="! $sembunyiTopbar && ! $sembunyiCari"
+                :tampil-lonceng="! $sembunyiTopbar" :menu="$menu"
                 :admin="auth()->user()?->isAdmin() === true" />
 
             <main class="p-6 lg:p-10">

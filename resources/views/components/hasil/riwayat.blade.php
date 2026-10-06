@@ -17,6 +17,12 @@
     kanan. Di layar sempit baris ini berubah jadi susunan vertikal,
     jadi tidak ada scroll horizontal.
 
+    Yang dipotong di ponsel ditangani di app.css pada blok
+    @media (max-width: 639px) milik .hasil-item, bukan di sini: judul
+    dilink ke dua baris dan tanggal dibiarkan membungkus. Span tanggal
+    tetap memakai .truncate supaya tablet dan desktop tidak jadi dua
+    baris.
+
     Nilai yang belum selesai ditampilkan sebagai "--", bukan persen,
     karena nilai itu memang belum final sampai pengerjaan ditutup.
 --}}

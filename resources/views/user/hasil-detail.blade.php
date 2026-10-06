@@ -186,7 +186,7 @@
                             @else
                                 {{-- Semua pilihan ditampilkan, jawaban peserta dan
                                      kunci ditandai supaya mudah dibandingkan. --}}
-                                <ul class="hasil-soal__pilihan">
+                                <ul class="hasil-soal__pilihan-daftar">
                                     @foreach ($soal['pilihan'] as $huruf => $teks)
                                         @php
                                             $terpilih = in_array($huruf, $soal['terpilih_huruf'], true);
@@ -203,7 +203,7 @@
                                         <li @class(['hasil-soal__pilihan', $kelas])>
                                             <span class="hasil-soal__huruf">{{ $huruf }}</span>
 
-                                            <span class="min-w-0 flex-1">{{ $teks }}</span>
+                                            <span class="hasil-soal__pilihan-teks">{{ $teks }}</span>
 
                                             @if ($terpilih)
                                                 <span class="hasil-soal__tag hasil-soal__tag--terpilih">Jawabanmu</span>

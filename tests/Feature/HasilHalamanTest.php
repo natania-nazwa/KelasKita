@@ -505,6 +505,73 @@ class HasilHalamanTest extends TestCase
             ->assertSee('Kembali ke Hasil');
     }
 
+    /**
+     * Halaman detail satu pengerjaan tidak punya yang bisa dicari, jadi
+     * kolom cari global hilang di top bar desktop maupun di header
+     * mobile — yang tersisa dari daftar `user.hasil*` karena rinde
+     * mencocokkan wildcard.
+     *
+     * Top bar dan lonceng harus tetap ada: keduanya tidak bergantung
+     * pada ada atau tidaknya daftar yang bisa disaring, dan ikut
+     * hilang bersama kolom cari berarti peserta kehilangan jalan ke
+     * notifikasi tepat di halaman yang baru dibuka dari daftarnya.
+     */
+    public function test_halaman_detail_menyingkirkan_kolom_cari_tetapi_menampilkan_notifikasi(): void
+    {
+        $user = $this->buatPengguna();
+        $quiz = $this->buatQuiz('HTML Dasar');
+        $pengerjaan = $this->buatPengerjaan($user, $quiz, nilai: 80, benar: 4, salah: 1, soal: 5, menit: 15);
+
+        // Daftar hasil tetap searchable seperti sebelumnya.
+        $this->actingAs($user)
+            ->get('/user/hasil')
+            ->assertOk()
+            ->assertSee('id="cari-topbar"', false)
+            ->assertSee('id="cari-mobile"', false);
+
+        $detail = $this->actingAs($user)
+            ->get('/user/hasil/'.$pengerjaan->getKey())
+            ->assertOk();
+
+        $detail->assertDontSee('id="cari-topbar"', false);
+        $detail->assertDontSee('id="cari-mobile"', false);
+
+        $detail->assertSee('data-app-topbar', false);
+        $detail->assertSee('data-notif', false);
+    }
+
+    /**
+     * Wadah <ul> pilihan dan butir <li>-nya harus punya kelas berbeda.
+     *
+     * .hasil-soal__pilihan memang display:flex untuk menyusun huruf +
+     * teks + tag dalam satu baris. Kalau <ul> memakainya juga, wadah
+     * itu ikut jadi flex row: keempat pilihan berdiri berjajar saling
+     * dorong, huruf A/B/C/D yang flex-shrink:0 merebut ruang lebih
+     * dulu, dan teks jawabannya yang gepeng di antaranya.
+     */
+    public function test_wadah_pilihan_tidak_memakai_kelas_butir_yang_sama(): void
+    {
+        $user = $this->buatPengguna();
+        $quiz = $this->buatQuiz('HTML Dasar');
+        $this->buatSoal($quiz, 1, 'A');
+        $pengerjaan = $this->buatPengerjaan($user, $quiz, nilai: 80, benar: 4, salah: 1, soal: 5, menit: 15);
+
+        $html = $this->actingAs($user)
+            ->get('/user/hasil/'.$pengerjaan->getKey())
+            ->assertOk()
+            ->getContent();
+
+        preg_match('/<ul class="([^"]*)"[^>]*>\s*<li class="hasil-soal__pilihan/', $html, $wadah);
+
+        $this->assertNotSame([], $wadah, 'Daftar pilihan tidak ditemukan di halaman detail.');
+        $this->assertStringContainsString('hasil-soal__pilihan-daftar', $wadah[1]);
+        $this->assertStringNotContainsString(
+            'hasil-soal__pilihan"',
+            $wadah[1],
+            'Wadah <ul> memakai kelas butir, jadi ikut display:flex dan pilihan berjajar.',
+        );
+    }
+
     public function test_catatan_mingguan_dihitung_dari_data_bukan_dikarang(): void
     {
         $user = $this->buatPengguna();

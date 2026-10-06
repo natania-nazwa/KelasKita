@@ -11,8 +11,21 @@
      * Halaman yang top bar-nya disembunyikan (lihat $sembunyiTopbar di
      * layouts/app) juga kehilangan baris pencarian dan lonceng di sini.
      * Satu daftar di layout yang memutuskan, bukan dua.
+     *
+     * Tapi satu halaman bisa kehilangan baris pencarian saja tanpa
+     * kehilangan lonceng: lihat prop tampilLonceng di bawah.
      */
     'tampilCari' => true,
+    /*
+     * Lonceng sengaja dipisah dari $tampilCari. Sebelumnya lonceng
+     * ikut hilang bersama baris pencarian karena keduanya selalu
+     * sebanding, tapi halaman detail hasil Wassena hanya tidak punya
+     * yang bisa dicari — notifikasi di sana tetap berguna.
+     *
+     * Nilai kosong berarti "ikut $tampilCari", jadi halaman yang
+     * tidak mengatur prop ini persis seperti sebelumnya.
+     */
+    'tampilLonceng' => null,
     /*
      * Menu lengkap dari layout. Item bertanda "bawah" sudah tampil di
      * navigasi bawah, jadi yang tersisa hanya menu tambahan: Jadwal,
@@ -36,6 +49,8 @@
      * disembunyikan dan top bar biasa yang bekerja.
      */
     $pengguna ??= auth()->user();
+
+    $tampilLonceng ??= $tampilCari;
 
     $menuTambahan = collect($menu)
         ->reject(fn (array $item) => $item['bawah'] ?? false)
@@ -61,7 +76,7 @@
             {{-- Lonceng hanya ada kalau halaman ini memang memakai baris
                  kedua; di halaman fokus (form, kerjakan soal, dsb.) ia
                  ikut hilang persis seperti perilaku top bar lama. --}}
-            @if ($tampilCari)
+            @if ($tampilLonceng)
                 <x-app.notifikasi :daftar="$notifikasi" :sisa="$notifikasiBelumDibaca" />
             @endif
 
