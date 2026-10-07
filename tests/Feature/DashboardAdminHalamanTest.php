@@ -258,7 +258,8 @@ class DashboardAdminHalamanTest extends TestCase
             ->assertSee('Menu Cepat')
             ->assertSee('Aktivitas Terbaru')
             ->assertSee('Pelajaran yang Disukai')
-            ->assertSee('Aktivitas Login Mingguan');
+            ->assertSee('Aktivitas Login Mingguan')
+            ->assertDontSee('total-menunggu=', false);
     }
 
     public function test_dashboard_admin_meneruskan_data_hasil_hitung_dari_server(): void

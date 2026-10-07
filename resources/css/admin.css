@@ -6604,8 +6604,7 @@ body.tubuh-admin {
 
 /* ================================================================
    KONTEN PEMBELAJARAN
-   Kartu aksi (Tambah Materi / Tambah Quiz), toast, dan dialog konfirmasi
-   terbitkan.
+   Toast dan dialog konfirmasi terbitkan.
 
    Karakter visual sama dengan halaman admin lain: latar putih, border
    tipis ungu muda, radius besar, bayangan sangat ringan, dan banyak
@@ -6613,94 +6612,6 @@ body.tubuh-admin {
    tenang: daftar kontennya berupa baris, bukan kartu besar, supaya
    admin bisa memindai judul dan statusnya tanpa mengejar dekorasi.
    ================================================================ */
-
-/* ---------- Kartu aksi ---------- */
-.ad-aksi {
-    display: grid;
-    gap: 1rem;
-    grid-template-columns: minmax(0, 1fr);
-}
-
-@media (min-width: 640px) {
-    .ad-aksi {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
-}
-
-.ad-aksi__kartu {
-    display: flex;
-    align-items: flex-start;
-    gap: 1rem;
-    min-width: 0;
-    border: 1px solid var(--ad-garis);
-    border-radius: 1.1rem;
-    background-color: var(--ad-white);
-    padding: 1.15rem 1.25rem;
-    box-shadow: var(--ad-bayangan);
-    transition:
-        border-color 0.18s ease,
-        box-shadow 0.18s ease,
-        transform 0.18s ease;
-}
-
-.ad-aksi__kartu:hover,
-.ad-aksi__kartu:focus-within {
-    border-color: color-mix(in oklab, var(--ad-primary) 40%, var(--ad-garis));
-    box-shadow: var(--ad-bayangan-naik);
-    transform: translateY(-2px);
-}
-
-.ad-aksi__ikon {
-    position: relative;
-    display: flex;
-    width: 2.75rem;
-    height: 2.75rem;
-    flex-shrink: 0;
-    align-items: center;
-    justify-content: center;
-    border-radius: 0.9rem;
-    background-color: var(--ad-primary-light);
-    color: var(--ad-teks-ungu-terang);
-}
-
-/* Tanda plus di pojok ikon, supaya "tambah" terbaca tanpa membaca teks. */
-.ad-aksi__ikon::after {
-    content: "";
-    position: absolute;
-    right: -0.3rem;
-    bottom: -0.3rem;
-    width: 1.05rem;
-    height: 1.05rem;
-    border: 2px solid var(--ad-white);
-    border-radius: 9999px;
-    background-color: var(--ad-teks-ungu-terang);
-}
-
-.ad-aksi__isi {
-    display: flex;
-    min-width: 0;
-    flex: 1;
-    flex-direction: column;
-    gap: 0.3rem;
-}
-
-.ad-aksi__judul {
-    font-size: 1rem;
-    font-weight: 800;
-    letter-spacing: -0.01em;
-    color: var(--ad-teks);
-}
-
-.ad-aksi__pesan {
-    font-size: 0.8125rem;
-    line-height: 1.55;
-    color: var(--ad-teks-2);
-}
-
-.ad-aksi__tombol {
-    margin-top: 0.35rem;
-    align-self: flex-start;
-}
 
 /* ---------- Toast ---------- */
 .ad-toast {

@@ -429,6 +429,7 @@ class PengaturanTampilanTest extends TestCase
         $this->assertStringContainsString('name="slug"', $html);
         $this->assertStringContainsString('name="deskripsi"', $html);
         $this->assertStringContainsString('name="aktif"', $html);
+        $this->assertStringContainsString('data-atur-saklar-nama="aktif"', $html);
     }
 
     /* ================================================================

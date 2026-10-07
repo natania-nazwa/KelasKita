@@ -32,8 +32,6 @@
                 latar transparan, palet soft purple, dan dekorasi sendiri
                 (kartu kode, centang, topi wisuda), jadi tidak ada
                 gelembung bicara tambahan yang perlu ditumpuk di atasnya.
-                Ilustrasi SVG lama (x-admin.ilustrasi-siswa) tetap dipakai
-                halaman Kelola Materi dan tidak diubah.
             --}}
             <img src="{{ asset('images/cover.png') }}" width="828" height="552"
                 alt="Ilustrasi seorang siswi sedang belajar memakai laptop di depan buku, tanaman, dan topi wisuda">

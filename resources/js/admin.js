@@ -11,9 +11,9 @@
  *   3. Panel notifikasi di topbar.
  *   4. Dialog peninjauan konten.
  *   5. Menu tiga titik di kartu konten.
- *   6. Halaman Verifikasi: pemilihan baris, panel review, dialog
+ *   6. Dialog hapus materi.
+ *   7. Halaman Verifikasi: pemilihan baris, panel review, dialog
  *      Setujui / Tolak, filter tambahan, dan toast.
- *   7. Dialog hapus materi.
  *   8. Dialog detail pengguna.
  *
  * Tanpa JavaScript: sidebar tetap tampil di desktop, tombol Keluar di

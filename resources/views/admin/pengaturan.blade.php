@@ -47,8 +47,7 @@
                     subjudul="Kelola foto profil, nama, dan email."
                     :href="route('admin.pengaturan.profil')" />
 
-                <button type="button" class="ad-atur-baris" data-atur-dialog-buka="atur-keamanan"
-                    data-atur-sorot="keamanan">
+                <button type="button" class="ad-atur-baris" data-atur-dialog-buka="atur-keamanan">
                     <span class="ad-atur-baris__ikon" aria-hidden="true">
                         <x-admin.ikon nama="perisai" ukuran="w-4 h-4" />
                     </span>
@@ -97,8 +96,7 @@
                             berubah sebelum server sempat menjawab, supaya tidak
                             ada kedipan di layar.
                         --}}
-                        <form method="POST" action="{{ route('admin.pengaturan.tema') }}"
-                            data-atur-tema-form>
+                        <form method="POST" action="{{ route('admin.pengaturan.tema') }}">
                             @csrf
                             @method('PUT')
 
@@ -122,8 +120,7 @@
                     </div>
                 </div>
 
-                <button type="button" class="ad-atur-baris" data-atur-dialog-buka="atur-notifikasi"
-                    data-atur-sorot="notifikasi">
+                <button type="button" class="ad-atur-baris" data-atur-dialog-buka="atur-notifikasi">
                     <span class="ad-atur-baris__ikon" aria-hidden="true">
                         <x-admin.ikon nama="lonceng" ukuran="w-4 h-4" />
                     </span>
@@ -166,8 +163,7 @@
                     :jumlah="$jumlahPelajaran.' mata pelajaran'"
                     :href="route('admin.pengaturan.pelajaran')" />
 
-                <button type="button" class="ad-atur-baris" data-atur-dialog-buka="atur-publikasi"
-                    data-atur-sorot="publikasi">
+                <button type="button" class="ad-atur-baris" data-atur-dialog-buka="atur-publikasi">
                     <span class="ad-atur-baris__ikon" aria-hidden="true">
                         <x-admin.ikon nama="kotak-centang" ukuran="w-4 h-4" />
                     </span>
@@ -192,8 +188,7 @@
                     subjudul="Lihat perangkat yang sedang login."
                     :href="route('admin.pengaturan.sesi')" />
 
-                <button type="button" class="ad-atur-baris" data-atur-dialog-buka="atur-logout-semua"
-                    data-atur-sorot="logout-semua">
+                <button type="button" class="ad-atur-baris" data-atur-dialog-buka="atur-logout-semua">
                     <span class="ad-atur-baris__ikon" aria-hidden="true">
                         <x-admin.ikon nama="pintu-keluar" ukuran="w-4 h-4" />
                     </span>
@@ -222,7 +217,7 @@
             <x-admin.atur-seksi bahaya>
 
                 <button type="button" class="ad-atur-baris ad-atur-baris--bahaya"
-                    data-atur-dialog-buka="atur-keluar" data-atur-sorot="keluar">
+                    data-atur-dialog-buka="atur-keluar">
                     <span class="ad-atur-baris__ikon" aria-hidden="true">
                         <x-admin.ikon nama="pintu-keluar" ukuran="w-4 h-4" />
                     </span>

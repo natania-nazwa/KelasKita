@@ -10,6 +10,7 @@ use App\Models\User;
 use App\Support\NotifikasiAdmin;
 use App\Support\SesiAdmin;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
@@ -258,6 +259,34 @@ class PengaturanAdminTest extends TestCase
                 'kata_sandi_baru_konfirmasi' => 'bedakan',
             ])
             ->assertSessionHasErrors('kata_sandi_baru');
+    }
+
+    public function test_kegagalan_validasi_membuka_lagi_dialog_password_supaya_error_terlihat(): void
+    {
+        $admin = $this->buatAdmin();
+
+        $this->actingAs($admin)
+            ->from(route('admin.pengaturan'))
+            ->put(route('admin.pengaturan.keamanan.kata-sandi'), [
+                'kata_sandi_lama' => 'salah',
+                'kata_sandi_baru' => 'katasandibaru',
+                'kata_sandi_baru_konfirmasi' => 'katasandibaru',
+            ]);
+
+        /*
+         * Halaman ulangnya harus membuka lagi dialog yang gagal itu. Pesan
+         * errornya dirender di dalam dialog, jadi kalau dialognya rapat,
+         * admin tidak akan melihat kalau ada yang salah.
+         */
+        $html = $this->actingAs($admin)
+            ->get(route('admin.pengaturan'))
+            ->assertOk()
+            ->getContent();
+
+        $this->assertMatchesRegularExpression(
+            '#data-atur-dialog="atur-keamanan"[^>]*aria-hidden="false"#',
+            $html,
+        );
     }
 
     /* ================================================================
@@ -598,6 +627,35 @@ class PengaturanAdminTest extends TestCase
             ->assertSessionHasErrors('slug');
 
         $this->assertSame('desain', $pelajaran->fresh()->slug);
+    }
+
+    public function test_mengganti_status_aktif_tidak_menghapus_deskripsi(): void
+    {
+        $admin = $this->buatAdmin();
+        $pelajaran = Pelajaran::create([
+            'nama' => 'Matematika',
+            'slug' => 'matematika',
+            'deskripsi' => 'Pelajaran bilangan.',
+            'aktif' => true,
+        ]);
+
+        /*
+         * Form toggle aktif di daftar pelajaran mengirim hanya nama dan
+         * aktif. Kalau deskripsi yang tidak terkirim ikut ditulis null,
+         * menonaktifkan satu mata pelajaran akan menghapus deskripsinya.
+         */
+        $this->actingAs($admin)
+            ->put(route('admin.pengaturan.pelajaran.update', $pelajaran), [
+                'nama' => $pelajaran->nama,
+                'aktif' => '0',
+            ])
+            ->assertRedirect(route('admin.pengaturan.pelajaran'))
+            ->assertSessionHas('sukses');
+
+        $setelah = $pelajaran->fresh();
+
+        $this->assertFalse((bool) $setelah->aktif);
+        $this->assertSame('Pelajaran bilangan.', $setelah->deskripsi);
     }
 
     public function test_pengguna_biasa_tidak_bisa_mengubah_mata_pelajaran(): void

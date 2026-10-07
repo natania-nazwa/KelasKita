@@ -1,7 +1,7 @@
 {{--
-    Empat dialog di halaman /admin/pengaturan.
+    Lima dialog di halaman /admin/pengaturan.
 
-    Satu berkas untuk keempatnya karena isinya pendek dan semuanya memakai
+    Satu berkas untuk kelimanya karena isinya pendek dan semuanya memakai
     pola yang sama: dialog .ad-dialog, tombol pemicunya di halaman memakai
     data-dialog-buka="<id>", dan form-nya memakai @method yang sesuai.
 
@@ -14,10 +14,18 @@
     hapus konten. Bedanya: yang ini butuh isian, dan formnya punya banyak
     field, jadi isinya memang berbeda tiap dialog, bukan hanya kalimat
     judulnya yang berbeda.
+
+    Dialog ber-form (Keamanan, Notifikasi, Publikasi) dibuka lagi oleh
+    server kalau isiannya gagal validasi: tanpa itu, pesan errornya
+    dirender di dalam dialog yang rapat dan tidak pernah terlihat.
 --}}
 
 {{-- ==================== 1. UBAH PASSWORD ==================== --}}
-<div class="ad-dialog" data-atur-dialog="atur-keamanan" role="dialog" aria-modal="true" aria-hidden="true"
+@php($bukaKeamanan = $errors->has(['kata_sandi_lama', 'kata_sandi_baru', 'kata_sandi_baru_konfirmasi']))
+
+<div @class(['ad-dialog', 'is-buka' => $bukaKeamanan])
+    data-atur-dialog="atur-keamanan" role="dialog" aria-modal="true"
+    aria-hidden="{{ $bukaKeamanan ? 'false' : 'true' }}"
     aria-labelledby="atur-keamanan-judul">
     <div class="ad-dialog__kartu">
         <header class="ad-dialog__kepala">
@@ -121,7 +129,16 @@
 </div>
 
 {{-- ==================== 2. NOTIFIKASI ==================== --}}
-<div class="ad-dialog" data-atur-dialog="atur-notifikasi" role="dialog" aria-modal="true" aria-hidden="true"
+@php($bukaNotifikasi = $errors->has([
+    'notifikasi_konten_terbit',
+    'notifikasi_konten_draft',
+    'notifikasi_aktivitas_kuis',
+    'notifikasi_aktivitas_konten',
+]))
+
+<div @class(['ad-dialog', 'is-buka' => $bukaNotifikasi])
+    data-atur-dialog="atur-notifikasi" role="dialog" aria-modal="true"
+    aria-hidden="{{ $bukaNotifikasi ? 'false' : 'true' }}"
     aria-labelledby="atur-notifikasi-judul">
     <div class="ad-dialog__kartu">
         <header class="ad-dialog__kepala">
@@ -236,7 +253,11 @@
 </div>
 
 {{-- ==================== 3. PENGATURAN PUBLIKASI ==================== --}}
-<div class="ad-dialog" data-atur-dialog="atur-publikasi" role="dialog" aria-modal="true" aria-hidden="true"
+@php($bukaPublikasi = $errors->has(['status_konten_default', 'konfirmasi_publikasi']))
+
+<div @class(['ad-dialog', 'is-buka' => $bukaPublikasi])
+    data-atur-dialog="atur-publikasi" role="dialog" aria-modal="true"
+    aria-hidden="{{ $bukaPublikasi ? 'false' : 'true' }}"
     aria-labelledby="atur-publikasi-judul">
     <div class="ad-dialog__kartu">
         <header class="ad-dialog__kepala">

@@ -22,10 +22,10 @@
     mengikuti isi, bukan dipaksa memenuhi layar.
 --}}
 
-<section @class([
+<section {{ $attributes->class([
     'ad-atur-seksi',
     'ad-atur-seksi--bahaya' => $bahaya,
-]) {{ $attributes }}>
+]) }}>
 
     @if (filled($judul))
         <header class="ad-atur-seksi__kepala">

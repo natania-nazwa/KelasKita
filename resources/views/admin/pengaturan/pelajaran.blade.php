@@ -169,9 +169,13 @@
         </div>
     </div>
 
-    {{-- ==================== DIALOG TAMBAH / UBAH ==================== --}}
-    <div class="ad-dialog" data-atur-dialog="atur-pelajaran" role="dialog" aria-modal="true" aria-hidden="true"
-        aria-labelledby="atur-pelajaran-judul">
+{{-- ==================== DIALOG TAMBAH / UBAH ==================== --}}
+@php($bukaPelajaran = $errors->has(['nama', 'slug', 'deskripsi', 'aktif']))
+
+<div @class(['ad-dialog', 'is-buka' => $bukaPelajaran])
+    data-atur-dialog="atur-pelajaran" role="dialog" aria-modal="true"
+    aria-hidden="{{ $bukaPelajaran ? 'false' : 'true' }}"
+    aria-labelledby="atur-pelajaran-judul">
         <div class="ad-dialog__kartu">
             <header class="ad-dialog__kepala">
                 <div class="min-w-0 flex-1">

@@ -22,12 +22,12 @@
 --}}
 
 <button type="button"
-    class="ad-atur-saklar"
     role="switch"
     aria-checked="{{ $aktif ? 'true' : 'false' }}"
     aria-label="{{ $judul }}"
     @if (filled($deskripsi)) aria-describedby="{{ $deskripsi }}" @endif
     data-atur-saklar
+    {{ $attributes->class(['ad-atur-saklar']) }}
 >
     <span class="ad-atur-saklar__titik" aria-hidden="true"></span>
 </button>

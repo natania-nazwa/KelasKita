@@ -171,7 +171,6 @@
                             antara menerbitkan dan menarik kembali.
                         --}}
                         <button type="button" class="ad-konten-menu__aksi" data-konten-publish="publish"
-                            data-konten-terbit-buka
                             data-konten-aksi="{{ $kartu['tautan']['publish'] }}"
                             data-konten-nama="{{ $nama }} &quot;{{ $kartu['judul'] }}&quot;"
                             data-konten-terbit-judul="{{ $terbit ? 'Batalkan publikasi?' : 'Publish konten?' }}"
@@ -179,7 +178,6 @@
                                 ? $nama . ' ini akan ditarik dari halaman pengguna dan kembali menjadi draft.'
                                 : 'Konten ini akan langsung tersedia untuk pengguna dan notifikasi akan dikirim.' }}"
                             data-konten-terbit-tombol="{{ $terbit ? 'Batalkan Publikasi' : 'Publish Sekarang' }}"
-                            data-konten-terbit-bahaya="{{ $terbit ? '1' : '0' }}"
                             role="menuitem">
                             <x-admin.ikon :nama="$terbit ? 'silang-polos' : 'unggah'" ukuran="w-4 h-4" />
 

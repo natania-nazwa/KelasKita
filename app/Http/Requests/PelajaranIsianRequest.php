@@ -88,11 +88,18 @@ class PelajaranIsianRequest extends FormRequest
     {
         $nilai = [
             'nama' => (string) $this->input('nama'),
-            'deskripsi' => filled($this->input('deskripsi'))
-                ? (string) $this->input('deskripsi')
-                : null,
             'aktif' => $this->boolean('aktif'),
         ];
+
+        // Deskripsi hanya ditulis kalau form memang mengirim field-nya.
+        // Form toggle aktif/nonaktif di daftar pelajaran sengaja hanya
+        // mengirim nama dan aktif; tanpa penjagaan ini, toggle akan
+        // mengosongkan deskripsi yang sudah tersimpan.
+        if ($this->has('deskripsi')) {
+            $nilai['deskripsi'] = filled($this->input('deskripsi'))
+                ? (string) $this->input('deskripsi')
+                : null;
+        }
 
         if (filled($this->input('slug'))) {
             $nilai['slug'] = (string) $this->input('slug');

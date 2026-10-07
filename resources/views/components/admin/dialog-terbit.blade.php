@@ -48,7 +48,7 @@
             </button>
         </footer>
 
-        <form method="POST" id="form-konten-publish" data-konten-publish-form hidden>
+        <form method="POST" id="form-konten-publish" hidden>
             @csrf
         </form>
     </div>

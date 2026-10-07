@@ -12,7 +12,7 @@
         yang sama. Bedanya hanya dua, semuanya soal siapa yang menerbitkan:
 
           1. Tidak ada saklar "Ajukan Persetujuan". Admin adalah pihak yang
-             menerbitkan, jadi tidak ada yang perlu diajukan ke siapa pun â€”
+             menerbitkan, jadi tidak ada yang perlu diajukan ke siapa pun —
              dan tidak ada catatan pengajuan maupun alasan penolakan, karena
              tidak ada proses yang menolaknya.
           2. Baris tombolnya punya dua pilihan: Simpan Draft dan Publish
@@ -31,7 +31,7 @@
         thumbnail-nya pasti akan menyimpang pada satu versi.
 
         Konfirmasi terbitan dikerjakan resources/js/konten-publish.js. Tanpa
-        JavaScript tombolnya tetap mengirim form apa adanya â€” lebih baik
+        JavaScript tombolnya tetap mengirim form apa adanya — lebih baik
         konten terbit tanpa tanya daripada tidak bisa terbit sama sekali.
     --}}
 
@@ -106,7 +106,7 @@
             {{--
                 Satu kolom, komponen persis sama seperti form pemilik, dan
                 urutan yang sama: informasi, daftar bab, editor isi. Tidak ada
-                kartu atau field tambahan di antaranya â€” kalau ada, isian form
+                kartu atau field tambahan di antaranya — kalau ada, isian form
                 ini akan berbeda dari form pemilik.
             --}}
             <div class="grid min-w-0 gap-4 lg:gap-5">
@@ -129,7 +129,7 @@
                  Bentuknya sama dengan baris tombol di form Quiz milik admin:
                  satu kartu di akhir form, bukan baris tombol lengket yang
                  menyala dan mati saat form digulir. Alasannya, form ini satu
-                 halaman panjang dan tiga tombolnya selalu relevan â€” membiarkan
+                 halaman panjang dan tiga tombolnya selalu relevan — membiarkan
                  mereka hilang sampai form habis digulir hanya menambah satu
                  langkah lagi sebelum admin bisa menyimpan.
 
@@ -143,7 +143,7 @@
                  ia membatalkan, sedangkan "Simpan Draft" dan "Publish Sekarang"
                  adalah dua arah dari satu keputusan yang sama, jadi keduanya
                  diletakkan berurutan di kanan. Dua tombol menyimpan isi yang
-                 sama persis â€” yang membedakan cuma field "aksi".
+                 sama persis — yang membedakan cuma field "aksi".
 
                  Keduanya type="submit" supaya tetap berfungsi tanpa
                  JavaScript; resources/js/konten-publish.js yang menahan
@@ -171,7 +171,7 @@
                     Baris tombolnya harus selebar kartunya (w-full). Tanpa itu
                     baris ini hanya selebar isinya dan duduk di kiri kartu,
                     sehingga sm:ml-auto pada pasangannya tidak punya ruang
-                    kosong untuk didorong â€” hasilnya tombol tetap berdesakan di
+                    kosong untuk didorong — hasilnya tombol tetap berdesakan di
                     kiri, bukan di tepi kanan.
                 --}}
                 <div class="mt-4 flex w-full flex-col gap-2.5 sm:flex-row sm:items-center">
@@ -217,7 +217,7 @@
          DIALOG HAPUS BAB
     ==========================
          Dipakai resources/js/materi-tambah.js, sama seperti di form
-         pemilik â€” termasuk letaknya: modul itu mencari elemen di dalam
+         pemilik — termasuk letaknya: modul itu mencari elemen di dalam
          akar data-tambah-materi, jadi dialog harus ikut di dalam akar itu
          supaya tombol "Ya, hapus" benar-benar bekerja di sini. --}}
         <div class="dialog-bab" data-dialog-hapus role="dialog" aria-modal="true"
@@ -246,7 +246,7 @@
                     </button>
 
                     <button type="button" data-dialog-hapus-tombol
-                        class="inline-flex items-center justify-center gap-2 rounded-full bg-[#d9535f] px-5 py-2.5 text-sm font-bold text-white transition hover-[#c2414a]">
+                        class="inline-flex items-center justify-center gap-2 rounded-full bg-[#d9535f] px-5 py-2.5 text-sm font-bold text-white transition hover:bg-[#c2414a]">
                         Ya, hapus
                     </button>
                 </div>

@@ -45,7 +45,7 @@
     @endphp
 
     {{-- ==================== BANNER SAPAAN ==================== --}}
-    <x-admin.banner :total-menunggu="$totalMenunggu" />
+    <x-admin.banner />
 
     {{-- ==================== ANALITIK ==================== --}}
     {{--

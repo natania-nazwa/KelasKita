@@ -1,5 +1,5 @@
 @props([
-    // Akun admin yang sedang login, dipakai lonceng tidak, tapi dipakai
+    // Akun admin yang sedang login, tidak dipakai lonceng, tapi dipakai
     // menu akun: avatar, nama, dan email.
     'admin',
     // Daftar notifikasi terbaru, sudah dipetakan jadi array polos oleh
@@ -14,15 +14,15 @@
 {{--
     Sisi kanan topbar area admin: pencarian, lonceng notifikasi, dan menu akun.
 
-    Dipisah dari layout supaya layout bisapriceda lewat <x-admin.topbar-kanan>
+    Dipisah dari layout supaya bisa dipakai lewat <x-admin.topbar-kanan>
     dan supaya query notifikasinya hanya jalan di halaman yang benar-benar
     menampilkan lonceng. Halaman Pengaturan tidak memakai komponen ini sama
     sekali (lihat $topbarRingkas di layouts/admin), jadi tidak ada satu pun
-    query yang dibayar di halaman itu.
+    query yang dijalankan di halaman itu.
 
     Tanpa JavaScript: pencarian tetap mengirim form, lonceng membuka panel yang
     isinya sudah dirender sejak halaman dimuat, dan menu akun tidak pernah
-    terbuka. Yang hilang hanya Membuka panel lonceng dan account, bukan isi
+    terbuka. Yang hilang hanya membuka panel lonceng dan menu akun, bukan isi
     dari notifikasi itu sendiri.
 --}}
 

@@ -84,7 +84,6 @@
     </header>
 
     {{-- =====================
-    {{-- =====================
          KARTU AKSI
     ======================
          Dua kartu dengan lebar sama: dua kolom di desktop, satu kolom di

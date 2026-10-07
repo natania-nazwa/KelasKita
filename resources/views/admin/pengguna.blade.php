@@ -398,8 +398,8 @@
         form-nya diambil dari atribut data-* tombol yang ditekan.
     --}}
     <x-admin.dialog-hapus
-        idDialog="dialog-hapus-pengguna-judul"
-        idForm="form-hapus-pengguna"
+        id-dialog="dialog-hapus-pengguna-judul"
+        id-form="form-hapus-pengguna"
         judul="Hapus pengguna?"
         pesan="Akun ini beserta data terkaitnya akan dihapus permanen. Tindakan ini tidak dapat dibatalkan." />
 
