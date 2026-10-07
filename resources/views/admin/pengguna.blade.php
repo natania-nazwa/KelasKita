@@ -7,11 +7,13 @@
     {{--
         Halaman "Pengguna": daftar semua akun yang memakai KelasKita.
 
-        Halaman ini hanya membaca. Tidak ada tombol yang mengubah apa pun:
-        tidak ada edit, tidak ada hapus, tidak ada ubah peran. Management
-        peran sengaja tidak dibuat karena saat ini hanya ada dua peran
-        (ADMIN dan USER) dan hanya ada satu admin, jadi tidak ada apa pun
-        yang perlu dikelola.
+        Halaman ini membaca daftar dan menyediakan satu aksi: hapus akun.
+        Aktif/nonaktif tidak diubah dari sini — statusnya dihitung otomatis
+        dari kapan terakhir pengguna membuka aplikasi, dan hanya ditampilkan.
+        Ubah peran juga sengaja tidak ada. Akun sendiri dan admin terakhir
+        tidak bisa dihapus; aturannya ditegakkan di controller dan hanya
+        tercermin di sini lewat $aksi, jadi tampilannya tidak mungkin berbeda
+        dari yang benar-benar diizinkan.
 
         Tiga bagian yang dihitung ulang dari database, bukan ditulis di
         markup:
@@ -21,10 +23,32 @@
                       yang sama dengan dashboard;
           $ringkasan  angka platform yang dulu berdiri sebagai kartu
                       sendiri, sekarang jadi satu baris di kaki tabel;
-          $detail     isi dialog detail, dikunci dengan id pengguna.
+          $detail     isi dialog detail, dikunci dengan id pengguna; di
+                      dalamnya ada status sekaligus "berapa lama sejak
+                      terakhir membuka aplikasi";
+          $aksi       aturan boleh/tidaknya tiap baris dihapus, dikunci
+                      dengan id pengguna.
     --}}
 
     <x-admin.kepala judul="Pengguna" subjudul="Daftar semua akun yang memakai KelasKita." />
+
+    {{--
+        Kegagalan aksi (mis. mencoba menghapus akun sendiri lewat URL langsung)
+        muncul di sini, bukan di dialog, karena halamannya sudah ditulis ulang
+        setelah form dikirim.
+    --}}
+    @if (session('galat'))
+        <div class="ad-seksi">
+            <div class="ad-alert ad-alert--bahaya" role="alert">
+                <span class="ad-alert__ikon" aria-hidden="true">
+                    <x-admin.ikon nama="silang-polos" ukuran="w-3.5 h-3.5" :tebal="2.6" />
+                </span>
+
+                <p class="font-semibold">{{ session('galat') }}</p>
+            </div>
+        </div>
+    @endif
+
 
     {{-- ==================== RINGKASAN ==================== --}}
     <section class="ad-seksi ad-grid ad-grid--statistik" aria-label="Ringkasan pengguna">
@@ -160,6 +184,8 @@
                             {{-- data-label kosong: kolom ini tidak punya judul di
                                 mobile, jadi labelnya disembunyikan. --}}
                             <td data-label="">
+                                @php $kunci = $aksi[$pengguna->getKey()]['alasan']; @endphp
+
                                 <div class="ad-tabel__aksi">
                                     <button type="button" class="ad-tombol ad-tombol--halus ad-tombol--kecil"
                                         data-detail-buka="{{ $pengguna->getKey() }}"
@@ -168,6 +194,27 @@
 
                                         Detail
                                     </button>
+
+                                    @if ($kunci === null)
+                                        <button type="button" class="ad-tombol ad-tombol--halus ad-tombol--kecil"
+                                            data-hapus-buka
+                                            data-hapus-judul="Hapus {{ $pengguna->nama }}?"
+                                            data-hapus-meta="{{ $pengguna->email }}"
+                                            data-hapus-pesan="Akun ini beserta quiz, hasil pengerjaan, jadwal, dan data terkaitnya akan dihapus permanen. Tindakan ini tidak dapat dibatalkan."
+                                            data-hapus-aksi="{{ route('admin.pengguna.destroy', $pengguna) }}">
+                                            <x-admin.ikon nama="sampah" ukuran="w-3.5 h-3.5" />
+                                            Hapus
+                                        </button>
+                                    @else
+                                        {{--
+                                            Akun sendiri dan admin terakhir:
+                                            tombol hapus tidak ditampilkan, dan
+                                            alasannya ditulis supaya tidak
+                                            terlihat seperti tombol yang gagal
+                                            diklik.
+                                        --}}
+                                        <span class="ad-field__petunjuk">{{ $kunci }}</span>
+                                    @endif
                                 </div>
                             </td>
                         </tr>
@@ -257,7 +304,18 @@
                                     <x-admin.ikon nama="centang" ukuran="w-3.5 h-3.5" />
                                     Status
                                 </dt>
-                                <dd><span class="ad-lencana ad-lencana--abu" data-detail-status>Aktif</span></dd>
+                                <dd>
+                                    <span class="ad-lencana ad-lencana--abu" data-detail-status>Aktif</span>
+
+                                    {{--
+                                        Keterangan "berapa lama": aktif/nonaktif
+                                        selalu disertai kapan terakhir pengguna
+                                        membuka aplikasi, mis. "Terakhir membuka
+                                        3 jam lalu". Teksnya dari server lewat
+                                        $detail, bukan dihitung JavaScript.
+                                    --}}
+                                    <span class="ad-field__petunjuk mt-1 block" data-detail-aktivitas></span>
+                                </dd>
                             </div>
 
                             <div class="ad-ug__identitas-baris">
@@ -333,5 +391,18 @@
 
         <script type="application/json" data-detail-pengguna>@json($detail)</script>
     @endif
+
+    {{--
+        Dialog hapus memakai komponen yang sudah ada di halaman lain. Satu
+        dialog dipakai ulang untuk semua baris; judul, keterangan, dan tujuan
+        form-nya diambil dari atribut data-* tombol yang ditekan.
+    --}}
+    <x-admin.dialog-hapus
+        idDialog="dialog-hapus-pengguna-judul"
+        idForm="form-hapus-pengguna"
+        judul="Hapus pengguna?"
+        pesan="Akun ini beserta data terkaitnya akan dihapus permanen. Tindakan ini tidak dapat dibatalkan." />
+
+    <x-admin.toast :judul="session('sukses')" :pesan="session('suksesDetail')" />
 
 @endsection

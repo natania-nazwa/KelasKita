@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\TolakQuizRequest;
 use App\Models\Quiz;
+use App\Support\NotifikasiKonten;
 use App\Support\TinjauanQuiz;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -20,6 +21,13 @@ use Illuminate\Http\Request;
  *
  * Keduanya mengembalikan admin ke tab status yang sedang dibuka, supaya
  * menolak satu quiz tidak membuat admin kehilangan tempatnya.
+ *
+ * Setiap keputusan juga menulis satu baris notifikasi ke lonceng pemilik
+ * quiz-nya, tepat setelah statusnya benar-benar berubah. Toast di halaman ini
+ * bukan pemberitahuan itu: admin yang membacanya, sedangkan yang perlu diberi
+ * tahu adalah penulis quiz-nya. Notifikasi ditulis setelah setujui()/tolak()
+ * supaya tidak pernah ada kabar "ditolak" untuk quiz yang statusnya belum
+ * benar-benar berubah.
  */
 class QuizTinjauController extends Controller
 {
@@ -28,6 +36,8 @@ class QuizTinjauController extends Controller
         $item = $this->quizMenunggu($quiz);
 
         $item->setujui();
+
+        NotifikasiKonten::karyaDisetujui($item);
 
         return $this->kembaliKeTinjauan(
             $request,
@@ -39,7 +49,11 @@ class QuizTinjauController extends Controller
     {
         $item = $this->quizMenunggu($quiz);
 
-        $item->tolak($request->string('alasan')->trim()->value());
+        $alasan = $request->string('alasan')->trim()->value();
+
+        $item->tolak($alasan);
+
+        NotifikasiKonten::karyaDitolak($item, $alasan);
 
         return $this->kembaliKeTinjauan(
             $request,

@@ -902,6 +902,7 @@ function initDetailPengguna() {
         email: dialog.querySelector("[data-detail-email]"),
         avatar: dialog.querySelector("[data-detail-avatar]"),
         status: dialog.querySelector("[data-detail-status]"),
+        aktivitas: dialog.querySelector("[data-detail-aktivitas]"),
         bergabung: dialog.querySelector("[data-detail-bergabung]"),
         materi: dialog.querySelector("[data-detail-materi]"),
         quiz: dialog.querySelector("[data-detail-quiz]"),
@@ -940,6 +941,7 @@ function initDetailPengguna() {
         tampil(medan.nama, orang.nama);
         tampil(medan.email, orang.email);
         tampil(medan.status, orang.status_label);
+        tampil(medan.aktivitas, orang.aktivitas);
         tampil(medan.bergabung, orang.bergabung_jam ? `${orang.bergabung} · ${orang.bergabung_jam}` : orang.bergabung);
         tampil(medan.materi, orang.materi);
         tampil(medan.quiz, orang.quiz);

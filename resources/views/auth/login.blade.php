@@ -53,6 +53,17 @@
                 <form action="{{ route('login') }}" method="POST" class="mt-8 space-y-5">
                     @csrf
 
+                    {{-- Kabar hasil aksi yang selesai di halaman lain, jadi
+                        halaman masuk ini yang pertama kali bisa menampilkannya.
+                        Satu-satunya pengirimnya sekarang: hapus akun di
+                        ProfilController::hapus(), yang mengeluarkan pengguna
+                        lalu mengarahkan ke sini. --}}
+                    @if (session('sukses'))
+                        <div class="rounded-xl border border-primary/25 bg-primary/10 px-4 py-3 text-sm font-medium text-dark">
+                            {{ session('sukses') }}
+                        </div>
+                    @endif
+
                     @if ($errors->any())
                         <div
                             class="rounded-xl border border-[#ed6970]/30 bg-[#ed6970]/10 px-4 py-3 text-sm font-medium text-[#c2414a]">

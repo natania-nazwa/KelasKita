@@ -1,14 +1,13 @@
 /**
  * Halaman Profil (berhenti sendiri kalau halamannya tidak ada).
  *
- * Lima hal yang dikerjakan di sini:
+ * Empat hal yang dikerjakan di sini:
  *   1. Buka/tutup dialog (edit profil, ubah password, hapus foto, hapus akun).
  *   2. Kolom password: tombol mata untuk menampilkan/menyembunyikan isi.
  *   3. Pilih foto: tombol "Ganti Foto" membuka kolom file, dan pratinjau
  *      avatar langsung ikut berubah.
  *   4. Mode terang/gelap: menulis atribut data-theme ke <html> dan
  *      mengingat pilihan di localStorage.
- *   5. Toast untuk aksi yang belum punya endpoint server.
  *
  * Tidak ada satu pun request yang dikirim lewat fetch. Semua perubahan
  * dikirim lewat form biasa, jadi setelah aksi selesai seluruh aplikasi
@@ -17,35 +16,6 @@
  */
 
 const KUNCI_TEMA = "kk-tema";
-
-/* ------------------------------------------------------------------
- * TOAST
- *
- * Elemennya sudah ada di markup dan disembunyikan lewat atribut hidden,
- * jadi kalau JavaScript mati tidak ada sisa yang menggantung di layar.
- * Dipakai oleh aksi yang belum punya endpoint server, supaya tidak
- * terasa seperti tidak berhasil.
- * ------------------------------------------------------------------ */
-
-let toast;
-let toastTimer = null;
-
-function tampilkanToast(pesan) {
-    if (!toast) {
-        return;
-    }
-
-    toast.textContent = pesan;
-    toast.hidden = false;
-
-    if (toastTimer) {
-        window.clearTimeout(toastTimer);
-    }
-
-    toastTimer = window.setTimeout(() => {
-        toast.hidden = true;
-    }, 5000);
-}
 
 /* ------------------------------------------------------------------
  * DIALOG
@@ -146,6 +116,25 @@ function initDialog() {
             tutup(terbuka);
         }
     });
+
+    /*
+     * Submit yang gagal membuat Laravel memuat ulang halaman, dan kotak
+     * dialog ikut menutup lagi karena display:none-nya kembali berlaku.
+     * Kalau tidak dibuka ulang, pesan kesalahan (mis. password lama salah
+     * atau konfirmasi hapus akun salah password) terkunci di dalam kotak
+     * yang tertutup dan pengguna tidak pernah melihatnya.
+     *
+     * Penandanya satu saja: .profil-galat, kelas yang dipakai setiap
+     * @error di halaman ini. Dialog mana pun yang memuatnya langsung
+     * dibuka lagi, dan buka() sudah memindah fokus ke kolom pertama.
+     */
+    const dialogBermasalah = dialogs.find((dialog) =>
+        dialog.querySelector(".profil-galat"),
+    );
+
+    if (dialogBermasalah) {
+        buka(dialogBermasalah);
+    }
 }
 
 /* ------------------------------------------------------------------
@@ -336,39 +325,7 @@ function initTema() {
     });
 }
 
-/* ------------------------------------------------------------------
- * HAPUS AKUN
- *
- * Endpoint hapus akun belum ada di aplikasi ini, jadi tombol "Ya, Hapus
- * Akun" tidak mengirim apa pun ke server. Fungsinya sekarang hanya
- * memberi tahu bahwa fiturnya belum tersedia, lalu menutup dialog.
- *
- * Begitu endpoint-nya tersedia: hapus fungsi ini beserta pemanggilnya di
- * bawah, dan ganti isi dialog pada hapus-akun.blade.php dengan <form>
- * yang menunjuk route('user.profil.hapus'), sama seperti
- * hapus-foto.blade.php.
- * ------------------------------------------------------------------ */
-
-function initHapusAkun() {
-    document.querySelectorAll("[data-belum-ada-endpoint]").forEach((tombol) => {
-        tombol.addEventListener("click", () => {
-            tampilkanToast(
-                "Penghapusan akun belum tersedia. Hubungi admin untuk menghapus akunmu.",
-            );
-
-            const dialog = tombol.closest("[data-dialog]");
-
-            if (dialog) {
-                dialog.classList.remove("is-buka");
-            }
-        });
-    });
-}
-
-toast = document.querySelector("[data-toast]");
-
 initDialog();
 initLihatSandi();
 initPilihFoto();
 initTema();
-initHapusAkun();

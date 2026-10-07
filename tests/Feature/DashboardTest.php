@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\Materi;
 use App\Models\Pelajaran;
+use App\Models\PengerjaanQuiz;
 use App\Models\Quiz;
 use App\Models\Soal;
 use App\Models\User;
@@ -191,5 +192,113 @@ class DashboardTest extends TestCase
             ->assertOk()
             ->assertSee('Belum ada materi terbaru')
             ->assertSee('Belum ada quiz terbaru');
+    }
+
+    /* ================================================================
+     * KARTU RINGKASAN
+     * ================================================================ */
+
+    public function test_kartu_total_quiz_menghitung_quiz_yang_berbeda_bukan_percobaan(): void
+    {
+        $user = $this->buatPengguna();
+        $pelajaran = $this->buatPelajaran();
+
+        $pertama = $this->buatQuiz($pelajaran, $user, 'Quiz Satu');
+        $kedua = $this->buatQuiz($pelajaran, $user, 'Quiz Dua');
+
+        // Quiz pertama dikerjakan dua kali. Karena label kartunya "Total
+        // Quiz", dua percobaan atas satu quiz yang sama harus tetap dihitung
+        // sebagai satu quiz.
+        $this->buatPengerjaan($user, $pertama, 70);
+        $this->buatPengerjaan($user, $pertama, 90);
+        $this->buatPengerjaan($user, $kedua, 80);
+
+        $kartu = $this->kartuRingkasan($user);
+
+        $this->assertSame('Total Quiz', $kartu['Total Quiz']['label']);
+        $this->assertSame('2', $kartu['Total Quiz']['nilai']);
+
+        // Rata-rata nilainya tetap dijumlahkan dari semua pengerjaan yang
+        // selesai, jadi mengulang quiz untuk memperbaiki nilai tetap
+        // memperbaiki rata-ratanya: (70 + 90 + 80) / 3 = 80.
+        $this->assertSame('80%', $kartu['Rata-rata Nilai']['nilai']);
+        $this->assertSame('Dari 2 quiz selesai', $kartu['Rata-rata Nilai']['perubahan']);
+    }
+
+    public function test_kartu_total_quiz_mengabaikan_pengerjaan_yang_belum_selesai(): void
+    {
+        $user = $this->buatPengguna();
+        $pelajaran = $this->buatPelajaran();
+        $quiz = $this->buatQuiz($pelajaran, $user, 'Quiz Ditinggalkan');
+
+        // Pengerjaan masih berjalan: belum ada nilai, jadi bukan capaian.
+        PengerjaanQuiz::create([
+            'pengguna_id' => $user->getKey(),
+            'quiz_id' => $quiz->getKey(),
+            'jumlah_soal' => 5,
+            'dimulai_pada' => now(),
+        ]);
+
+        $kartu = $this->kartuRingkasan($user);
+
+        $this->assertSame('0', $kartu['Total Quiz']['nilai']);
+        $this->assertSame('—', $kartu['Rata-rata Nilai']['nilai']);
+    }
+
+    public function test_kartu_total_quiz_hanya_menghitung_pengerjaan_pengguna_yang_login(): void
+    {
+        $user = $this->buatPengguna();
+        $orangLain = $this->buatPengguna(['nama' => 'Siti', 'email' => 'siti@example.com']);
+        $pelajaran = $this->buatPelajaran();
+        $quiz = $this->buatQuiz($pelajaran, $user, 'Quiz Bersama');
+
+        $this->buatPengerjaan($user, $quiz, 80);
+        $this->buatPengerjaan($orangLain, $quiz, 60);
+
+        $kartu = $this->kartuRingkasan($user);
+
+        $this->assertSame('1', $kartu['Total Quiz']['nilai']);
+        $this->assertSame('80%', $kartu['Rata-rata Nilai']['nilai']);
+    }
+
+    /**
+     * Satu pengerjaan yang sudah selesai, dibuat langsung lewat model supaya
+     * test tidak bergantung pada alur menjawab soal.
+     */
+    private function buatPengerjaan(User $pengguna, Quiz $quiz, int $nilai): PengerjaanQuiz
+    {
+        return PengerjaanQuiz::create([
+            'pengguna_id' => $pengguna->getKey(),
+            'quiz_id' => $quiz->getKey(),
+            'jumlah_soal' => 10,
+            'jumlah_dijawab' => 10,
+            'jumlah_benar' => (int) round($nilai / 10),
+            'jumlah_salah' => 10 - (int) round($nilai / 10),
+            'nilai' => $nilai,
+            'dimulai_pada' => now()->subMinutes(10),
+            'selesai_pada' => now(),
+        ]);
+    }
+
+    /**
+     * Kartu ringkasan di dashboard, dikunci lewat labelnya supaya test tidak
+     * bergantung pada urutan kartu.
+     *
+     * @return array<string, array<string, string>>
+     */
+    private function kartuRingkasan(User $pengguna): array
+    {
+        $ringkasan = $this->actingAs($pengguna)
+            ->get('/user/dashboard')
+            ->assertOk()
+            ->viewData('ringkasan');
+
+        $kartu = [];
+
+        foreach ($ringkasan as $stat) {
+            $kartu[$stat['label']] = $stat;
+        }
+
+        return $kartu;
     }
 }

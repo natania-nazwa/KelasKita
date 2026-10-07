@@ -23,11 +23,11 @@ class EnsureAdmin
         }
 
         /*
-         * "aktif" dimuat dari database, bukan dari input form.
-         * Nilai NULL dianggap TIDAK aktif (fail-closed) supaya akun
-         * yang bermasalah tidak pernah bisa masuk area admin.
+         * Status aktif tidak lagi menjadi gerbang: akun yang sudah lama tidak
+         * membuka aplikasi tetap boleh masuk area admin begitu ia kembali.
+         * Yang dijaga di sini hanya perannya.
          */
-        if (! $user->isAktif() || ! $user->isAdmin()) {
+        if (! $user->isAdmin()) {
             abort(403, 'Halaman ini hanya untuk admin.');
         }
 

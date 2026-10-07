@@ -84,7 +84,7 @@
                         </span>
 
                         <span
-                            title="Streak {{ $streak['jumlah'] }} hari. Menyala kalau kamu membaca materi atau mengerjakan soal hari ini."
+                            title="Streak {{ $streak['jumlah'] }} hari. Menyala selama masih ada kegiatan dalam 24 jam terakhir."
                             class="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 font-mono text-[11px] font-bold tracking-[0.14em] uppercase lg:text-[10px] {{ $streak['aktif'] ? 'bg-[#fee4e2] text-[#dc2626]' : 'bg-dark/5 text-dark/40' }}">
                             <svg class="h-3.5 w-3.5 {{ $streak['aktif'] ? 'text-[#ef4444]' : 'text-dark/35' }}"
                                 fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"

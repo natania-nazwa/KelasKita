@@ -12,9 +12,10 @@
 
     </div>
 
-    {{-- Kabar berhasil. Semua aksi di halaman ini (simpan profil, hapus
-        foto, ubah password) berakhir dengan redirect ke halaman Profil,
-        jadi session ini juga jadi pemberitahuan hasil aksi tersebut. --}}
+    {{-- Kabar berhasil. Semua aksi di halaman ini yang kembali ke sini
+        (simpan profil, hapus foto, ubah password) berakhir dengan redirect
+        ke halaman Profil, jadi session ini juga jadi pemberitahuan hasil
+        aksi tersebut. --}}
     @if (session('sukses'))
         <div
             data-reveal
@@ -57,7 +58,12 @@
     ==========================
          Keempat dialog halaman ini dirender di sini, di luar kartu mana
          pun, supaya posisinya tidak ikut bergeser mengikuti grid dan
-         tidak pernah terpotong overflow kartu. --}}
+         tidak pernah terpotong overflow kartu.
+
+         Tidak ada toast di halaman ini lagi: toast itu hanya dipakai untuk
+         memberi tahu bahwa hapus akun belum punya endpoint, dan sekarang
+         endpoint-nya sudah ada -- errornya muncul di dalam dialog yang
+         memang sedang dibuka. --}}
     <x-profil.edit :pengguna="$pengguna" />
 
     <x-profil.kata-sandi />
@@ -65,13 +71,4 @@
     <x-profil.hapus-foto />
 
     <x-profil.hapus-akun />
-
-    {{-- Toast ringan untuk aksi yang belum punya endpoint server. --}}
-    <div
-        data-toast
-        hidden
-        class="pointer-events-none fixed inset-x-4 bottom-24 z-[80] mx-auto w-fit max-w-[calc(100%-2rem)] rounded-2xl border border-lavender bg-white px-4 py-3 text-sm font-medium text-dark shadow-[0_24px_44px_-24px_rgba(33,26,58,0.55)] sm:inset-x-auto sm:right-6 lg:bottom-6"
-        role="status"
-        aria-live="polite"
-    ></div>
 @endsection

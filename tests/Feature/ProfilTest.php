@@ -2,11 +2,15 @@
 
 namespace Tests\Feature;
 
+use App\Models\Materi;
+use App\Models\Notifikasi;
+use App\Models\Pelajaran;
+use App\Models\Quiz;
 use App\Models\User;
+use App\Support\AktivitasHarian;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
@@ -22,8 +26,9 @@ use Tests\TestCase;
  *      berkas fotonya di disk publik.
  *   4. Aturan validasi kedua form (email unik, konfirmasi password) dan
  *      password lama benar-benar diperiksa.
- *   5. Hapus akun belum punya endpoint, jadi tidak ada aksi yang bisa
- *      menghapus akun dari halaman ini.
+ *   5. Hapus akun: password wajib benar, akun beserta seluruh isinya
+ *      hilang, materinya sendiri tetap tayang, dan akun orang lain tidak
+ *      ikut tersentuh.
  *
  * Semua test memakai SQLite in-memory (lihat phpunit.xml) dan disk publik
  * palsu, jadi tidak menyentuh database sungguhan.
@@ -39,6 +44,17 @@ class ProfilTest extends TestCase
             'email' => 'natania@gmail.com',
             'kata_sandi' => 'rahasia123',
         ], $atribut))->refresh();
+    }
+
+    private function buatPelajaran(): Pelajaran
+    {
+        return Pelajaran::create([
+            'nama' => 'Pemrograman',
+            'slug' => 'pemrograman',
+            'deskripsi' => 'Deskripsi Pemrograman',
+            'ikon' => '</>',
+            'aktif' => true,
+        ]);
     }
 
     public function test_halaman_profil_membuka_dengan_judul_dan_data_pengguna(): void
@@ -444,45 +460,188 @@ class ProfilTest extends TestCase
             ->assertSee('Ya, Hapus Foto');
     }
 
-    public function test_zona_berbahaya_tidak_pernah_menghapus_akun(): void
+    public function test_dialog_hapus_akun_menanyakan_password_dan_tidak_menembakkan_password_ke_markup(): void
     {
         $user = $this->buatPengguna();
 
         $isi = $this->actingAs($user)->get(route('user.profil'))->getContent();
 
-        // Konfirmasi sudah ada lengkap dengan tombol Batal...
+        // Dialog sudah jadi form sungguhan yang menunjuk endpoint hapus akun,
+        // lengkap dengan kolom password dan tombol Batal.
+        $this->assertStringContainsString('id="form-hapus-akun"', $isi);
+        $this->assertStringContainsString('action="'.route('user.profil.hapus').'"', $isi);
+        $this->assertStringContainsString('name="kata_sandi"', $isi);
         $this->assertStringContainsString('Hapus akun?', $isi);
         $this->assertStringContainsString('data-dialog-batal', $isi);
-        $this->assertStringContainsString('Ya, Hapus Akun', $isi);
 
-        // ...tapi dialog itu tidak pernah jadi <form>, jadi tidak ada
-        // jalur apa pun untuk menghapus akun dari halaman ini.
-        $this->assertStringNotContainsString('id="form-hapus-akun"', $isi);
-        $this->assertStringContainsString('data-belum-ada-endpoint', $isi);
-        $this->assertDatabaseHas('tb_pengguna', ['id' => $user->getKey()]);
+        // Isi password tidak pernah ditulis di markup: kolomnya kosong
+        // dan bertipe password, bukan teks.
+        $this->assertStringNotContainsString('value="rahasia123"', $isi);
+        $this->assertStringNotContainsString('data-belum-ada-endpoint', $isi);
     }
 
-    public function test_tidak_ada_route_hapus_akun(): void
+    public function test_akun_bisa_dihapus_jika_password_benar(): void
     {
-        // Endpoint-nya memang belum dibuat, jadi tidak boleh ada rute
-        // yang menghapus akun, supaya tidak dikira sudah siap.
-        $adaRuteHapusAkun = collect(Route::getRoutes()->getRoutes())
-            ->contains(fn ($rute) => str_contains($rute->uri(), 'profil')
-                && in_array('DELETE', $rute->methods(), true)
-                && str_contains($rute->uri(), 'akun'));
+        $user = $this->buatPengguna();
 
-        $this->assertFalse($adaRuteHapusAkun);
+        $this->actingAs($user)
+            ->from(route('user.profil'))
+            ->delete(route('user.profil.hapus'), ['kata_sandi' => 'rahasia123'])
+            ->assertRedirect(route('login'))
+            ->assertSessionHasNoErrors();
+
+        $this->assertDatabaseMissing('tb_pengguna', ['id' => $user->getKey()]);
+        $this->assertGuest();
+    }
+
+    public function test_hapus_akun_menampilkan_kabar_berhasil_di_halaman_masuk(): void
+    {
+        $user = $this->buatPengguna();
+
+        $this->actingAs($user)
+            ->delete(route('user.profil.hapus'), ['kata_sandi' => 'rahasia123'])
+            ->assertSessionHas('sukses', 'Akunmu sudah dihapus. Terima kasih sudah belajar di KelasKita.');
+
+        // Pesannya harus benar-benar tampil, bukan cuma ikut tersimpan di
+        // session: halaman masuk tidak punya tempat lain untuk kabar
+        // berhasil ini.
+        $this->get(route('login'))
+            ->assertOk()
+            ->assertSee('Akunmu sudah dihapus. Terima kasih sudah belajar di KelasKita.');
+    }
+
+    public function test_password_yang_salah_tidak_menghapus_akun(): void
+    {
+        $user = $this->buatPengguna();
+
+        $this->actingAs($user)
+            ->from(route('user.profil'))
+            ->delete(route('user.profil.hapus'), ['kata_sandi' => 'salah-total'])
+            ->assertRedirect(route('user.profil'))
+            ->assertSessionHasErrors('kata_sandi');
+
+        // Akun, berkasnya, dan sesinya tetap utuh: satu klik dengan
+        // password salah tidak boleh menghapus apa pun.
+        $this->assertDatabaseHas('tb_pengguna', ['id' => $user->getKey()]);
+        $this->assertAuthenticatedAs($user);
+    }
+
+    public function test_password_wajib_diisi_untuk_menghapus_akun(): void
+    {
+        $user = $this->buatPengguna();
+
+        $this->actingAs($user)
+            ->from(route('user.profil'))
+            ->delete(route('user.profil.hapus'), ['kata_sandi' => ''])
+            ->assertSessionHasErrors('kata_sandi');
+
+        $this->assertDatabaseHas('tb_pengguna', ['id' => $user->getKey()]);
+        $this->assertAuthenticatedAs($user);
+    }
+
+    public function test_hapus_akun_menghapus_berkas_foto_dan_thumbnail_miliknya(): void
+    {
+        Storage::fake('public');
+
+        $user = $this->buatPengguna(['foto_profil' => 'foto-profil/saya.png']);
+        Storage::disk('public')->put('foto-profil/saya.png', 'foto');
+
+        $quiz = Quiz::create([
+            'pelajaran_id' => $this->buatPelajaran()->getKey(),
+            'dibuat_oleh' => $user->getKey(),
+            'judul' => 'Quiz Buatan Saya',
+            'slug' => 'quiz-buatan-saya',
+            'deskripsi' => 'Deskripsi quiz.',
+            'durasi' => 10,
+            'visibilitas' => Quiz::VISIBILITAS_PUBLIK,
+            'status' => Quiz::STATUS_PUBLISHED,
+            'thumbnail' => 'thumbnail-quiz/saya.jpg',
+        ]);
+        Storage::disk('public')->put('thumbnail-quiz/saya.jpg', 'thumb');
+
+        $this->actingAs($user)->delete(route('user.profil.hapus'), ['kata_sandi' => 'rahasia123']);
+
+        // Cascade di database tidak menyentuh disk, jadi berkas tetap
+        // dihapus sendiri setelah baris akun hilang.
+        Storage::disk('public')->assertMissing('foto-profil/saya.png');
+        Storage::disk('public')->assertMissing('thumbnail-quiz/saya.jpg');
+        $this->assertDatabaseMissing('tb_quiz', ['id' => $quiz->getKey()]);
+    }
+
+    public function test_hapus_akun_membawa_serta_notifikasi_dan_aktivitas_miliknya(): void
+    {
+        $user = $this->buatPengguna();
+
+        Notifikasi::create([
+            'pengguna_id' => $user->getKey(),
+            'jenis' => Notifikasi::JENIS_KARYA_DISETUJUI,
+            'judul' => 'Materi kamu disetujui',
+            'pesan' => 'Materi kamu sudah tayang.',
+            'konten_tipe' => Notifikasi::KONTEN_MATERI,
+            'konten_id' => null,
+        ]);
+
+        AktivitasHarian::bacaMateri($user);
+
+        $this->assertDatabaseHas('tb_notifikasi', ['pengguna_id' => $user->getKey()]);
+        $this->assertDatabaseHas('tb_aktivitas_harian', ['pengguna_id' => $user->getKey()]);
+
+        $this->actingAs($user)->delete(route('user.profil.hapus'), ['kata_sandi' => 'rahasia123']);
+
+        $this->assertDatabaseCount('tb_notifikasi', 0);
+        $this->assertDatabaseCount('tb_aktivitas_harian', 0);
+    }
+
+    public function test_hapus_akun_tidak_menghapus_materi_yang_sudah_diterbitkan(): void
+    {
+        $user = $this->buatPengguna();
+
+        $materi = Materi::create([
+            'pelajaran_id' => $this->buatPelajaran()->getKey(),
+            'dibuat_oleh' => $user->getKey(),
+            'nama' => 'Materi Tetap Tayang',
+            'slug' => 'materi-tetap-tayang',
+            'deskripsi' => 'Ringkasan materi.',
+            'isi' => "Bab 1: Pendahuluan\n\nIsi materi.\n\nBab 2: Lanjutan\n\nIsi bab kedua.",
+            'tingkat_kesulitan' => 'Mudah',
+            'status' => Materi::STATUS_PUBLISHED,
+        ]);
+
+        $this->actingAs($user)->delete(route('user.profil.hapus'), ['kata_sandi' => 'rahasia123']);
+
+        // Materi pakai ON DELETE SET NULL, jadi karya yang sudah tayang
+        // tidak ikut hilang bersama akun pembuatnya.
+        $setelah = $materi->fresh();
+
+        $this->assertNotNull($setelah);
+        $this->assertNull($setelah->dibuat_oleh);
+        $this->assertSame(Materi::STATUS_PUBLISHED, $setelah->status);
+    }
+
+    public function test_hapus_akun_tidak_menyentuh_akun_orang_lain(): void
+    {
+        $user = $this->buatPengguna();
+        $orangLain = $this->buatPengguna(['nama' => 'Budi', 'email' => 'budi@example.com']);
+
+        $this->actingAs($user)->delete(route('user.profil.hapus'), ['kata_sandi' => 'rahasia123']);
+
+        // Rutenya tanpa parameter id, jadi tidak ada URL yang bisa dipakai
+        // untuk menghapus akun orang lain.
+        $this->assertDatabaseMissing('tb_pengguna', ['id' => $user->getKey()]);
+        $this->assertDatabaseHas('tb_pengguna', ['id' => $orangLain->getKey()]);
+        $this->assertTrue(Hash::check('rahasia123', $orangLain->fresh()->kata_sandi));
     }
 
     public function test_halaman_profil_membutuhkan_login(): void
     {
         $this->get('/user/profil')->assertRedirect('/login');
         $this->put('/user/profil')->assertRedirect('/login');
+        $this->delete('/user/profil')->assertRedirect('/login');
         $this->delete('/user/profil/foto')->assertRedirect('/login');
         $this->put('/user/profil/kata-sandi')->assertRedirect('/login');
     }
 
-    public function test_peran_dan_status_aktif_tidak_bisa_diubah_lewat_form_profil(): void
+    public function test_peran_dan_aktivitas_tidak_bisa_diubah_lewat_form_profil(): void
     {
         $user = $this->buatPengguna();
 
@@ -492,7 +651,9 @@ class ProfilTest extends TestCase
                 'email' => 'natania@gmail.com',
                 // Percobaan menaikkan diri jadi admin.
                 'peran' => 'admin',
-                'aktif' => true,
+                // Percobaan memalsukan "terakhir membuka" ke masa depan supaya
+                // selamanya terbaca aktif.
+                'terakhir_aktivitas' => now()->addYear()->toDateTimeString(),
             ])
             ->assertSessionHasNoErrors();
 
@@ -500,5 +661,9 @@ class ProfilTest extends TestCase
 
         $this->assertSame(User::PERAN_USER, $setelah->peran);
         $this->assertFalse($setelah->isAdmin());
+        $this->assertTrue(
+            $setelah->terakhir_aktivitas->lessThanOrEqualTo(now()),
+            'Aktivitas tidak boleh bisa dimajukan lewat form profil.',
+        );
     }
 }

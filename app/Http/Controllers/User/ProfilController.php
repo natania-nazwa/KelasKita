@@ -3,11 +3,14 @@
 namespace App\Http\Controllers\User;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\HapusAkunRequest;
 use App\Http\Requests\KataSandiRequest;
 use App\Http\Requests\ProfilIsianRequest;
 use App\Support\BerkasProfil;
+use App\Support\BerkasQuiz;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\View\View;
 
 /**
@@ -97,5 +100,59 @@ class ProfilController extends Controller
         return redirect()
             ->route('user.profil')
             ->with('sukses', 'Password berhasil diubah.');
+    }
+
+    /**
+     * Hapus akun beserta seluruh isinya, lalu keluarkan pengguna.
+     *
+     * Password sudah diperiksa HapusAkunRequest, jadi sampai baris ini
+     * account belum ada yang tersentuh: kode di bawahnya baru jalan kalau
+     * orang yang sedang login memang pemilik akun itu dan tahu passwordnya.
+     *
+     * Sesuai relasi tabel di database, menghapus baris tb_pengguna sudah
+     * membersihkan Riwayat Aktivitas, preferensi, notifikasi, bookmark,
+     * pengerjaan dan sesi quiz miliknya (ON DELETE CASCADE). Dua hal tidak
+     * ikut hilang, dan itu disengaja:
+     *
+     *   - Materi miliknya tetap ada dengan pembuatnya jadi kosong
+     *     (ON DELETE SET NULL), supaya karya yang sudah tayang tidak ikut
+     *     hilang bersama akunnya.
+     *   - Materi tidak punya relasi database ke user, jadi isinya tidak
+     *     tersentuh sama sekali.
+     *
+     * Berkas di disk publik tidak dihapus oleh cascade database, jadi kedua
+     * daftar path diambil lebih dulu dan berkasnya dihapus setelah baris
+     * akun benar-benar hilang — urutan yang sama seperti hapus quiz di
+     * User\QuizKelolaController::destroy().
+     */
+    public function hapus(HapusAkunRequest $request): RedirectResponse
+    {
+        $pengguna = $request->user();
+
+        $foto = $pengguna->foto_profil;
+        $thumbnail = $pengguna->quiz()->pluck('thumbnail')->all();
+
+        // Logout sebelum delete: sesi tidak boleh tetap membawa akun yang
+        // sudah tidak ada lagi, dan memvalidasi ulang session tidak butuh
+        // baris pengguna.
+        Auth::guard('web')->logout();
+
+        $pengguna->delete();
+
+        BerkasProfil::hapus($foto);
+
+        foreach ($thumbnail as $berkas) {
+            BerkasQuiz::hapus($berkas);
+        }
+
+        // invalidate() membuang seluruh isi session lama termasuk tokennya,
+        // jadi tidak ada sisa yang bisa dipakai setelah akun dihapus. Flash
+        // pesan ditulis sesudahnya, supaya tetap terbawa ke halaman tujuan.
+        $request->session()->invalidate();
+        $request->session()->regenerateToken();
+
+        return redirect()
+            ->route('login')
+            ->with('sukses', 'Akunmu sudah dihapus. Terima kasih sudah belajar di KelasKita.');
     }
 }

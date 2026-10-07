@@ -445,12 +445,13 @@ Route::middleware('auth')
          * dalam form edit, supaya "hapus foto" tetap butuh konfirmasi
          * sendiri dan tidak bisa ikut terkirim bersama simpan biasa.
          *
-         * Hapus akun sengaja belum ada rutenya. UI konfirmasinya sudah
-         * ada di halaman, tapi belum ada endpoint, jadi tidak ada aksi
-         * yang bisa menghapus akun hanya karena satu klik.
+         * Hapus akun juga DELETE sendiri (bukan /profil/akun) supaya URL-nya
+         * tetap "/user/profil" dan tidak perlu ada path baru. Password akun
+         * dicek HapusAkunRequest sebelum satu baris pun ikut terhapus.
          */
         Route::get('/profil', User\ProfilController::class)->name('profil');
         Route::put('/profil', [User\ProfilController::class, 'update'])->name('profil.update');
+        Route::delete('/profil', [User\ProfilController::class, 'hapus'])->name('profil.hapus');
         Route::delete('/profil/foto', [User\ProfilController::class, 'hapusFoto'])->name('profil.foto.destroy');
         Route::put('/profil/kata-sandi', [User\ProfilController::class, 'ubahKataSandi'])->name('profil.kata-sandi');
 
@@ -712,10 +713,23 @@ Route::middleware(['auth', 'admin'])
         Route::get('/verifikasi', Admin\VerifikasiController::class)->name('verifikasi');
 
         /*
-         * Daftar seluruh akun. Hanya dibaca: tidak ada aksi yang
-         * mengaktifkan, menonaktifkan, mengubah peran, atau menghapus.
+         * Daftar seluruh akun. Halaman ini membaca daftar, dan menyediakan
+         * aksi hapus akun.
+         *
+         * Aktif/nonaktif tidak diubah dari sini: statusnya dihitung otomatis
+         * dari kapan terakhir pengguna membuka aplikasi, dibaca dari kolom
+         * "terakhir_aktivitas". Ubah peran juga sengaja tidak ada: hanya ada
+         * dua peran dan tidak ada kebutuhan memindahkan akun di antara
+         * keduanya.
+         *
+         * Hapus dikirim lewat form DELETE biasa supaya tetap jalan tanpa
+         * JavaScript. Penjagaannya ada di controller, bukan hanya dengan
+         * menyembunyikan tombol: akun sendiri dan admin terakhir tidak bisa
+         * dihapus.
          */
         Route::get('/pengguna', Admin\PenggunaController::class)->name('pengguna');
+        Route::delete('/pengguna/{pengguna}', [Admin\PenggunaController::class, 'destroy'])
+            ->name('pengguna.destroy');
 
         /*
          * =============================================================

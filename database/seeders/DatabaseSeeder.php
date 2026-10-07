@@ -29,7 +29,6 @@ class DatabaseSeeder extends Seeder
                 'nama' => 'Test User',
                 'kata_sandi' => Hash::make('password'),
                 'peran' => User::PERAN_USER,
-                'aktif' => true,
             ]
         );
     }

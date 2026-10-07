@@ -27,9 +27,11 @@ class AuthenticatedSessionController extends Controller
             'remember' => ['nullable', 'boolean'],
         ]);
 
-        // 'aktif' ikut Dicek supaya akun yang dinonaktifkan tidak bisa masuk
-        $credentials['aktif'] = true;
-
+        /*
+         * Status aktif tidak ikut dicek: itu murni penanda "terakhir membuka
+         * aplikasi", bukan larangan masuk. Akun yang lama tidak kembali tetap
+         * bisa login, dan kunjungannya langsung membuatnya terbaca aktif lagi.
+         */
         if (! Auth::attempt($credentials, $request->boolean('remember'))) {
             throw ValidationException::withMessages([
                 'email' => 'Email atau kata sandi salah.',

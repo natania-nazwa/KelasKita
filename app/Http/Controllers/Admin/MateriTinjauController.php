@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\TolakMateriRequest;
 use App\Models\Materi;
+use App\Support\NotifikasiKonten;
 use App\Support\TinjauanMateri;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -20,6 +21,13 @@ use Illuminate\Http\Request;
  *
  * Keduanya mengembalikan admin ke tab status yang sedang dibuka, supaya
  * menolak satu materi tidak membuat admin kehilangan tempatnya.
+ *
+ * Setiap keputusan juga menulis satu baris notifikasi ke lonceng pemilik
+ * materinya, tepat setelah statusnya benar-benar berubah. Toast di halaman
+ * ini bukan pemberitahuan itu: admin yang membacanya, sedangkan yang perlu
+ * diberi tahu adalah penulis materinya. Notifikasi ditulis setelah
+ * setujui()/tolak() supaya tidak pernah ada kabar "ditolak" untuk materi yang
+ * statusnya belum benar-benar berubah.
  */
 class MateriTinjauController extends Controller
 {
@@ -28,6 +36,8 @@ class MateriTinjauController extends Controller
         $item = $this->materiMenunggu($materi);
 
         $item->setujui();
+
+        NotifikasiKonten::karyaDisetujui($item);
 
         return $this->kembaliKeTinjauan(
             $request,
@@ -39,7 +49,11 @@ class MateriTinjauController extends Controller
     {
         $item = $this->materiMenunggu($materi);
 
-        $item->tolak($request->string('alasan')->trim()->value());
+        $alasan = $request->string('alasan')->trim()->value();
+
+        $item->tolak($alasan);
+
+        NotifikasiKonten::karyaDitolak($item, $alasan);
 
         return $this->kembaliKeTinjauan(
             $request,

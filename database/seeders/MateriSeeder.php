@@ -801,7 +801,6 @@ class MateriSeeder extends Seeder
                     'nama' => $pengguna['nama'],
                     'kata_sandi' => Hash::make('password'),
                     'peran' => $pengguna['peran'],
-                    'aktif' => true,
                 ]
             )->getKey();
         }

@@ -4,12 +4,17 @@ namespace App\Http\Controllers\User;
 
 use App\Http\Controllers\Controller;
 use App\Models\Materi;
+use App\Models\PengerjaanQuiz;
 use App\Models\Quiz;
 use App\Models\User;
+use App\Support\AktivitasHarian;
+use App\Support\Angka;
 use App\Support\DaftarJadwal;
 use App\Support\DaftarMateri;
 use App\Support\DaftarQuiz;
 use App\Support\Ikon;
+use App\Support\MateriDibaca;
+use App\Support\PeringkatGlobal;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -28,11 +33,16 @@ use Illuminate\View\View;
  *   ringkasan     => [label, nilai, perubahan, ikon, warna]
  *   aksiCepat     => [judul, deskripsi, ikon, warna, warna_gelap, tautan, sorot]
  *   aksesCepat    => [judul, deskripsi, ikon, warna, warna_gelap, tautan]
- *   materiTerbaru => hasil App\Support\DaftarMateri::petakan()
- *   quizTerbaru   => hasil App\Support\DaftarQuiz::petakan()
+ *   materiTerbaru => hasil App\Support\DaftarMateri::petikan()
+ *   quizTerbaru   => hasil App\Support\DaftarQuiz::petikan()
  *   jadwal        => hasil App\Support\DaftarJadwal::hariIni()
- *   peringkat     => [peringkat, skor, nama, inisial, warna, warna_gelap, ...]
+ *   peringkat     => hasil App\Support\PeringkatGlobal::daftar()
  *   kalender      => [nama_bulan, nama_hari, sel[], sebelumnya, berikutnya]
+ *   streak        => hasil App\Support\AktivitasHarian::streak()
+ *
+ * Tidak ada angka yang diketik langsung di kelas ini. Semua yang tampil di
+ * dashboard dibaca dari database, jadi kartu tidak pernah menampilkan angka
+ * yang tidak ada di tabel.
  *
  * Path ikon diambil dari App\Support\Ikon supaya tiap path hanya ditulis sekali.
  */
@@ -53,7 +63,7 @@ class DashboardController extends Controller
         return view('user.dashboard', [
             'pengguna' => $pengguna,
 
-            'ringkasan' => $this->ringkasan(),
+            'ringkasan' => $this->ringkasan($pengguna),
             'aksiCepat' => $this->aksiCepat(),
             'aksesCepat' => $this->aksesCepat(),
             'materiTerbaru' => $this->materiTerbaru(),
@@ -61,45 +71,133 @@ class DashboardController extends Controller
             'jadwal' => $this->jadwal($request),
             'peringkat' => $this->peringkat($pengguna),
             'kalender' => $this->kalender($request),
-            'streak' => $this->streak(),
+            'streak' => $this->streak($pengguna),
         ]);
     }
 
     /**
      * Empat kartu ringkasan di bawah banner selamat datang.
+     *
+     * Semuanya dihitung dari database, bukan angka yang diketik di sini:
+     *
+     *   - Total Materi     => berapa materi yang sudah tayang.
+     *   - Total Quiz       => berapa quiz yang pernah ia kerjakan sampai selesai.
+     *   - Rata-rata Nilai  => rata-rata nilai dari pengerjaan yang selesai.
+     *   - Progress Belajar => (materi dibaca + quiz selesai) / (semua materi +
+     *                         semua quiz yang terbit).
+     *
+     * "Total Materi" menghitung seluruh materi yang tayang, bukan yang milik
+     * pengguna ini saja, karena labelnya memang total isi perpustakaan. Yang
+     * per-pengguna ada di kartu Progress Belajar.
      */
-    private function ringkasan(): array
+    private function ringkasan(?User $pengguna): array
     {
+        $totalMateri = Materi::query()->terbit()->count();
+
+        $materiBulanIni = Materi::query()
+            ->terbit()
+            ->where('created_at', '>=', now()->startOfMonth())
+            ->count();
+
+        $pengerjaan = $this->pengerjaanRingkas($pengguna);
+        $progress = MateriDibaca::progress($pengguna);
+
         return [
             [
                 'label' => 'Total Materi',
-                'nilai' => '8',
-                'perubahan' => '+2% dari bulan lalu',
+                'nilai' => (string) $totalMateri,
+                'perubahan' => $this->perubahanJumlah($materiBulanIni),
                 'ikon' => Ikon::path('buku'),
                 'warna' => 'hijau',
             ],
             [
                 'label' => 'Total Quiz',
-                'nilai' => '5',
-                'perubahan' => '+1% dari bulan lalu',
+                'nilai' => (string) $pengerjaan['jumlah'],
+                'perubahan' => $this->perubahanJumlah($pengerjaan['bulan_ini']),
                 'ikon' => Ikon::path('benar'),
                 'warna' => 'kuning',
             ],
             [
                 'label' => 'Rata-rata Nilai',
-                'nilai' => '85%',
-                'perubahan' => '+5% dari bulan lalu',
+                'nilai' => $pengerjaan['rata_nilai'] === null
+                    ? '—'
+                    : Angka::teks($pengerjaan['rata_nilai']).'%',
+                'perubahan' => $pengerjaan['jumlah'] === 0
+                    ? 'Belum ada nilai'
+                    : 'Dari '.$pengerjaan['jumlah'].' quiz selesai',
                 'ikon' => Ikon::path('piala'),
                 'warna' => 'oranye',
             ],
             [
                 'label' => 'Progress Belajar',
-                'nilai' => '60%',
-                'perubahan' => '+10% dari bulan lalu',
+                'nilai' => Angka::teks($progress['persen']).'%',
+                'perubahan' => $progress['total'] === 0
+                    ? 'Belum ada materi atau quiz'
+                    : $progress['selesai'].' dari '.$progress['total'].' konten selesai',
                 'ikon' => Ikon::path('grafik'),
                 'warna' => 'pink',
             ],
         ];
+    }
+
+    /**
+     * Berapa quiz yang sudah pernah ia selesaikan, dan rata-ratanya.
+     *
+     * Hanya pengerjaan yang sudah selesai. Pengerjaan yang masih berjalan
+     * punya nilai 0, jadi menghitungnya membuat kartu "Rata-rata Nilai"
+     * terlihat rendah padahal orang itu belum selesai menjawab.
+     *
+     * Jumlah dan jumlah bulan ini menghitung quiz yang berbeda, bukan
+     * pengerjaannya. Satu orang boleh mengerjakan quiz yang sama berulang
+     * kali, dan label kartunya berbunyi "Total Quiz", jadi tiga percobaan
+     * atas satu quiz yang sama harus tetap dibaca sebagai satu quiz.
+     * Menghitung baris pengerjaan akan membuat angkanya naik setiap kali
+     * orang mengulang, padahal isi halaman yang ditampilkan tidak bertambah.
+     *
+     * Rata-ratanya tetap dijumlahkan dari semua pengerjaan yang selesai,
+     * karena "rata-rata nilai" memang artinya nilai yang dikumpulkan orang
+     * itu, bukan rata-rata per quiz. Angka ini sengaja dibiarkan begitu
+     * agar mengulang quiz untuk memperbaiki nilai tetap memperbaiki
+     * rata-ratanya.
+     *
+     * @return array{jumlah: int, bulan_ini: int, rata_nilai: float|null}
+     */
+    private function pengerjaanRingkas(?User $pengguna): array
+    {
+        $kosong = ['jumlah' => 0, 'bulan_ini' => 0, 'rata_nilai' => null];
+
+        if ($pengguna === null) {
+            return $kosong;
+        }
+
+        $selesai = PengerjaanQuiz::query()
+            ->milik($pengguna->getKey())
+            ->selesai();
+
+        $rata = (clone $selesai)->avg('nilai');
+
+        return [
+            'jumlah' => (clone $selesai)->distinct()->count('quiz_id'),
+            'bulan_ini' => (clone $selesai)
+                ->where('selesai_pada', '>=', now()->startOfMonth())
+                ->distinct()
+                ->count('quiz_id'),
+            'rata_nilai' => $rata === null ? null : round((float) $rata, 1),
+        ];
+    }
+
+    /**
+     * Baris "perubahan" untuk kartu yang menghitung jumlah.
+     *
+     * Ditulis sebagai selisih jumlah, bukan persentase: 8 materi jadi 10
+     * berarti "+2 bulan ini", bukan "+25%", yang terdengar seperti nilai yang
+     * melonjak padahal hanya bertambah dua.
+     */
+    private function perubahanJumlah(int $jumlah): string
+    {
+        return $jumlah === 0
+            ? 'Belum ada tambahan bulan ini'
+            : '+'.$jumlah.' bulan ini';
     }
 
     /**
@@ -240,33 +338,16 @@ class DashboardController extends Controller
     }
 
     /**
-     * Lima peringkat teratas. Baris milik pengguna yang sedang login ditandai
-     * lewat flag "saya" supaya bisa disorot di komponen.
+     * Leaderboard di sidebar.
+     *
+     * Datanya diambil dari App\Support\PeringkatGlobal, bukan ditulis ulang
+     * di sini, supaya aturan urutannya (soal dijawab dulu, nilai tertinggi
+     * kedua, nama sebagai pemutus terakhir) hanya ada di satu tempat. Baris
+     * milik pengguna yang sedang login sudah ditandai "saya" di sana.
      */
-    private function peringkat(User $pengguna): array
+    private function peringkat(?User $pengguna): array
     {
-        $daftar = [
-            ['nama' => 'Keyla', 'skor' => 980],
-            ['nama' => 'Khanif', 'skor' => 960],
-            ['nama' => 'Irma', 'skor' => 940],
-            ['nama' => 'Heysell', 'skor' => 920],
-            ['nama' => 'Natania', 'skor' => 890],
-        ];
-
-        return array_map(function (array $baris, int $urut) use ($pengguna) {
-            return [
-                ...$this->orang($baris['nama']),
-                'peringkat' => $urut + 1,
-                'skor' => $baris['skor'],
-                'medali' => match ($urut + 1) {
-                    1 => 'emas',
-                    2 => 'perak',
-                    3 => 'perunggu',
-                    default => null,
-                },
-                'saya' => $baris['nama'] === $pengguna->nama,
-            ];
-        }, $daftar, array_keys($daftar));
+        return PeringkatGlobal::daftar($pengguna?->getKey());
     }
 
     /**
@@ -275,23 +356,26 @@ class DashboardController extends Controller
      * Grid dihitung di server (bukan JavaScript) supaya tombol sebelumnya /
      * berikutnya cukup berupa link biasa (?bulan=YYYY-MM) dan tetap jalan
      * walau JavaScript dimatikan.
+     *
+     * Titik-titik pada tanggal diambil dari jadwal milik pengguna yang sedang
+     * login, lewat peta per hari milik App\Support\DaftarJadwal — sama persis
+     * dengan sumber yang dipakai kartu "Jadwal Hari Ini" dan halaman Jadwal.
+     * Karena jadwal disimpan sebagai "hari dalam seminggu" plus jam, satu tanggal
+     * di kalender hanya bisa diisi dari jadwal di hari dalam seminggu yang sama;
+     * itu sebabnya peta per hari cukup, tanpa satu query per tanggal.
+     *
+     * Hanya jadwal milik pengguna sendiri yang tampil. Kalender di dashboard
+     * bukan pengingat jadwal orang lain, jadi tidak ada yang perlu disembunyikan
+     * dengan filter di sini.
      */
     private function kalender(Request $request): array
     {
         $bulan = $this->bulanTerpilih($request->query('bulan'));
 
-        $awal = $bulan->copy()->startOfMonth();
-        $akhir = $bulan->copy()->endOfMonth();
-        $jumlahHari = (int) $akhir->day;
+        $peta = DaftarJadwal::jadwalMinggu($request->user()?->getKey());
 
-        // Acara dummy, dikunci ke tanggal 3/12/19/26. Angkanya dibatasi dengan
-        // min() supaya tidak keluar dari bulan yang hanya punya 28/29/30 hari.
-        $acara = [
-            min(3, $jumlahHari) => 'Kuis Pemrograman',
-            min(12, $jumlahHari) => 'Ulangan Matematika',
-            min(19, $jumlahHari) => 'Deadline Project',
-            min(26, $jumlahHari) => 'Diskusi Kelompok',
-        ];
+        $awal = $bulan->copy()->startOfMonth();
+        $jumlahHari = (int) $awal->copy()->endOfMonth()->day;
 
         // Hari dalam seminggu dimulai dari Minggu (0). Sel kosong di depan
         // supaya tanggal 1 jatuh di kolom yang benar, dan baris terakhir
@@ -300,27 +384,23 @@ class DashboardController extends Controller
         $jumlahSel = (int) (ceil(($geser + $jumlahHari) / 7) * 7);
 
         // Jangkar grid adalah tanggal 1 bulan ini yang digeser mundur sebanyak
-        // kolom kosong. Kalau memakai tanggal hari ini sebagai jangkar, grid
-        // akan selalu mulai dari tanggal yang sama, berapa pun bulan yang
-        // sedang dibuka.
+        // kolom kosong. Kalau memakai tanggal hari ini sebagai jangkar, grid akan
+        // selalu mulai dari tanggal yang sama, berapa pun bulan yang sedang
+        // dibuka.
         $jangkar = $awal->copy()->subDays($geser);
 
         $sel = [];
+
         for ($i = 0; $i < $jumlahSel; $i++) {
             $hari = $jangkar->copy()->addDays($i);
             $dalamBulan = $hari->month === $awal->month;
-            $hariIni = $hari->isSameDay(now());
+            $jadwalHari = $dalamBulan ? ($peta[(int) $hari->dayOfWeek] ?? []) : [];
 
             $sel[] = [
                 'angka' => (int) $hari->day,
                 'dalam_bulan' => $dalamBulan,
-                'hari_ini' => $hariIni,
-                'acara' => match (true) {
-                    ! $dalamBulan => null,
-                    isset($acara[$hari->day]) => $acara[$hari->day],
-                    $hariIni => 'Belajar hari ini',
-                    default => null,
-                },
+                'hari_ini' => $hari->isSameDay(now()),
+                'acara' => $jadwalHari === [] ? null : $this->ringkasAcara($jadwalHari),
             ];
         }
 
@@ -331,6 +411,24 @@ class DashboardController extends Controller
             'sebelumnya' => route('user.dashboard', ['bulan' => $bulan->copy()->subMonth()->format('Y-m')]),
             'berikutnya' => route('user.dashboard', ['bulan' => $bulan->copy()->addMonth()->format('Y-m')]),
         ];
+    }
+
+    /**
+     * Satu kalimat ringkas untuk tooltip tanggal yang ada jadwalnya.
+     *
+     * Sel kalender cuma punya ruang untuk beberapa karakter, jadi judul semua
+     * jadwal di hari itu digabung. Kalau hanya satu, judulnya tampil utuh.
+     *
+     * @param  array<int, array<string, mixed>>  $jadwal
+     */
+    private function ringkasAcara(array $jadwal): string
+    {
+        $judul = array_map(fn (array $baris) => $baris['judul'], $jadwal);
+        $sisa = count($judul) - 1;
+
+        return $sisa > 0
+            ? $judul[0].' +'.$sisa
+            : $judul[0];
     }
 
     /**
@@ -350,40 +448,20 @@ class DashboardController extends Controller
     }
 
     /**
-     * Avatar + nama untuk penulis materi, pembuat quiz, atau peringkat.
-     *
-     * Warnanya diambil dari User::warnaAvatar() supaya warna avatar konsisten
-     * di seluruh aplikasi tanpa kolom avatar di database.
-     *
-     * Catatan: warnaAvatar() saat ini mengembalikan daftar posisional
-     * ([0 => terang, 1 => gelap]), bukan ['warna' =>, 'warna_gelap' =>]
-     * seperti di docblock-nya. Helper ini menerima dua-duanya supaya tetap
-     * aman kalau nanti bentuknya dirapikan.
-     */
-    private function orang(string $nama): array
-    {
-        $user = new User(['nama' => $nama]);
-        $warna = $user->warnaAvatar();
-
-        return [
-            'nama' => $nama,
-            'inisial' => $user->inisial(),
-            'warna' => $warna['warna'] ?? $warna[0] ?? '#a78bfa',
-            'warna_gelap' => $warna['warna_gelap'] ?? $warna[1] ?? '#6c4de6',
-        ];
-    }
-
-    /**
      * Streak belajar harian.
-     * "aktif" = true saat pengguna membaca materi atau mengerjakan
-     * soal pada hari ini. Kalau sehari penuh tidak ada aktivitas
-     * (misal 1 hari beruntun kosong) streak-nya padam dan tampil abu.
+     *
+     * Dihitung oleh App\Support\AktivitasHarian dari tabel yang ditulis setiap kali
+     * pengguna membuka halaman baca materi atau menyimpan jawaban soal. Jadi
+     * angkanya benar-benar berasal dari kegiatannya, bukan sekadar tanggal hari
+     * ini: "aktif" hanya true kalau kegiatan terakhirnya masih dalam 24 jam
+     * terakhir.
+     *
+     * Setelah 24 jam penuh tanpa kegiatan, streak() mengembalikan 0 dan aktif
+     * false, sehingga angka yang masih terlihat di banner langsung hilang dan
+     * tampil abu.
      */
-    private function streak(): array
+    private function streak(?User $pengguna): array
     {
-        return [
-            'jumlah' => 1,
-            'aktif' => true,
-        ];
+        return AktivitasHarian::streak($pengguna);
     }
 }

@@ -10,10 +10,15 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 /**
  * Notifikasi milik satu pengguna (tabel tb_notifikasi).
  *
- * Yang menulisnya hanya admin, lewat App\Support\NotifikasiKonten, setiap
- * kali ia menerbitkan materi atau quiz dari menu "Konten Pembelajaran".
- * Tidak ada notifikasi lain di aplikasi, jadi satu tabel ini adalah satu-
- * satunya sistem notifikasi — bukan tambahan kedua.
+ * Satu tabel ini dipakai dua lonceng sekaligus dan keduanya menulis ke
+ * tempat yang sama:
+ *
+ *   - lonceng admin, lewat App\Support\NotifikasiAdmin: karya sendiri yang
+ *     terbit atau disimpan sebagai draft, hasil kuis baru, dan karya pengguna
+ *     yang menunggu diperiksa;
+ *   - lonceng pengguna, lewat App\Support\NotifikasiKonten: konten baru yang
+ *     ditayangkan, keputusan admin atas karyanya sendiri, dan hasil quiz
+ *     yang baru selesai dikerjakan.
  *
  * Yang disimpan di sini bukan salinan isi konten, tapi koordinatnya: jenis
  * notifikasi, judul, pesan, dan tautan ke konten asalnya. Isi materi atau
@@ -44,7 +49,8 @@ class Notifikasi extends Model
      * mematikan saklarnya di Pengaturan benar-benar menghentikan notifikasi
      * jenis itu.
      */
-    /** Admin menerbitkaryanya sendiri. */
+
+    /** Admin menerbitkan karyanya sendiri. */
     public const JENIS_KONTEN_TERBIT = 'konten_terbit';
 
     /** Admin menyimpan karyanya sebagai draft. */
@@ -56,7 +62,21 @@ class Notifikasi extends Model
     /** Karya pengguna yang menunggu diperiksa admin. */
     public const JENIS_KONTEN_MENUNGGU = 'konten_menunggu';
 
-    /** Dua jenis yang pernah ada, untuk dropdown dan validasi. */
+    /*
+     * Tiga jenis berikut dikirim ke lonceng pemilik karyanya sendiri, bukan
+     * ke lonceng admin. Semuanya ditulis oleh App\Support\NotifikasiKonten.
+     */
+
+    /** Admin menyetujui materi atau quiz milik pengguna ini. */
+    public const JENIS_KARYA_DISETUJUI = 'karya_disetujui';
+
+    /** Admin menolak karya milik pengguna ini, beserta alasannya. */
+    public const JENIS_KARYA_DITOLAK = 'karya_ditolak';
+
+    /** Pengguna selesai mengerjakan quiz, hasilnya sudah tersimpan. */
+    public const JENIS_QUIZ_SELESAI = 'quiz_selesai';
+
+    /** Sembilan jenis untuk dropdown dan validasi. */
     public const JENIS_TERSEDIA = [
         self::JENIS_MATERI_BARU,
         self::JENIS_QUIZ_BARU,
@@ -64,6 +84,9 @@ class Notifikasi extends Model
         self::JENIS_KONTEN_DRAFT,
         self::JENIS_HASIL_KUIS,
         self::JENIS_KONTEN_MENUNGGU,
+        self::JENIS_KARYA_DISETUJUI,
+        self::JENIS_KARYA_DITOLAK,
+        self::JENIS_QUIZ_SELESAI,
     ];
 
     /**
@@ -82,6 +105,9 @@ class Notifikasi extends Model
         self::JENIS_KONTEN_DRAFT => 'file-teks',
         self::JENIS_HASIL_KUIS => 'piala',
         self::JENIS_KONTEN_MENUNGGU => 'jam',
+        self::JENIS_KARYA_DISETUJUI => 'centang',
+        self::JENIS_KARYA_DITOLAK => 'silang',
+        self::JENIS_QUIZ_SELESAI => 'piala',
     ];
 
     /**
@@ -97,6 +123,17 @@ class Notifikasi extends Model
 
     /** Nilai kolom konten_tipe untuk quiz. */
     public const KONTEN_QUIZ = 'quiz';
+
+    /**
+     * Nilai kolom konten_tipe untuk satu pengerjaan quiz.
+     *
+     * Bedanya dengan KONTEN_QUIZ penting: pada KONTEN_QUIZ, konten_id menunjuk
+     * ke quiz-nya (halaman "mulai"), sedangkan di sini konten_id menunjuk ke
+     * tb_pengerjaan_quiz (halaman rincian jawaban milik pengguna itu sendiri).
+     * Satu jenis notifikasi saja yang memakai nilai ini, yaitu kabar bahwa
+     * hasil kuis sudah tersimpan.
+     */
+    public const KONTEN_PENGERJAAN = 'pengerjaan';
 
     /**
      * Nama tabel tidak mengikuti default Laravel ("notifications").
@@ -167,6 +204,10 @@ class Notifikasi extends Model
         return match ($this->konten_tipe) {
             self::KONTEN_MATERI => Materi::query()->find($this->konten_id),
             self::KONTEN_QUIZ => Quiz::query()->find($this->konten_id),
+            self::KONTEN_PENGERJAAN => PengerjaanQuiz::query()
+                ->whereKey($this->konten_id)
+                ->where('pengguna_id', $this->pengguna_id)
+                ->first(),
             default => null,
         };
     }

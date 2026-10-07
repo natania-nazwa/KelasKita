@@ -12,6 +12,7 @@ use App\Support\SesiAdmin;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
 /**
@@ -162,6 +163,51 @@ class PengaturanAdminTest extends TestCase
                 'email' => $admin->email,
             ])
             ->assertSessionHasErrors('nama');
+    }
+
+    public function test_foto_profil_admin_dapat_dihapus_dan_avatar_kembali_ke_inisial(): void
+    {
+        Storage::fake('public');
+
+        $admin = $this->buatAdmin(['foto_profil' => 'foto-profil/admin-lama.png']);
+        Storage::disk('public')->put('foto-profil/admin-lama.png', 'lama');
+
+        $this->actingAs($admin)
+            ->delete(route('admin.pengaturan.profil.foto.destroy'))
+            ->assertRedirect(route('admin.pengaturan'))
+            ->assertSessionHas('sukses', 'Foto profil berhasil dihapus.');
+
+        $setelah = $admin->fresh();
+
+        $this->assertNull($setelah->foto_profil);
+        $this->assertNull($setelah->fotoProfilUrl());
+        Storage::disk('public')->assertMissing('foto-profil/admin-lama.png');
+
+        // Akun adminnya sendiri tidak ikut rusak: nama, email, dan peran tetap.
+        $this->assertSame('Admin KelasKita', $setelah->nama);
+        $this->assertSame('admin@example.com', $setelah->email);
+        $this->assertSame(User::PERAN_ADMIN, $setelah->peran);
+    }
+
+    public function test_menghapus_foto_admin_yang_tidak_punya_foto_menghasilkan_404(): void
+    {
+        $admin = $this->buatAdmin();
+
+        $this->actingAs($admin)
+            ->delete(route('admin.pengaturan.profil.foto.destroy'))
+            ->assertNotFound();
+    }
+
+    public function test_pengguna_biasa_tidak_bisa_menghapus_foto_admin(): void
+    {
+        $pengguna = $this->buatPengguna();
+        $admin = $this->buatAdmin(['foto_profil' => 'foto-profil/admin.png']);
+
+        $this->actingAs($pengguna)
+            ->delete(route('admin.pengaturan.profil.foto.destroy'))
+            ->assertForbidden();
+
+        $this->assertSame('foto-profil/admin.png', $admin->fresh()->foto_profil);
     }
 
     /* ================================================================
@@ -505,6 +551,68 @@ class PengaturanAdminTest extends TestCase
                 'aktif' => '1',
             ])
             ->assertSessionHasErrors('slug');
+    }
+
+    public function test_mata_pelajaran_yang_sudah_ada_bisa_diubah(): void
+    {
+        $admin = $this->buatAdmin();
+        $pelajaran = Pelajaran::create([
+            'nama' => 'Matematika',
+            'slug' => 'matematika',
+            'aktif' => true,
+        ]);
+
+        $this->actingAs($admin)
+            ->put(route('admin.pengaturan.pelajaran.update', $pelajaran), [
+                'nama' => 'Matematika Dasar',
+                'deskripsi' => 'Angka dasar.',
+                'aktif' => '0',
+            ])
+            ->assertRedirect(route('admin.pengaturan.pelajaran'))
+            ->assertSessionHas('sukses');
+
+        $setelah = $pelajaran->fresh();
+
+        $this->assertSame('Matematika Dasar', $setelah->nama);
+        $this->assertSame('Angka dasar.', $setelah->deskripsi);
+        $this->assertFalse((bool) $setelah->aktif);
+
+        // Form ubah tidak punya kolom kode, jadi slug lama harus utuh.
+        // Kalau ikut kosong, semua tautan filter yang sudah dibagikan mati.
+        $this->assertSame('matematika', $setelah->slug);
+    }
+
+    public function test_mata_pelajaran_yang_diubah_tidak_bisa_memakai_kode_milik_yang_lain(): void
+    {
+        $admin = $this->buatAdmin();
+        Pelajaran::create(['nama' => 'UI UX', 'slug' => 'ui-ux', 'aktif' => true]);
+        $pelajaran = Pelajaran::create(['nama' => 'Desain', 'slug' => 'desain', 'aktif' => true]);
+
+        $this->actingAs($admin)
+            ->from(route('admin.pengaturan.pelajaran'))
+            ->put(route('admin.pengaturan.pelajaran.update', $pelajaran), [
+                'nama' => 'Desain Grafis',
+                'slug' => 'ui-ux',
+                'aktif' => '1',
+            ])
+            ->assertSessionHasErrors('slug');
+
+        $this->assertSame('desain', $pelajaran->fresh()->slug);
+    }
+
+    public function test_pengguna_biasa_tidak_bisa_mengubah_mata_pelajaran(): void
+    {
+        $pengguna = $this->buatPengguna();
+        $pelajaran = Pelajaran::create(['nama' => 'Matematika', 'slug' => 'matematika', 'aktif' => true]);
+
+        $this->actingAs($pengguna)
+            ->put(route('admin.pengaturan.pelajaran.update', $pelajaran), [
+                'nama' => 'Diubah',
+                'aktif' => '1',
+            ])
+            ->assertForbidden();
+
+        $this->assertSame('Matematika', $pelajaran->fresh()->nama);
     }
 
     public function test_mata_pelajaran_yang_dipakai_tidak_bisa_dihapus(): void

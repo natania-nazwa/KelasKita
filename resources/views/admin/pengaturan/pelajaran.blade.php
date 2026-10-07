@@ -136,7 +136,7 @@
 
                             @if ($pelajaran->materi_count === 0 && $pelajaran->quiz_count === 0)
                                 <button type="button" class="ad-tombol ad-tombol--halus ad-tombol--kecil"
-                                    data-dialog-hapus-buka
+                                    data-hapus-buka
                                     data-hapus-judul="Hapus {{ $pelajaran->nama }}?"
                                     data-hapus-aksi="{{ route('admin.pengaturan.pelajaran.destroy', $pelajaran) }}">
                                     <x-admin.ikon nama="sampah" ukuran="w-3.5 h-3.5" />

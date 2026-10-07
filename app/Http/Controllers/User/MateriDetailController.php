@@ -5,8 +5,10 @@ namespace App\Http\Controllers\User;
 use App\Http\Controllers\Controller;
 use App\Models\Materi;
 use App\Models\SimpananMateri;
+use App\Support\AktivitasHarian;
 use App\Support\DaftarMateri;
 use App\Support\DetailMateri;
+use App\Support\MateriDibaca;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 
@@ -34,6 +36,25 @@ class MateriDetailController extends Controller
          * langsung menampilkan angka terbarunya tanpa query kedua.
          */
         $item->increment('jumlah_dilihat');
+
+        /*
+         * Membaca materi adalah satu dari dua kegiatan yang menyalakan
+         * streak, jadi setiap pembukaan halaman baca dicatat di sini.
+         * Satu hari punya paling banyak satu baris per jenis, jadi membuka
+         * materi yang sama berulang kali tidak menambah apa pun.
+         */
+        AktivitasHarian::bacaMateri($request->user());
+
+        /*
+         * Yang kedua: materi ini masuk daftar "sudah dibaca" milik pengguna.
+         *
+         * Berbeda dari streak di atas, yang ini mengingat materi mana, bukan
+         * cuma hari apa — itulah yang membuat kartu "Progress Belajar" bisa
+         * menghitung berapa materi yang benar-benar sudah diselesaikan. Satu
+         * baris per pasangan pengguna + materi, jadi membuka ulang halaman
+         * yang sama tidak menambah apa pun.
+         */
+        MateriDibaca::catat($request->user(), $item);
 
         /*
          * Status tombol Simpan. Satu query untuk pasangan pengguna +

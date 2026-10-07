@@ -77,7 +77,6 @@ class QuizContohSeeder extends Seeder
                 'nama' => self::PEMBUAT['nama'],
                 'kata_sandi' => 'password',
                 'peran' => User::PERAN_USER,
-                'aktif' => true,
             ]
         )->getKey();
     }

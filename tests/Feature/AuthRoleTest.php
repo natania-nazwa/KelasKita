@@ -11,9 +11,9 @@ class AuthRoleTest extends TestCase
     use RefreshDatabase;
 
     /**
-     * actingAs() memakai objek model yang ada di memory.zjermel
-     * Kita refresh() supaya atribut seperti "aktif" terisi dari database,
-     * meniru kondisi guard saat request HTTP sungguhan.
+     * actingAs() memakai objek model yang ada di memory.
+     * Kita refresh() supaya atribut seperti "terakhir_aktivitas" terisi dari
+     * database, meniru kondisi guard saat request HTTP sungguhan.
      */
     private function buatPengguna(array $atribut = []): User
     {
@@ -76,28 +76,32 @@ class AuthRoleTest extends TestCase
         }
     }
 
-    public function test_akun_nonaktif_tidak_bisa_login(): void
+    public function test_akun_yang_lama_tidak_membuka_tetap_bisa_login(): void
     {
-        $this->buatPengguna(['aktif' => false]);
+        // Status aktif tidak lagi jadi gerbang: akun yang lama tidak kembali
+        // tetap bisa masuk, dan kunjungannya sendiri yang membuatnya terbaca
+        // aktif lagi.
+        $pengguna = $this->buatPengguna();
+        $pengguna->forceFill(['terakhir_aktivitas' => now()->subHours(48)])->save();
 
         $this->post('/login', [
             'email' => 'budi@example.com',
             'password' => 'rahasia123',
-        ])->assertSessionHasErrors('email');
+        ])->assertRedirect();
 
-        $this->assertGuest();
+        $this->assertAuthenticated();
     }
 
-    public function test_akun_nonaktif_ditolak_di_admin(): void
+    public function test_akun_yang_lama_tidak_membuka_tetap_masuk_admin(): void
     {
         $admin = $this->buatPengguna([
             'nama' => 'Pemilik',
             'email' => 'admin@example.com',
             'peran' => 'admin',
-            'aktif' => false,
         ]);
+        $admin->forceFill(['terakhir_aktivitas' => now()->subHours(48)])->save();
 
-        $this->actingAs($admin)->get('/admin/dashboard')->assertForbidden();
+        $this->actingAs($admin)->get('/admin/dashboard')->assertOk();
     }
 
     public function test_admin_diarahkan_ke_dashboard_admin_setelah_login(): void

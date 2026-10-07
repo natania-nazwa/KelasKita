@@ -220,7 +220,6 @@ class QuizSeeder extends Seeder
                 'email' => $email,
                 'kata_sandi' => 'password',
                 'peran' => $nama === 'Admin' ? User::PERAN_ADMIN : User::PERAN_USER,
-                'aktif' => true,
             ])->getKey();
         }
 

@@ -44,6 +44,24 @@ class PenggunaHalamanTest extends TestCase
         ]);
     }
 
+    /**
+     * Pengguna yang sudah lewat batas 24 jam sejak terakhir membuka aplikasi.
+     *
+     * Status aktif dihitung dari kolom "terakhir_aktivitas", bukan lagi kolom
+     * boolean yang bisa diisi saat membuat model. Jadi untuk membuat akun
+     * nonaktif, waktunya yang digeser ke belakang, bukan "aktif" yang di-set.
+     */
+    private function buatNonaktif(array $atribut = []): User
+    {
+        $pengguna = $this->buatPengguna($atribut);
+
+        $pengguna->forceFill([
+            'terakhir_aktivitas' => now()->subHours(User::BATAS_AKTIF_JAM + 1),
+        ])->save();
+
+        return $pengguna;
+    }
+
     private function buatPelajaran(string $nama = 'Matematika'): Pelajaran
     {
         return Pelajaran::firstOrCreate(['slug' => str($nama)->slug()->value()], [
@@ -253,10 +271,9 @@ class PenggunaHalamanTest extends TestCase
     public function test_detail_menandai_peran_dan_status_dari_data_bukan_dari_tebakan(): void
     {
         $admin = $this->buatAdmin();
-        $siswa = $this->buatPengguna([
+        $siswa = $this->buatNonaktif([
             'nama' => 'Sari',
             'email' => 'sari@example.com',
-            'aktif' => false,
         ]);
 
         $detail = $this->actingAs($admin)->get(route('admin.pengguna'))->viewData('detail');
@@ -269,6 +286,24 @@ class PenggunaHalamanTest extends TestCase
         $this->assertSame('Admin', $detail[$admin->getKey()]['peran_label']);
         $this->assertTrue($detail[$admin->getKey()]['aktif']);
         $this->assertSame('Aktif', $detail[$admin->getKey()]['status_label']);
+    }
+
+    public function test_detail_status_menyertakan_keterangan_berapa_lama(): void
+    {
+        $admin = $this->buatAdmin();
+        $siswa = $this->buatNonaktif([
+            'nama' => 'Sari',
+            'email' => 'sari@example.com',
+        ]);
+
+        $detail = $this->actingAs($admin)->get(route('admin.pengguna'))->viewData('detail');
+
+        // "Berapa lama" disusun di server dan ikut dikirim ke dialog detail,
+        // supaya teks bahasa Indonesianya punya satu sumber saja.
+        $this->assertSame(
+            'Terakhir membuka 1 hari lalu',
+            $detail[$siswa->getKey()]['aktivitas'],
+        );
     }
 
     public function test_detail_cuma_berisi_pengguna_di_halaman_itu_saja(): void
@@ -335,12 +370,10 @@ class PenggunaHalamanTest extends TestCase
         $this->buatPengguna([
             'nama' => 'Sari',
             'email' => 'sari@example.com',
-            'aktif' => true,
         ]);
-        $this->buatPengguna([
+        $this->buatNonaktif([
             'nama' => 'Rina',
             'email' => 'rina@example.com',
-            'aktif' => false,
         ]);
 
         $this->actingAs($admin)
@@ -367,10 +400,9 @@ class PenggunaHalamanTest extends TestCase
     {
         $admin = $this->buatAdmin();
 
-        $this->buatPengguna([
+        $this->buatNonaktif([
             'nama' => 'Sari',
             'email' => 'sari@example.com',
-            'aktif' => false,
         ]);
 
         // Admin nonaktif tidak boleh muncul di sini, sedangkan admin aktif
@@ -428,12 +460,10 @@ class PenggunaHalamanTest extends TestCase
         $this->buatPengguna([
             'nama' => 'Sari',
             'email' => 'sari@example.com',
-            'aktif' => true,
         ]);
-        $this->buatPengguna([
+        $this->buatNonaktif([
             'nama' => 'Rina',
             'email' => 'rina@example.com',
-            'aktif' => false,
         ]);
 
         // Tab dihitung setelah filter status: dari dua siswa, yang nonaktif
@@ -455,12 +485,10 @@ class PenggunaHalamanTest extends TestCase
         $this->buatPengguna([
             'nama' => 'Sari',
             'email' => 'sari@example.com',
-            'aktif' => true,
         ]);
-        $this->buatPengguna([
+        $this->buatNonaktif([
             'nama' => 'Rina',
             'email' => 'rina@example.com',
-            'aktif' => false,
         ]);
 
         $tab = $this->actingAs($admin)
@@ -479,12 +507,10 @@ class PenggunaHalamanTest extends TestCase
         $this->buatPengguna([
             'nama' => 'Sari',
             'email' => 'sari@example.com',
-            'aktif' => true,
         ]);
-        $this->buatPengguna([
+        $this->buatNonaktif([
             'nama' => 'Rina',
             'email' => 'rina@example.com',
-            'aktif' => false,
         ]);
 
         $statistik = $this->actingAs($admin)->get(route('admin.pengguna'))->viewData('statistik');
@@ -575,25 +601,43 @@ class PenggunaHalamanTest extends TestCase
 
     /*
      * =================================================================
-     * Batas halaman: read-only
+     * Aksi: hapus saja, tanpa ubah peran dan tanpa tombol status
      * =================================================================
      */
 
-    public function test_halaman_tidak_menawarkan_aksi_yang_mengubah_akun(): void
+    public function test_halaman_menawarkan_aksi_hapus_tanpa_ubah_peran_atau_status(): void
     {
         $admin = $this->buatAdmin();
-        $this->buatPengguna();
+        $siswa = $this->buatPengguna(['nama' => 'Sari', 'email' => 'sari@example.com']);
 
         $html = $this->actingAs($admin)->get(route('admin.pengguna'))->assertOk()->getContent();
 
-        /*
-         * Form di halaman ini semuanya form GET: pencarian dan form filter.
-         * Layout admin memang memakai form POST untuk logout, jadi yang
-         * diperiksa di sini bukan keberadaan CSRF token, melainkan tidak
-         * adanya jalur POST yang mengubah akun pengguna.
-         */
-        $this->assertStringNotContainsString('@method', $html);
-        $this->assertStringNotContainsString('form-hapus-pengguna', $html);
+        // Akun orang lain bisa dihapus.
+        $this->assertStringContainsString('data-hapus-buka', $html);
+        $this->assertStringContainsString(route('admin.pengguna.destroy', $siswa), $html);
+
+        // Status aktif tidak lagi bisa diubah manual: tidak ada tombolnya.
+        $this->assertStringNotContainsString('Nonaktifkan', $html);
+        $this->assertStringNotContainsString('Aktifkan', $html);
+
+        // Ubah peran tetap sengaja tidak ada.
         $this->assertStringNotContainsString('Ubah Peran', $html);
+    }
+
+    public function test_akun_sendiri_tidak_ditawarkan_tombol_hapus(): void
+    {
+        $admin = $this->buatAdmin();
+        $this->buatPengguna(['nama' => 'Sari', 'email' => 'sari@example.com']);
+
+        $html = $this->actingAs($admin)->get(route('admin.pengguna'))->assertOk()->getContent();
+
+        // Akun admin sendiri tidak boleh punya jalur hapus.
+        $this->assertStringNotContainsString(
+            route('admin.pengguna.destroy', $admin),
+            $html,
+        );
+
+        // Alasannya ditulis supaya tidak terlihat seperti tombol yang hilang.
+        $this->assertStringContainsString('Akun Anda sendiri tidak bisa dihapus.', $html);
     }
 }

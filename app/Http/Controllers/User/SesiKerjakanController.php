@@ -11,7 +11,9 @@ use App\Models\SesiQuiz;
 use App\Models\Soal;
 use App\Models\SoalRagu;
 use App\Models\User;
+use App\Support\AktivitasHarian;
 use App\Support\NotifikasiAdmin;
+use App\Support\NotifikasiKonten;
 use App\Support\Penilaian;
 use App\Support\PenjagaSesi;
 use App\Support\SesiAktif;
@@ -357,11 +359,24 @@ class SesiKerjakanController extends Controller
             $pengerjaan->selesai_pada = now();
             $pengerjaan->save();
 
+            /*
+             * Menjawab soal adalah kegiatan belajar yang menyalakan streak.
+             * Dicatat di sini, bukan saat membuka halaman soal, supaya membuka
+             * halaman tanpa menjawab tidak dihitung sebagai belajar.
+             */
+            AktivitasHarian::kerjakanQuiz($pengguna);
+
             // Hasil kuis yang baru selesai diberi tahu ke admin, selama admin
             // masih ingin menerima kabar itu. Saklarnya ada di Pengaturan
             // admin, jadi mematikan "Ada hasil kuis baru" benar-benar membuat
             // baris notifikasi ini tidak pernah dibuat.
             NotifikasiAdmin::hasilKuisBaru($pengerjaan);
+
+            /*
+             * Pesertanya sendiri diberi tahu bahwa nilainya sudah tersimpan di
+             * menu Hasil, lengkap dengan tautan ke rincian jawabannya.
+             */
+            NotifikasiKonten::quizSelesai($pengerjaan, $pengguna);
         }
 
         $sesi->peserta()

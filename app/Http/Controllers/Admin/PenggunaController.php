@@ -8,6 +8,7 @@ use App\Models\Quiz;
 use App\Models\User;
 use App\Support\StatistikAdmin;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\View\View;
@@ -15,10 +16,17 @@ use Illuminate\View\View;
 /**
  * Halaman "Pengguna": daftar semua akun yang memakai KelasKita.
  *
- * Halaman ini murni membaca. Tidak ada tombol yang mengubah akun apa pun:
- * tidak ada edit, tidak ada ubah peran, tidak ada hapus. Management peran
- * sengaja tidak dibuat — saat ini hanya ada dua peran (ADMIN dan USER) dan
- * hanya ada satu admin, jadi tidak ada apa pun yang perlu dikelola.
+ * Halaman ini membaca daftar sekaligus menyediakan satu aksi: hapus akun.
+ * Status aktif tidak lagi di sini — tidak ada tombol yang mengubahnya, karena
+ * aktif/nonaktif kini dihitung otomatis dari kapan terakhir pengguna membuka
+ * aplikasi (lihat App\Http\Middleware\CatatAktivitasPengguna). Ubah peran juga
+ * sengaja tidak ada: hanya ada dua peran (ADMIN dan USER).
+ *
+ * Penjagaan hapus, ditegakkan di controller dan bukan hanya dengan
+ * menyembunyikan tombol di view:
+ *   - akun sendiri tidak bisa dihapus, supaya admin tidak menghapus dirinya;
+ *   - admin terakhir tidak bisa dihapus, supaya platform tidak pernah
+ *     kehabisan admin.
  */
 class PenggunaController extends Controller
 {
@@ -92,7 +100,76 @@ class PenggunaController extends Controller
             'statistik' => $this->statistik(),
             'ringkasan' => $this->ringkasan(),
             'detail' => $this->detail($daftar),
+            'aksi' => $this->aksi($daftar, $request->user()),
         ]);
+    }
+
+    /**
+     * Hapus satu akun beserta data yang menggantung padanya.
+     *
+     * Sebagian besar tabel memakai cascadeOnDelete, jadi quiz, pengerjaan,
+     * jawaban, jadwal, simpanan, notifikasi, dan riwayat login ikut terhapus.
+     * Materi tidak: kolom pembuatnya nullOnDelete, jadi materinya tetap ada
+     * sebagai konten tanpa pemilik, bukan ikut hilang dari halaman pengguna.
+     */
+    public function destroy(Request $request, User $pengguna): RedirectResponse
+    {
+        $alasan = $this->terkunci($pengguna, $request->user());
+
+        if ($alasan !== null) {
+            return back()->with('galat', $alasan);
+        }
+
+        $nama = $pengguna->nama;
+
+        $pengguna->delete();
+
+        return back()
+            ->with('sukses', 'Akun dihapus')
+            ->with('suksesDetail', $nama.' dan data yang menggantung padanya sudah dihapus.');
+    }
+
+    /**
+     * Alasan sebuah akun tidak boleh dihapus, atau null kalau boleh.
+     *
+     * Dipakai baik oleh controller (sumber kebenaran penjagaan) maupun oleh
+     * view (untuk menyembunyikan tombol), jadi aturannya tidak mungkin
+     * berbeda antara apa yang terlihat dan apa yang benar-benar diizinkan.
+     */
+    private function terkunci(User $pengguna, ?User $penggunaSaatIni): ?string
+    {
+        if ($penggunaSaatIni !== null && $pengguna->is($penggunaSaatIni)) {
+            return 'Akun Anda sendiri tidak bisa dihapus.';
+        }
+
+        if ($pengguna->isAdmin() && User::query()->where('peran', User::PERAN_ADMIN)->count() <= 1) {
+            return 'Admin satu-satunya tidak bisa dihapus.';
+        }
+
+        return null;
+    }
+
+    /**
+     * Peta aturan aksi per id pengguna, dikunci dengan id.
+     *
+     * View membacanya untuk memutuskan tombol mana yang tampil dan alasan apa
+     * yang ditulis sebagai gantinya. Dihitung sekali untuk seluruh halaman,
+     * bukan sekali per baris.
+     *
+     * @param  LengthAwarePaginator<int, User>  $daftar
+     * @return array<int|string, array{alasan: string|null}>
+     */
+    private function aksi(LengthAwarePaginator $daftar, ?User $penggunaSaatIni): array
+    {
+        $hasil = [];
+
+        foreach ($daftar as $pengguna) {
+            $hasil[$pengguna->getKey()] = [
+                'alasan' => $this->terkunci($pengguna, $penggunaSaatIni),
+            ];
+        }
+
+        return $hasil;
     }
 
     /**
@@ -122,7 +199,7 @@ class PenggunaController extends Controller
          */
         $tren = StatistikAdmin::perubahanBaru(User::query());
 
-        $aktif = (int) User::query()->where('aktif', true)->count();
+        $aktif = (int) User::query()->aktif()->count();
 
         return [
             'total' => $tren['total'],
@@ -228,8 +305,8 @@ class PenggunaController extends Controller
      * Tab filter status, lengkap dengan jumlahnya.
      *
      * Jumlah dihitung setelah filter peran. Tab "Nonaktif" tidak dihitung
-     * dengan query sendiri: kolom "aktif" menyimpan boolean, jadi menjumlahkan
-     * tab Aktif dan tab Semua sudah menghasilkan sisanya.
+     * dengan query sendiri: yang aktif dihitung lewat scope, sisanya dari
+     * tab "Semua" dikurangi tab "Aktif".
      *
      * @return array<string, array{label: string, nilai: string, jumlah: int, href: string}>
      */
@@ -239,7 +316,7 @@ class PenggunaController extends Controller
 
         $jumlah = [
             'semua' => (int) (clone $query)->count(),
-            'aktif' => (int) (clone $query)->where('aktif', true)->count(),
+            'aktif' => (int) (clone $query)->aktif()->count(),
         ];
 
         $label = [
@@ -306,6 +383,14 @@ class PenggunaController extends Controller
                 'aktif' => $pengguna->isAktif(),
                 'status_label' => $pengguna->isAktif() ? 'Aktif' : 'Nonaktif',
 
+                /*
+                 * "Berapa lama" disusun server, bukan di JavaScript: teks
+                 * bahasa Indonesianya butuh perhitungan waktu, dan formatnya
+                 * lebih baik punya satu sumber saja. Yang belum pernah masuk
+                 * dapat kalimat sendiri, bukan "0 menit lalu".
+                 */
+                'aktivitas' => $pengguna->aktivitasLabel(),
+
                 'bergabung' => $pengguna->created_at?->translatedFormat('d M Y') ?? '-',
                 'bergabung_jam' => $pengguna->created_at?->format('H:i') ?? '',
 
@@ -349,9 +434,9 @@ class PenggunaController extends Controller
         );
 
         return $query->when($status === 'aktif',
-            fn (Builder $saring) => $saring->where('aktif', true))
+            fn (Builder $saring) => $saring->aktif())
             ->when($status === 'nonaktif',
-                fn (Builder $saring) => $saring->where('aktif', false));
+                fn (Builder $saring) => $saring->nonaktif());
     }
 
     /**

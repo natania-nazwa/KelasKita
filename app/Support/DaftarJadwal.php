@@ -356,6 +356,16 @@ final class DaftarJadwal
                 continue;
             }
 
+            /*
+             * Yang sedang berlangsung sengaja tidak ikut dihitung sebagai
+             * "akan datang". Kalau ikut, kartu yang berbunyi "3 akan datang"
+             * akan menampilkan pelajaran yang sedang terjadi sebagai salah
+             * satu di antaranya — dua label berbeda untuk satu baris yang sama.
+             */
+            if ($baris['status'] !== self::STATUS_AKAN_DATANG) {
+                continue;
+            }
+
             // Daftar sudah diurutkan berdasarkan jam mulai, jadi pelajaran
             // "akan datang" yang pertama otomatis yang paling dekat.
             $akanDatang++;

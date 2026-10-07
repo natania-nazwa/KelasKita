@@ -393,7 +393,6 @@ class PeringkatDemoSeeder extends Seeder
                 'nama' => $nama,
                 'kata_sandi' => self::KATA_SANDI,
                 'peran' => User::PERAN_USER,
-                'aktif' => true,
             ]
         )->refresh();
     }

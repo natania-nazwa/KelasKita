@@ -96,7 +96,7 @@ final class NotifikasiAdmin
         }
 
         return self::kirim(
-            ke: self::adminAktif(),
+            ke: self::semuaAdmin(),
             jenis: Notifikasi::JENIS_HASIL_KUIS,
             saklar: 'notifikasi_aktivitas_kuis',
             judul: 'Ada hasil kuis baru',
@@ -125,7 +125,7 @@ final class NotifikasiAdmin
         };
 
         return self::kirim(
-            ke: self::adminAktif(),
+            ke: self::semuaAdmin(),
             jenis: Notifikasi::JENIS_KONTEN_MENUNGGU,
             saklar: 'notifikasi_aktivitas_konten',
             judul: 'Konten menunggu ditinjau',
@@ -215,16 +215,19 @@ final class NotifikasiAdmin
     }
 
     /**
-     * Semua admin yang aktif, untuk pemberitahuan yang berlaku buat semua
-     * pengelola.
+     * Semua admin, untuk pemberitahuan yang berlaku buat semua pengelola.
+     *
+     * Status aktif tidak lagi menyaring: dulu admin bisa menonaktifkan
+     * akunnya sendiri untuk berhenti menerima, sekarang status itu sekadar
+     * penanda kapan terakhir membuka aplikasi. Notifikasi tetap tercatat dan
+     * bisa dimatikan lewat saklar preferensi masing-masing.
      *
      * @return array<int, User>
      */
-    private static function adminAktif(): array
+    private static function semuaAdmin(): array
     {
         return User::query()
             ->where('peran', User::PERAN_ADMIN)
-            ->where('aktif', true)
             ->get()
             ->all();
     }

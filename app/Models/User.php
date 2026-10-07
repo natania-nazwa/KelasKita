@@ -5,17 +5,24 @@ namespace App\Models;
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Carbon;
 
 /**
  * User dan admin berada di tabel yang sama (tb_pengguna).
  * Pembeda keduanya hanya kolom "peran".
+ *
+ * Status aktif tidak lagi diubah manual: aktif berarti pengguna membuka
+ * aplikasi dalam 24 jam terakhir, dan itu dibaca dari kolom
+ * "terakhir_aktivitas" yang diperbarui middleware setiap kali pengguna
+ * memuat halaman. Tidak ada tombol admin untuk mengubahnya.
  */
-#[Fillable(['nama', 'email', 'kata_sandi', 'peran', 'aktif', 'foto_profil'])]
+#[Fillable(['nama', 'email', 'kata_sandi', 'peran', 'foto_profil'])]
 #[Hidden(['kata_sandi', 'remember_token'])]
 class User extends Authenticatable
 {
@@ -25,6 +32,14 @@ class User extends Authenticatable
     public const PERAN_USER = 'user';
 
     public const PERAN_ADMIN = 'admin';
+
+    /**
+     * Berapa jam tanpa membuka aplikasi sampai dianggap nonaktif.
+     *
+     * Dua puluh empat jam, sama dengan aturan streak di
+     * App\Support\AktivitasHarian::BATAS_JAM.
+     */
+    public const BATAS_AKTIF_JAM = 24;
 
     /**
      * Nama tabel tidak mengikuti default Laravel ("users").
@@ -50,8 +65,18 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'kata_sandi' => 'hashed',
-            'aktif' => 'boolean',
+            'terakhir_aktivitas' => 'datetime',
         ];
+    }
+
+    /**
+     * Akun baru langsung dihitung aktif: mendaftar berarti membuka aplikasi.
+     */
+    protected static function booted(): void
+    {
+        static::creating(function (User $pengguna): void {
+            $pengguna->terakhir_aktivitas ??= now();
+        });
     }
 
     /**
@@ -62,9 +87,82 @@ class User extends Authenticatable
         return $this->peran === self::PERAN_ADMIN;
     }
 
+    /**
+     * Aktif kalau terakhir membuka aplikasi belum lewat batas 24 jam.
+     *
+     * Dihitung dari waktu, bukan dari kolom tersimpan, supaya statusnya
+     * berubah sendiri tanpa perlu ada yang menjalankan apa pun: begitu
+     * 24 jam lewat tanpa kunjungan, akunnya langsung terbaca nonaktif.
+     */
     public function isAktif(): bool
     {
-        return (bool) $this->aktif;
+        return $this->terakhir_aktivitas !== null
+            && $this->terakhir_aktivitas->greaterThan(now()->subHours(self::BATAS_AKTIF_JAM));
+    }
+
+    /**
+     * Batas waktu paling tua yang masih dihitung aktif.
+     *
+     * Dipakai scope dan isAktif() dari satu definisi, jadi keduanya tidak
+     * mungkin berbeda.
+     */
+    public static function batasAktif(): Carbon
+    {
+        return now()->subHours(self::BATAS_AKTIF_JAM);
+    }
+
+    /**
+     * Hanya pengguna yang membuka aplikasi dalam batas waktu.
+     */
+    public function scopeAktif(Builder $query): Builder
+    {
+        return $query->where('terakhir_aktivitas', '>=', self::batasAktif());
+    }
+
+    /**
+     * Pengguna yang belum pernah membuka aplikasi atau sudah lewat batas.
+     */
+    public function scopeNonaktif(Builder $query): Builder
+    {
+        return $query->where(function (Builder $isi): void {
+            $isi->whereNull('terakhir_aktivitas')
+                ->orWhere('terakhir_aktivitas', '<', self::batasAktif());
+        });
+    }
+
+    /**
+     * Kalimat "berapa lama" dalam bahasa Indonesia untuk dialog detail.
+     *
+     * Locale aplikasi masih "en", jadi diffForHumans() akan keluar bahasa
+     * Inggris. Karena itu durasinya disusun manual, mengikuti cara
+     * DaftarJadwal dan DetailMateri menulis nama hari/bulan.
+     */
+    public function lamaAktivitas(): ?string
+    {
+        if ($this->terakhir_aktivitas === null) {
+            return null;
+        }
+
+        $detik = $this->terakhir_aktivitas->diffInSeconds(now(), absolute: true);
+
+        return match (true) {
+            $detik < 60 => 'baru saja',
+            $detik < 3600 => (int) floor($detik / 60).' menit lalu',
+            $detik < 86400 => (int) floor($detik / 3600).' jam lalu',
+            default => (int) floor($detik / 86400).' hari lalu',
+        };
+    }
+
+    /**
+     * Keterangan status untuk dialog detail, sekaligus "berapa lama".
+     */
+    public function aktivitasLabel(): string
+    {
+        $lama = $this->lamaAktivitas();
+
+        return $lama === null
+            ? 'Belum pernah membuka aplikasi'
+            : 'Terakhir membuka '.$lama;
     }
 
     /**

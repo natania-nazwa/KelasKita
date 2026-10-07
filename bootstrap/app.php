@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Middleware\CatatAktivitasPengguna;
 use App\Http\Middleware\EnsureAdmin;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
@@ -16,6 +17,11 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'admin' => EnsureAdmin::class,
         ]);
+
+        // Aktivitas dicatat untuk seluruh request web, bukan hanya halaman
+        // ber-middleware "auth", supaya kunjungan ke halaman apa pun ikut
+        // terhitung selama penggunanya sudah login.
+        $middleware->appendToGroup('web', CatatAktivitasPengguna::class);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->shouldRenderJsonWhen(
