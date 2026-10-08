@@ -182,19 +182,29 @@
     ];
 
     /*
-     * Navigasi bawah untuk layar kecil: lima menu, tidak kurang tidak
-     * lebih. Karena sidebar disembunyikan di layar itu, lima menu inilah
-     * satu-satunya cara pindah halaman, jadi "Pengaturan" dan "Materi" yang
-     * ada di sidebar tidak ikut di sini; keduanya masih terbuka lewat ikon
-     * roda di header ponsel dan lewat tombol "Lihat Semua" di dashboard.
+     * Navigasi bawah untuk layar kecil: enam menu, tidak kurang tidak
+     * lebih. Karena sidebar disembunyikan di layar itu, enam menu inilah
+     * satu-satunya cara pindah halaman, jadi "Pengaturan" yang ada di
+     * sidebar tidak ikut di sini; ia masih terbuka lewat ikon roda di
+     * header ponsel dan lewat tombol "Lihat Semua" di dashboard.
+     *
+     * "Materi" ikut masuk. Dulu ia sengaja ditahan supaya barisnya tetap
+     * lima, dan admin mencapainya lewat tombol "Lihat Semua" di dashboard.
+     * Sekarang baris bawahnya menambah satu menu: enam tautan di 320px
+     * masih muat (lihat ukuran label di resources/css/admin.css), jadi
+     * Materi — katalog konten yang sudah tayang — bisa dibuka langsung
+     * tanpa lewat dashboard.
      *
      * Daftar ini disaring dari $menuUtama, bukan ditulis ulang, supaya
      * ikon, tujuan tautan, angka menunggu, dan penanda halaman aktifnya
      * selalu sama dengan yang tertulis di sidebar desktop. Kalau suatu saat
      * sidebar berubah, navigasi bawah ikut berubah tanpa ikut disentuh.
+     *
+     * Urutannya ikut urutan $menuUtama, jadi "Materi" muncul tepat setelah
+     * "Verifikasi" tanpa perlu menyusun ulang di sini.
      */
     $menuNavigasiBawah = collect($menuUtama)
-        ->filter(fn (array $menu) => in_array($menu['kunci'], ['dashboard', 'konten', 'verifikasi', 'quiz', 'pengguna'], true))
+        ->filter(fn (array $menu) => in_array($menu['kunci'], ['dashboard', 'konten', 'verifikasi', 'materi', 'quiz', 'pengguna'], true))
         ->values();
 
     $menuBawah = [
@@ -457,7 +467,7 @@
     {{-- ---------- NAVIGASI BAWAH ---------- --}}
     {{--
         Navigasi bawah untuk layar kecil (<= 767px). Di lebar itu sidebar
-        disembunyikan, jadi lima tautan inilah yang menggantikannya. Di jalur
+        disembunyikan, jadi enam tautan inilah yang menggantikannya. Di jalur
         ini tidak ada tombol menu lipat (hamburger) sama sekali.
 
         Bentuknya <nav> biasa berisi tautan, bukan tombol ber-JavaScript:
@@ -467,12 +477,12 @@
         Isinya disaring dari $menuUtama di blok @php di atas, jadi ikon,
         tujuan tautan, angka yang menunggu di Verifikasi, dan penanda halaman
         aktif selalu sama dengan sidebar desktop. Halaman yang tidak punya
-        salah satu dari lima menu ini -- misalnya /admin/materi,
-        /admin/pengaturan, dan form edit -- tidak menyalakan apa pun, bukan
-        menyalakan menu yang kebetulan mirip.
+        salah satu dari enam menu ini -- misalnya /admin/pengaturan dan form
+        edit -- tidak menyalakan apa pun, bukan menyalakan menu yang kebetulan
+        mirip.
 
         Padding bawah memakai env(safe-area-inset-bottom) supaya di iPhone
-        dengan bar home gestural, lima menu ini tidak tertimpa bar itu.
+        dengan bar home gestural, enam menu ini tidak tertimpa bar itu.
     --}}
     <nav class="ad-bawah" aria-label="Navigasi utama admin">
         <ul class="ad-bawah__daftar">
@@ -494,9 +504,9 @@
                             @endif
                         </span>
 
-                        {{-- "Verifikasi" label terpanjang (10 huruf), jadi
-                             ukuran 10px + whitespace-nowrap membuatnya tetap
-                             muat di 320px di mana tiap kolom hanya 64px. --}}
+                        {{-- "Verifikasi" label terpanjang (10 huruf), dan enam kolom
+                             di 320px hanya 53px masing-masing — makanya
+                             labelnya 9px, bukan 10px seperti tadi. --}}
                         <span class="ad-bawah__label">{{ $menu['bawahLabel'] }}</span>
                     </a>
                 </li>

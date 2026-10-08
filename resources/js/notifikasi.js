@@ -57,6 +57,18 @@ function initNotifikasi(akar) {
     };
 
     akar.addEventListener("click", (event) => {
+        // Modifier atau tombol selain klik kiri = membuka di tab lain, bukan
+        // membuka notifikasi ini, jadi tandanya tidak boleh ikut berubah.
+        if (
+            event.metaKey ||
+            event.ctrlKey ||
+            event.shiftKey ||
+            event.altKey ||
+            event.button !== 0
+        ) {
+            return;
+        }
+
         const baris = event.target.closest("[data-notif-item]");
 
         if (!baris) {
@@ -75,11 +87,35 @@ function initNotifikasi(akar) {
             return;
         }
 
+        /*
+         * Baris yang masih punya tautan harus navigating ke halaman
+         * tujuannya, sedangkan halaman tujuan dirender ulang dari database.
+         * Kalau navigasi boleh jalan duluan, request penandaan bisa kalah
+         * cepat dan titik lonceng masih menyala di halaman yang baru
+         * dibuka. Jadi navigasi ditahan sampai server mengonfirmasi, lalu
+         * dikirim ulang ke alamat aslinya.
+         *
+         * Notifikasi tanpa tautan (kontennya sudah dihapus) tidak punya
+         * tujuan, jadi tidak ada yang perlu ditahan.
+         */
+        const tujuan = baris.tagName === "A" ? baris.getAttribute("href") : null;
+
+        if (tujuan) {
+            event.preventDefault();
+        }
+
         const semua = kembaran(alamat);
         semua.forEach((el) => el.classList.remove("is-belum"));
 
+        const lanjutkan = () => {
+            if (tujuan) {
+                window.location.assign(tujuan);
+            }
+        };
+
         fetch(alamat, {
             method: "POST",
+            keepalive: true,
             headers: {
                 Accept: "application/json",
                 "Content-Type": "application/json",
@@ -98,6 +134,7 @@ function initNotifikasi(akar) {
                 // supaya tidak hilang notifikasi yang sebenarnya belum
                 // ditandai terbaca.
                 semua.forEach((el) => el.classList.add("is-belum"));
-            });
+            })
+            .finally(lanjutkan);
     });
 }

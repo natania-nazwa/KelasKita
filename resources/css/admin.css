@@ -8548,9 +8548,12 @@ body.tubuh-admin {
         padding-bottom: env(safe-area-inset-bottom);
     }
 
+    /* Enam menu: Dashboard, Konten, Verifikasi, Materi, Quiz, Pengguna.
+       Urutannya mengikuti $menuNavigasiBawah di layouts/admin.blade.php,
+       jadi jumlah kolom di sini harus sama dengan isi <ul> di sana. */
     .ad-bawah__daftar {
         display: grid;
-        grid-template-columns: repeat(5, minmax(0, 1fr));
+        grid-template-columns: repeat(6, minmax(0, 1fr));
         margin: 0;
         padding: 0;
         list-style: none;
@@ -8564,13 +8567,14 @@ body.tubuh-admin {
         align-items: center;
         justify-content: center;
         gap: 0.2rem;
-        padding: 0.4rem 0.15rem 0.35rem;
+        padding: 0.4rem 0.05rem 0.35rem;
         color: var(--ad-teks-2);
         transition: color 0.18s ease;
     }
 
-    /* Pil di belakang ikon. Lebarnya 2,4rem bukan 2,75rem supaya lima
-       pil dan lima label muat rapi di 320px juga, bukan cuma di 375px. */
+    /* Pil di belakang ikon. Lebarnya 2,4rem bukan 2,75rem supaya enam
+       pil dan enam label muat rapi di 320px juga, bukan cuma di 375px:
+       di enam kolom tiap kolom hanya 53px. */
     .ad-bawah__ikon {
         position: relative;
         display: flex;
@@ -8591,10 +8595,14 @@ body.tubuh-admin {
         background-color: var(--ad-cucian-ungu);
     }
 
-    /* Label 10px + whitespace-nowrap: "Verifikasi" (10 huruf) tetap muat
-       di kolom 64px tanpa dipotong. */
+    /* Label 9px + whitespace-nowrap. Enam kolom di 320px hanya memberi
+       ~53px per kolom, dan "Verifikasi" (10 huruf) butuh ~50px di 9px.
+       Ukuran 10px milik lima kolom dulu tidak muat lagi, dan
+       whitespace-nowrap membuat label yang kepanjangan justru saling
+       menindih, bukan terpotong. Padding kiri-kanan tautan juga ditipkan
+       ke 0.05rem supaya ruang labelnya sebanyak mungkin. */
     .ad-bawah__label {
-        font-size: 0.625rem;
+        font-size: 0.5625rem;
         line-height: 1.2;
         white-space: nowrap;
         color: inherit;

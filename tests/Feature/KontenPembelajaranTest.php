@@ -1507,6 +1507,87 @@ class KontenPembelajaranTest extends TestCase
             ->assertSee(route('admin.konten'), false);
     }
 
+    /**
+     * Navigasi bawah admin punya enam menu, dan urutannya tetap.
+     *
+     * Di <= 767px sidebar disembunyikan, jadi <nav class="ad-bawah"> ini
+     * satu-satunya cara pindah halaman. Dulu isinya lima menu; "Materi"
+     * sengaja ditahan dan hanya terbuka lewat tombol "Lihat Semua" di
+     * dashboard. Sekarang Materi ikut masuk dan harus muncul tepat setelah
+     * "Verifikasi".
+     *
+     * Dua sisi yang diuji:
+     *
+     *   - Urutannya. "Materi" disaring dari $menuUtama, jadi posisinya
+     *     berutut dari sidebar dan bisa bergeser diam-diam kalau urutan
+     *     $menuUtama diubah.
+     *   - Jumlah kolom CSS-nya sama dengan jumlah tautan. Kalau <ul> berisi
+     *     enam <a> sementara grid-nya masih repeat(5, ...), kolom keenam
+     *     turun ke baris kedua dan bar navigasi menutupi isi halaman.
+     */
+    public function test_navigasi_bawah_admin_punya_enam_menu_dengan_urutan_yang_tepat(): void
+    {
+        $admin = $this->buatAdmin();
+
+        $html = $this->actingAs($admin)
+            ->get(route('admin.dashboard'))
+            ->assertOk()
+            ->baseResponse->getContent();
+
+        $awal = strpos($html, 'aria-label="Navigasi utama admin"');
+        $this->assertNotFalse($awal, 'Navigasi bawah admin tidak ada di halaman.');
+
+        $nav = substr($html, $awal, strpos($html, '</nav>', $awal) - $awal);
+
+        $tujuan = [
+            route('admin.dashboard'),
+            route('admin.konten'),
+            route('admin.verifikasi'),
+            route('admin.materi'),
+            route('admin.quiz'),
+            route('admin.pengguna'),
+        ];
+
+        $this->assertSame(6, substr_count($nav, '<a href'), 'Navigasi bawah admin harus berisi tepat enam tautan.');
+
+        $sebelumnya = -1;
+
+        foreach ($tujuan as $satu) {
+            $posisi = strpos($nav, 'href="'.$satu.'"');
+
+            $this->assertNotFalse($posisi, "Menu $satu tidak ada di navigasi bawah.");
+            $this->assertGreaterThan(
+                $sebelumnya,
+                $posisi,
+                "Menu $satu ada di tempat yang salah pada navigasi bawah."
+            );
+
+            $sebelumnya = $posisi;
+        }
+
+        // "Materi" tepat setelah "Verifikasi", bukan di ujung mana pun.
+        $this->assertGreaterThan(
+            strpos($nav, 'href="'.route('admin.verifikasi').'"'),
+            strpos($nav, 'href="'.route('admin.materi').'"'),
+            'Materi harus muncul setelah Verifikasi.'
+        );
+
+        $css = file_get_contents(resource_path('css/admin.css'));
+
+        $this->assertStringContainsString(
+            'grid-template-columns: repeat(6, minmax(0, 1fr))',
+            $css,
+            'Jumlah kolom navigasi bawah harus enam, sama dengan jumlah tautannya.'
+        );
+
+        /*
+         * "Pengaturan" tetap di luar baris bawah: ia punya banyak halaman
+         * anak dan sudah terbuka lewat ikon roda di header ponsel. Kalau ikut
+         * masuk, barisnya jadi tujuh dan tidak muat di 320px.
+         */
+        $this->assertStringNotContainsString('href="'.route('admin.pengaturan').'"', $nav);
+    }
+
     public function test_non_admin_tidak_bisa_membuka_halaman_konten_pembelajaran(): void
     {
         $user = $this->buatPengguna();
