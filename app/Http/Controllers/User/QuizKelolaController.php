@@ -32,7 +32,7 @@ class QuizKelolaController extends Controller
         $this->pastikanMilik($request, $quiz);
 
         return view('user.quiz-tambah', [
-            'kategori' => Pelajaran::query()->aktif()->orderBy('nama')->get(),
+            'kategori' => Pelajaran::query()->aktif()->urutKatalog()->get(),
             'quiz' => $quiz,
             'soal' => $quiz->soal()->terurut()->get(),
             // Quiz tanpa kode (mis. quiz publik yang belum pernah punya

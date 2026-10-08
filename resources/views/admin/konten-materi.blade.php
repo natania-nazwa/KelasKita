@@ -185,17 +185,28 @@
                         satu tombol: kalau hanya tombol Publish yang didorong,
                         "Simpan Draft" akan tertinggal di tengah baris dan
                         kelihatan seperti tombol milik blok status di atasnya.
+
+                        Keduanya sengaja TIDAK memakai data-konten-kirim.
+                        Atribut itu penanda "tombol milik wizard quiz", dan
+                        resources/js/konten-publish.js membacanya untuk
+                        memanggil window.kelasKitaKontenKirim — fungsi yang
+                        hanya ada di quiz-tambah.js. Kalau tombol di sini ikut
+                        memakai atribut itu, konfirmasi akan memanggil wizard
+                        yang tidak ada, lalu form pun tidak pernah dikirim.
+                        Tanpa atribut, resources/js/konten-publish.js memakai
+                        jalur kedua: form milik halaman ini yang dikirim, dengan
+                        tombol pemicunya sebagai submitter supaya name="aksi"
+                        ikut terkirim.
                     --}}
                     <div class="flex flex-col gap-2.5 sm:ml-auto sm:flex-row sm:items-center">
-                        <button type="submit" name="aksi" value="draft" data-konten-kirim
-                            class="tombol-garis justify-center">
+                        <button type="submit" name="aksi" value="draft" class="tombol-garis justify-center">
                             <x-admin.ikon nama="dokumen" ukuran="w-4 h-4" />
 
                             Simpan Draft
                         </button>
 
                         <button type="submit" name="aksi" value="publish" data-konten-publish="publish"
-                            data-konten-kirim class="tombol-utama justify-center">
+                            class="tombol-utama justify-center">
                             <x-admin.ikon nama="centang" ukuran="w-4 h-4" />
 
                             Publish Sekarang

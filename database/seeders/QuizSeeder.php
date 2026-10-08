@@ -55,7 +55,7 @@ class QuizSeeder extends Seeder
      */
     private const QUIZ = [
         [
-            'kategori' => 'pemrograman',
+            'kategori' => 'pplg',
             'pembuat' => 'Admin',
             'judul' => 'HTML & CSS Dasar',
             'deskripsi' => 'Kuis untuk menguji pemahaman dasar HTML dan CSS.',
@@ -76,7 +76,7 @@ class QuizSeeder extends Seeder
             ],
         ],
         [
-            'kategori' => 'pemrograman',
+            'kategori' => 'pplg',
             'pembuat' => 'Irma',
             'judul' => 'JavaScript Dasar',
             'deskripsi' => 'Kuis tentang konsep dasar JavaScript.',
@@ -99,7 +99,7 @@ class QuizSeeder extends Seeder
             ],
         ],
         [
-            'kategori' => 'desain-web',
+            'kategori' => 'pplg',
             'pembuat' => 'Keyla',
             'judul' => 'UI/UX Design',
             'deskripsi' => 'Kuis tentang prinsip desain antarmuka pengguna.',
@@ -139,7 +139,7 @@ class QuizSeeder extends Seeder
             ],
         ],
         [
-            'kategori' => 'teknologi',
+            'kategori' => 'database',
             'pembuat' => 'Heysell',
             'judul' => 'Pengembangan Web',
             'deskripsi' => 'Kuis dari desain hingga deployment.',
@@ -165,7 +165,7 @@ class QuizSeeder extends Seeder
             ],
         ],
         [
-            'kategori' => 'teknologi',
+            'kategori' => 'database',
             'pembuat' => 'Natania',
             'judul' => 'Seputar Teknologi',
             'deskripsi' => 'Kuis umum tentang dunia teknologi.',

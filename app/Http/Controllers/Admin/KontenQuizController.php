@@ -51,7 +51,7 @@ class KontenQuizController extends Controller
     public function create(): View
     {
         return view('admin.konten-quiz', [
-            'kategori' => Pelajaran::query()->aktif()->orderBy('nama')->get(),
+            'kategori' => Pelajaran::query()->aktif()->urutKatalog()->get(),
             'quiz' => null,
             'soal' => null,
             'kodeAwal' => KodeQuiz::unik(),
@@ -118,7 +118,7 @@ class KontenQuizController extends Controller
         $this->pastikanMilik($request, $quiz);
 
         return view('admin.konten-quiz', [
-            'kategori' => Pelajaran::query()->aktif()->orderBy('nama')->get(),
+            'kategori' => Pelajaran::query()->aktif()->urutKatalog()->get(),
             'quiz' => $quiz,
             // Semua soal, bukan hanya yang aktif: kalau ada soal yang
             // dinonaktifkan, form edit harus tetap bisa melihatnya.

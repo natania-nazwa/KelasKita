@@ -22,6 +22,7 @@
 @props([
     'totalMateri' => 0,
     'totalPembuat' => 0,
+    'jumlahKategori' => 0,
     'kategori' => [],
     'kategoriAktif' => '',
     'kataKunci' => '',
@@ -48,7 +49,7 @@
                 </div>
 
                 <div>
-                    <span class="materi-kepala__angka">{{ count($kategori) }}</span>
+                    <span class="materi-kepala__angka">{{ $jumlahKategori }}</span>
                     <span class="materi-kepala__satuan">Kategori</span>
                 </div>
 

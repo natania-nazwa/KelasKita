@@ -33,7 +33,7 @@ class PenggunaController extends Controller
     /**
      * Pengguna per halaman.
      */
-    private const PER_HALAMAN = 15;
+    private const PER_HALAMAN = 10;
 
     /**
      * Nilai tab peran: semua | admin | user.

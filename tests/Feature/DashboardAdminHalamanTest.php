@@ -49,12 +49,19 @@ class DashboardAdminHalamanTest extends TestCase
 
     private function buatPelajaran(string $nama): Pelajaran
     {
-        return Pelajaran::create([
-            'nama' => $nama,
-            'slug' => Str::slug($nama),
-            'deskripsi' => "Deskripsi $nama",
-            'aktif' => true,
-        ]);
+        /*
+         * firstOrCreate, bukan create: migration sudah mengisi baris resmi
+         * daftar mata pelajaran, jadi slug yang sama bisa sudah ada. create
+         * akan bentrok dengan batasan unik kolom slug.
+         */
+        return Pelajaran::query()->firstOrCreate(
+            ['slug' => Str::slug($nama)],
+            [
+                'nama' => $nama,
+                'deskripsi' => "Deskripsi $nama",
+                'aktif' => true,
+            ]
+        );
     }
 
     private function buatMateri(Pelajaran $pelajaran, User $pembuat, string $nama, string $status = Materi::STATUS_PUBLISHED): Materi

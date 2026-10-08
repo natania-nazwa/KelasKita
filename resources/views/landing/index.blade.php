@@ -1,4 +1,4 @@
-﻿@extends ('layouts.guest')
+@extends ('layouts.guest')
 
 @section ('title', 'KelasKita - Belajar Lebih Mudah')
 
@@ -563,479 +563,71 @@
             {{-- =========================
              KATEGORI
         ========================== --}}
+            {{--
+                Kartu kategori diambil dari DaftarKategoriLanding, jadi nama,
+                ikon, warna, dan jumlah materinya sama persis dengan yang
+                muncul di filter Materi, filter Quiz, dan form tambah konten.
+
+                Kartu ini masih tanpa tujuan (href="#") seperti sebelumnya:
+                menampilkan materi memang butuh login, jadi mengarahkan tamu
+                ke sana hanya akan memunculkan halaman login.
+
+                Bentuk dan Tata letak kartunya tidak berubah. Yang dipindah ke
+                app.css adalah warna yang tadinya ditulis sebagai kelas
+                Tailwind hex di setiap kartu, karena warna itu sekarang ikut
+                data dan tidak bisa lagi ditulis per kartu.
+            --}}
             <div
                 data-reveal-stagger
                 class="mt-10 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-5"
             >
-                {{-- Bahasa Indonesia --}}
-                <a
-                    href="#"
-                    class="group relative min-h-[150px] overflow-hidden rounded-3xl border border-lavender bg-white p-5 transition-all duration-300 hover:-translate-y-2 hover:border-[#f492d3] hover:shadow-2xl hover:shadow-[#ed78c1]/20"
-                >
-                    <span
-                        class="absolute -top-14 -right-14 h-32 w-32 rounded-full bg-[#ed78c1]/10 transition-transform duration-500 group-hover:scale-[2]"
-                    ></span>
-
-                    <span
-                        class="misi-bar absolute inset-x-3 top-0 h-1 rounded-b-full bg-gradient-to-r from-white via-[#f492d3] to-[#ed78c1]"
-                    ></span>
-
-                    <div class="relative flex flex-col items-start gap-3 sm:flex-row sm:items-center sm:gap-3.5">
+                @foreach ($kartuKategori as $kartu)
+                    <a
+                        href="#"
+                        style="--k: {{ $kartu['warna'] }}; --k-gelap: {{ $kartu['warna_gelap'] }};"
+                        class="kartu-kategori group relative min-h-[150px] overflow-hidden rounded-3xl border bg-white p-5"
+                    >
                         <span
-                            class="relative flex h-14 w-14 shrink-0 items-center justify-center"
+                            class="kartu-kategori__bola absolute -top-14 -right-14 h-32 w-32 rounded-full transition-transform duration-500 group-hover:scale-[2]"
+                        ></span>
+
+                        <span
+                            class="misi-bar kartu-kategori__garis absolute inset-x-3 top-0 h-1 rounded-b-full"
+                        ></span>
+
+                        <div
+                            class="relative flex flex-col items-start gap-3 sm:flex-row sm:items-center sm:gap-3.5"
                         >
                             <span
-                                class="absolute inset-0 rounded-2xl bg-[#ed78c1]/15 transition-transform duration-300 group-hover:rotate-6 group-hover:scale-110"
-                            ></span>
-                            <span
-                                class="relative flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br from-[#f492d3] to-[#ed78c1] text-white text-lg font-extrabold shadow-lg shadow-[#ed78c1]/30"
+                                class="relative flex h-14 w-14 shrink-0 items-center justify-center"
                             >
-                                A
-                            </span>
-                        </span>
-                        <div class="min-w-0">
-                            <h3
-                                class="line-clamp-2 text-sm font-bold text-dark transition-colors duration-300 group-hover:text-[#d94da8]"
-                            >
-                                Bahasa Indonesia
-                            </h3>
-                            <p class="mt-1.5 flex items-center gap-1.5 text-xs text-dark/50">
                                 <span
-                                    class="h-1.5 w-1.5 rounded-full bg-[#ed78c1]"
+                                    class="kartu-kategori__latar absolute inset-0 rounded-2xl transition-transform duration-300 group-hover:rotate-6 group-hover:scale-110"
                                 ></span>
-                                5 Materi
-                            </p>
-                        </div>
-                    </div>
-
-                    <span
-                        class="absolute bottom-4 right-4 flex h-8 w-8 items-center justify-center rounded-full bg-[#ed78c1]/10 text-[#d94da8] text-sm transition-all duration-300 group-hover:bg-[#ed78c1] group-hover:text-white group-hover:translate-x-0.5"
-                        >→</span
-                    >
-                </a>
-
-                {{-- PPKN --}}
-                <a
-                    href="#"
-                    class="group relative min-h-[150px] overflow-hidden rounded-3xl border border-lavender bg-white p-5 transition-all duration-300 hover:-translate-y-2 hover:border-[#f6cd6b] hover:shadow-2xl hover:shadow-[#f2bd45]/20"
-                >
-                    <span
-                        class="absolute -top-14 -right-14 h-32 w-32 rounded-full bg-[#f2bd45]/10 transition-transform duration-500 group-hover:scale-[2]"
-                    ></span>
-
-                    <span
-                        class="misi-bar absolute inset-x-3 top-0 h-1 rounded-b-full bg-gradient-to-r from-white via-[#f6cd6b] to-[#f2bd45]"
-                    ></span>
-
-                    <div class="relative flex flex-col items-start gap-3 sm:flex-row sm:items-center sm:gap-3.5">
-                        <span
-                            class="relative flex h-14 w-14 shrink-0 items-center justify-center"
-                        >
-                            <span
-                                class="absolute inset-0 rounded-2xl bg-[#f2bd45]/15 transition-transform duration-300 group-hover:rotate-6 group-hover:scale-110"
-                            ></span>
-                            <span
-                                class="relative flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br from-[#f6cd6b] to-[#f2bd45] text-white text-lg font-extrabold shadow-lg shadow-[#f2bd45]/30"
-                            >
-                                🇮🇩
-                            </span>
-                        </span>
-                        <div class="min-w-0">
-                            <h3
-                                class="line-clamp-2 text-sm font-bold text-dark transition-colors duration-300 group-hover:text-[#c99213]"
-                            >
-                                PPKN
-                            </h3>
-                            <p class="mt-1.5 flex items-center gap-1.5 text-xs text-dark/50">
                                 <span
-                                    class="h-1.5 w-1.5 rounded-full bg-[#f2bd45]"
-                                ></span>
-                                5 Materi
-                            </p>
-                        </div>
-                    </div>
-
-                    <span
-                        class="absolute bottom-4 right-4 flex h-8 w-8 items-center justify-center rounded-full bg-[#f2bd45]/10 text-[#c99213] text-sm transition-all duration-300 group-hover:bg-[#f2bd45] group-hover:text-white group-hover:translate-x-0.5"
-                        >→</span
-                    >
-                </a>
-
-                {{-- Sejarah --}}
-                <a
-                    href="#"
-                    class="group relative min-h-[150px] overflow-hidden rounded-3xl border border-lavender bg-white p-5 transition-all duration-300 hover:-translate-y-2 hover:border-[#8b80e6] hover:shadow-2xl hover:shadow-[#7164d9]/20"
-                >
-                    <span
-                        class="absolute -top-14 -right-14 h-32 w-32 rounded-full bg-[#7164d9]/10 transition-transform duration-500 group-hover:scale-[2]"
-                    ></span>
-
-                    <span
-                        class="misi-bar absolute inset-x-3 top-0 h-1 rounded-b-full bg-gradient-to-r from-white via-[#8b80e6] to-[#7164d9]"
-                    ></span>
-
-                    <div class="relative flex flex-col items-start gap-3 sm:flex-row sm:items-center sm:gap-3.5">
-                        <span
-                            class="relative flex h-14 w-14 shrink-0 items-center justify-center"
-                        >
-                            <span
-                                class="absolute inset-0 rounded-2xl bg-[#7164d9]/15 transition-transform duration-300 group-hover:rotate-6 group-hover:scale-110"
-                            ></span>
-                            <span
-                                class="relative flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br from-[#8b80e6] to-[#7164d9] text-white text-lg font-extrabold shadow-lg shadow-[#7164d9]/30"
-                            >
-                                🏛
+                                    class="kartu-kategori__ikon relative flex h-11 w-11 items-center justify-center rounded-2xl text-white text-lg font-extrabold"
+                                >
+                                    {{ $kartu['ikon'] }}
+                                </span>
                             </span>
-                        </span>
-                        <div class="min-w-0">
-                            <h3
-                                class="line-clamp-2 text-sm font-bold text-dark transition-colors duration-300 group-hover:text-[#5a4cc9]"
-                            >
-                                Sejarah
-                            </h3>
-                            <p class="mt-1.5 flex items-center gap-1.5 text-xs text-dark/50">
-                                <span
-                                    class="h-1.5 w-1.5 rounded-full bg-[#7164d9]"
-                                ></span>
-                                5 Materi
-                            </p>
+                            <div class="min-w-0">
+                                <h3
+                                    class="kartu-kategori__judul line-clamp-2 text-sm font-bold transition-colors duration-300"
+                                >
+                                    {{ $kartu['nama'] }}
+                                </h3>
+                                <p
+                                    class="mt-1.5 flex items-center gap-1.5 text-xs text-dark/50"
+                                >
+                                    <span
+                                        class="kartu-kategori__titik h-1.5 w-1.5 rounded-full"
+                                    ></span>
+                                    {{ $kartu['jumlah_materi'] }} Materi
+                                </p>
+                            </div>
                         </div>
-                    </div>
-
-                    <span
-                        class="absolute bottom-4 right-4 flex h-8 w-8 items-center justify-center rounded-full bg-[#7164d9]/10 text-[#5a4cc9] text-sm transition-all duration-300 group-hover:bg-[#7164d9] group-hover:text-white group-hover:translate-x-0.5"
-                        >→</span
-                    >
-                </a>
-
-                {{-- Matematika --}}
-                <a
-                    href="#"
-                    class="group relative min-h-[150px] overflow-hidden rounded-3xl border border-lavender bg-white p-5 transition-all duration-300 hover:-translate-y-2 hover:border-[#f0858b] hover:shadow-2xl hover:shadow-[#ed6970]/20"
-                >
-                    <span
-                        class="absolute -top-14 -right-14 h-32 w-32 rounded-full bg-[#ed6970]/10 transition-transform duration-500 group-hover:scale-[2]"
-                    ></span>
-
-                    <span
-                        class="misi-bar absolute inset-x-3 top-0 h-1 rounded-b-full bg-gradient-to-r from-white via-[#f0858b] to-[#ed6970]"
-                    ></span>
-
-                    <div class="relative flex flex-col items-start gap-3 sm:flex-row sm:items-center sm:gap-3.5">
-                        <span
-                            class="relative flex h-14 w-14 shrink-0 items-center justify-center"
-                        >
-                            <span
-                                class="absolute inset-0 rounded-2xl bg-[#ed6970]/15 transition-transform duration-300 group-hover:rotate-6 group-hover:scale-110"
-                            ></span>
-                            <span
-                                class="relative flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br from-[#f0858b] to-[#ed6970] text-white text-lg font-extrabold shadow-lg shadow-[#ed6970]/30"
-                            >
-                                π
-                            </span>
-                        </span>
-                        <div class="min-w-0">
-                            <h3
-                                class="line-clamp-2 text-sm font-bold text-dark transition-colors duration-300 group-hover:text-[#d94a53]"
-                            >
-                                Matematika
-                            </h3>
-                            <p class="mt-1.5 flex items-center gap-1.5 text-xs text-dark/50">
-                                <span
-                                    class="h-1.5 w-1.5 rounded-full bg-[#ed6970]"
-                                ></span>
-                                5 Materi
-                            </p>
-                        </div>
-                    </div>
-
-                    <span
-                        class="absolute bottom-4 right-4 flex h-8 w-8 items-center justify-center rounded-full bg-[#ed6970]/10 text-[#d94a53] text-sm transition-all duration-300 group-hover:bg-[#ed6970] group-hover:text-white group-hover:translate-x-0.5"
-                        >→</span
-                    >
-                </a>
-
-                {{-- IPA --}}
-                <a
-                    href="#"
-                    class="group relative min-h-[150px] overflow-hidden rounded-3xl border border-lavender bg-white p-5 transition-all duration-300 hover:-translate-y-2 hover:border-[#6bcb91] hover:shadow-2xl hover:shadow-[#52bd7d]/20"
-                >
-                    <span
-                        class="absolute -top-14 -right-14 h-32 w-32 rounded-full bg-[#52bd7d]/10 transition-transform duration-500 group-hover:scale-[2]"
-                    ></span>
-
-                    <span
-                        class="misi-bar absolute inset-x-3 top-0 h-1 rounded-b-full bg-gradient-to-r from-white via-[#6bcb91] to-[#52bd7d]"
-                    ></span>
-
-                    <div class="relative flex flex-col items-start gap-3 sm:flex-row sm:items-center sm:gap-3.5">
-                        <span
-                            class="relative flex h-14 w-14 shrink-0 items-center justify-center"
-                        >
-                            <span
-                                class="absolute inset-0 rounded-2xl bg-[#52bd7d]/15 transition-transform duration-300 group-hover:rotate-6 group-hover:scale-110"
-                            ></span>
-                            <span
-                                class="relative flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br from-[#6bcb91] to-[#52bd7d] text-white text-lg font-extrabold shadow-lg shadow-[#52bd7d]/30"
-                            >
-                                🔬
-                            </span>
-                        </span>
-                        <div class="min-w-0">
-                            <h3
-                                class="line-clamp-2 text-sm font-bold text-dark transition-colors duration-300 group-hover:text-[#379458]"
-                            >
-                                IPA
-                            </h3>
-                            <p class="mt-1.5 flex items-center gap-1.5 text-xs text-dark/50">
-                                <span
-                                    class="h-1.5 w-1.5 rounded-full bg-[#52bd7d]"
-                                ></span>
-                                5 Materi
-                            </p>
-                        </div>
-                    </div>
-
-                    <span
-                        class="absolute bottom-4 right-4 flex h-8 w-8 items-center justify-center rounded-full bg-[#52bd7d]/10 text-[#379458] text-sm transition-all duration-300 group-hover:bg-[#52bd7d] group-hover:text-white group-hover:translate-x-0.5"
-                        >→</span
-                    >
-                </a>
-
-                {{-- Bahasa Inggris --}}
-                <a
-                    href="#"
-                    class="group relative min-h-[150px] overflow-hidden rounded-3xl border border-lavender bg-white p-5 transition-all duration-300 hover:-translate-y-2 hover:border-[#4dbdcf] hover:shadow-2xl hover:shadow-[#36a7bb]/20"
-                >
-                    <span
-                        class="absolute -top-14 -right-14 h-32 w-32 rounded-full bg-[#36a7bb]/10 transition-transform duration-500 group-hover:scale-[2]"
-                    ></span>
-
-                    <span
-                        class="misi-bar absolute inset-x-3 top-0 h-1 rounded-b-full bg-gradient-to-r from-white via-[#4dbdcf] to-[#36a7bb]"
-                    ></span>
-
-                    <div class="relative flex flex-col items-start gap-3 sm:flex-row sm:items-center sm:gap-3.5">
-                        <span
-                            class="relative flex h-14 w-14 shrink-0 items-center justify-center"
-                        >
-                            <span
-                                class="absolute inset-0 rounded-2xl bg-[#36a7bb]/15 transition-transform duration-300 group-hover:rotate-6 group-hover:scale-110"
-                            ></span>
-                            <span
-                                class="relative flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br from-[#4dbdcf] to-[#36a7bb] text-white text-lg font-extrabold shadow-lg shadow-[#36a7bb]/30"
-                            >
-                                EN
-                            </span>
-                        </span>
-                        <div class="min-w-0">
-                            <h3
-                                class="line-clamp-2 text-sm font-bold text-dark transition-colors duration-300 group-hover:text-[#2088a0]"
-                            >
-                                Bahasa Inggris
-                            </h3>
-                            <p class="mt-1.5 flex items-center gap-1.5 text-xs text-dark/50">
-                                <span
-                                    class="h-1.5 w-1.5 rounded-full bg-[#36a7bb]"
-                                ></span>
-                                5 Materi
-                            </p>
-                        </div>
-                    </div>
-
-                    <span
-                        class="absolute bottom-4 right-4 flex h-8 w-8 items-center justify-center rounded-full bg-[#36a7bb]/10 text-[#2088a0] text-sm transition-all duration-300 group-hover:bg-[#36a7bb] group-hover:text-white group-hover:translate-x-0.5"
-                        >→</span
-                    >
-                </a>
-
-                {{-- Seni Budaya --}}
-                <a
-                    href="#"
-                    class="group relative min-h-[150px] overflow-hidden rounded-3xl border border-lavender bg-white p-5 transition-all duration-300 hover:-translate-y-2 hover:border-[#f5a564] hover:shadow-2xl hover:shadow-[#f2924a]/20"
-                >
-                    <span
-                        class="absolute -top-14 -right-14 h-32 w-32 rounded-full bg-[#f2924a]/10 transition-transform duration-500 group-hover:scale-[2]"
-                    ></span>
-
-                    <span
-                        class="misi-bar absolute inset-x-3 top-0 h-1 rounded-b-full bg-gradient-to-r from-white via-[#f5a564] to-[#f2924a]"
-                    ></span>
-
-                    <div class="relative flex flex-col items-start gap-3 sm:flex-row sm:items-center sm:gap-3.5">
-                        <span
-                            class="relative flex h-14 w-14 shrink-0 items-center justify-center"
-                        >
-                            <span
-                                class="absolute inset-0 rounded-2xl bg-[#f2924a]/15 transition-transform duration-300 group-hover:rotate-6 group-hover:scale-110"
-                            ></span>
-                            <span
-                                class="relative flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br from-[#f5a564] to-[#f2924a] text-white text-lg font-extrabold shadow-lg shadow-[#f2924a]/30"
-                            >
-                                🎨
-                            </span>
-                        </span>
-                        <div class="min-w-0">
-                            <h3
-                                class="line-clamp-2 text-sm font-bold text-dark transition-colors duration-300 group-hover:text-[#d96a21]"
-                            >
-                                Seni Budaya
-                            </h3>
-                            <p class="mt-1.5 flex items-center gap-1.5 text-xs text-dark/50">
-                                <span
-                                    class="h-1.5 w-1.5 rounded-full bg-[#f2924a]"
-                                ></span>
-                                5 Materi
-                            </p>
-                        </div>
-                    </div>
-
-                    <span
-                        class="absolute bottom-4 right-4 flex h-8 w-8 items-center justify-center rounded-full bg-[#f2924a]/10 text-[#d96a21] text-sm transition-all duration-300 group-hover:bg-[#f2924a] group-hover:text-white group-hover:translate-x-0.5"
-                        >→</span
-                    >
-                </a>
-
-                {{-- PJOK --}}
-                <a
-                    href="#"
-                    class="group relative min-h-[150px] overflow-hidden rounded-3xl border border-lavender bg-white p-5 transition-all duration-300 hover:-translate-y-2 hover:border-[#6ba0f5] hover:shadow-2xl hover:shadow-[#4f8ff0]/20"
-                >
-                    <span
-                        class="absolute -top-14 -right-14 h-32 w-32 rounded-full bg-[#4f8ff0]/10 transition-transform duration-500 group-hover:scale-[2]"
-                    ></span>
-
-                    <span
-                        class="misi-bar absolute inset-x-3 top-0 h-1 rounded-b-full bg-gradient-to-r from-white via-[#6ba0f5] to-[#4f8ff0]"
-                    ></span>
-
-                    <div class="relative flex flex-col items-start gap-3 sm:flex-row sm:items-center sm:gap-3.5">
-                        <span
-                            class="relative flex h-14 w-14 shrink-0 items-center justify-center"
-                        >
-                            <span
-                                class="absolute inset-0 rounded-2xl bg-[#4f8ff0]/15 transition-transform duration-300 group-hover:rotate-6 group-hover:scale-110"
-                            ></span>
-                            <span
-                                class="relative flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br from-[#6ba0f5] to-[#4f8ff0] text-white text-lg font-extrabold shadow-lg shadow-[#4f8ff0]/30"
-                            >
-                                🏃
-                            </span>
-                        </span>
-                        <div class="min-w-0">
-                            <h3
-                                class="line-clamp-2 text-sm font-bold text-dark transition-colors duration-300 group-hover:text-[#2a66cc]"
-                            >
-                                PJOK
-                            </h3>
-                            <p class="mt-1.5 flex items-center gap-1.5 text-xs text-dark/50">
-                                <span
-                                    class="h-1.5 w-1.5 rounded-full bg-[#4f8ff0]"
-                                ></span>
-                                5 Materi
-                            </p>
-                        </div>
-                    </div>
-
-                    <span
-                        class="absolute bottom-4 right-4 flex h-8 w-8 items-center justify-center rounded-full bg-[#4f8ff0]/10 text-[#2a66cc] text-sm transition-all duration-300 group-hover:bg-[#4f8ff0] group-hover:text-white group-hover:translate-x-0.5"
-                        >→</span
-                    >
-                </a>
-
-                {{-- Geografi --}}
-                <a
-                    href="#"
-                    class="group relative min-h-[150px] overflow-hidden rounded-3xl border border-lavender bg-white p-5 transition-all duration-300 hover:-translate-y-2 hover:border-[#d8a06a] hover:shadow-2xl hover:shadow-[#c88a4f]/20"
-                >
-                    <span
-                        class="absolute -top-14 -right-14 h-32 w-32 rounded-full bg-[#c88a4f]/10 transition-transform duration-500 group-hover:scale-[2]"
-                    ></span>
-
-                    <span
-                        class="misi-bar absolute inset-x-3 top-0 h-1 rounded-b-full bg-gradient-to-r from-white via-[#d8a06a] to-[#c88a4f]"
-                    ></span>
-
-                    <div class="relative flex flex-col items-start gap-3 sm:flex-row sm:items-center sm:gap-3.5">
-                        <span
-                            class="relative flex h-14 w-14 shrink-0 items-center justify-center"
-                        >
-                            <span
-                                class="absolute inset-0 rounded-2xl bg-[#c88a4f]/15 transition-transform duration-300 group-hover:rotate-6 group-hover:scale-110"
-                            ></span>
-                            <span
-                                class="relative flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br from-[#d8a06a] to-[#c88a4f] text-white text-lg font-extrabold shadow-lg shadow-[#c88a4f]/30"
-                            >
-                                🌍
-                            </span>
-                        </span>
-                        <div class="min-w-0">
-                            <h3
-                                class="line-clamp-2 text-sm font-bold text-dark transition-colors duration-300 group-hover:text-[#9c611f]"
-                            >
-                                Geografi
-                            </h3>
-                            <p class="mt-1.5 flex items-center gap-1.5 text-xs text-dark/50">
-                                <span
-                                    class="h-1.5 w-1.5 rounded-full bg-[#c88a4f]"
-                                ></span>
-                                5 Materi
-                            </p>
-                        </div>
-                    </div>
-
-                    <span
-                        class="absolute bottom-4 right-4 flex h-8 w-8 items-center justify-center rounded-full bg-[#c88a4f]/10 text-[#9c611f] text-sm transition-all duration-300 group-hover:bg-[#c88a4f] group-hover:text-white group-hover:translate-x-0.5"
-                        >→</span
-                    >
-                </a>
-
-                {{-- Ekonomi --}}
-                <a
-                    href="#"
-                    class="group relative min-h-[150px] overflow-hidden rounded-3xl border border-lavender bg-white p-5 transition-all duration-300 hover:-translate-y-2 hover:border-[#6c7cf0] hover:shadow-2xl hover:shadow-[#4f46e5]/20"
-                >
-                    <span
-                        class="absolute -top-14 -right-14 h-32 w-32 rounded-full bg-[#4f46e5]/10 transition-transform duration-500 group-hover:scale-[2]"
-                    ></span>
-
-                    <span
-                        class="misi-bar absolute inset-x-3 top-0 h-1 rounded-b-full bg-gradient-to-r from-white via-[#6c7cf0] to-[#4f46e5]"
-                    ></span>
-
-                    <div class="relative flex flex-col items-start gap-3 sm:flex-row sm:items-center sm:gap-3.5">
-                        <span
-                            class="relative flex h-14 w-14 shrink-0 items-center justify-center"
-                        >
-                            <span
-                                class="absolute inset-0 rounded-2xl bg-[#4f46e5]/15 transition-transform duration-300 group-hover:rotate-6 group-hover:scale-110"
-                            ></span>
-                            <span
-                                class="relative flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br from-[#6c7cf0] to-[#4f46e5] text-white text-lg font-extrabold shadow-lg shadow-[#4f46e5]/30"
-                            >
-                                💰
-                            </span>
-                        </span>
-                        <div class="min-w-0">
-                            <h3
-                                class="line-clamp-2 text-sm font-bold text-dark transition-colors duration-300 group-hover:text-[#3326c4]"
-                            >
-                                Ekonomi
-                            </h3>
-                            <p class="mt-1.5 flex items-center gap-1.5 text-xs text-dark/50">
-                                <span
-                                    class="h-1.5 w-1.5 rounded-full bg-[#4f46e5]"
-                                ></span>
-                                5 Materi
-                            </p>
-                        </div>
-                    </div>
-
-                    <span
-                        class="absolute bottom-4 right-4 flex h-8 w-8 items-center justify-center rounded-full bg-[#4f46e5]/10 text-[#3326c4] text-sm transition-all duration-300 group-hover:bg-[#4f46e5] group-hover:text-white group-hover:translate-x-0.5"
-                        >→</span
-                    >
-                </a>
+                    </a>
+                @endforeach
             </div>
         </div>
     </section>

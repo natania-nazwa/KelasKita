@@ -540,19 +540,26 @@ class QuizKelolaHalamanTest extends TestCase
         }
     }
 
-    public function test_kategori_tanpa_quiz_tidak_ditawarkan(): void
+    public function test_kategori_tanpa_quiz_tetap_ditawarkan_dengan_jumlah_nol(): void
     {
         $admin = $this->buatAdmin();
-        $this->buatPelajaran('Kosong', 'kosong');
-        $this->buatTerbit($this->buatPengguna(), 'Quiz Terbit', $this->buatPelajaran('Teknologi', 'teknologi'));
+        $kosong = $this->buatPelajaran('Kosong', 'kosong');
+        $terisi = $this->buatPelajaran('Teknologi', 'teknologi');
+        $this->buatTerbit($this->buatPengguna(), 'Quiz Terbit', $terisi);
 
         $html = $this->actingAs($admin)->get('/admin/quiz')->assertOk()->getContent();
 
-        // Kategori tanpa quiz published tidak boleh muncul sebagai pilihan,
-        // supaya memilihnya tidak pernah menghasilkan daftar kosong tanpa
-        // alasan yang terlihat.
-        $this->assertStringNotContainsString('value="kosong"', $html);
-        $this->assertStringContainsString('value="teknologi"', $html);
+        /*
+         * Filter menampilkan seluruh daftar kategori, bukan hanya yang sudah
+         * berisi. Alasannya daftar resminya harus sama di mana pun: yang
+         * berubah hanya jumlah isi tiap kategori, bukan ketersediaan
+         * pilihannya. Kategori yang kosong ditulis dengan jumlah 0 supaya
+         * terbaca sebagai "belum ada isinya", bukan hilang tanpa jejak.
+         */
+        $this->assertStringContainsString('value="'.$kosong->slug.'"', $html);
+        $this->assertStringContainsString($kosong->nama.' (0)', $html);
+        $this->assertStringContainsString('value="'.$terisi->slug.'"', $html);
+        $this->assertStringContainsString($terisi->nama.' (1)', $html);
     }
 
     public function test_total_kategori_menghitung_semua_quiz_terbit(): void

@@ -12,7 +12,8 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * Mata pelajaran / kategori materi (tabel tb_pelajaran).
  *
  * Satu baris di tabel ini dipakai sebagai filter kategori di halaman Materi,
- * mis. Bahasa Jepang, Bahasa Indonesia, Matematika, IPA, IPS, PPKN, dan PPLG.
+ * Quiz, dan jadwal. Daftar resminya ada di KATALOG dan tabelnya diselaraskan
+ * dengan migration, jadi nama pelajaran di seluruh aplikasi hanya satu.
  */
 #[Fillable(['nama', 'slug', 'deskripsi', 'ikon', 'aktif'])]
 class Pelajaran extends Model
@@ -23,17 +24,30 @@ class Pelajaran extends Model
     protected $table = 'tb_pelajaran';
 
     /**
-     * Daftar mata pelajaran baku yang dipakai sebagai warna, ikon, dan
-     * urutan filter di halaman Materi.
+     * Daftar resmi mata pelajaran, lengkap dengan warna, ikon, dan urutannya.
      *
-     * Data ini bukan pengganti baris di database, melainkan "warna dasar"
-     * supaya tampilan tetap konsisten walaupun tabel tb_pelajaran masih
-     * kosong atau ada pelajaran baru yang ditambahkan admin.
+     * Ini satu-satunya daftar yang dipakai aplikasi: baris di tb_pelajaran
+     * diselaraskan dengan daftar ini lewat migration, dan setiap tempat yang
+     * menampilkan kategori membacanya lewat warna() atau urutan(). Karena itu
+     * nama pelajaran di landing page, filter Materi dan Quiz, form tambah
+     * konten, form jadwal, dan Kelola Mata Pelajaran tidak akan berbeda.
+     *
+     * Urutan array sekaligus urutan tampilannya: landing page memakai enam
+     * teratas, filter dan pilihan jadwal memakai seluruh daftarnya.
      */
     public const KATALOG = [
         [
+            'nama' => 'PAI',
+            'slug' => 'pai',
+            'deskripsi' => 'Pendidikan Agama Islam: akidah, fikih, dan akhlak.',
+            'ikon' => '🕌',
+            'warna' => '#4fd0a8',
+            'warna_gelap' => '#14916f',
+        ],
+        [
             'nama' => 'Bahasa Indonesia',
             'slug' => 'bahasa-indonesia',
+            'deskripsi' => 'Tata bahasa, kosakata, dan keterampilan membaca dan menulis.',
             'ikon' => 'A',
             'warna' => '#f492d3',
             'warna_gelap' => '#d94da8',
@@ -41,6 +55,7 @@ class Pelajaran extends Model
         [
             'nama' => 'Bahasa Inggris',
             'slug' => 'bahasa-inggris',
+            'deskripsi' => 'Grammar, kosakata, dan kemampuan menulis dan berbicara.',
             'ikon' => 'En',
             'warna' => '#7cc0f7',
             'warna_gelap' => '#2f8fdc',
@@ -48,34 +63,15 @@ class Pelajaran extends Model
         [
             'nama' => 'Bahasa Jepang',
             'slug' => 'bahasa-jepang',
+            'deskripsi' => 'Hiragana, katakana, kanji, dan kosakata dasar.',
             'ikon' => '日',
             'warna' => '#f78299',
             'warna_gelap' => '#e23a5e',
         ],
         [
-            'nama' => 'Matematika',
-            'slug' => 'matematika',
-            'ikon' => '∑',
-            'warna' => '#8b80e6',
-            'warna_gelap' => '#5a4cc9',
-        ],
-        [
-            'nama' => 'IPA',
-            'slug' => 'ipa',
-            'ikon' => '🔬',
-            'warna' => '#5fd6ae',
-            'warna_gelap' => '#14a97e',
-        ],
-        [
-            'nama' => 'IPS',
-            'slug' => 'ips',
-            'ikon' => '🌏',
-            'warna' => '#f6cd6b',
-            'warna_gelap' => '#c99213',
-        ],
-        [
-            'nama' => 'PPKN',
-            'slug' => 'ppkn',
+            'nama' => 'Pendidikan Pancasila',
+            'slug' => 'pendidikan-pancasila',
+            'deskripsi' => 'Nilai kebangsaan, hak dan kewajiban warga negara.',
             'ikon' => '🇮🇩',
             'warna' => '#f9a86b',
             'warna_gelap' => '#e0722a',
@@ -83,48 +79,50 @@ class Pelajaran extends Model
         [
             'nama' => 'PPLG',
             'slug' => 'pplg',
+            'deskripsi' => 'Pengembangan Perangkat Lunak dan Gim, dari desain sampai rilis.',
             'ikon' => '💻',
             'warna' => '#4fd0e0',
             'warna_gelap' => '#0e9bb0',
         ],
         [
-            'nama' => 'Pemrograman',
-            'slug' => 'pemrograman',
-            'ikon' => '</>',
-            'warna' => '#6c8cf5',
-            'warna_gelap' => '#2f5bc7',
+            'nama' => 'Matematika',
+            'slug' => 'matematika',
+            'deskripsi' => 'Pecahan, geometri, dan aljebra untuk jenjang dasar.',
+            'ikon' => '∑',
+            'warna' => '#8b80e6',
+            'warna_gelap' => '#5a4cc9',
         ],
         [
-            'nama' => 'Desain Web',
-            'slug' => 'desain-web',
-            'ikon' => '🎨',
-            'warna' => '#ff9fc4',
-            'warna_gelap' => '#d94b86',
+            'nama' => 'IPA',
+            'slug' => 'ipa',
+            'deskripsi' => 'Fisika, astronomi, dan phenomena alam sehari-hari.',
+            'ikon' => '🔬',
+            'warna' => '#5fd6ae',
+            'warna_gelap' => '#14a97e',
         ],
         [
-            'nama' => 'Database',
-            'slug' => 'database',
-            'ikon' => '🗄️',
-            'warna' => '#3fb8c9',
-            'warna_gelap' => '#0e7d8c',
+            'nama' => 'IPS',
+            'slug' => 'ips',
+            'deskripsi' => 'Sejarah, geografi, dan kehidupan sosial masyarakat.',
+            'ikon' => '🌏',
+            'warna' => '#f6cd6b',
+            'warna_gelap' => '#c99213',
         ],
         [
-            'nama' => 'Teknologi',
-            'slug' => 'teknologi',
-            'ikon' => '⚡',
+            'nama' => 'Sejarah',
+            'slug' => 'sejarah',
+            'deskripsi' => 'Peristiwa dan tokoh penting dalam sejarah dunia dan Indonesia.',
+            'ikon' => '🏛',
             'warna' => '#b39ef5',
             'warna_gelap' => '#6a45c9',
         ],
         [
-            // Praktikum dan Projek. Awalnya jadwal contoh memakai slug "pjkr"
-            // supaya tidak bentrok dengan kode yang lebih panjang, sekarang
-            // slug itu jadi nama resmi supaya bisa dipilih di form jadwal
-            // dan filter kategori.
-            'nama' => 'Praktikum dan Projek',
-            'slug' => 'pjkr',
-            'ikon' => '🛠️',
-            'warna' => '#a5b4fc',
-            'warna_gelap' => '#5b5fd6',
+            'nama' => 'Database',
+            'slug' => 'database',
+            'deskripsi' => 'Penyimpanan data terstruktur dan bahasa SQL.',
+            'ikon' => '🗄️',
+            'warna' => '#3fb8c9',
+            'warna_gelap' => '#0e7d8c',
         ],
     ];
 
@@ -154,6 +152,58 @@ class Pelajaran extends Model
     }
 
     /**
+     * Urutkan menurut KATALOG, bukan menurut nama.
+     *
+     * Semua pilihan dan filter kategori memakai urutan ini supaya daftar
+     * pelajaran selalu sama, dari mana pun dibaca. Pelajaran di luar katalog
+     * (mis. yang ditambahkan admin dari Kelola Mata Pelajaran) tidak punya
+     * posisi, jadi diletakkan di belakang dan diurutkan menurut nama.
+     */
+    public function scopeUrutKatalog(Builder $query): Builder
+    {
+        $kasus = collect(self::urutan())
+            ->map(fn (int $posisi, string $slug) => "WHEN '{$slug}' THEN {$posisi}")
+            ->implode(' ');
+
+        return $query
+            ->orderByRaw("CASE slug {$kasus} ELSE 99 END")
+            ->orderBy('nama');
+    }
+
+    /**
+     * Peta slug ke posisi di KATALOG, untuk mengurutkan daftar kategori.
+     *
+     * Dipakai setiap kali kategori ditampilkan urut, supaya urutannya sama di
+     * filter Materi, filter Quiz, pilihan jadwal, dan kartu landing page.
+     * Pelajaran di luar katalog (mis. yang ditambahkan admin dari Kelola Mata
+     * Pelajaran) tidak ada di peta ini, jadi diletakkan di akhir daftar.
+     *
+     * @return array<string, int>
+     */
+    public static function urutan(): array
+    {
+        return collect(self::KATALOG)
+            ->pluck('slug')
+            ->mapWithKeys(fn (string $slug, int $index) => [$slug => $index])
+            ->all();
+    }
+
+    /**
+     * Enam pelajaran teratas dari KATALOG, untuk kartu kategori di landing page.
+     *
+     * Landing page tidak butuh seluruh daftar: enam kartu sudah memenuhi
+     * barisnya, dan sisanya tetap lengkap di setiap filter. Dipotong dari
+     * KATALOG, bukan dari database, supaya kartu tidak ikut berubah-ubah isi
+     * setiap kali ada materi baru.
+     *
+     * @return array<int, array{nama: string, slug: string, ikon: string, warna: string, warna_gelap: string}>
+     */
+    public static function landing(int $jumlah = 6): array
+    {
+        return array_slice(self::KATALOG, 0, $jumlah);
+    }
+
+    /**
      * Kategori untuk dropdown form tambah dan form edit materi.
      *
      * Daftarnya kategori aktif. Tapi materi yang sedang diedit boleh saja
@@ -167,7 +217,7 @@ class Pelajaran extends Model
      */
     public static function untukForm(?int $pelajaranId = null): Collection
     {
-        $kategori = static::query()->aktif()->orderBy('nama')->get();
+        $kategori = static::query()->aktif()->urutKatalog()->get();
 
         if ($pelajaranId === null) {
             return $kategori;

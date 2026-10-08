@@ -3,8 +3,8 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Models\Pelajaran;
 use App\Models\Quiz;
+use App\Support\DaftarKategori;
 use App\Support\DaftarQuizAdmin;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Builder;
@@ -152,21 +152,7 @@ class QuizController extends Controller
             ->groupBy('pelajaran_id')
             ->pluck('jumlah', 'pelajaran_id');
 
-        $urutanKatalog = collect(Pelajaran::KATALOG)
-            ->pluck('slug')
-            ->mapWithKeys(fn (string $slug, int $index) => [$slug => $index]);
-
-        return Pelajaran::query()
-            ->aktif()
-            ->orderBy('nama')
-            ->get()
-            ->map(fn (Pelajaran $pelajaran) => [
-                ...Pelajaran::warna($pelajaran->slug, $pelajaran->nama),
-                'jumlah' => (int) ($jumlah[$pelajaran->id] ?? 0),
-            ])
-            ->filter(fn (array $item) => $item['jumlah'] > 0)
-            ->sortBy(fn (array $item) => [$urutanKatalog[$item['slug']] ?? 99, $item['nama']])
-            ->values();
+        return DaftarKategori::filter($jumlah);
     }
 
     /**

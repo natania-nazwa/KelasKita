@@ -30,13 +30,20 @@ class QuizHalamanTest extends TestCase
 
     private function buatPelajaran(string $nama, string $slug): Pelajaran
     {
-        return Pelajaran::create([
-            'nama' => $nama,
-            'slug' => $slug,
-            'deskripsi' => "Deskripsi $nama",
-            'ikon' => '</>',
-            'aktif' => true,
-        ]);
+        /*
+         * firstOrCreate, bukan create: migration sudah mengisi baris resmi
+         * daftar mata pelajaran, jadi slug yang sama bisa sudah ada. create
+         * akan bentrok dengan batasan unik kolom slug.
+         */
+        return Pelajaran::query()->firstOrCreate(
+            ['slug' => $slug],
+            [
+                'nama' => $nama,
+                'deskripsi' => "Deskripsi $nama",
+                'ikon' => '</>',
+                'aktif' => true,
+            ]
+        );
     }
 
     private function buatQuiz(

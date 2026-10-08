@@ -32,7 +32,7 @@ class MateriKelolaController extends Controller
         $item = $this->materiMilik($request, $materi);
 
         return view('user.materi-tambah', [
-            'kategori' => Pelajaran::query()->aktif()->orderBy('nama')->get(),
+            'kategori' => Pelajaran::query()->aktif()->urutKatalog()->get(),
             'materi' => $item,
             // Daftar bab dipecah lagi dari isi tersimpan supaya editor bisa
             // dibuka dengan bab yang sama seperti waktu materi dibuat.

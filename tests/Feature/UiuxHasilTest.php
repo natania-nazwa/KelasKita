@@ -40,13 +40,20 @@ class UiuxHasilTest extends TestCase
 
     private function buatPelajaran(): Pelajaran
     {
-        return $this->pelajaran ??= Pelajaran::create([
-            'nama' => 'Matematika',
-            'slug' => 'matematika',
-            'deskripsi' => 'Deskripsi Matematika',
-            'ikon' => '123',
-            'aktif' => true,
-        ]);
+        /*
+         * firstOrCreate, bukan create: migration sudah mengisi baris resmi
+         * daftar mata pelajaran, jadi slug "matematika" sudah ada. Test
+         * memakai slug itu juga, dan create akan bentrok dengan batasan unik.
+         */
+        return $this->pelajaran ??= Pelajaran::query()->firstOrCreate(
+            ['slug' => 'matematika'],
+            [
+                'nama' => 'Matematika',
+                'deskripsi' => 'Deskripsi Matematika',
+                'ikon' => '123',
+                'aktif' => true,
+            ]
+        );
     }
 
     private function buatQuiz(array $atribut = []): Quiz

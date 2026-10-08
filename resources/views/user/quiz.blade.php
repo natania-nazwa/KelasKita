@@ -32,7 +32,7 @@
              kedua header mobile, sehingga tidak ada lagi kotak
              "Cari quiz..." yang menduplikasi pencarian di sini. --}}
         <x-quiz.kepala :total-quiz="$totalQuiz" :total-soal="$totalSoal"
-            :jumlah-kategori="count($kategori)" :kategori="$kategori"
+            :jumlah-kategori="$totalKategori" :kategori="$kategori"
             :kategori-aktif="$kategoriAktif" :kata-kunci="$kataKunci" />
 
         {{-- =========================

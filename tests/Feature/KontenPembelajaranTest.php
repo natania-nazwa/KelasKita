@@ -549,6 +549,65 @@ class KontenPembelajaranTest extends TestCase
         $this->assertStringContainsString('akan ditarik dari halaman pengguna', $isi);
     }
 
+    /**
+     * Dialog konfirmasi tidak boleh punya form sendiri.
+     *
+     * Yang mengirim formnya adalah resources/js/konten-publish.js: ia membuat
+     * form sendiri di runtime, mengisi action-nya dari data-konten-aksi, lalu
+     * mengirimkannya dari tombol konfirmasi.
+     *
+     * Pernah ada form kedua di dalam dialog ini, dan tombol konfirmasinya
+     * menunjuk form itu lewat atribut form="...". Form tanpa action dikirim
+     * ke URL halaman yang sedang dibuka, jadi di /admin/konten kliknya jadi
+     * POST ke route yang hanya menerima GET: 405, dan admin tidak pernah
+     * sampai ke penerbitan. Halaman form punya POST sendiri, jadi di sana
+     * bentuk kegagalannya lebih diam-diam: kiriman kedua tanpa isian yang
+     * membatalkan kiriman pertama.
+     *
+     * Dua sisi yang diperiksa: tidak ada form tanpa action di halaman-halaman
+     * yang memakai dialog ini, dan tombol konfirmasinya bukan tombol submit.
+     */
+    public function test_dialog_publish_tidak_mirim_form_tanpa_action(): void
+    {
+        $admin = $this->buatAdmin();
+        $materi = $this->buatMateri($admin, Materi::STATUS_DRAFT, 'Materi Dialog Action');
+        $this->buatPelajaran();
+
+        $halaman = [
+            'daftar' => $this->actingAs($admin)->get(route('admin.konten')),
+            'tambah materi' => $this->actingAs($admin)->get(route('admin.konten.materi.tambah')),
+            'edit materi' => $this->actingAs($admin)->get(route('admin.konten.materi.edit', $materi->slug)),
+            'tambah quiz' => $this->actingAs($admin)->get(route('admin.konten.quiz.tambah')),
+        ];
+
+        foreach ($halaman as $nama => $respons) {
+            $respons->assertOk();
+            $isi = $respons->baseResponse->getContent();
+
+            preg_match_all('/<form\b[^>]*>/i', $isi, $cocok);
+
+            foreach ($cocok[0] as $tag) {
+                $this->assertStringContainsString(
+                    'action=',
+                    $tag,
+                    "Halaman $nama punya form tanpa action, jadi form itu dikirim ke URL halaman ini."
+                );
+            }
+
+            $this->assertSame(
+                1,
+                preg_match('/<button[^>]*type="button"[^>]*data-konten-publish-konfirmasi/', $isi),
+                "Tombol konfirmasi dialog di halaman $nama harus type=\"button\", bukan submit."
+            );
+
+            $this->assertStringNotContainsString(
+                'form="form-konten-publish"',
+                $isi,
+                "Tombol konfirmasi dialog di halaman $nama masih menunjuk form milik Blade."
+            );
+        }
+    }
+
     public function test_dialog_hapus_lebih_jelas_untuk_konten_yang_sudah_tayang(): void
     {
         $admin = $this->buatAdmin();
@@ -1514,6 +1573,49 @@ class KontenPembelajaranTest extends TestCase
          */
         $this->assertStringNotContainsString('name="kelas"', $halaman);
         $this->assertStringNotContainsString('Kelas Tujuan', $halaman);
+    }
+
+    /**
+     * Tombol publish di form materi bukan tombol milik wizard.
+     *
+     * resources/js/konten-publish.js memakai data-konten-kirim untuk mengenali
+     * tombol wizard quiz: tombol itu type="button" dan berada di luar form, so
+     * yang mengirim bukan form-nya melainkan fungsi yang wizard pasang di
+     * window.kelasKitaKontenKirim.
+     *
+     * Tombol di form materi justru kebalikannya — type="submit" dan berada di
+     * dalam form, jadi justru formnya yang harus dikirim. Kalau tombol ini ikut
+     * memakai atribut wizard, konfirmasi akan memanggil fungsi yang tidak ada
+     * di halaman ini (quiz-tambah.js hanya jalan di halaman wizard), lalu form
+     * tidak pernah terkirim sama sekali.
+     *
+     * Karena itu tombol publish harus tetap type="submit" dengan name="aksi",
+     * dan halaman ini tidak boleh punya penanda wizard sama sekali.
+     */
+    public function test_tombol_publish_form_materi_bukan_tombol_wizard(): void
+    {
+        $admin = $this->buatAdmin();
+        $this->buatPelajaran();
+
+        $halaman = $this->actingAs($admin)
+            ->get(route('admin.konten.materi.tambah'))
+            ->assertOk()
+            ->baseResponse->getContent();
+
+        $this->assertSame(
+            1,
+            preg_match(
+                '/<button(?=[^>]*type="submit")(?=[^>]*name="aksi")(?=[^>]*value="publish")(?=[^>]*data-konten-publish="publish")[^>]*>/',
+                $halaman
+            ),
+            'Tombol Publish Sekarang harus submit milik form, dengan name="aksi" value="publish".'
+        );
+
+        $this->assertSame(
+            0,
+            preg_match('/<[^>]*\bdata-konten-kirim\b[^>]*>/', $halaman),
+            'Halaman form materi tidak punya wizard, jadi tidak boleh memakai penanda data-konten-kirim.'
+        );
     }
 
     /**

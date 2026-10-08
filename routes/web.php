@@ -4,6 +4,7 @@ use App\Http\Controllers\Admin;
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\Auth\RegisteredUserController;
 use App\Http\Controllers\User;
+use App\Support\DaftarKategoriLanding;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -12,8 +13,20 @@ use Illuminate\Support\Facades\Route;
 |--------------------------------------------------------------------------
 */
 
+/*
+ * Landing page untuk tamu.
+ *
+ * Satu-satunya halaman yang menampilkan kartu kategori materi, dan kartu itu
+ * diambil dari daftar resmi mata pelajaran lewat
+ * App\Support\DaftarKategoriLanding. landing/index.blade.php tidak lagi
+ * menulis kartu kategori sendiri, jadi nama pelajaran yang tampil di sini
+ * sama dengan yang muncul di filter Materi, filter Quiz, dan form tambah
+ * konten.
+ */
 Route::get('/', function () {
-    return view('landing.index');
+    return view('landing.index', [
+        'kartuKategori' => DaftarKategoriLanding::kartu(),
+    ]);
 })->name('landing');
 
 /*

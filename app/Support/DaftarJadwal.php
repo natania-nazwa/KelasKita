@@ -93,15 +93,16 @@ final class DaftarJadwal
      * @var array<string, string>
      */
     private const IKON = [
+        'pai' => 'bintang',
         'bahasa-indonesia' => 'pena',
         'bahasa-inggris' => 'buku',
+        'bahasa-jepang' => 'dunia',
+        'pendidikan-pancasila' => 'perisai',
+        'pplg' => 'kode',
         'matematika' => 'kalkulator',
         'ipa' => 'target',
         'ips' => 'orang',
-        'ppkn' => 'bintang',
-        'pemrograman' => 'kode',
-        'pjkr' => 'grafik',
-        'desain-web' => 'petir',
+        'sejarah' => 'jam',
         'database' => 'dokumen',
     ];
 

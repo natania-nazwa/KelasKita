@@ -35,7 +35,8 @@
              Tidak ada tombol tambah di sini: materi dibuat dan dikelola
              lewat menu "Karya Saya". --}}
         <x-materi.kepala :total-materi="$totalMateri" :total-pembuat="$totalPembuat"
-            :kategori="$kategori" :kategori-aktif="$kategoriAktif" :kata-kunci="$kataKunci" />
+            :jumlah-kategori="$totalKategori" :kategori="$kategori" :kategori-aktif="$kategoriAktif"
+            :kata-kunci="$kataKunci" />
 
         {{-- =========================
              DAFTAR MATERI

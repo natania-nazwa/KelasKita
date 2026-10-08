@@ -3,9 +3,9 @@
 namespace App\Http\Controllers\User;
 
 use App\Http\Controllers\Controller;
-use App\Models\Pelajaran;
 use App\Models\Quiz;
 use App\Models\Soal;
+use App\Support\DaftarKategori;
 use App\Support\DaftarQuiz;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
@@ -47,6 +47,7 @@ class QuizController extends Controller
             'kategoriAktif' => $kategori,
             'totalQuiz' => $daftarKategori->sum('jumlah'),
             'totalSoal' => $this->totalSoal(),
+            'totalKategori' => $this->totalKategori(),
             'alasanKosong' => match (true) {
                 $kataKunci !== '' => 'cari',
                 $kategori !== '' => 'filter',
@@ -82,21 +83,24 @@ class QuizController extends Controller
             ->groupBy('pelajaran_id')
             ->pluck('jumlah', 'pelajaran_id');
 
-        $urutanKatalog = collect(Pelajaran::KATALOG)
-            ->pluck('slug')
-            ->mapWithKeys(fn (string $slug, int $index) => [$slug => $index]);
+        return DaftarKategori::filter($jumlahPerPelajaran);
+    }
 
-        return Pelajaran::query()
-            ->aktif()
-            ->orderBy('nama')
-            ->get()
-            ->map(fn (Pelajaran $pelajaran) => [
-                ...Pelajaran::warna($pelajaran->slug, $pelajaran->nama),
-                'jumlah' => (int) ($jumlahPerPelajaran[$pelajaran->id] ?? 0),
-            ])
-            ->filter(fn (array $item) => $item['jumlah'] > 0)
-            ->sortBy(fn (array $item) => [$urutanKatalog[$item['slug']] ?? 99, $item['nama']])
-            ->values();
+    /**
+     * Berapa kategori yang benar-benar berisi quiz yang tayang.
+     *
+     * Angka ini dihitung sendiri, bukan dari jumlah pilihan di filter.
+     * Filter menampilkan seluruh daftar resmi, termasuk yang isinya masih
+     * kosong, jadi membacanya selalu menghasilkan sebelas dan tidak lagi
+     * menjawab "seberapa banyak kategori yang ada di pustaka ini".
+     */
+    private function totalKategori(): int
+    {
+        return (int) Quiz::query()
+            ->terbit()
+            ->whereNotNull('pelajaran_id')
+            ->distinct()
+            ->count('pelajaran_id');
     }
 
     /**

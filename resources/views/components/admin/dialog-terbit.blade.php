@@ -8,9 +8,16 @@
      * kalimat penutup yang menyebut nama konten — kalimat itu dikirim lewat
      * data-konten-nama oleh pemicunya.
      *
-     * Tanpa JavaScript tombol "Publish Sekarang" tetap mengirim form apa
-     * adanya, hanya tanpa konfirmasi. Itu urutan yang benar: lebih baik konten
-     * terbit tanpa tanya daripada tidak bisa terbit sama sekali.
+     * Tanpa JavaScript tombol "Publish Sekarang" di halaman tetap mengirim form
+     * apa adanya, hanya tanpa konfirmasi. Itu urutan yang benar: lebih baik
+     * konten terbit tanpa tanya daripada tidak bisa terbit sama sekali.
+     *
+     * Dialognya sendiri display:none sampai .is-buka, dan kelas itu hanya
+     * dipasang JavaScript, jadi tombol konfirmasinya type="button" dan tidak
+     * punya form milik Blade. Form yang dikirim dibuat runtime oleh
+     * resources/js/konten-publish.js beserta action-nya; kalau tombol ini
+     * type="submit", kliknya akan mengirim form tanpa action dan jatuh ke URL
+     * halaman ini — mis. POST ke /admin/konten yang hanya menerima GET.
      */
     'judul' => 'Publish konten?',
     'pesan' => 'Konten ini akan langsung tersedia untuk pengguna dan notifikasi akan dikirim.',
@@ -40,16 +47,11 @@
                 Batal
             </button>
 
-            <button type="submit" class="ad-tombol ad-tombol--sukses" data-konten-publish-konfirmasi
-                form="form-konten-publish">
+            <button type="button" class="ad-tombol ad-tombol--sukses" data-konten-publish-konfirmasi>
                 <x-admin.ikon nama="tanda-centang" ukuran="w-4 h-4" :tebal="2.4" />
 
                 <span data-konten-terbit-tombol>Publish Sekarang</span>
             </button>
         </footer>
-
-        <form method="POST" id="form-konten-publish" hidden>
-            @csrf
-        </form>
     </div>
 </div>

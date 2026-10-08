@@ -121,13 +121,13 @@ class JadwalKelolaTest extends TestCase
         $user = $this->buatPengguna();
 
         $this->actingAs($user)
-            ->post('/user/jadwal/tambah', $this->isian(['judul' => 'Praktikum Proyek', 'pelajaran' => 'pjkr']))
+            ->post('/user/jadwal/tambah', $this->isian(['judul' => 'Praktikum Proyek', 'pelajaran' => 'pplg']))
             ->assertRedirect(route('user.jadwal', ['tanggal' => $this->tanggalSenin()]));
 
         $this->assertDatabaseHas('tb_jadwal', [
             'dibuat_oleh' => $user->getKey(),
             'hari' => 1,
-            'pelajaran' => 'pjkr',
+            'pelajaran' => 'pplg',
             'judul' => 'Praktikum Proyek',
         ]);
 
@@ -507,14 +507,14 @@ class JadwalKelolaTest extends TestCase
                 'hari' => 1,
                 'mulai' => '08:00',
                 'selesai' => '09:30',
-                'pelajaran' => 'ppkn',
-                'judul' => 'PPKN',
+                'pelajaran' => 'pendidikan-pancasila',
+                'judul' => 'Pendidikan Pancasila',
                 // Kelas, ruang, dan PR sengaja tidak dikirim sama sekali.
             ])
             ->assertSessionHasNoErrors();
 
         $this->assertDatabaseHas('tb_jadwal', [
-            'judul' => 'PPKN',
+            'judul' => 'Pendidikan Pancasila',
             'kelas' => null,
             'ruang' => null,
             'pr' => null,

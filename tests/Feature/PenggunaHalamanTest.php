@@ -329,8 +329,8 @@ class PenggunaHalamanTest extends TestCase
 
         $idDiHalaman = $daftar->getCollection()->pluck('id')->all();
 
-        $this->assertCount(15, $idDiHalaman);
-        $this->assertCount(15, $detail);
+        $this->assertCount(10, $idDiHalaman);
+        $this->assertCount(10, $detail);
 
         // Peta detail harus persis sama dengan isi halamannya: tidak ada
         // pengguna luar halaman ini yang ikut terambil, dan tidak ada baris di
@@ -564,9 +564,9 @@ class PenggunaHalamanTest extends TestCase
 
         $daftar = $this->actingAs($admin)->get(route('admin.pengguna'))->viewData('daftar');
 
-        $this->assertSame(15, $daftar->perPage());
+        $this->assertSame(10, $daftar->perPage());
         $this->assertSame(18, $daftar->total());
-        $this->assertCount(15, $daftar->items());
+        $this->assertCount(10, $daftar->items());
     }
 
     public function test_filter_ikut_terbawa_saat_pindah_halaman(): void

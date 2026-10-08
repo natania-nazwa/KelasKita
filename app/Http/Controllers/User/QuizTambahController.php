@@ -39,7 +39,7 @@ class QuizTambahController extends Controller
     public function create(): View
     {
         return view('user.quiz-tambah', [
-            'kategori' => Pelajaran::query()->aktif()->orderBy('nama')->get(),
+            'kategori' => Pelajaran::query()->aktif()->urutKatalog()->get(),
             'kodeAwal' => KodeQuiz::unik(),
         ]);
     }

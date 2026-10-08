@@ -152,10 +152,19 @@ class PengaturanTampilanTest extends TestCase
         $this->buatPelajaran('Basis Data', 'basis-data');
         Pelajaran::create(['nama' => 'UI UX', 'slug' => 'ui-ux', 'aktif' => false]);
 
-        // Yang dihitung hanya yang aktif, karena itu yang jadi pilihan konten.
+        /*
+         * Yang dihitung hanya yang aktif, karena itu yang jadi pilihan konten.
+         *
+         * Angkanya dibaca dari tabel, bukan ditulis langsung: migration sudah
+         * mengisi sebelas baris resmi daftar mata pelajaran, jadi tabel tidak
+         * pernah kosong dan angka konstanta akan salah begitu daftar resminya
+         * bertambah.
+         */
+        $aktif = Pelajaran::query()->aktif()->count();
+
         $this->actingAs($admin)
             ->get(route('admin.pengaturan'))
-            ->assertSee('2 mata pelajaran');
+            ->assertSee($aktif.' mata pelajaran');
     }
 
     public function test_baris_yang_membuka_halaman_menyasar_url_yang_benar(): void
@@ -383,10 +392,16 @@ class PengaturanTampilanTest extends TestCase
 
         $html = $this->actingAs($admin)->get(route('admin.pengaturan.pelajaran'))->assertOk()->getContent();
 
+        /*
+         * Jumlah aktif dan nonaktif dibaca dari tabel, bukan ditulis langsung.
+         * Migration sudah mengisi sebelas baris resmi daftar mata pelajaran,
+         * jadi tabel tidak pernah kosong di test ini dan angka konstanta akan
+         * salah begitu daftar resminya bertambah.
+         */
         $this->assertStringContainsString('Pemrograman', $html);
         $this->assertStringContainsString('Nonaktif', $html);
-        $this->assertStringContainsString('1 aktif', $html);
-        $this->assertStringContainsString('1 nonaktif', $html);
+        $this->assertStringContainsString(Pelajaran::query()->aktif()->count().' aktif', $html);
+        $this->assertStringContainsString(Pelajaran::query()->where('aktif', false)->count().' nonaktif', $html);
         $this->assertStringContainsString('1 materi', $html);
     }
 
@@ -410,6 +425,14 @@ class PengaturanTampilanTest extends TestCase
     public function test_daftar_kosong_menampilkan_pesan_yang_jelas(): void
     {
         $admin = $this->buatAdmin();
+
+        /*
+         * Tabel dikosongkan dulu karena migration sudah mengisi sebelas baris
+         * resmi daftar mata pelajaran. Empty state hanya bisa diuji dari
+         * tabel yang benar-benar kosong — baris resminya tidak dihapus karena
+         * tabel memang disiapkan terisi.
+         */
+        Pelajaran::query()->delete();
 
         $this->actingAs($admin)
             ->get(route('admin.pengaturan.pelajaran'))

@@ -585,9 +585,12 @@ class PengaturanAdminTest extends TestCase
     public function test_mata_pelajaran_yang_sudah_ada_bisa_diubah(): void
     {
         $admin = $this->buatAdmin();
+
+        // Slug di luar daftar resmi, supaya barisnya milik test ini sendiri
+        // dan tidak tertimpa baris yang sama dari migration.
         $pelajaran = Pelajaran::create([
             'nama' => 'Matematika',
-            'slug' => 'matematika',
+            'slug' => 'matematika-ubah',
             'aktif' => true,
         ]);
 
@@ -608,7 +611,7 @@ class PengaturanAdminTest extends TestCase
 
         // Form ubah tidak punya kolom kode, jadi slug lama harus utuh.
         // Kalau ikut kosong, semua tautan filter yang sudah dibagikan mati.
-        $this->assertSame('matematika', $setelah->slug);
+        $this->assertSame('matematika-ubah', $setelah->slug);
     }
 
     public function test_mata_pelajaran_yang_diubah_tidak_bisa_memakai_kode_milik_yang_lain(): void
@@ -632,9 +635,11 @@ class PengaturanAdminTest extends TestCase
     public function test_mengganti_status_aktif_tidak_menghapus_deskripsi(): void
     {
         $admin = $this->buatAdmin();
+        // Slug di luar daftar resmi, supaya barisnya milik test ini sendiri dan
+        // deskripsinya benar-benar yang ditulis di sini.
         $pelajaran = Pelajaran::create([
             'nama' => 'Matematika',
-            'slug' => 'matematika',
+            'slug' => 'matematika-uji',
             'deskripsi' => 'Pelajaran bilangan.',
             'aktif' => true,
         ]);
@@ -661,7 +666,7 @@ class PengaturanAdminTest extends TestCase
     public function test_pengguna_biasa_tidak_bisa_mengubah_mata_pelajaran(): void
     {
         $pengguna = $this->buatPengguna();
-        $pelajaran = Pelajaran::create(['nama' => 'Matematika', 'slug' => 'matematika', 'aktif' => true]);
+        $pelajaran = Pelajaran::create(['nama' => 'Matematika', 'slug' => 'matematika-akses', 'aktif' => true]);
 
         $this->actingAs($pengguna)
             ->put(route('admin.pengaturan.pelajaran.update', $pelajaran), [
@@ -676,7 +681,7 @@ class PengaturanAdminTest extends TestCase
     public function test_mata_pelajaran_yang_dipakai_tidak_bisa_dihapus(): void
     {
         $admin = $this->buatAdmin();
-        $pelajaran = Pelajaran::create(['nama' => 'Matematika', 'slug' => 'matematika', 'aktif' => true]);
+        $pelajaran = Pelajaran::create(['nama' => 'Matematika', 'slug' => 'matematika-pakai', 'aktif' => true]);
 
         Materi::create([
             'pelajaran_id' => $pelajaran->getKey(),

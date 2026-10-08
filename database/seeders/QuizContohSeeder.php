@@ -59,12 +59,12 @@ class QuizContohSeeder extends Seeder
     }
 
     /**
-     * Id pelajaran untuk kartu. Kalau kategori pemrograman belum ada,
-     * dikembalikan null supaya quiz tetap tersimpan tanpa pelajaran.
+     * Id pelajaran untuk kartu. Kalau kategori PPLG belum ada, dikembalikan
+     * null supaya quiz tetap tersimpan tanpa pelajaran.
      */
     private function pelajaranId(): ?int
     {
-        $ada = Pelajaran::query()->where('slug', 'pemrograman')->value('id');
+        $ada = Pelajaran::query()->where('slug', 'pplg')->value('id');
 
         return $ada !== null ? (int) $ada : null;
     }

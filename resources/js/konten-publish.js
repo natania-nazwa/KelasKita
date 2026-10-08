@@ -116,6 +116,67 @@ function initKonfirmasiTerbit() {
         pemicuSekarang = null;
     };
 
+    /*
+     * Kirim form milik tombol pemicu.
+     *
+     * Dipakai dua kali: saat admin menyetujui dialog, dan saat aturan
+     * "Konfirmasi sebelum Publish" dimatikan sehingga dialog tidak pernah
+     * dibuka. Satu fungsi supaya keduanya tidak bisa berbeda diam-diam.
+     *
+     * Tiga sumber tombol, tiga cara berbeda mengirim:
+     *
+     *   1. Tombol milik wizard (data-konten-kirim). Tombolnya type="button"
+     *      dan berada di luar <form>, jadi yang bisa mengirim bukan form-nya
+     *      melainkan fungsi yang dipasang wizard di
+     *      window.kelasKitaKontenKirim. Fungsi itu juga memeriksa semua
+     *      langkah form lebih dulu, jadi konfirmasi tidak melewati pemeriksaan
+     *      yang biasa dilakukan wizard.
+     *
+     *   2. Tombol di dalam <form> (tombol "Publish Sekarang" pada form
+     *      materi). Form itu yang dikirim, karena isian admin ada di sana
+     *      dan field "aksi"-nya sudah diisi tombol yang ditekan.
+     *
+     *   3. Tombol berdiri sendiri di daftar konten. Form yang dibuat di atas
+     *      yang dikirim, memakai URL dari data-konten-aksi.
+     */
+    const kirim = (tombol) => {
+        if (!tombol) {
+            return;
+        }
+
+        if (tombol.hasAttribute("data-konten-kirim")) {
+            window.kelasKitaKontenKirim?.("publish");
+
+            return;
+        }
+
+        const formPemilik = tombol.form;
+
+        if (formPemilik) {
+            /*
+             * Tombol pemicunya ikut jadi submitter supaya name="aksi"-
+             * nya ikut terkirim: requestSubmit() tanpa argumen melempar
+             * tombol itu, jadi server tidak tahu admin menekan Publish
+             * atau Simpan Draft dan isiannya tersimpan sebagai draft.
+             */
+            const submitter = tombol.type === "submit" ? tombol : undefined;
+
+            formPemilik.requestSubmit(submitter);
+
+            return;
+        }
+
+        const action = tombol.dataset.kontenAksi || "";
+
+        if (!action) {
+            return;
+        }
+
+        form.setAttribute("action", action);
+        method.value = tombol.dataset.kontenMetode || "POST";
+        form.submit();
+    };
+
     pemicu.forEach((tombol) => {
         /*
          * Listener dipasang di fase tangkap supaya preventDefault() masih
@@ -125,7 +186,22 @@ function initKonfirmasiTerbit() {
         tombol.addEventListener(
             "click",
             (event) => {
+                /*
+                 * Aturan dari Pengaturan dimatikan: tombol harus langsung
+                 * mengirim, tanpa dialog.
+                 *
+                 * Tombol di dalam form sudah type="submit", jadi browser
+                 * yang mengirim — termasuk name="aksi"-nya — dan kalau ikut
+                 * dikirim di sini form-nya terkirim dua kali. Tombol yang
+                 * berdiri sendiri di luar form tidak punya apa pun untuk
+                 * dikirim, jadi form yang dibuat di atas yang dipakai.
+                 */
                 if (!perluKonfirmasi()) {
+                    if (!tombol.form) {
+                        event.preventDefault();
+                        kirim(tombol);
+                    }
+
                     return;
                 }
 
@@ -165,11 +241,6 @@ function initKonfirmasiTerbit() {
                     nama.textContent = tombol.dataset.kontenNama || "";
                 }
 
-                if (!tombol.form) {
-                    form.setAttribute("action", tombol.dataset.kontenAksi || "");
-                    method.value = tombol.dataset.kontenMetode || "POST";
-                }
-
                 dialog.classList.add("is-buka");
                 dialog.setAttribute("aria-hidden", "false");
 
@@ -180,39 +251,25 @@ function initKonfirmasiTerbit() {
     });
 
     /*
-     * Konfirmasi: kirim form yang tadi ditahan.
+     * Konfirmasi: kirim form yang tadi ditahan. Jalur pengirimannya sama
+     * dengan yang dipakai ketika konfirmasi dimatikan, semuanya lewat kirim().
      *
-     * Tiga sumber tombol, tiga cara berbeda mengirim:
-     *
-     *   1. Tombol milik wizard (data-konten-kirim). Tombolnya type="button"
-     *      dan berada di luar <form>, jadi yang bisa mengirim bukan form-nya
-     *      melainkan fungsi yang dipasang wizard di
-     *      window.kelasKitaKontenKirim. Fungsi itu juga memeriksa semua
-     *      langkah form lebih dulu, jadi konfirmasi tidak melewati pemeriksaan
-     *      yang biasa dilakukan wizard.
-     *
-     *   2. Tombol di dalam <form> (tombol "Publish Sekarang" pada form
-     *      materi). Form itu yang dikirim, karena isian admin ada di sana
-     *      dan field "aksi"-nya sudah diisi tombol yang ditekan.
-     *
-     *   3. Tombol berdiri sendiri di daftar konten. Form yang dibuat di atas
-     *      yang dikirim, memakai URL dari data-konten-aksi.
+     * preventDefault() dipasang karena tombol konfirmasi harus type="button"
+     * supaya tidak ada pengiriman bawaan. Pengaman ini tetap ada: kalau
+     * markup berubah lagi menjadi type="submit", listener ini yang mengirim
+     * form yang benar, dan preventDefault() yang menahan pengiriman ke URL
+     * halaman. Tanpa itu, kliknya mengirim dua form: yang benar, lalu form
+     * tanpa action yang jatuh ke halaman ini — POST ke /admin/konten yang
+     * hanya menerima GET, jadi 405.
      */
-    tombolKonfirmasi?.addEventListener("click", () => {
+    tombolKonfirmasi?.addEventListener("click", (event) => {
+        event.preventDefault();
+
         const tombolIni = pemicuSekarang;
-        const formPemilik = tombolIni?.form;
-        const lewatWizard = tombolIni?.hasAttribute("data-konten-kirim");
-        const action = form.getAttribute("action");
 
         tutup();
 
-        if (lewatWizard) {
-            window.kelasKitaKontenKirim?.("publish");
-        } else if (formPemilik) {
-            formPemilik.requestSubmit();
-        } else if (action) {
-            form.submit();
-        }
+        kirim(tombolIni);
     });
 
     tombolBatal.forEach((tombol) => {

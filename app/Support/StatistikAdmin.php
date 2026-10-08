@@ -36,7 +36,7 @@ final class StatistikAdmin
      */
     public static function batasTerpopuler(): int
     {
-        return 6;
+        return 5;
     }
 
     /**

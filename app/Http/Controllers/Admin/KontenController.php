@@ -149,7 +149,7 @@ class KontenController extends Controller
                 'za' => 'Z–A',
             ],
             'pilihanStatus' => $this->pilihanStatus(),
-            'daftarKategori' => Pelajaran::query()->aktif()->orderBy('nama')->get(),
+            'daftarKategori' => Pelajaran::query()->aktif()->urutKatalog()->get(),
             'jumlahMateri' => Materi::query()->milik($admin?->getKey())->count(),
             'jumlahQuiz' => Quiz::query()->milik($admin?->getKey())->count(),
         ]);

@@ -18,60 +18,6 @@ use Illuminate\Support\Facades\Hash;
 class MateriSeeder extends Seeder
 {
     /**
-     * @var array<int, array<string, mixed>>
-     */
-    private const KATEGORI = [
-        [
-            'nama' => 'Bahasa Indonesia',
-            'slug' => 'bahasa-indonesia',
-            'deskripsi' => 'Tata bahasa, kosakata, dan keterampilan membaca dan menulis.',
-            'ikon' => 'A',
-        ],
-        [
-            'nama' => 'Bahasa Jepang',
-            'slug' => 'bahasa-jepang',
-            'deskripsi' => 'Hiragana, katakana, kanji, dan kosakata dasar.',
-            'ikon' => '日',
-        ],
-        [
-            'nama' => 'Matematika',
-            'slug' => 'matematika',
-            'deskripsi' => 'Pecahan, geometri, dan aljebra untuk jenjang dasar.',
-            'ikon' => '∑',
-        ],
-        [
-            'nama' => 'IPA',
-            'slug' => 'ipa',
-            'deskripsi' => 'Fisika, astronomi, dan phenomena alam sehari-hari.',
-            'ikon' => '🔬',
-        ],
-        [
-            'nama' => 'Pemrograman',
-            'slug' => 'pemrograman',
-            'deskripsi' => 'Dasar-dasar menulis program, dari HTML sampai JavaScript.',
-            'ikon' => '</>',
-        ],
-        [
-            'nama' => 'Desain Web',
-            'slug' => 'desain-web',
-            'deskripsi' => 'Tampilan, tipografi, dan pengalaman antarmuka pengguna.',
-            'ikon' => '🎨',
-        ],
-        [
-            'nama' => 'Database',
-            'slug' => 'database',
-            'deskripsi' => 'Penyimpanan data terstruktur dan bahasa SQL.',
-            'ikon' => '🗄️',
-        ],
-        [
-            'nama' => 'Teknologi',
-            'slug' => 'teknologi',
-            'deskripsi' => 'Alur kerja membangun aplikasi web dari awal sampai selesai.',
-            'ikon' => '⚡',
-        ],
-    ];
-
-    /**
      * Pembuat materi. Email dipakai sebagai kunci unik, jadi aman dijalankan
      * berulang.
      *
@@ -301,7 +247,7 @@ class MateriSeeder extends Seeder
             ISI,
         ],
         [
-            'kategori' => 'pemrograman',
+            'kategori' => 'pplg',
             'nama' => 'HTML Dasar',
             'tingkat_kesulitan' => 'Mudah',
             'deskripsi' => 'Materi dasar HTML untuk pemula.',
@@ -426,7 +372,7 @@ class MateriSeeder extends Seeder
             ISI,
         ],
         [
-            'kategori' => 'pemrograman',
+            'kategori' => 'pplg',
             'nama' => 'CSS Dasar',
             'tingkat_kesulitan' => 'Mudah',
             'deskripsi' => 'Membuat tampilan web lebih menarik.',
@@ -491,7 +437,7 @@ class MateriSeeder extends Seeder
             ISI,
         ],
         [
-            'kategori' => 'desain-web',
+            'kategori' => 'pplg',
             'nama' => 'UI/UX Design',
             'tingkat_kesulitan' => 'Sedang',
             'deskripsi' => 'Mengenal dasar desain antarmuka pengguna.',
@@ -541,7 +487,7 @@ class MateriSeeder extends Seeder
             ISI,
         ],
         [
-            'kategori' => 'pemrograman',
+            'kategori' => 'pplg',
             'nama' => 'JavaScript Dasar',
             'tingkat_kesulitan' => 'Sedang',
             'deskripsi' => 'Logika dan interaksi pada website.',
@@ -676,7 +622,7 @@ class MateriSeeder extends Seeder
             ISI,
         ],
         [
-            'kategori' => 'teknologi',
+            'kategori' => 'database',
             'nama' => 'Pengembangan Web',
             'tingkat_kesulitan' => 'Sulit',
             'deskripsi' => 'Dari desain hingga deployment.',
@@ -738,7 +684,13 @@ class MateriSeeder extends Seeder
     {
         $idKategori = [];
 
-        foreach (self::KATEGORI as $kategori) {
+        /*
+         * Kategori diambil dari daftar resmi di Pelajaran::KATALOG, bukan dari
+         * daftar sendiri di seeder ini. Kalau daftarnya ditulis dua kali, isi
+         * database dan daftar resmi bisa berbeda, dan yang tampil di filter
+         * bukan lagi kategori yang benar-benar ada.
+         */
+        foreach (Pelajaran::KATALOG as $kategori) {
             $idKategori[$kategori['slug']] = Pelajaran::query()->updateOrCreate(
                 ['slug' => $kategori['slug']],
                 [

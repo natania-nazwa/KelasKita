@@ -4,7 +4,7 @@ namespace App\Http\Controllers\User;
 
 use App\Http\Controllers\Controller;
 use App\Models\Materi;
-use App\Models\Pelajaran;
+use App\Support\DaftarKategori;
 use App\Support\DaftarMateri;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
@@ -39,6 +39,7 @@ class MateriController extends Controller
             'kategoriAktif' => $kategori,
             'totalMateri' => Materi::query()->terbit()->count(),
             'totalPembuat' => $this->totalPembuat(),
+            'totalKategori' => $this->totalKategori(),
         ]);
     }
 
@@ -53,6 +54,23 @@ class MateriController extends Controller
             ->whereNotNull('dibuat_oleh')
             ->distinct()
             ->count('dibuat_oleh');
+    }
+
+    /**
+     * Berapa kategori yang benar-benar berisi materi yang tayang.
+     *
+     * Angka ini sengaja dihitung sendiri, bukan dari jumlah pilihan di filter.
+     * Filter menampilkan seluruh daftar resmi, termasuk yang isinya masih
+     * kosong, jadi membacanya selalu menghasilkan sebelas dan tidak lagi
+     * menjawab "seberapa banyak kategori yang ada di pustaka ini".
+     */
+    private function totalKategori(): int
+    {
+        return (int) Materi::query()
+            ->terbit()
+            ->whereNotNull('pelajaran_id')
+            ->distinct()
+            ->count('pelajaran_id');
     }
 
     /**
@@ -82,17 +100,6 @@ class MateriController extends Controller
             ->groupBy('pelajaran_id')
             ->pluck('jumlah', 'pelajaran_id');
 
-        $urutanKatalog = collect(Pelajaran::KATALOG)
-            ->pluck('slug')
-            ->mapWithKeys(fn (string $slug, int $index) => [$slug => $index]);
-
-        return Pelajaran::query()
-            ->aktif()
-            ->orderBy('nama')
-            ->get()
-            ->map(fn (Pelajaran $pelajaran) => [...Pelajaran::warna($pelajaran->slug, $pelajaran->nama), 'jumlah' => (int) ($jumlahPerPelajaran[$pelajaran->id] ?? 0)])
-            ->filter(fn (array $item) => $item['jumlah'] > 0)
-            ->sortBy(fn (array $item) => [$urutanKatalog[$item['slug']] ?? 99, $item['nama']])
-            ->values();
+        return DaftarKategori::filter($jumlahPerPelajaran);
     }
 }

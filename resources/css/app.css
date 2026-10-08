@@ -228,6 +228,90 @@ html {
     animation: kk-gradient-slide 2.5s linear infinite;
 }
 
+/*
+ * ============================================================
+   KARTU KATEGORI (landing page)
+   ============================================================
+ *
+ * Sepuluh kartu kategori di section "Kategori Materi" landing page.
+ *
+ * Warnanya dulu ditulis sebagai kelas hex Tailwind di setiap kartu, jadi tiap
+ * kartu punya kelasnya sendiri. Sekarang warnanya datang dari data lewat
+ * --k dan --k-gelap, sama seperti kartu materi dan quiz di halaman lain, jadi
+ * kelas warnanya dipindah ke sini.
+ *
+ * Bentuk kartunya tidak berubah: ukuran, radius, jaraknya, dan semua efek
+ * hover-nya sama seperti kelas Tailwind yang sebelumnya menempel di markup.
+ * Yang dicatat di sini hanya bagian warna yang tidak bisa ditulis inline.
+ *
+ * Warna tengah (--k-tengah) adalah warna kategori yang dipergelapkan
+ * seperlunya lewat color-mix, menggantikan pasangan hex yang tadinya ditulis
+ * manual di tiap kartu untuk warna gradasian, latar ikon, dan titik.
+ */
+.kartu-kategori {
+    --k-tengah: color-mix(in oklab, var(--k) 60%, var(--k-gelap));
+
+    border-color: var(--color-lavender);
+    transition-property:
+        transform,
+        border-color,
+        box-shadow;
+    transition-duration: 300ms;
+}
+
+.kartu-kategori:hover,
+.kartu-kategori:focus-visible {
+    transform: translateY(-8px);
+    border-color: var(--k);
+    box-shadow:
+        0 2px 4px rgba(33, 26, 58, 0.05),
+        0 30px 55px -28px color-mix(in oklab, var(--k-tengah) 70%, transparent);
+}
+
+/* Lingkaran besar di pojok kanan atas. */
+.kartu-kategori__bola {
+    background-color: color-mix(in oklab, var(--k-tengah) 10%, transparent);
+}
+
+/* Garis gradasian tipis di tepi atas kartu, yang ikut beranimasi. */
+.kartu-kategori__garis {
+    background-image: linear-gradient(
+        to right,
+        white,
+        var(--k),
+        var(--k-tengah)
+    );
+}
+
+/* Latar persegi di belakang ikon. */
+.kartu-kategori__latar {
+    background-color: color-mix(in oklab, var(--k-tengah) 15%, transparent);
+}
+
+/* Kotak gradien ikon, sama bentuknya seperti sebelumnya. */
+.kartu-kategori__ikon {
+    background-image: linear-gradient(
+        135deg,
+        var(--k),
+        var(--k-tengah)
+    );
+    box-shadow: 0 10px 15px -3px color-mix(in oklab, var(--k-tengah) 30%, transparent);
+}
+
+.kartu-kategori__judul {
+    color: var(--color-dark);
+}
+
+.kartu-kategori:hover .kartu-kategori__judul,
+.kartu-kategori:focus-visible .kartu-kategori__judul {
+    color: var(--k-gelap);
+}
+
+/* Titik kecil di depan jumlah materi. */
+.kartu-kategori__titik {
+    background-color: var(--k-tengah);
+}
+
 @keyframes kk-gradient-slide {
     0% {
         background-position: 200% 50%;
