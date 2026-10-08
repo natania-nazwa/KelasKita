@@ -323,7 +323,8 @@ Modifier --materi dan --kuis bukan hiasan: keduanya yang
     ======================
          Hasil aksi setelah redirect: simpan, terbitkan, duplikat, atau
          hapus. Muncul mengambang di pojok kanan bawah dan menutup dirinya
-         sendiri setelah beberapa detik (resources/js/konten-admin.js). --}}
+         sendiri setelah lima detik atau saat tombol silangnya ditekan
+         (resources/js/konten-admin.js). --}}
     <x-admin.toast :judul="session('sukses')" :pesan="session('suksesDetail')" />
 
     {{-- =====================

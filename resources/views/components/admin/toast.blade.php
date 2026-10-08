@@ -13,7 +13,7 @@
     tiap kali halaman dibuka.
 
     Letaknya di pojok kanan bawah, menumpuk di atas sidebar yang tetap
-    terlihat, dan menutup dirinya sendiri setelah beberapa detik
+    terlihat, dan menutup dirinya sendiri setelah lima detik
     (resources/js/konten-admin.js). Tombol tutup selalu ada, jadi membaca
     pesannya tidak bergantung pada JavaScript.
 --}}

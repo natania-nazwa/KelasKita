@@ -59,7 +59,14 @@
 
     {{-- ==================== STATISTIK UTAMA ==================== --}}
     {{-- Nada kartu: hijau (Pengguna), kuning (Materi), ungu (Quiz), merah (Menunggu). --}}
-    <section class="ad-seksi ad-grid ad-grid--statistik" aria-label="Ringkasan platform">
+    {{--
+        .ad-grid--ponsel hanya berlaku di <= 767px (lihat resources/css/
+        admin.css) dan hanya dipakai di halaman ini: di <= 639px keempatnya
+        jadi dua kolom supaya tidak perlu digulir melewati empat kartu tinggi.
+        Halaman /admin/pengguna memakai .ad-grid--statistik yang sama tapi
+        tanpa kelas ini, jadi susunan kolomnya tidak ikut berubah.
+    --}}
+    <section class="ad-seksi ad-grid ad-grid--statistik ad-grid--ponsel" aria-label="Ringkasan platform">
         <x-admin.statistik ikon="grup" label="Pengguna" :nilai="$ringkasan['pengguna']" nada="sukses"
             :naik="$persen['pengguna']" :keterangan="$persen['pengguna'] ? null : $keterangan['pengguna']"
             :href="route('admin.pengguna')" />

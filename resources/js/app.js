@@ -36,6 +36,23 @@ import "./konten-publish.js";
 import "./konten-daftar.js";
 
 /*
+ * Toast hasil aksi seluruh area admin: menutup dirinya sendiri dan tombol
+ * silangnya.
+ *
+ * Modul ini sama sekali tidak bergantung pada elemen Konten Pembelajaran,
+ * dan elemen yang dicari berhenti sendiri kalau halaman tidak punya toast --
+ * jadi aman diimpor di mana saja.
+ *
+ * WAJIB diimpor. Sebelumnya file ini ada tapi tidak pernah diimpor dari
+ * mana pun, sehingga tidak ada yang memasang timer maupun listener tombol
+ * tutup: toast "Draft berhasil disimpan" dan sejenisnya tidak pernah hilang
+ * sendiri, dan tombol X-nya tidak bereaksi. Toast dipakai di delapan
+ * halaman admin (Konten, Konten Quiz, Pengguna, dan Pengaturan beserta
+ * empat sub-halamannya), jadi satu impor di sini menutup semuanya.
+ */
+import "./konten-admin.js";
+
+/*
  * Area admin "Pengaturan": dialog pengaturan, saklar, mode terang/gelap,
  * pratinjau foto profil, dan lonceng notifikasi di topbar.
  *

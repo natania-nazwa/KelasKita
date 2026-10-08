@@ -8355,3 +8355,442 @@ body.tubuh-admin {
         transition: none;
     }
 }
+
+/* ================================================================
+   TAMPILAN PONSEL
+   ================================================================
+   Area admin untuk layar kecil (<= 767px). Tablet (768px-1023px)
+   dan desktop (>= 1024px) TIDAK disentuh oleh seluruh blok ini:
+   setiap aturan di bawah memakai max-width: 767px, jadi tidak ada
+   satu pun aturan di sini yang bisa berlaku di >= 768px.
+
+   Batasannya sengaja 767px, bukan 1023px seperti batas sidebar.
+   Yang menentukan navigasi di layar kecil adalah ruang fingerscreen
+   yang sempit, dan batas 767px sudah dipakai halaman Konten
+   Pembelajaran untuk hal yang sama (lihat .ad-konten-alat-kotak).
+   Di 768px-1023px sidebar masih dipakai sebagai drawer dan topbar
+   masih membuka drawer itu, persis seperti sebelumnya.
+
+   Tiga hal yang berubah di <= 767px:
+     1. Sidebar dan tombol buka drawer disembunyikan, digantikan
+        navigasi bawah lima menu.
+     2. Header ponsel (.ad-hp) muncul menggantikan topbar.
+     3. Kartu, banner, grafik, dan kartu statistik dirapatkan supaya
+        tidak ada gulir horizontal dan tidak ada yang tertutup
+        navigasi bawah.
+   ================================================================ */
+
+/* ---------- Sidebar dan topbar disembunyikan ---------- */
+.ad-hp,
+.ad-bawah {
+    display: none;
+}
+
+@media (max-width: 767px) {
+
+    /*
+     * Sidebar tidak lagi jadi drawer di layar ini, dan tombol buka
+     * drawer-nya ikut hilang. .ad-sisi disembunyikan total (bukan
+     * translateX) supaya tidak ada drawer tersembunyi yang masih bisa
+     * terbuka lewat tombol lain. Tirainya ikut disembunyikan supaya
+     * layar tidak pernah gelap tanpa sebab.
+     *
+     * Komponen sidebar di layouts/admin.blade.php tidak dihapus: di
+     * >= 768px dia tetap dipakai, dan di desktop persis seperti
+     * sebelumnya.
+     */
+    .ad-sisi,
+    .ad-sisi__tirai {
+        display: none;
+    }
+
+    /* Strip topbar lama (yang isinya cuma tombol buka drawer) tidak
+       lagi punya isi yang tampil, jadi disembunyikan supaya tidak
+       menyisakan ruang kosong 4rem di atas header ponsel. */
+    .ad-atas {
+        display: none;
+    }
+
+    /* Ruang untuk navigasi bawah. Nilai 6rem menutup tinggi navigasi
+       (sekitar 3,4rem baris menu) plus jarak baca, dan ditambah
+       env(safe-area-inset-bottom) supaya kartu terakhir di iPhone
+       dengan bar home gestural tidak tertutup bar itu. */
+    .ad-isi {
+        padding-bottom: calc(6rem + env(safe-area-inset-bottom));
+    }
+
+    /* ---------- Header ponsel ---------- */
+    /*
+     * Tinggi dijaga: padding 0,65rem + baris 2,4rem = sekitar 3,7rem.
+     * Header aplikasi yang lebih tinggi hanya memakan layar yang
+     * sudah pendek, dan di halaman yang isinya panjang (Konten,
+     * Pengaturan) setiap piksel yang dipotong terasa sebagai
+     * ruang baca yang hilang.
+     */
+    .ad-hp {
+        position: sticky;
+        z-index: 20;
+        top: 0;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.75rem;
+        min-height: 3.7rem;
+        border-bottom: 1px solid color-mix(in oklab, var(--ad-primary) 12%, var(--ad-garis));
+        background-color: color-mix(in oklab, var(--ad-latar) 88%, transparent);
+        backdrop-filter: blur(10px);
+        padding: 0.65rem 1rem;
+    }
+
+    /* Logo: warna dan rasio sama persis dengan yang di kepala sidebar,
+       supaya brand-nya tidak berubah bentuk hanya karena layarnya
+       kecil. Rasionya 217:187 dan gambarnya object-contain, jadi
+       logonya tidak pernah gepeng. */
+    .ad-hp__logo {
+        display: flex;
+        width: 2.1rem;
+        height: 1.8rem;
+        flex-shrink: 0;
+        align-items: center;
+        justify-content: center;
+        filter: brightness(0.92) saturate(1.05);
+    }
+
+    .ad-hp__merek {
+        display: flex;
+        min-width: 0;
+        align-items: center;
+        gap: 0.6rem;
+    }
+
+    .ad-hp__merek-teks {
+        display: flex;
+        min-width: 0;
+        flex-direction: column;
+    }
+
+    /* "KelasKita" sedikit lebih kecil dari nama di sidebar supaya
+       "Admin Panel" di bawahnya masih muat satu baris. */
+    .ad-hp__nama {
+        font-family: var(--font-display);
+        font-size: 1rem;
+        font-weight: 700;
+        line-height: 1.15;
+        letter-spacing: -0.01em;
+        color: var(--ad-teks);
+    }
+
+    .ad-hp__sapaan {
+        font-size: 0.625rem;
+        font-weight: 600;
+        line-height: 1.3;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--ad-teks-2);
+    }
+
+    .ad-hp__aksi {
+        display: flex;
+        flex-shrink: 0;
+        align-items: center;
+        gap: 0.4rem;
+    }
+
+    /*
+     * Tombol aksi: kotak putih bertepi halus, sama seperti bentuk
+     * tombol di seluruh area admin. Avatar memakai tombol yang sama
+     * tanpa tepi supaya yang terlihat di kanan header hanyalah
+     * avatar, bukan avatar di dalam kotak.
+     */
+    .ad-hp__tombol {
+        display: flex;
+        width: 2.3rem;
+        height: 2.3rem;
+        align-items: center;
+        justify-content: center;
+        border-radius: 0.8rem;
+        border: 1px solid var(--ad-garis);
+        background-color: var(--ad-permukaan);
+        color: var(--ad-teks-ungu-terang);
+        transition:
+            border-color 0.18s ease,
+            color 0.18s ease;
+    }
+
+    .ad-hp__tombol--avatar {
+        border-color: transparent;
+        background-color: transparent;
+    }
+
+    /* ---------- Navigasi bawah ---------- */
+    /*
+     * Bentuknya sama persis dengan navigasi bawah halaman pengguna
+     * (components/app/nav-bawah.blade.php): pil lavender di belakang
+     * ikon yang sedang aktif, label 10px di bawahnya, dan env(
+     * safe-area-inset-bottom) supaya tidak tertimpa bar home gestural
+     * di iPhone. Yang dipakai dari sana hanya bentuknya; warna ditulis
+     * ulang dari token --ad-* supaya tetap mengikuti mode gelap.
+     *
+     * Menu aktif = warna teks --ad-teks-ungu-terang (ungu KelasKita),
+     * menu tidak aktif = --ad-teks-2 (abu kecoklatan lavender).
+     */
+    .ad-bawah {
+        position: fixed;
+        z-index: 40;
+        right: 0;
+        bottom: 0;
+        left: 0;
+        display: block;
+        border-top: 1px solid color-mix(in oklab, var(--ad-primary) 12%, var(--ad-garis));
+        border-radius: 1.1rem 1.1rem 0 0;
+        background-color: var(--ad-permukaan);
+        box-shadow: 0 -6px 22px -18px rgba(41, 36, 92, 0.5);
+        padding-bottom: env(safe-area-inset-bottom);
+    }
+
+    .ad-bawah__daftar {
+        display: grid;
+        grid-template-columns: repeat(5, minmax(0, 1fr));
+        margin: 0;
+        padding: 0;
+        list-style: none;
+    }
+
+    .ad-bawah__tautan {
+        position: relative;
+        display: flex;
+        min-height: 3.4rem;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 0.2rem;
+        padding: 0.4rem 0.15rem 0.35rem;
+        color: var(--ad-teks-2);
+        transition: color 0.18s ease;
+    }
+
+    /* Pil di belakang ikon. Lebarnya 2,4rem bukan 2,75rem supaya lima
+       pil dan lima label muat rapi di 320px juga, bukan cuma di 375px. */
+    .ad-bawah__ikon {
+        position: relative;
+        display: flex;
+        width: 2.4rem;
+        height: 1.75rem;
+        align-items: center;
+        justify-content: center;
+        border-radius: 9999px;
+        transition: background-color 0.18s ease;
+    }
+
+    .ad-bawah__tautan--aktif,
+    .ad-bawah__tautan--aktif:hover {
+        color: var(--ad-teks-ungu-terang);
+    }
+
+    .ad-bawah__tautan--aktif .ad-bawah__ikon {
+        background-color: var(--ad-cucian-ungu);
+    }
+
+    /* Label 10px + whitespace-nowrap: "Verifikasi" (10 huruf) tetap muat
+       di kolom 64px tanpa dipotong. */
+    .ad-bawah__label {
+        font-size: 0.625rem;
+        line-height: 1.2;
+        white-space: nowrap;
+        color: inherit;
+    }
+
+    .ad-bawah__tautan--aktif .ad-bawah__label {
+        font-weight: 800;
+    }
+
+    .ad-bawah__tautan:not(.ad-bawah__tautan--aktif) .ad-bawah__label {
+        font-weight: 600;
+    }
+
+    /* Angka konten yang menunggu: pil coral yang sama dengan di sidebar,
+       supaya penanda "ada yang perlu diputuskan" tidak berubah bentuk
+       hanya karena layarnya kecil. */
+    .ad-bawah__jumlah {
+        position: absolute;
+        top: -0.2rem;
+        right: -0.3rem;
+        min-width: 1.05rem;
+        border-radius: 9999px;
+        background-color: #f47fa5;
+        padding: 0 0.28rem;
+        font-size: 0.5625rem;
+        font-weight: 700;
+        line-height: 1.05rem;
+        text-align: center;
+        font-variant-numeric: tabular-nums;
+        color: #fff;
+    }
+
+    /* ---------- Kartu sapaan (banner) ---------- */
+    /*
+     * Padding dikecilkan supaya teks dan ilustrasi tetap muat satu layar
+     * tanpa harus digulir. Isinya (judul, subjudul, ilustrasi PNG) tidak
+     * berubah sedikit pun; hanya ruangnya.
+     *
+     * Ilustrasi turun ke bawah teks lalu dirapatkan ke kanan, sesuai
+     * ruang yang tersisa. Di >= 1024px ilustrasi masih melayang di kanan
+     * banner seperti sebelumnya.
+     */
+    .ad-banner {
+        padding: 1.15rem 1rem;
+    }
+
+    .ad-banner__susun {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .ad-banner__ilustrasi {
+        width: 10.5rem;
+        max-width: 62%;
+        margin: 0.65rem 0 0 auto;
+    }
+
+    .ad-banner__sub {
+        max-width: 78%;
+    }
+
+    /* ---------- Kartu ---------- */
+    /*
+     * Padding 1rem (16px) dan jarak 0.9rem: angka yang diminta untuk
+     * kartu ponsel. Nilai 1,1rem-1,25rem milik desktop tidak diubah,
+     * hanya ditimpa di <= 767px.
+     */
+    .ad-kartu {
+        border-radius: 1.2rem;
+    }
+
+    .ad-kartu__kepala {
+        padding: 0.9rem 1rem;
+    }
+
+    .ad-kartu__kepala-judul {
+        font-size: 1rem;
+    }
+
+    .ad-kartu__badan {
+        padding: 0.9rem 1rem 1rem;
+    }
+
+    .ad-kartu__badan--luas {
+        padding: 0.95rem 1rem 1rem;
+    }
+
+    .ad-kartu__kaki {
+        padding: 0.75rem 1rem;
+    }
+
+    /* ---------- Kartu statistik: grid dua kolom ---------- */
+    /*
+     * Dua kolom di <= 639px, bukan satu. Satu kolom di layar 375px berarti
+     * admin harus menggulir melewati empat kartu penuh tinggi sebelum
+     * mencapai baris section di bawahnya; dua kolom membuat keempatnya
+     * terlihat sekaligus.
+     *
+     * Hanya grid di dashboard yang memakai .ad-grid--ponsel, supaya
+     * .ad-grid--statistik yang dipakai /admin/pengguna tetap satu kolom
+     * seperti sebelumnya.
+     */
+    .ad-grid--ponsel {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 0.75rem;
+    }
+
+    /*
+     * Isi kartu dipadatkan supaya dua kolom tetap muat: ikon mengecil,
+     * angka turun satu tingkat, dan jarak kartu turun dari 1rem ke
+     * 0.75rem. Warna, ikon, angka, dan baris keterangan tidak berubah.
+     *
+     * .ad-stat--kuning override desktop (label uppercase, angka
+     * 1,9375rem) juga ikut ditimpa, kalau tidak kartu Materi akan
+     * terlihat lebih besar dari tiga kartu sebelahnya di baris yang
+     * sama -- dan tinggi kartu di dalam grid sudah sama, jadi yang
+     * tersisa ruang kosong di dalam kartunya.
+     */
+    .ad-stat {
+        gap: 0.5rem;
+        border-radius: 1.2rem;
+        padding: 0.8rem 0.75rem 0.7rem;
+    }
+
+    .ad-stat__atas {
+        gap: 0.55rem;
+    }
+
+    .ad-stat__ikon {
+        width: 2.1rem;
+        height: 2.1rem;
+        border-radius: 0.7rem;
+    }
+
+    .ad-stat__nilai {
+        font-size: 1.5rem;
+    }
+
+    .ad-stat--kuning .ad-stat__nilai {
+        font-size: 1.5rem;
+    }
+
+    .ad-stat__label {
+        font-size: 0.6875rem;
+        line-height: 1.3;
+    }
+
+    .ad-stat--kuning .ad-stat__label {
+        font-size: 0.625rem;
+        letter-spacing: 0.05em;
+    }
+
+    .ad-stat__ket {
+        font-size: 0.625rem;
+        padding: 0.25rem 0.45rem;
+    }
+
+    .ad-stat--kuning .ad-stat__ket {
+        padding: 0.25rem 0.45rem;
+        font-size: 0.625rem;
+    }
+
+    /* ---------- Grafik ---------- */
+    /*
+     * Dua chart di dashboard ini SVG murni dengan viewBox tetap dan
+     * lebar 100%, jadi keduanya sudah ikut lebar kartu tanpa JS dan
+     * tanpa pustaka chart -- tidak ada yang perlu "diresponsifkan"
+     * di sini. Yang tersisa adalah keterbacaannya:
+     *
+     * SVG diperkecil mengikuti lebar viewBox-nya, jadi di 375px kanvas
+     * 576 unit hanya jadi sekitar 300px, yaitu skala 0,52. Label
+     * 10px di dalam viewBox karena itu ikut jadi sekitar 5px di layar,
+     * dan angka sumbu Y serta tanggal minggu jadi nyaris tak terbaca.
+     *
+     * Font label diperbesar di <= 639px supaya ukuran hurufnya di layar
+     * kembali ke sekitar 9-10px. Tidak ada koordinat, data, atau logika
+     * yang disentuh: yang diubah hanya ukuran huruf.
+     */
+    .ad-grafik__label {
+        font-size: 16px;
+    }
+
+    /* Di 400px ke bawah (375px dan 320px) skalanya lebih kecil lagi,
+       jadi satu langkah tambahan supaya label tidak ikut mengecil. */
+    @media (max-width: 400px) {
+        .ad-grafik__label {
+            font-size: 17.5px;
+        }
+    }
+
+    /* Donat chart: melingkar dan legenda sudah tersusun ke atas di bawah
+       520px (lihat .ad-donat__susun), jadi tidak ada yang perlu diubah.
+       Yang dikecilkan hanya lingkarannya supaya kartu tidak butuh
+       gulir vertikal di layar pendek. */
+    .ad-donat__lingkaran {
+        width: 9rem;
+        height: 9rem;
+    }
+}

@@ -115,28 +115,40 @@
      * halaman Konten Pembelajaran (nav.ad-tab di admin/konten.blade.php),
      * yang sudah ada dan tidak bergantung pada menu turunan.
      */
+    /*
+     * Setiap menu punya "kunci": nama pendek yang tidak pernah tampil dan
+     * hanya dipakai untuk memilih menu mana yang ikut navigasi bawah.
+     */
     $menuUtama = [
         [
+            'kunci' => 'dashboard',
             'label' => 'Dashboard',
+            'bawahLabel' => 'Dashboard',
             'ikon' => 'papan',
             'href' => route('admin.dashboard'),
             'aktif' => request()->routeIs('admin.dashboard'),
         ],
         [
+            'kunci' => 'konten',
             'label' => 'Konten Pembelajaran',
+            'bawahLabel' => 'Konten',
             'ikon' => 'buku',
             'href' => route('admin.konten'),
             'aktif' => request()->routeIs('admin.konten*'),
         ],
         [
+            'kunci' => 'verifikasi',
             'label' => 'Verifikasi',
+            'bawahLabel' => 'Verifikasi',
             'ikon' => 'buku-centang',
             'href' => route('admin.verifikasi'),
             'aktif' => request()->routeIs('admin.verifikasi'),
             'jumlah' => $jumlahVerifikasi,
         ],
         [
+            'kunci' => 'materi',
             'label' => 'Materi',
+            'bawahLabel' => 'Materi',
             'ikon' => 'buku',
             'href' => route('admin.materi'),
             'aktif' => request()->routeIs('admin.materi*'),
@@ -152,18 +164,38 @@
              * di halaman detail dan form editnya, sama seperti menu Materi
              * di atasnya.
              */
+            'kunci' => 'quiz',
             'label' => 'Quiz',
+            'bawahLabel' => 'Quiz',
             'ikon' => 'centang',
             'href' => route('admin.quiz'),
             'aktif' => request()->routeIs('admin.quiz*'),
         ],
         [
+            'kunci' => 'pengguna',
             'label' => 'Pengguna',
+            'bawahLabel' => 'Pengguna',
             'ikon' => 'grup',
             'href' => route('admin.pengguna'),
             'aktif' => request()->routeIs('admin.pengguna'),
         ],
     ];
+
+    /*
+     * Navigasi bawah untuk layar kecil: lima menu, tidak kurang tidak
+     * lebih. Karena sidebar disembunyikan di layar itu, lima menu inilah
+     * satu-satunya cara pindah halaman, jadi "Pengaturan" dan "Materi" yang
+     * ada di sidebar tidak ikut di sini; keduanya masih terbuka lewat ikon
+     * roda di header ponsel dan lewat tombol "Lihat Semua" di dashboard.
+     *
+     * Daftar ini disaring dari $menuUtama, bukan ditulis ulang, supaya
+     * ikon, tujuan tautan, angka menunggu, dan penanda halaman aktifnya
+     * selalu sama dengan yang tertulis di sidebar desktop. Kalau suatu saat
+     * sidebar berubah, navigasi bawah ikut berubah tanpa ikut disentuh.
+     */
+    $menuNavigasiBawah = collect($menuUtama)
+        ->filter(fn (array $menu) => in_array($menu['kunci'], ['dashboard', 'konten', 'verifikasi', 'quiz', 'pengguna'], true))
+        ->values();
 
     $menuBawah = [
         [
@@ -326,6 +358,61 @@
     {{-- ---------- KOLOM KONTEN ---------- --}}
     <div class="ad-utama">
 
+        {{-- ---------- HEADER PONSEL ---------- --}}
+        {{--
+            Header khusus layar kecil (<= 767px). Di lebar itu sidebar
+            disembunyikan dan navigasi bawah yang menggantikannya, jadi
+            halaman akan kehilangan merek, nama akun, dan jalan ke
+            Pengaturan kalau tidak ada strip ini.
+
+            Bentuknya sengaja seperti header aplikasi mobile, bukan seperti
+            topbar admin: merek di kiri, dua aksi di kanan, satu baris saja
+            supaya tidak memakan tinggi layar yang sudah sempit.
+
+            Isinya:
+              - logo dan nama yang sama persis dengan kepala sidebar, supaya
+                brand-nya tidak berubah bentuk hanya karena layarnya kecil;
+              - ikon roda yang menuju /admin/pengaturan. Di layar kecil
+                sidebar tidak ada, dan Pengaturan adalah satu-satunya halaman
+                yang memuat "Keluar dari Akun" serta saklar notifikasi, jadi
+                kedua fitur itu harus tetap bisa dijangkau;
+              - avatar admin yang menuju /admin/pengaturan/profil.
+
+            Tanpa JavaScript semua tombol di sini tetap tautan biasa, dan
+            halaman tetap bisa dipakai. Yang hilang di layar kecil hanyalah
+            menu lewat, dan itu memang dipindah ke navigasi bawah.
+
+            Seluruh elemen ini disembunyikan di >= 768px oleh .ad-hp, jadi
+            tampilan desktop tidak bertambah apa pun.
+        --}}
+        <header class="ad-hp">
+            <a href="{{ route('admin.dashboard') }}" class="ad-hp__merek">
+                <span class="ad-hp__logo">
+                    <img
+                        src="{{ asset('images/logo.png') }}"
+                        alt="Logo KelasKita"
+                        class="w-full h-full object-contain"
+                    />
+                </span>
+
+                <span class="ad-hp__merek-teks">
+                    <span class="ad-hp__nama">KelasKita</span>
+                    <span class="ad-hp__sapaan">Admin Panel</span>
+                </span>
+            </a>
+
+            <span class="ad-hp__aksi">
+                <a href="{{ route('admin.pengaturan') }}" class="ad-hp__tombol" aria-label="Pengaturan">
+                    <x-admin.ikon nama="roda" ukuran="w-5 h-5" />
+                </a>
+
+                <a href="{{ route('admin.pengaturan.profil') }}" class="ad-hp__tombol ad-hp__tombol--avatar"
+                    aria-label="Profil {{ $admin?->nama ?? 'admin' }}">
+                    <x-admin.avatar :inisial="$admin?->inisial() ?? 'A'" ukuran="kecil" />
+                </a>
+            </span>
+        </header>
+
         {{-- ---------- TOPBAR ---------- --}}
         {{--
             Topbar area admin sekarang hanya tombol buka sidebar. Kotak
@@ -339,6 +426,12 @@
             strip kosong setinggi 4rem di atas judul setiap halaman. Di bawah
             1024px tombolnya justru satu-satunya cara membuka sidebar, jadi
             topbarnya tetap ada.
+
+            Di <= 767px topbar ini ikut disembunyikan (lihat blok .ad-atas di
+            resources/css/admin.css): di layar itu sidebar dan tombol buka
+            drawer tidak lagi dipakai, dan membiarkannya tampil hanya menambah
+            strip kosong di atas header ponsel. Di 768px-1023px drawer masih
+            dipakai, jadi topbarnya tetap tampil persis seperti sebelumnya.
 
             x-admin.topbar-kanan sengaja tidak dipanggil. Komponennya masih
             ada di resources/views/components/admin/topbar-kanan.blade.php
@@ -360,6 +453,56 @@
             @yield('content')
         </main>
     </div>
+
+    {{-- ---------- NAVIGASI BAWAH ---------- --}}
+    {{--
+        Navigasi bawah untuk layar kecil (<= 767px). Di lebar itu sidebar
+        disembunyikan, jadi lima tautan inilah yang menggantikannya. Di jalur
+        ini tidak ada tombol menu lipat (hamburger) sama sekali.
+
+        Bentuknya <nav> biasa berisi tautan, bukan tombol ber-JavaScript:
+        tanpa JS pun admin tetap bisa berpindah halaman, dan tidak ada satu
+        pun baris JavaScript baru yang perlu ditulis untuk navigasi ini.
+
+        Isinya disaring dari $menuUtama di blok @php di atas, jadi ikon,
+        tujuan tautan, angka yang menunggu di Verifikasi, dan penanda halaman
+        aktif selalu sama dengan sidebar desktop. Halaman yang tidak punya
+        salah satu dari lima menu ini -- misalnya /admin/materi,
+        /admin/pengaturan, dan form edit -- tidak menyalakan apa pun, bukan
+        menyalakan menu yang kebetulan mirip.
+
+        Padding bawah memakai env(safe-area-inset-bottom) supaya di iPhone
+        dengan bar home gestural, lima menu ini tidak tertimpa bar itu.
+    --}}
+    <nav class="ad-bawah" aria-label="Navigasi utama admin">
+        <ul class="ad-bawah__daftar">
+            @foreach ($menuNavigasiBawah as $menu)
+                <li>
+                    <a href="{{ $menu['href'] }}" @if ($menu['aktif']) aria-current="page" @endif
+                        @class([
+                            'ad-bawah__tautan',
+                            'ad-bawah__tautan--aktif' => $menu['aktif'],
+                        ])>
+                        {{-- Pil lavender di belakang ikon hanya muncul pada
+                             menu yang sedang terbuka, jadi "halaman ini"
+                             terbaca sekilas tanpa harus membaca labelnya. --}}
+                        <span class="ad-bawah__ikon" aria-hidden="true">
+                            <x-admin.ikon :nama="$menu['ikon']" ukuran="w-5 h-5" />
+
+                            @if (($menu['jumlah'] ?? 0) > 0)
+                                <span class="ad-bawah__jumlah">{{ $menu['jumlah'] }}</span>
+                            @endif
+                        </span>
+
+                        {{-- "Verifikasi" label terpanjang (10 huruf), jadi
+                             ukuran 10px + whitespace-nowrap membuatnya tetap
+                             muat di 320px di mana tiap kolom hanya 64px. --}}
+                        <span class="ad-bawah__label">{{ $menu['bawahLabel'] }}</span>
+                    </a>
+                </li>
+            @endforeach
+        </ul>
+    </nav>
 </div>
 
 </body>
