@@ -27,11 +27,19 @@
         dengan kelas ad-atur-baris, bukan lewat x-admin.atur-baris: komponen
         itu merender <a>, dan tombolnya harus benar-benar tombol supaya bisa
         dibuka tanpa JavaScript dan bisa difokus dengan keyboard.
+
+        Kepala halamannya memakai kembaliHref: tombol "Kembali ke Dashboard"
+        yang hanya muncul di bawah 768px. Di layar itu sidebar disembunyikan,
+        jadi tanpa tombol ini satu-satunya jalan kembali ke Dashboard adalah
+        logo di header — dan logo itu terbaca sebagai merek, bukan sebagai
+        tombol kembali. Di desktop tombolnya tidak muncul karena sidebar
+        sudah menyediakan Dashboard secara terbuka.
     --}}
 
     <div class="ad-seksi">
         <x-admin.kepala judul="Pengaturan"
-            subjudul="Kelola preferensi akun, tampilan, notifikasi, dan aplikasi." ikon="roda" />
+            subjudul="Kelola preferensi akun, tampilan, notifikasi, dan aplikasi." ikon="roda"
+            :kembaliHref="route('admin.dashboard')" />
     </div>
 
     <div class="ad-atur-kolom">

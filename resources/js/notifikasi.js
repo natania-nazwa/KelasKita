@@ -1,12 +1,23 @@
 /*
  * Lonceng notifikasi di kepala halaman user.
  *
- * Yang dikerjakan satu hal saja: begitu satu notifikasi diklik, tandanya
- * langsung hilang tanpa menunggu halaman tujuan selesai dimuat.
+ * Dua hal yang dikerjakan, keduanya soal satu hal yang sama: kapan sebuah
+ * notifikasi dihitung sudah dibaca.
  *
- * Penandaan dikirim sebagai fetch ke "user.notifikasi.baca" memakai
- * attribute data-notif-baca pada barisnya, jadi tidak ada satu pun markup
- * yang harus diubah server untuk setiap jenis notifikasi.
+ * Pertama, begitu panel lonceng dibuka, semua notifikasi yang ada ditandai
+ * terbaca. Alasannya sederhana: orang yang membuka lonceng sedang melihat
+ * daftarnya, jadi membiarkan titiknya menyala hanya karena satu baris belum
+ * diklik akan membuatnya selalu terasa belum dibaca. Efeknya titik hilang
+ * sampai notifikasi baru datang — itulah satu-satunya kejadian yang menambah
+ * notifikasi, jadi itulah satu-satunya yang menyalakan titik lagi.
+ *
+ * Kedua, satu baris yang diklik menandai dirinya sendiri. Ini menutup jalur
+ * notifikasi yang baru datang setelah panel ditutup, dan tetap bekerja
+ * walau panelnya sedang tidak dibuka.
+ *
+ * Penandaan dikirim sebagai fetch memakai attribute data-* pada markup, jadi
+ * tidak ada satu pun markup yang harus diubah server untuk setiap jenis
+ * notifikasi.
  *
  * Tanpa JavaScript notifikasi tetap bisa dibaca dan tautannya tetap
  * bekerja; hanya tandanya yang belum hilang. Itu degrade yang wajar: isi
@@ -43,7 +54,31 @@ function initNotifikasi(akar) {
         );
 
     /**
-     * Sembunyikan titik merah di SEMUA lonceng ketika tidak ada lagi
+     * Kirim penandaan terbaca dan kembalikan sisa yang belum dibaca, atau
+     * null kalau server menolak atau jawabannya bukan JSON.
+     *
+     * keepalive dipakai supaya request tetap terkirim walau halaman
+     * ditinggalkan di tengah jalan; pemanggilnya yang memutuskan mau
+     * pindah halaman atau tidak.
+     */
+    const kirim = (alamat) =>
+        fetch(alamat, {
+            method: "POST",
+            keepalive: true,
+            headers: {
+                Accept: "application/json",
+                "Content-Type": "application/json",
+                "X-CSRF-TOKEN":
+                    document.querySelector('meta[name="csrf-token"]')
+                        ?.content || "",
+                "X-Requested-With": "XMLHttpRequest",
+            },
+            credentials: "same-origin",
+            body: "{}",
+        }).then((res) => (res.ok ? res.json() : null));
+
+    /**
+     * Sembunyikan titik di SEMUA lonceng ketika tidak ada lagi
      * yang belum dibaca.
      */
     const perbaruiTitik = (sisa) => {
@@ -55,6 +90,71 @@ function initNotifikasi(akar) {
             .querySelectorAll("[data-notif-titik]")
             .forEach((titik) => titik.remove());
     };
+
+    /**
+     * Lepas tanda "belum dibaca" dari sekumpulan baris, dan kembalikan
+     * baris-baris itu supaya nilainya bisa dipulihkan kalau ternyata
+     * penandaannya tidak sampai ke server.
+     */
+    const lepasTanda = (baris) => {
+        baris.forEach((el) => el.classList.remove("is-belum"));
+    };
+
+    const pulihkanTanda = (baris) => {
+        baris.forEach((el) => el.classList.add("is-belum"));
+    };
+
+    /**
+     * Kosongkan tanda "belum dibaca" di seluruh lonceng — dipakai saat panel
+     * dibuka, karena yang tersisa tinggal milik notifikasi baru saja.
+     */
+    const kosongkanSemua = () =>
+        Array.from(document.querySelectorAll("[data-notif-item].is-belum"));
+
+    /*
+     * Panel dibuka: semua yang ada di dalamnya sudah dilihat, jadi semuanya
+     * ditandai terbaca dan titiknya ikut hilang.
+     *
+     * Yang didengarkan adalah klik pada <summary>, bukan event "toggle" milik
+     * <details>. Event itu masih baru: Safari baru mendukungnya sejak 26.5,
+     * dan Chrome, Edge, serta Firefox juga baru menyusul di versi terbaru.
+     * Di peramban yang lebih tua penandaan ini tidak akan pernah jalan sama
+     * sekali. Klik pada <summary> tidak punya masalah itu, dan tetap jalan
+     * juga saat panel dibuka lewat keyboard.
+     *
+     * `open` dibaca lebih dulu karena browser baru membuka panelnya setelah
+     * listener ini selesai. Jadi nilainya masih milik keadaan sebelumnya:
+     * kalau panelnya sudah terbuka, yang sedang terjadi adalah penutupan dan
+     * tidak ada yang perlu ditandai.
+     */
+    const tandaiSemuaTerbaca = () => {
+        const alamat = akar.dataset.notifSemua;
+
+        if (akar.open || !alamat) {
+            return;
+        }
+
+        const menyala = kosongkanSemua();
+
+        // Tidak ada yang belum dibaca: membuka lonceng tidak perlu
+        // membanjiri server dengan permintaan yang tidak mengubah apa pun.
+        if (
+            menyala.length === 0 &&
+            !document.querySelector("[data-notif-titik]")
+        ) {
+            return;
+        }
+
+        lepasTanda(menyala);
+
+        kirim(alamat)
+            .then((data) => perbaruiTitik(data?.sisa))
+            .catch(() => pulihkanTanda(menyala));
+    };
+
+    akar
+        .querySelector("summary")
+        ?.addEventListener("click", tandaiSemuaTerbaca);
 
     akar.addEventListener("click", (event) => {
         // Modifier atau tombol selain klik kiri = membuka di tab lain, bukan
@@ -88,12 +188,12 @@ function initNotifikasi(akar) {
         }
 
         /*
-         * Baris yang masih punya tautan harus navigating ke halaman
+         * Baris yang masih punya tautan harus langsung membuka halaman
          * tujuannya, sedangkan halaman tujuan dirender ulang dari database.
-         * Kalau navigasi boleh jalan duluan, request penandaan bisa kalah
-         * cepat dan titik lonceng masih menyala di halaman yang baru
-         * dibuka. Jadi navigasi ditahan sampai server mengonfirmasi, lalu
-         * dikirim ulang ke alamat aslinya.
+         * Kalau navigasi boleh berjalan duluan, penandaan bisa kalah cepat
+         * dan titik lonceng masih menyala di halaman yang baru dibuka. Jadi
+         * navigasi ditahan sampai server mengonfirmasi, lalu dikirim ulang
+         * ke alamat aslinya.
          *
          * Notifikasi tanpa tautan (kontennya sudah dihapus) tidak punya
          * tujuan, jadi tidak ada yang perlu ditahan.
@@ -105,36 +205,16 @@ function initNotifikasi(akar) {
         }
 
         const semua = kembaran(alamat);
-        semua.forEach((el) => el.classList.remove("is-belum"));
 
-        const lanjutkan = () => {
-            if (tujuan) {
-                window.location.assign(tujuan);
-            }
-        };
+        lepasTanda(semua);
 
-        fetch(alamat, {
-            method: "POST",
-            keepalive: true,
-            headers: {
-                Accept: "application/json",
-                "Content-Type": "application/json",
-                "X-CSRF-TOKEN":
-                    document.querySelector('meta[name="csrf-token"]')
-                        ?.content || "",
-                "X-Requested-With": "XMLHttpRequest",
-            },
-            credentials: "same-origin",
-            body: "{}",
-        })
-            .then((res) => (res.ok ? res.json() : null))
+        kirim(alamat)
             .then((data) => perbaruiTitik(data?.sisa))
-            .catch(() => {
-                // Jaringan gagal atau server menolak: tandanya dikembalikan
-                // supaya tidak hilang notifikasi yang sebenarnya belum
-                // ditandai terbaca.
-                semua.forEach((el) => el.classList.add("is-belum"));
-            })
-            .finally(lanjutkan);
+            .catch(() => pulihkanTanda(semua))
+            .finally(() => {
+                if (tujuan) {
+                    window.location.assign(tujuan);
+                }
+            });
     });
 }

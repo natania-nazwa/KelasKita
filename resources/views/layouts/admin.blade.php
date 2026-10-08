@@ -385,7 +385,10 @@
               - ikon roda yang menuju /admin/pengaturan. Di layar kecil
                 sidebar tidak ada, dan Pengaturan adalah satu-satunya halaman
                 yang memuat "Keluar dari Akun" serta saklar notifikasi, jadi
-                kedua fitur itu harus tetap bisa dijangkau;
+                kedua fitur itu harus tetap bisa dijangkau. Ikonnya memakai
+                tombol polos (tanpa kotak putih), sama seperti avatar di
+                sebelahnya: yang terbaca di header adalah ikonnya, bukan ikon
+                di dalam kartu putih;
               - avatar admin yang menuju /admin/pengaturan/profil.
 
             Tanpa JavaScript semua tombol di sini tetap tautan biasa, dan
@@ -412,7 +415,8 @@
             </a>
 
             <span class="ad-hp__aksi">
-                <a href="{{ route('admin.pengaturan') }}" class="ad-hp__tombol" aria-label="Pengaturan">
+                <a href="{{ route('admin.pengaturan') }}" class="ad-hp__tombol ad-hp__tombol--polos"
+                    aria-label="Pengaturan">
                     <x-admin.ikon nama="roda" ukuran="w-5 h-5" />
                 </a>
 

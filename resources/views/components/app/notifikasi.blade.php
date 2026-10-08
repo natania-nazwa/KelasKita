@@ -10,19 +10,26 @@
     Lonceng notifikasi di top bar halaman user.
 
     Dua bagian yang berbeda tugasnya, jadi sengaja tidak digabung: loncengnya
-    membuka daftar, dan isinya sudah dirender sejak halaman dimuat. Yang
-    ditambahkan JavaScript hanya penandaan terbaca saat satu baris diklik.
+    membuka daftar, dan isinya sudah dirender sejak halaman dimuat.
+
+    Yang ditambahkan JavaScript dua hal. Pertama, begitu panel dibuka,
+    semua notifikasi yang ada ditandai terbaca — pembaca yang membuka
+    lonceng memang sedang melihat daftarnya, jadi titiknya tidak perlu
+    menunggu setiap baris diklik satu per satu. Kedua, tiap baris yang
+    diklik ikut menandai dirinya sendiri, supaya tidakifikasi yang baru
+    datang setelah panel dibuka tetap langsung terasa sudah dibaca.
 
     Setiap baris menuju kontennya (halaman detail materi atau halaman detail
-    quiz) dan menandai notifikasi itu terbaca lewat fetch, supaya titik
-    merahnya langsung hilang begitu diklik.
+    quiz). Navigasi ditahan sampai penandaan sampai ke server, karena
+    halaman tujuan dirender ulang dari database: kalau navigasi berjalan
+    duluan, titik lonceng masih menyala di halaman yang baru dibuka.
 
     Notifikasi yang kontennya sudah dihapus tetap ditampilkan sebagai teks
     biasa, tanpa tautan: pesannya masih benar sebagai kabar, dan tidak ada
     lagi halaman yang bisa dituju.
 --}}
 
-<details class="notif" data-notif>
+<details class="notif" data-notif data-notif-semua="{{ route('user.notifikasi.baca-semua') }}">
     <summary class="notif__tombol" aria-label="Notifikasi">
         <svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"
             xmlns="http://www.w3.org/2000/svg" aria-hidden="true">

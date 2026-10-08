@@ -177,7 +177,7 @@ class Notifikasi extends Model
     }
 
     /**
-     * Tandai notifikasi ini sudah dibaca.
+     * Tandai satu notifikasi sudah dibaca.
      *
      * Sudah dibaca tidak diubah lagi: notifikasi yang dibuka dua kali tidak
      * boleh memindahkan tanggal bacanya, karena urutan di daftar ditentukan
@@ -190,6 +190,27 @@ class Notifikasi extends Model
         }
 
         $this->forceFill(['dibaca_pada' => now()])->save();
+    }
+
+    /**
+     * Tandai semua notifikasi yang belum dibaca milik satu pengguna terbaca.
+     *
+     * Dipakai begitu panel loncengnya dibuka. Yang ditanyakan pembaca saat
+     * membuka lonceng adalah "apa saja yang baru", jadi begitu daftarnya
+     * sudah terlihat, tidak ada lagi yang perlu ditandai belum dibaca.
+     *
+     * Hanya baris milik pengguna itu dan hanya yang belum dibaca, jadi
+     * notifikasi orang lain tidak ikut berubah dan tanggal baca baris yang
+     * sudah dibaca tidak pernah bergerak.
+     *
+     * @return int jumlah baris yang ditandai
+     */
+    public static function tandaiSemuaDibaca(int $penggunaId): int
+    {
+        return self::query()
+            ->where('pengguna_id', $penggunaId)
+            ->belumDibaca()
+            ->update(['dibaca_pada' => now()]);
     }
 
     /**

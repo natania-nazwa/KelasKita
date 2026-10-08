@@ -472,20 +472,28 @@ Route::middleware('auth')
          * =============================================================
          * NOTIFIKASI
          * =============================================================
-         * Satu-satunya rute notifikasi: menandai satu notifikasi sudah
-         * dibaca. Daftar notifikasi sendiri dirender di lonceng topbar,
-         * jadi tidak ada halaman notifikasi terpisah yang harus dibuka
-         * dan ditutup lagi.
+         * Dua rute notifikasi, dan keduanya hanya menandai: satu baris
+         * (baca) dan seluruh miliknya sekaligus (baca-semua). Daftar
+         * notifikasi sendiri dirender di lonceng topbar, jadi tidak ada
+         * halaman notifikasi terpisah yang harus dibuka dan ditutup lagi.
          *
          * Notifikasi dibuat admin dari menu "Konten Pembelajaran" setiap kali
          * ia menerbitkan materi atau quiz (lihat
          * App\Support\NotifikasiKonten). Tidak ada sumber notifikasi lain,
          * jadi tidak ada rute "buat notifikasi" pun.
          *
-         * Rute ini dijaga middleware "auth" bersama seluruh halaman user di
-         * atas, dan controller-nya menolak notifikasi milik orang lain dengan
-         * 403.
+         * Rute "baca-semua" tidak punya parameter notifikasi dan tidak
+         * pernah membaca kolom notifikasi milik orang lain: ia hanya
+         * menyentuh baris milik pengguna yang sedang login, karena itu
+         * cukup dengan memeriksa usersan saja. Rute "baca" membawa satu
+         * baris, jadi tetap menolak 403 kalau baris itu bukan miliknya.
+         *
+         * Keduanya dijaga middleware "auth" bersama seluruh halaman user di
+         * atas.
          */
+        Route::post('/notifikasi/baca-semua', [User\NotifikasiController::class, 'bacaSemua'])
+            ->name('notifikasi.baca-semua');
+
         Route::post('/notifikasi/{notifikasi}/baca', [User\NotifikasiController::class, 'baca'])
             ->name('notifikasi.baca');
     });

@@ -818,6 +818,19 @@ class KontenPembelajaranTest extends TestCase
         $this->assertSame(3, substr_count($halaman->baseResponse->getContent(), 'data-konten-saring-pilih'));
 
         /*
+         * Tiap select dibungkus pembeda kelasnya sendiri. Susunan barisnya di
+         * ponsel sekarang bergantung pada ketiga nama itu: kategori dan urutan
+         * harus berbagi satu baris dan status mendapat baris sendiri, dan itu
+         * hanya bisa terjadi lewat .ad-konten-alat__field--kategori / --urut /
+         * --status. Kalau salah satu berubah nama, aturan CSSnya diam-diam
+         * tidak lagi berlaku dan ketiganya kembali jadi tiga kolom sempit
+         * dalam satu baris — tanpa error apa pun.
+         */
+        foreach (['kategori', 'status', 'urut'] as $varian) {
+            $halaman->assertSee('ad-konten-alat__field--'.$varian, false);
+        }
+
+        /*
          * Filter kelas sudah dihapus, jadi query ?kelas= di URL tidak boleh
          * diam-diam ikut menyaring: kalau tidak, admin yang punya tautan lama
          * akan melihat daftar kosong tanpa penjelasan apa pun.
@@ -897,7 +910,7 @@ class KontenPembelajaranTest extends TestCase
     }
 
     /**
-     * Di ponsel, "Terapkan" dan "Hapus filter" harus sebaris.
+     * Di ponsel, baris alat ditumpuk dalam empat baris.
      *
      * Dua-duanya form yang berbeda, dan sengaja tidak digabung: kalau satu
      * form, tombol Hapus filter ikut mengirim nilai filter yang sedang aktif
@@ -906,10 +919,20 @@ class KontenPembelajaranTest extends TestCase
      * contents yang melarotten keduanya, lalu masing-masing tombolnya
      * mengambil tiga dari enam kolom.
      *
+     * Bentuknya: cari penuh; kategori dan urutan setengah-setengah; status
+     * penuh; kedua tombol setengah-setengah.
+     *
+     * Yang membuat kategori dan urutan bisa berbagi baris padahal urutan
+     * elemennya kategori, status, urutan adalah "order" — CSS hanya bisa
+     * menyusun ulang lewat itu, dan memindahkan elemen di markup akan mengubah
+     * desktop juga, tempat ketiganya memang sebaris. Test ini mengunci seluruh
+     * rangkaian order itu: kalau satu hilang, barisnya kembali ke tiga select
+     * yang berbagi satu baris dan tiap select cuma dapat seperenam lebar.
+     *
      * Yang dijaga hanya aturan ponsel. Aturan desktop-nya sudah dikunci
      * test sebelumnya dan tidak boleh ikut berubah oleh yang ini.
      */
-    public function test_tombol_terapkan_dan_hapus_filter_sebaris_di_ponsel(): void
+    public function test_baris_alat_di_ponsel_berempat_baris_kategori_dan_urut_sebaris(): void
     {
         $css = $this->tanpaKomentar(file_get_contents(resource_path('css/admin.css')));
 
@@ -934,13 +957,13 @@ class KontenPembelajaranTest extends TestCase
 
         $this->assertNotSame('', $ponsel, 'Aturan ponsel untuk baris alat tidak ada di admin.css.');
 
-        // Enam kolom: tiga untuk tiap tombol, jadi keduanya berdampingan dan
-        // sama lebar.
+        // Enam kolom: tiga untuk tiap kolom setengah, jadi tombolnya berdampingan
+        // dan sama lebar.
         $this->assertStringContainsString('grid-template-columns: repeat(6, minmax(0, 1fr))', $ponsel);
         $this->assertStringContainsString('grid-column: span 3', $ponsel);
 
         /*
-         *(display: contents) yang membuat kedua tombol bisa jadi sel grid
+         * display: contents yang membuat kedua tombol bisa jadi sel grid
          * yang sama. Tanpa itu, masing-masing form tetap jadi kotak penuh di
          * barisnya sendiri dan "Hapus filter" turun ke baris keempat.
          */
@@ -949,9 +972,93 @@ class KontenPembelajaranTest extends TestCase
             $ponsel
         );
 
-        // Kotak cari tetap penuh, tiga select tetap berbagi satu baris.
+        // Kotak cari dan status sama-sama penuh; kategori dan urutan masing-masing
+        // setengah, jadi mereka berbagi satu baris.
         $this->assertStringContainsString('grid-column: span 6', $ponsel);
-        $this->assertStringContainsString('grid-column: span 2', $ponsel);
+
+        foreach (['--kategori', '--urut'] as $varian) {
+            $this->assertMatchesRegularExpression(
+                '/\.ad-konten-alat__field'.preg_quote($varian, '/').'\s*\{[^}]*grid-column: span 3;/',
+                $ponsel,
+                "Select $varian harus setengah baris."
+            );
+        }
+
+        $this->assertMatchesRegularExpression(
+            '/\.ad-konten-alat__field--status\s*\{[^}]*grid-column: span 6;/',
+            $ponsel,
+            'Status harus mendapat baris sendiri.'
+        );
+
+        /*
+         * Urutan visualnya: cari, kategori, urutan, status, terapkan, hapus
+         * filter. Angka-angka ini yang membuat kategori dan urutan mendahului
+         * status di ponsel; tanpa itu ketiganya kembali berbagi satu baris.
+         */
+        preg_match_all('/order: (\d+);/', $ponsel, $urutan);
+        $this->assertSame(['1', '2', '3', '4', '5', '6', '7'], $urutan[1], 'Urutan baris alat di ponsel tidak lagi berurutan.');
+
+        $this->assertMatchesRegularExpression(
+            '/\.ad-konten-alat__field--kategori\s*\{[^}]*order: 2;/',
+            $ponsel
+        );
+
+        $this->assertMatchesRegularExpression(
+            '/\.ad-konten-alat__field--urut\s*\{[^}]*order: 3;/',
+            $ponsel
+        );
+
+        $this->assertMatchesRegularExpression(
+            '/\.ad-konten-alat__field--status\s*\{[^}]*order: 4;/',
+            $ponsel
+        );
+
+        /*
+         * Baris simpul filter aktif ikut jadi sel grid dan order-nya harus paling
+         * akhir. Tanpa itu ia mendahului kotak cari: order 0 selalu lebih dulu
+         * dari order 1, jadi baris ringkasan filter akan naik ke paling atas
+         * setiap kali ada filter aktif.
+         */
+        $this->assertMatchesRegularExpression(
+            '/\.ad-konten-alat-kotak > \.ad-alat-baris__simpul\s*\{[^}]*order: 7;/',
+            $ponsel,
+            'Baris simpul filter aktif harus tetap paling bawah di ponsel.'
+        );
+    }
+
+    /**
+     * Kaki kartu Konten Pembelajaran membagi rata sesuai jumlah tombolnya.
+     *
+     * Yang dijaga bukan hanya "Lihat dan Edit sama lebar" — itu sudah terjadi
+     * dengan grid dua kolom — tapi juga bahwa kolom kosong tidak pernah muncul.
+     * Kalau jumlah kolomnya ditulis tetap dua sementara kartunya hanya merender
+     * satu tombol, separuh baris itu jadi ruang mati yang terbaca sebagai
+     * ruang putih di samping tombol.
+     *
+     * Karena itu jumlah kolomnya ikut jumlah anak: grid-auto-flow: column
+     * membuat satu tombol mengisi satu kolom penuh, dan dua tombol membagi rata.
+     */
+    public function test_kaki_kartu_konten_membagi_rata_tanpa_kolom_kosong(): void
+    {
+        $css = $this->tanpaKomentar(file_get_contents(resource_path('css/app.css')));
+
+        preg_match('/\.kartu-konten \.karya-aksi\s*\{([^}]*)\}/', $css, $cocok);
+
+        $this->assertNotEmpty($cocok, 'Aturan kaki kartu Konten tidak ada di app.css.');
+
+        $kaki = $cocok[1];
+
+        $this->assertStringContainsString('grid-auto-flow: column', $kaki);
+        $this->assertStringContainsString('grid-auto-columns: minmax(0, 1fr)', $kaki);
+
+        // Jumlah kolom yang dipatok akan menyisakan kolom kosong saat hanya ada
+        // satu tombol.
+        $this->assertStringNotContainsString('grid-template-columns', $kaki);
+
+        // Setiap tombol tetap mengisi selnya penuh, jadi tidak ada ruang putih
+        // di dalam kolomnya sendiri.
+        preg_match('/\.kartu-konten \.karya-aksi__tombol\s*\{([^}]*)\}/', $css, $tombol);
+        $this->assertStringContainsString('width: 100%', $tombol[1] ?? '');
     }
 
     /**
@@ -2543,6 +2650,83 @@ class KontenPembelajaranTest extends TestCase
             ->assertForbidden();
 
         $this->assertNull($notifikasi->refresh()->dibaca_pada);
+    }
+
+    public function test_membuka_lonceng_menandai_semua_notifikasi_sudah_dibaca(): void
+    {
+        $admin = $this->buatAdmin();
+        $pengguna = $this->buatPengguna();
+        $pelajaran = $this->buatPelajaran();
+
+        // Dua terbitan supaya ada lebih dari satu baris belum dibaca: satu
+        // klik pada satu baris tidak akan membuat semuanya terbaca.
+        $this->actingAs($admin)
+            ->post(route('admin.konten.materi.tambah.store'), $this->dataMateri($pelajaran, [
+                'aksi' => 'publish',
+            ]));
+
+        $this->actingAs($admin)
+            ->post(route('admin.konten.materi.tambah.store'), $this->dataMateri($pelajaran, [
+                'nama' => 'Materi Kedua',
+                'aksi' => 'publish',
+            ]));
+
+        $this->assertSame(2, Notifikasi::query()->where('pengguna_id', $pengguna->getKey())->count());
+
+        // Panel lonceng mengirim ini lewat fetch, jadi jawabannya yang
+        // dipakai JavaScript untuk menyembunyikan titiknya.
+        $this->actingAs($pengguna)
+            ->postJson(route('user.notifikasi.baca-semua'))
+            ->assertOk()
+            ->assertJson(['terbaca' => true, 'sisa' => 0]);
+
+        $this->assertSame(
+            0,
+            Notifikasi::query()
+                ->where('pengguna_id', $pengguna->getKey())
+                ->belumDibaca()
+                ->count()
+        );
+
+        // Titiknya hilang karena tidak ada sisa yang belum dibaca, dan
+        // barisnya tetap ada di daftar karena notifikasi boleh dibaca ulang.
+        $this->actingAs($pengguna)
+            ->get(route('user.dashboard'))
+            ->assertOk()
+            ->assertSee('Materi baru tersedia')
+            ->assertDontSee('notif__titik', false)
+            ->assertDontSee('is-belum', false);
+    }
+
+    public function test_membuka_lonceng_tidak_menandai_notifikasi_milik_orang_lain(): void
+    {
+        $admin = $this->buatAdmin();
+        $this->buatPengguna();
+        $orangLain = $this->buatPengguna(['nama' => 'Siti', 'email' => 'siti@example.com']);
+        $pelajaran = $this->buatPelajaran();
+
+        $this->actingAs($admin)
+            ->post(route('admin.konten.materi.tambah.store'), $this->dataMateri($pelajaran, [
+                'aksi' => 'publish',
+            ]));
+
+        /*
+         * Rute ini tidak punya parameter notifikasi, jadi yang perlu dijaga
+         * bukan "baris mana yang boleh disentuh" melainkan "baris siapa saja
+         * yang boleh disentuh": notifikasi pengguna lain harus tetap belum
+         * dibaca karena hanya satu tabel yang dipakai dua lonceng.
+         */
+        $this->actingAs($orangLain)
+            ->post(route('user.notifikasi.baca-semua'))
+            ->assertRedirect();
+
+        $this->assertSame(
+            1,
+            Notifikasi::query()
+                ->whereIn('pengguna_id', User::query()->where('peran', User::PERAN_USER)->whereKeyNot($orangLain->getKey())->pluck('id'))
+                ->belumDibaca()
+                ->count()
+        );
     }
 
     public function test_admin_yang_menerbitkan_tidak_mendapat_notifikasi(): void

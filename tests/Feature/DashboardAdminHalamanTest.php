@@ -589,4 +589,52 @@ class DashboardAdminHalamanTest extends TestCase
             );
         }
     }
+
+    /**
+     * Ikon Pengaturan di header ponsel tanpa kartu putih.
+     *
+     * Header ponsel (.ad-hp) menggantikan sidebar di bawah 768px, dan tombol
+     * di kananannya memakai .ad-hp__tombol — kotak putih bertepi. Avatar
+     * sudah sejak awal memakai variannya yang polos; ikon roda
+     * (/admin/pengaturan) ikut disamakan.
+     *
+     * Alasannya: yang harus terbaca di header adalah ikonnya. Lingkaran
+     * avatar sudah punya bentuk sendiri, dan ikon roda berada di atas header
+     * yang sudah berlatar — jadi kotak putih di belakang keduanya bukan
+     * tombol, melainkan kartu putih kecil yang tidak diminta.
+     *
+     * Dua sisi yang dijaga, karena hanya salah satu yang bisa membuat
+     * perubahan ini berbalik arah:
+     *
+     *   - tombolnya memakai variannya yang polos, dan aturan CSS itu benar
+     *     benar menghapus latar dan garisnya;
+     *   - tombolnya tetap punya aria-label. Menghapus kotak tidak boleh
+     *     membuat ikon kehilangan nama untuk pembaca layar.
+     */
+    public function test_ikon_pengaturan_di_header_ponsel_tanpa_kartu_putih(): void
+    {
+        $html = $this->actingAs($this->buatAdmin())
+            ->get(route('admin.dashboard'))
+            ->assertOk()
+            ->getContent();
+
+        $this->assertStringContainsString('class="ad-hp__tombol ad-hp__tombol--polos"', $html);
+        $this->assertStringContainsString('aria-label="Pengaturan"', $html);
+
+        // Avatar ikut memakai aturan polos yang sama, jadi keduanya konsisten.
+        $this->assertStringContainsString('ad-hp__tombol--avatar', $html);
+
+        $css = (string) preg_replace('#/\*.*?\*/#s', '', file_get_contents(resource_path('css/admin.css')));
+
+        $this->assertMatchesRegularExpression(
+            '/\.ad-hp__tombol--avatar,\s*\.ad-hp__tombol--polos\s*\{\s*border-color: transparent;\s*background-color: transparent;/',
+            $css,
+            'Varian tombol polos harus menghapus garis dan latar putihnya.'
+        );
+
+        // Kotak putih tetap ada di aturan dasarnya: kelas dasar tidak ikut berubah,
+        // jadi halaman lain yang memakainya tetap konsisten dengan bentuk tombol admin.
+        preg_match('/\.ad-hp__tombol\s*\{([^}]*)\}/', $css, $cocok);
+        $this->assertStringContainsString('background-color: var(--ad-permukaan)', $cocok[1] ?? '');
+    }
 }

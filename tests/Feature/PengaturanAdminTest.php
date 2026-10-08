@@ -7,6 +7,7 @@ use App\Models\Notifikasi;
 use App\Models\Pelajaran;
 use App\Models\Preferensi;
 use App\Models\User;
+use App\Support\Ikon;
 use App\Support\NotifikasiAdmin;
 use App\Support\SesiAdmin;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -79,6 +80,83 @@ class PengaturanAdminTest extends TestCase
         ] as $nama) {
             $this->actingAs($admin)->get(route($nama))->assertOk();
         }
+    }
+
+    /**
+     * Pengaturan punya tombol kembali ke Dashboard, hanya di layar kecil.
+     *
+     * Di bawah 768px sidebar disembunyikan, jadi tanpa tombol ini satu-satunya
+     * jalan kembali ke Dashboard adalah logo di header — dan logo itu terbaca
+     * sebagai merek, bukan sebagai tombol kembali. Di desktop tombolnya tidak
+     * muncul karena sidebar sudah menyediakan Dashboard secara terbuka.
+     *
+     * Tiga sisi yang dijaga, masing-masing bisa hilang sendiri:
+     *
+     *   - tautannya benar-benar ke Dashboard, bukan ke halaman sebelumnya;
+     *   - kelasnya menyembunyikannya di atas 768px. Tombolnya adalah tautan
+     *     biasa, jadi tanpa kelas itu ia akan ikut tampil di desktop dan berdua
+     *     dengan menu Dashboard di sidebar;
+     *   - halaman lain yang memakai x-admin.kepala tidak ikut mendapat tombol
+     *     ini. Kalau tombolnya ditempel langsung di dalam komponen, setiap
+     *     kepala halaman admin akan mendapat tombol yang tidak diminta.
+     */
+    public function test_pengaturan_punya_tombol_kembali_ke_dashboard_hanya_di_layar_kecil(): void
+    {
+        $admin = $this->buatAdmin();
+
+        $pengaturan = $this->actingAs($admin)->get(route('admin.pengaturan'))->assertOk();
+        $isi = $pengaturan->baseResponse->getContent();
+
+        $pengaturan->assertSee('Kembali ke Dashboard');
+
+        /*
+         * Ikonnya dicek lewat jalur SVG-nya, bukan lewat atribut nama="...":
+         * <x-admin.ikon> merender <svg> berisi path, dan atribut aslinya tidak
+         * pernah sampai ke HTML. Memakai Ikon::path() juga membuat test ini
+         * ikut gagal kalau ikon panah-kiri diganti, bukan diam-diam lolos
+         * karena nama atributnya kebetulan masih ada.
+         */
+        $pengaturan->assertSee(Ikon::path('panah-kiri'), false);
+
+        /*
+         * Tampil di bawah 768px, hilang di atasnya: tombol ini untuk ponsel,
+         * tempat sidebar tidak ada. Yang dijaga adalah md:hidden, BUKAN
+         * "hidden md:..." — yang terakhir justru menyembunyikannya di layar
+         * yang justru butuh, dan tetap lolos dari test mana pun yang hanya
+         * menebak-nebak kata "hidden".
+         */
+        $this->assertSame(
+            1,
+            preg_match(
+                '/<a[^>]*href="'.preg_quote(route('admin.dashboard'), '/').'"[^>]*class="[^"]*\bmd:hidden\b[^"]*"[^>]*>/',
+                $isi,
+                $cocok
+            ),
+            'Tombol kembali harus menunjuk Dashboard dan memakai md:hidden supaya hilang di atas 768px.',
+            $cocok[0] ?? ''
+        );
+
+        $this->assertStringNotContainsString(
+            'hidden md:inline-flex',
+            $isi,
+            'Tombol kembali terbalik: disembunyikan justru di layar kecil.'
+        );
+
+        /*
+         * Kepala halaman lain tidak boleh ikut membawa tombol. Dicek lewat
+         * dashboard, yang memakai x-admin.kepala juga: kalau opsinya ditempel
+         * langsung di dalam komponen, tombol ini akan muncul di mana-mana.
+         */
+        $dashboard = $this->actingAs($admin)
+            ->get(route('admin.dashboard'))
+            ->assertOk()
+            ->baseResponse->getContent();
+
+        $this->assertStringNotContainsString(
+            'Kembali ke Dashboard',
+            $dashboard,
+            'Tombol kembali Pengaturan bocor ke halaman admin lain.'
+        );
     }
 
     public function test_pengguna_biasa_tidak_bisa_membuka_halaman_pengaturan(): void

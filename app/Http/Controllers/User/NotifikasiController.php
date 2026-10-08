@@ -49,4 +49,29 @@ class NotifikasiController extends Controller
 
         return back();
     }
+
+    /**
+     * Tandai semua notifikasi milik pengguna yang sedang login sudah dibaca.
+     *
+     * Dipanggil begitu panel lonceng dibuka, bukan saat satu baris diklik:
+     * pembaca yang membuka lonceng memang sedang melihat daftarnya, jadi
+     * membiarkan titiknya menyala hanya karena satu baris belum diklik akan
+     * membuatnya selalu terasa belum dibaca.
+     *
+     * Setelah ini titik lonceng hilang sampai notifikasi baru benar-benar
+     * datang, karena itulah satu-satunya kejadian yang menambahnya lagi.
+     */
+    public function bacaSemua(Request $request): JsonResponse|RedirectResponse
+    {
+        Notifikasi::tandaiSemuaDibaca((int) $request->user()->getKey());
+
+        if ($request->expectsJson()) {
+            return response()->json([
+                'terbaca' => true,
+                'sisa' => NotifikasiKonten::belumDibaca($request->user()),
+            ]);
+        }
+
+        return back();
+    }
 }

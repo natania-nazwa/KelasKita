@@ -8608,11 +8608,22 @@ body.tubuh-admin {
         gap: 0.4rem;
     }
 
-    /*
+/*
      * Tombol aksi: kotak putih bertepi halus, sama seperti bentuk
-     * tombol di seluruh area admin. Avatar memakai tombol yang sama
-     * tanpa tepi supaya yang terlihat di kanan header hanyalah
-     * avatar, bukan avatar di dalam kotak.
+     * tombol di seluruh area admin.
+     *
+     * Varian --polos melenyapkan kotaknya, dan dipakai kedua tombol yang
+     * ada di kanan header. Alasannya sama untuk keduanya: yang harus
+     * terbaca di header ponsel adalah ikonnya, bukan ikon di dalam kotak.
+     * Avatar sudah sejak awal begitu — lingkaran avatar punya bentuknya
+     * sendiri, jadi kotak putih di belakang cuma menambah garis yang tidak
+     * membawa informasi. Ikon roda punya alasan tambahan: header ponsel
+     * sudah berlatar, jadi kotak putih di atasnya bukan tombol, melainkan
+     * kartu putih kecil yang tidak diminta siapa pun.
+     *
+     * Tanpa kotak, tombolnya tetap terbaca sebagai tombol karena ikonnya
+     * besar (w-5 h-5), berwarna, dan punya aria-label. Yang hilang hanya
+     * kotaknya; tautan dan area sentuhnya tetap 2.3rem.
      */
     .ad-hp__tombol {
         display: flex;
@@ -8626,12 +8637,24 @@ body.tubuh-admin {
         color: var(--ad-teks-ungu-terang);
         transition:
             border-color 0.18s ease,
+            background-color 0.18s ease,
             color 0.18s ease;
     }
 
-    .ad-hp__tombol--avatar {
+    .ad-hp__tombol--avatar,
+    .ad-hp__tombol--polos {
         border-color: transparent;
         background-color: transparent;
+    }
+
+/*
+     * Tombol polos tetap harus terasa bisa ditekan. Hover tidak
+     * mengembalikan kotak putih — itu yang baru saja dihapus — cukup
+     * warnanya menguat, supaya tidak pernah terasa seperti ikon mati.
+     */
+    .ad-hp__tombol--polos:hover,
+    .ad-hp__tombol--polos:focus-visible {
+        color: var(--ad-primary);
     }
 
     /* ---------- Navigasi bawah ---------- */
