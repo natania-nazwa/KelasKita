@@ -3795,6 +3795,44 @@ body.tubuh-admin {
     min-width: 0;
 }
 
+/*
+ * Di bawah 768px baris filter halaman Materi dan Quiz ditumpuk menjadi tiga
+ * baris: kotak cari penuh, dua select berbagi baris sama rata, lalu dua
+ * tombol aksi.
+ *
+ * Yang perlu diperbaiki hanya kotak cari. Lebar dasarnya 12rem masih muat
+ * berdampingan dengan select pertama pada layar 375px, sehingga yang terjadi
+ * bukan "cari di atas, filter di bawah" melainkan kotak cari berdesakan dengan
+ * "Semua kategori" — persis kebalikan dari yang diinginkan. Karena itu
+ * flex-basis-nya jadi 100%: satu baris untuknya sendiri, dan dua select yang
+ * turun ke baris kedua.
+ *
+ * Dua select memakai flex: 1 1 0 (bukan 8.5rem) supaya membagi lebar baris
+ * sama rata. Di desktop hal itu justru dilarang — lihat catatan grow di
+ * .ad-alat-baris__field — karena ruang sisa baris yang lebar akan larut ke
+ * select dan membuatnya melebar sendiri. Di ponsel tidak ada ruang sisa itu:
+ * barisnya sudah penuh, jadi membagi rata justru yang paling tepat.
+ *
+ * Selector select-nya diberi prefiks .ad-alat-baris > supaya specificity-nya
+ * lebih tinggi dari aturan dasarnya. Tanpa itu urutan file menentukan
+ * pemenang, dan aturan ini ditulis sebelum .ad-alat-baris__field sehingga
+ * diam-diam dikalahkan olehnya — perubahan yang terlihat benar di kode tapi
+ * tidak pernah berlaku di layar.
+ *
+ * Baris tombolnya tidak diatur di sini: .ad-alat-baris__aksi sudah turun
+ * ke lebar penuh di bawah 1024px dan tombol-tombolnya sudah flex: 1, jadi
+ * keduanya sudah berdiri berdampingan dan sama lebar.
+ */
+@media (max-width: 767px) {
+    .ad-alat-baris > .ad-cari {
+        flex: 1 1 100%;
+    }
+
+    .ad-alat-baris > .ad-alat-baris__field {
+        flex: 1 1 0;
+    }
+}
+
 /* ================================================================
    BARIS ALAT KONTEN PEMBELAJARAN
    ================================================================
@@ -4328,6 +4366,43 @@ body.tubuh-admin {
     align-items: center;
     gap: 0.3rem;
     margin-left: auto;
+}
+
+/*
+ * Di bawah 768px tombolnya mengisi seluruh sisa baris kaki.
+ *
+ * Di atas layar itu, .ad-kartu-daftar__aksi sengaja tidak melebar: lencana
+ * status di kiri dan dua tombol sewajarnya di kanan, dengan ruang putih di
+ * antaranya sebagai pemisah. Di layar kecil ruang itu tidak lagi terbaca
+ * sebagai pemisah — kartu yang selebar layar, dan yang tersisa hanyalah
+ * ruang kosong di samping tombol, persis seperti yang dikeluhkan.
+ *
+ * Karena itu di sini tombolnya yang mengisi ruang, bukan lencana yang
+ * menjauh: jumlah kolomnya ikut jumlah tombol (grid-auto-flow: column),
+ * sehingga:
+ *
+ *   - dua tombol (Lihat + Edit) membagi ruang sisa sama rata;
+ *   - satu tombol saja — materi buatan pengguna lain tidak punya tautan
+ *     Edit, jadi di halaman Materi dan Quiz banyak kartu seperti itu hanya
+ *     menampilkan "Lihat" — menjadi satu kolom penuh.
+ *
+ * Keduanya diatur oleh aturan yang sama; tidak ada jumlah kolom yang perlu
+ * dijaga agar sinkron, jadi kartu yang kehilangan tombol Edit tidak
+ * meninggalkan kolom kosong di sampingnya.
+ */
+@media (max-width: 767px) {
+    .ad-kartu-daftar__aksi {
+        display: grid;
+        grid-auto-flow: column;
+        grid-auto-columns: minmax(0, 1fr);
+        flex: 1 1 auto;
+        min-width: 0;
+        margin-left: 0;
+    }
+
+    .ad-kartu-daftar__aksi .ad-tombol {
+        width: 100%;
+    }
 }
 
 /* ================================================================
@@ -8014,16 +8089,22 @@ body.tubuh-admin {
  * Kolom input[type=hidden] di dalam keduanya tidak ikut jadi sel karena
  * elemen itu memang tidak pernah digambar.
  *
- * Enam kolom, bukan satu: "Terapkan" dan "Hapus filter" masing-masing
- * mengambil tiga kolom, jadi keduanya benar-benar berdampingan dan sama
- * lebar. Aturannya ditulis sebagai jumlah kolom yang dipoles, bukan pixel,
- * supaya yang dijaga posisinya — bukan hasil hitungannya yang sudah pasti
- * beda antar peramban.
+ * Enam kolom, bukan satu: enam kolom memberi kelonggaran yang cukup untuk
+ * membagi setiap baris control menjadi separuh-separuh dan tetap menyisakan
+ * ruang kosong yang sama rata di tiap sisi, sedangkan jumlah kolom yang
+ * dipoles tidak bergantung pada hasil hitungan antar peramban.
  *
- * Urutannya: kotak cari melebar penuh, tiga select berbagi satu baris, lalu
- * kedua tombol side by side. Yang dijaga di sini kebalikannya: tidak ada
- * kontrol yang melebar jadi ladang kosong dan tidak ada yang tergotong
- * placeholder-nya.
+ * Bentuknya empat baris: cari penuh; kategori dan urutan setengah-setengah;
+ * status penuh; lalu kedua tombol setengah-setengah.
+ *
+ * Kenapa butuh "order": urutan elemen di markup adalah kategori, status,
+ * urutan — urutan yang benar untuk desktop, tempat ketiganya sebaris. Di
+ * ponsel category dan urutan harus mendahului status supaya bisa berbagi
+ * satu baris, sedangkan memindahkan elemen di markup akan mengubah desktop
+ * juga. CSS hanya bisa menyusun ulang lewat order, jadi itulah yang dipakai:
+ * urutan visualnya ditulis ulang di sini, urutan DOM-nya dibiarkan.
+ * Tanpa order, tiga select tetap mengambil tiga kolom masing-masing dan
+ * kategori akan berdiri sendiri di barisnya dengan separuh baris kosong.
  */
 @media (max-width: 767px) {
     .ad-konten-alat-kotak {
@@ -8038,15 +8119,46 @@ body.tubuh-admin {
 
     .ad-konten-alat__cari {
         grid-column: span 6;
+        order: 1;
     }
 
-    .ad-konten-alat__field {
-        grid-column: span 2;
+    .ad-konten-alat__field--kategori {
+        grid-column: span 3;
+        order: 2;
+    }
+
+    .ad-konten-alat__field--urut {
+        grid-column: span 3;
+        order: 3;
+    }
+
+    .ad-konten-alat__field--status {
+        grid-column: span 6;
+        order: 4;
     }
 
     .ad-konten-alat > .ad-tombol,
     .ad-konten-alat__aksi > .ad-tombol {
         grid-column: span 3;
+    }
+
+    .ad-konten-alat > .ad-tombol {
+        order: 5;
+    }
+
+    .ad-konten-alat__aksi > .ad-tombol {
+        order: 6;
+    }
+
+    /*
+     * Baris simpul filter aktif ikut jadi sel grid di sini, dan ia anak
+     * langsung dari kotak alat — bukan dari salah satu form yang jadi
+     * display: contents. order-nya masih 0 kalau tidak ditulis, sehingga
+     * dia akan mendahului kotak cari dan naik ke paling atas, padahal
+     * posisinya jelas harus setelah semua kontrol.
+     */
+    .ad-konten-alat-kotak > .ad-alat-baris__simpul {
+        order: 7;
     }
 }
 

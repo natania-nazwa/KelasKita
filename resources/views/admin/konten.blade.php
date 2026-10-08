@@ -170,8 +170,19 @@ Modifier --materi dan --kuis bukan hiasan: keduanya yang
          putus-putus justru hanya terbaca karena ia ada di baris sendiri.
 
          Di bawah 768px muatannya memang tidak cukup untuk dibaca, jadi
-         barisnya ditumpuk: cari penuh, tiga select berbagi baris, tombol
-         penuh. Tablets dan ke atas tetap satu baris.
+         barisnya ditumpuk dalam empat baris:
+
+             cari                     (penuh)
+             semua kategori | terbaru (setengah-setengah)
+             semua status             (penuh)
+             terapkan | hapus filter  (setengah-setengah)
+
+         Status dapat barisnya sendiri karena tiga select dalam satu baris
+         menyisakan terlalu sedikit ruang untuk teksnya di ponsel. Tablets
+         dan ke atas tetap satu baris, dan urutan select di markup tetap
+         kategori, status, urutan — pemindahannya ke bawah dilakukan CSS,
+         bukan dengan memindahkan elemen (lihat .ad-konten-alat__field--urut
+         di resources/css/admin.css).
 
          Dua form, bukan satu: "Terapkan" mengirim form yang berisi semua
          field, sedangkan "Hapus filter" memakai form sendiri yang isinya
@@ -199,7 +210,7 @@ Modifier --materi dan --kuis bukan hiasan: keduanya yang
                     </div>
                 </div>
 
-                <div class="ad-konten-alat__field">
+                <div class="ad-konten-alat__field ad-konten-alat__field--kategori">
                     <label class="sr-only" for="saring-kategori-konten">Saring menurut kategori</label>
 
                     <div class="ad-pilih__bungkus">
@@ -222,7 +233,7 @@ Modifier --materi dan --kuis bukan hiasan: keduanya yang
                     </div>
                 </div>
 
-                <div class="ad-konten-alat__field">
+                <div class="ad-konten-alat__field ad-konten-alat__field--status">
                     <label class="sr-only" for="saring-status">Saring menurut status</label>
 
                     <div class="ad-pilih__bungkus">
@@ -244,7 +255,7 @@ Modifier --materi dan --kuis bukan hiasan: keduanya yang
                     </div>
                 </div>
 
-                <div class="ad-konten-alat__field">
+                <div class="ad-konten-alat__field ad-konten-alat__field--urut">
                     <label class="sr-only" for="saring-urut-konten">Urutkan daftar</label>
 
                     <div class="ad-pilih__bungkus">

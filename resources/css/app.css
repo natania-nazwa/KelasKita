@@ -6660,14 +6660,20 @@ html {
      * informasi, menempel di kanan tanggal (lihat .kartu-konten__akhir),
      * jadi di kaki tinggal "Lihat" dan "Edit".
      *
-     * Dua tombol membagi lebar baris rata persis seperti di kartu pengguna,
-     * jadi peregangannya tidak dimatikan di sini: grid dua kolom seperti
-     * versi lima tombol hanya akan membuat "Edit" melebar jadi oval panjang
-     * di bawah "Lihat" yang sama lebarnya.
+     * Jumlah kolom di sini ikut jumlah tombolnya, bukan ditulis tetap dua.
+     * Dengan dua tombol hasilnya sama seperti grid dua kolom — Lihat dan
+     * Edit masing-masing separuh — tapi kalau suatu saat hanya "Lihat" yang
+     * dirender, tombol itu langsung jadi satu kolom penuh. Grid dengan
+     * repeat(2, ...) yang tetap akan menyisakan kolom kosong di sebelahnya,
+     * dan kolom kosong itulah yang terbaca sebagai ruang mati di kartu.
+     *
+     * Peregangannya tidak dimatikan: grid dua kolom dengan tiga tombol
+     * hanya akan membuat baris ketiga melebar jadi oval panjang sendirian.
      */
     .kartu-konten .karya-aksi {
         display: grid;
-        grid-template-columns: repeat(2, minmax(0, 1fr));
+        grid-auto-flow: column;
+        grid-auto-columns: minmax(0, 1fr);
         align-items: center;
     }
 

@@ -546,6 +546,111 @@ class MateriKelolaHalamanTest extends TestCase
         $this->assertStringContainsString('flex-shrink: 0', $this->tanpaKomentar($aksi[1]));
     }
 
+    /**
+     * Di bawah 768px, baris filter menumpuk tiga baris.
+     *
+     * Yang diperbaiki di sini kotak cari: lebar dasarnya 12rem masih muat
+     * berdampingan dengan select pertama pada layar 375px, sehingga yang
+     * terjadi justru kotak cari berdesakan dengan "Semua kategori" —
+     * persis kebalikan dari yang diminta. Karena itu flex-basis-nya jadi
+     * 100% supaya cari mendapat satu baris sendiri, dan dua select turun ke
+     * baris kedua sambil membagi lebarnya sama rata.
+     *
+     * Dua hal yang mengikat test ini selain nilainya:
+     *
+     *   - aturan ponselnya harus ditulis SETELAH aturan dasar .ad-alat-baris__field.
+     *     Media query tidak menambah specificity, jadi aturan yang lebih
+     *     dulu di file justru kalah dan diam-diam tidak berlaku — perubahan
+     *     yang terlihat benar di kode tapi tidak pernah terjadi di layar.
+     *   - selector select-nya harus berprefiks .ad-alat-baris >, bukan polos.
+     *     Itu menaikkan specificity sehingga urutannya tidak lagi menentukan,
+     *     dan sekaligus membedakannya dari aturan dasar yang grow-nya wajib 0
+     *     (lihat test_yang_melebar_di_baris_filter_adalah_kolom_cari_bukan_select).
+     */
+    public function test_baris_filter_di_ponsel_cari_sendiri_lalu_dua_select_sebaris(): void
+    {
+        $css = file_get_contents(resource_path('css/admin.css'));
+
+        $posisiDasar = strpos($css, "\n.ad-alat-baris__field {");
+        $posisiPonsel = strpos($css, '.ad-alat-baris > .ad-alat-baris__field {');
+
+        $this->assertNotFalse($posisiDasar, 'Aturan dasar .ad-alat-baris__field tidak ada.');
+        $this->assertNotFalse($posisiPonsel, 'Aturan ponsel untuk select baris filter tidak ada.');
+        $this->assertGreaterThan(
+            $posisiDasar,
+            $posisiPonsel,
+            'Aturan ponsel select harus ditulis setelah aturan dasarnya, kalau tidak kalah specificity.'
+        );
+
+        // Basis 100% = satu baris sendiri; 1 1 0 = bagi rata dengan select sebelahnya.
+        $this->assertMatchesRegularExpression(
+            '/@media \(max-width: 767px\)\s*\{(?:[^{}]|\{[^{}]*\})*'
+            .'\.ad-alat-baris > \.ad-cari\s*\{[^}]*flex:\s*1 1 100%;/',
+            $css,
+            'Di ponsel kotak cari harus melebar penuh, tidak berbagi baris dengan select.'
+        );
+
+        $this->assertMatchesRegularExpression(
+            '/@media \(max-width: 767px\)\s*\{(?:[^{}]|\{[^{}]*\})*'
+            .'\.ad-alat-baris > \.ad-alat-baris__field\s*\{[^}]*flex:\s*1 1 0;/',
+            $css,
+            'Di ponsel dua select harus membagi lebar baris sama rata.'
+        );
+    }
+
+    /**
+     * Di bawah 768px, tombol kaki kartu mengisi sisa baris dan tidak pernah
+     * meninggalkan kolom kosong.
+     *
+     * Di atas layar itu, tombolnya sengaja tidak melebar: lencana status di
+     * kiri, tombol sewajarnya di kanan, ruang putih di antaranya sebagai
+     * pemisah. Di layar kecil ruang itu tidak lagi terbaca sebagai pemisah,
+     * dan yang tersisa hanyalah ruang kosong di samping tombol.
+     *
+     * Jumlah kolomnya ikut jumlah tombol (grid-auto-flow: column), bukan
+     * ditulis tetap. Ini penting karena tombol Edit di sini bersyarat: materi
+     * buatan pengguna lain tidak punya tautan edit, jadi banyak kartu hanya
+     * menampilkan "Lihat". Dengan kolom yang dipatok, separuh baris kartu itu
+     * akan menjadi ruang mati — persis keluhan yang diperbaiki di sini.
+     */
+    public function test_tombol_kaki_kartu_di_ponsel_membagi_rata_tanpa_kolom_kosong(): void
+    {
+        $css = file_get_contents(resource_path('css/admin.css'));
+
+        /*
+         * Aturan .ad-kartu-daftar__aksi muncul dua kali: yang dasar (desktop)
+         * dan yang di dalam media query ponsel. Yang dasar tidak boleh ikut
+         * berubah — di desktop tombol tetap sewajarnya di kanan dengan lencana
+         * status di kiri, itu memang disengaja.
+         */
+        preg_match_all('/\.ad-kartu-daftar__aksi\s*\{([^}]*)\}/', $css, $cocok);
+
+        $this->assertSame(2, count($cocok[1]), 'Harus ada aturan dasar dan aturan ponsel untuk kaki kartu.');
+
+        [$desktop, $ponsel] = $cocok[1];
+
+        $this->assertStringContainsString('margin-left: auto', $this->tanpaKomentar($desktop));
+
+        $aturan = $this->tanpaKomentar($ponsel);
+
+        $this->assertStringContainsString('display: grid', $aturan);
+        $this->assertStringContainsString('grid-auto-flow: column', $aturan);
+        $this->assertStringContainsString('grid-auto-columns: minmax(0, 1fr)', $aturan);
+
+        // Kolom yang dipatok akan menyisakan kolom kosong saat hanya ada "Lihat".
+        $this->assertStringNotContainsString('grid-template-columns', $aturan);
+
+        // Mengisi ruang sisa baris kaki, bukan didorong ke kanan dengan margin-left.
+        $this->assertStringContainsString('flex: 1 1 auto', $aturan);
+        $this->assertStringContainsString('margin-left: 0', $aturan);
+
+        $this->assertMatchesRegularExpression(
+            '/\.ad-kartu-daftar__aksi \.ad-tombol\s*\{[^}]*width:\s*100%;/',
+            $css,
+            'Tombol kaki kartu di ponsel harus mengisi kolomnya.'
+        );
+    }
+
     public function test_kartu_tidak_memotong_menu_tiga_titik(): void
     {
         /*
