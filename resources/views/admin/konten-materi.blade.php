@@ -180,23 +180,19 @@
                     </a>
 
                     {{--
-                        Dua tombol yang menjawab keputusan terbit. Dikelompokkan
-                        supaya sm:ml-auto cukup mendorong satu wadah, bukan
-                        satu tombol: kalau hanya tombol Publish yang didorong,
-                        "Simpan Draft" akan tertinggal di tengah baris dan
-                        kelihatan seperti tombol milik blok status di atasnya.
+                        Hanya "Simpan Draft". Menerbitkan materi bukan urusan
+                        form ini: statusnya diubah dari daftar Konten
+                        Pembelajaran, lewat aksi Publish / Batalkan Publikasi
+                        di menu tiga titik (route admin.konten.materi.publish).
+                        Konsekuensinya, form ini tidak lagi punya tombol
+                        ber-name="aksi" value="publish", jadi tidak ada yang
+                        perlu mengonfirmasi apa pun — dan karena itu dialog
+                        terbitan juga tidak ikut di halaman ini.
 
-                        Keduanya sengaja TIDAK memakai data-konten-kirim.
-                        Atribut itu penanda "tombol milik wizard quiz", dan
-                        resources/js/konten-publish.js membacanya untuk
-                        memanggil window.kelasKitaKontenKirim — fungsi yang
-                        hanya ada di quiz-tambah.js. Kalau tombol di sini ikut
-                        memakai atribut itu, konfirmasi akan memanggil wizard
-                        yang tidak ada, lalu form pun tidak pernah dikirim.
-                        Tanpa atribut, resources/js/konten-publish.js memakai
-                        jalur kedua: form milik halaman ini yang dikirim, dengan
-                        tombol pemicunya sebagai submitter supaya name="aksi"
-                        ikut terkirim.
+                        Tombolnya tetap type="submit" supaya "Simpan Draft"
+                        tetap berfungsi tanpa JavaScript, dan field "aksi"-
+                        nya selalu ikut terkirim: itulah yang memberitahu
+                        server materi ini harus disimpan sebagai draft.
                     --}}
                     <div class="flex flex-col gap-2.5 sm:ml-auto sm:flex-row sm:items-center">
                         <button type="submit" name="aksi" value="draft" class="tombol-garis justify-center">
@@ -204,25 +200,20 @@
 
                             Simpan Draft
                         </button>
-
-                        <button type="submit" name="aksi" value="publish" data-konten-publish="publish"
-                            class="tombol-utama justify-center">
-                            <x-admin.ikon nama="centang" ukuran="w-4 h-4" />
-
-                            Publish Sekarang
-                        </button>
                     </div>
                 </div>
             </div>
         </form>
 
-    {{-- =========================
-         DIALOG
-    ==========================
-         Dialog konfirmasi terbitan dipakai seluruh form; isinya diambil
-         dari tombol yang ditekan, bukan dari server
-         (resources/js/konten-publish.js). --}}
-    <x-admin.dialog-terbit />
+    {{--
+         Tidak ada <x-admin.dialog-terbit /> di halaman ini, padahal form
+         Quiz milik admin masih memakainya. Dialog itu hanya hidup kalau
+         ada pemicu data-konten-publish: resources/js/konten-publish.js
+         berhenti sendiri begitu dialog maupun pemicunya tidak ada, jadi
+         tanpa pemicu dialog yang dirender hanya display:none
+         yang tidak pernah dibuka. Meninggalkannya di sini berarti menaruh markup tak
+         terjangkau yang dulu jadi sumber bug form tanpa action.
+    --}}
 
     {{-- =========================
          DIALOG HAPUS BAB

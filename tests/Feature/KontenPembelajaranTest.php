@@ -566,17 +566,18 @@ class KontenPembelajaranTest extends TestCase
      *
      * Dua sisi yang diperiksa: tidak ada form tanpa action di halaman-halaman
      * yang memakai dialog ini, dan tombol konfirmasinya bukan tombol submit.
+     *
+     * Daftar konten dan form Quiz admin adalah dua halaman yang masih memakai
+     * dialog ini. Form Materi tidak, karena tidak lagi punya pemicu terbitan
+     * (lihat test_form_materi_tidak_punya_aksi_terbitkan).
      */
     public function test_dialog_publish_tidak_mirim_form_tanpa_action(): void
     {
         $admin = $this->buatAdmin();
-        $materi = $this->buatMateri($admin, Materi::STATUS_DRAFT, 'Materi Dialog Action');
         $this->buatPelajaran();
 
         $halaman = [
             'daftar' => $this->actingAs($admin)->get(route('admin.konten')),
-            'tambah materi' => $this->actingAs($admin)->get(route('admin.konten.materi.tambah')),
-            'edit materi' => $this->actingAs($admin)->get(route('admin.konten.materi.edit', $materi->slug)),
             'tambah quiz' => $this->actingAs($admin)->get(route('admin.konten.quiz.tambah')),
         ];
 
@@ -1532,7 +1533,7 @@ class KontenPembelajaranTest extends TestCase
             ->assertOk()
             ->assertSee('Tambah Materi')
             ->assertSee('Simpan Draft')
-            ->assertSee('Publish Sekarang')
+            ->assertDontSee('Publish Sekarang')
             ->baseResponse->getContent();
 
         /*
@@ -1576,46 +1577,61 @@ class KontenPembelajaranTest extends TestCase
     }
 
     /**
-     * Tombol publish di form materi bukan tombol milik wizard.
+     * Form materi admin tidak punya aksi terbitkan sama sekali.
      *
-     * resources/js/konten-publish.js memakai data-konten-kirim untuk mengenali
-     * tombol wizard quiz: tombol itu type="button" dan berada di luar form, so
-     * yang mengirim bukan form-nya melainkan fungsi yang wizard pasang di
-     * window.kelasKitaKontenKirim.
+     * Menerbitkan materi dilakukan dari daftar Konten Pembelajaran lewat aksi
+     * Publish / Batalkan Publikasi di menu tiga titik, jadi form Tambah dan
+     * Edit tidak lagi punya tombol ber-name="aksi" value="publish". Yang
+     * tersisa hanya "Simpan Draft".
      *
-     * Tombol di form materi justru kebalikannya — type="submit" dan berada di
-     * dalam form, jadi justru formnya yang harus dikirim. Kalau tombol ini ikut
-     * memakai atribut wizard, konfirmasi akan memanggil fungsi yang tidak ada
-     * di halaman ini (quiz-tambah.js hanya jalan di halaman wizard), lalu form
-     * tidak pernah terkirim sama sekali.
+     * Dua hal yang diperiksa, dan keduanya perlu datang berpasangan:
      *
-     * Karena itu tombol publish harus tetap type="submit" dengan name="aksi",
-     * dan halaman ini tidak boleh punya penanda wizard sama sekali.
+     *   - tidak ada pemicu data-konten-publish. Kalau pemicunya muncul lagi,
+     *     dialog konfirmasi ikut hidup dan kita kembali ke jalur yang dulu
+     *     salah: tombol di dalam form yang konfirmasinya memanggil wizard
+     *     yang tidak ada di halaman ini (data-konten-kirim), sehingga form
+     *     tidak pernah terkirim.
+     *   - tidak ada dialog terbitan. resources/js/konten-publish.js berhenti
+     *     sendiri begitu pemicunya tidak ada, jadi dialog yang dirender di sini
+     *     hanya markup display:none yang tidak pernah bisa dibuka — persis
+     *     markup yang dulu jadi sumber form tanpa action dan 405.
      */
-    public function test_tombol_publish_form_materi_bukan_tombol_wizard(): void
+    public function test_form_materi_tidak_punya_aksi_terbitkan(): void
     {
         $admin = $this->buatAdmin();
+        $materi = $this->buatMateri($admin, Materi::STATUS_DRAFT, 'Materi Tanpa Publish');
         $this->buatPelajaran();
 
-        $halaman = $this->actingAs($admin)
-            ->get(route('admin.konten.materi.tambah'))
-            ->assertOk()
-            ->baseResponse->getContent();
+        $halaman = [
+            'tambah' => $this->actingAs($admin)->get(route('admin.konten.materi.tambah')),
+            'edit' => $this->actingAs($admin)->get(route('admin.konten.materi.edit', $materi->slug)),
+        ];
 
-        $this->assertSame(
-            1,
-            preg_match(
-                '/<button(?=[^>]*type="submit")(?=[^>]*name="aksi")(?=[^>]*value="publish")(?=[^>]*data-konten-publish="publish")[^>]*>/',
-                $halaman
-            ),
-            'Tombol Publish Sekarang harus submit milik form, dengan name="aksi" value="publish".'
-        );
+        foreach ($halaman as $nama => $respons) {
+            $respons->assertOk();
+            $isi = $respons->baseResponse->getContent();
 
-        $this->assertSame(
-            0,
-            preg_match('/<[^>]*\bdata-konten-kirim\b[^>]*>/', $halaman),
-            'Halaman form materi tidak punya wizard, jadi tidak boleh memakai penanda data-konten-kirim.'
-        );
+            $this->assertStringNotContainsString('data-konten-publish', $isi, "Halaman $nama tidak punya pemicu terbitan.");
+            $this->assertStringNotContainsString('data-konten-kirim', $isi, "Halaman $nama tidak punya wizard.");
+            $this->assertStringNotContainsString('data-konten-publish-dialog', $isi, "Halaman $nama tidak perlu dialog terbitan.");
+
+            /*
+             * Yang tersisa satu tombol kirim, dan itu tombol draft. Field
+             * "aksi" tetap ikut terkirim karena namanya ada pada tombolnya:
+             * tanpa itu server tidak tahu materi ini harus jadi draft.
+             */
+            $this->assertSame(
+                1,
+                preg_match('/<button(?=[^>]*type="submit")(?=[^>]*name="aksi")(?=[^>]*value="draft")[^>]*>/', $isi),
+                "Halaman $nama harus punya tepat satu tombol kirim, yaitu Simpan Draft."
+            );
+
+            $this->assertSame(
+                0,
+                preg_match('/<button(?=[^>]*type="submit")(?=[^>]*value="publish")[^>]*>/', $isi),
+                "Tombol terbitan tidak boleh ada di halaman $nama."
+            );
+        }
     }
 
     /**

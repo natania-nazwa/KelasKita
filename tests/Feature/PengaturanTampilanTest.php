@@ -831,7 +831,21 @@ class PengaturanTampilanTest extends TestCase
         $this->assertStringContainsString('data-konten-publish-dialog', $html);
     }
 
-    public function test_form_tambah_materi_masih_punya_tombol_publish_dengan_konfirmasi(): void
+    /**
+     * Form materi tidak lagi punya tombol terbitan.
+     *
+     * Dulu test ini memastikan form Tambah Materi masih punya tombol Publish
+     * beserta dialog konfirmasinya, karena aturan "Konfirmasi sebelum Publish"
+     * ikut menjangkaunya. Sekarang status materi hanya diubah dari daftar Konten
+     * Pembelajaran, jadi form ini tidak punya pemicu terbitan — dan aturannya
+     * tetap berlaku untuk dua tempat yang memang masih menerbitkannya: daftar
+     * konten dan wizard Quiz admin.
+     *
+     * Yang dijaga di sini hanya sisi "tidak lagi": kalau tombol atau dialognya
+     * muncul kembali, aturan konfirmasi diam-diam ikut terpasang lagi di halaman
+     * yang tidak menerbitkan apa pun.
+     */
+    public function test_form_tambah_materi_tidak_punya_tombol_publish_lagi(): void
     {
         $admin = $this->buatAdmin();
         $this->buatPelajaran();
@@ -841,7 +855,15 @@ class PengaturanTampilanTest extends TestCase
             ->assertOk()
             ->getContent();
 
-        $this->assertStringContainsString('data-konten-publish="publish"', $html);
-        $this->assertStringContainsString('name="aksi" value="publish"', $html);
+        $this->assertStringNotContainsString('data-konten-publish="publish"', $html);
+        $this->assertStringNotContainsString('name="aksi" value="publish"', $html);
+
+        // Aturan konfirmasi tetap hidup di dua tempat yang benar-benar menerbitkan.
+        $daftar = $this->actingAs($admin)->get(route('admin.konten'))->assertOk()->getContent();
+        $quiz = $this->actingAs($admin)->get(route('admin.konten.quiz.tambah'))->assertOk()->getContent();
+
+        foreach (['daftar konten' => $daftar, 'form quiz admin' => $quiz] as $nama => $isi) {
+            $this->assertStringContainsString('data-konten-publish-dialog', $isi, "Dialog terbitan hilang dari $nama.");
+        }
     }
 }
