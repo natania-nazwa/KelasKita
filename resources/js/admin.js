@@ -565,6 +565,7 @@ function initVerifikasi() {
     let pemicu = null;
     let urutanMuat = 0;
     let jamToast = null;
+    let sedangMengirim = false;
 
     const hpKecil = () => window.matchMedia("(max-width: 1199px)").matches;
 
@@ -836,6 +837,40 @@ function initVerifikasi() {
         if (dialog && event.target === dialog) {
             tutupDialog(dialog);
         }
+    });
+
+    /*
+     * Satu keputusan hanya boleh terkirim sekali.
+     *
+     * Server menolak (404) kalau konten yang diputuskan tidak lagi
+     * berstatus "menunggu" -- itu memang aturan yang benar. Tapi kalau
+     * penyebabnya cuma admin yang menekan tombolnya dua kali, hasilnya
+     * menyesatkan: POST pertama sudah berhasil, jadi POST kedua hanya
+     * membawa admin ke halaman 404 padahal keputusannya sudah berlaku.
+     *
+     * Karena itu begitu form keputusan dikirim, pengiriman berikutnya
+     * dibatalkan dan tombol kirimnya dinonaktifkan. Tombol "Setujui"
+     * berada di luar form-nya sendiri (memakai atribut form=), jadi
+     * keduanya dinonaktifkan dari sini, bukan dari dalam form.
+     */
+    halaman.addEventListener("submit", (event) => {
+        const form = event.target;
+
+        if (!(form instanceof HTMLFormElement) || !form.matches("[data-vf-form]")) {
+            return;
+        }
+
+        if (sedangMengirim) {
+            event.preventDefault();
+
+            return;
+        }
+
+        sedangMengirim = true;
+
+        halaman.querySelectorAll("[data-vf-dialog-kirim]").forEach((tombol) => {
+            tombol.disabled = true;
+        });
     });
 
     document.addEventListener("keydown", (event) => {

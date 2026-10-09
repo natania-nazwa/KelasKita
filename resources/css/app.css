@@ -11357,6 +11357,108 @@ html {
     }
 }
 
+/* ---------- Toast hasil aksi ----------
+   Kartu kecil di pojok kanan bawah: member tahu karyanya berhasil
+   disimpan tanpa isi halamannya bergeser ke bawah. Bentuk dan perilakunya
+   sama dengan toast di area admin (components/admin/toast.blade.php),
+   hanya warnanya yang mengikuti palet halaman pengguna.
+
+   Muncul dari flash session "sukses" (lihat x-app.toast), jadi hanya ada
+   setelah aksi yang benar-benar baru saja berhasil. Menutup dirinya
+   sendiri setelah lima detik dan selalu punya tombol tutup, sehingga
+   membaca pesannya tidak bergantung pada JavaScript.
+
+   Warna latar dan teksnya sengaja pakai kelas utilitas, bukan hex di
+   sini: .bg-white sudah ditimpa menjadi gelap oleh blok tema gelap, jadi
+   toast ikut gelap tanpa aturan tambahan. */
+.app-toast {
+    position: fixed;
+    right: 1.25rem;
+    bottom: 1.25rem;
+    z-index: 60;
+    display: flex;
+    align-items: flex-start;
+    gap: 0.65rem;
+    max-width: min(24rem, calc(100vw - 2.5rem));
+    padding: 0.8rem 0.9rem;
+    border-radius: 0.95rem;
+    font-size: 0.875rem;
+    line-height: 1.5;
+    animation: app-toast-masuk 0.32s ease;
+}
+
+@keyframes app-toast-masuk {
+    from {
+        transform: translateY(12px);
+        opacity: 0;
+    }
+
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+.app-toast__ikon {
+    display: flex;
+    flex-shrink: 0;
+    align-items: center;
+    justify-content: center;
+    width: 1.75rem;
+    height: 1.75rem;
+    border-radius: 9999px;
+    background-color: #0f9d76;
+    color: #fff;
+}
+
+.app-toast__teks {
+    min-width: 0;
+    font-weight: 600;
+    overflow-wrap: anywhere;
+}
+
+.app-toast__tutup {
+    display: flex;
+    flex-shrink: 0;
+    align-items: center;
+    justify-content: center;
+    margin-left: auto;
+    width: 1.5rem;
+    height: 1.5rem;
+    border-radius: 9999px;
+    color: color-mix(in oklab, var(--color-dark) 45%, transparent);
+    cursor: pointer;
+    transition:
+        background-color 0.18s ease,
+        color 0.18s ease;
+}
+
+.app-toast__tutup:hover {
+    background-color: var(--color-ungu-bg);
+    color: var(--color-primary);
+}
+
+/*
+ * Sama seperti .jadwal-sukses di atas: navigasi bawah tetap menempati
+ * ±54px + safe-area, jadi toast harus melayang di atasnya. Tanpa ini,
+ * toast benar-benar menelan ketukan di atas menu.
+ */
+@media (max-width: 1023px) {
+    .app-toast {
+        bottom: calc(5rem + env(safe-area-inset-bottom));
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .app-toast {
+        animation: none;
+    }
+
+    .app-toast__tutup {
+        transition: none;
+    }
+}
+
 /* ---------- PR di dalam baris jadwal ----------
    Satu baris berisi label PR, isi tugasnya, dan tenggat. Isi tugas
    dipangkas ke dua baris supaya baris jadwal tidak ikut jadi tinggi

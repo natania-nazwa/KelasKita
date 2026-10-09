@@ -726,6 +726,51 @@ function initKonfirmasi() {
 }
 
 /*
+ * Toast hasil aksi: "Materi "X" tersimpan dan menunggu persetujuan
+ * admin.", "Quiz "Y" berhasil dihapus.", dan sejenisnya.
+ *
+ * Muncul dari flash session "sukses" (lihat components/app/toast.blade.php),
+ * jadi hanya ada setelah aksi yang benar-benar baru saja berhasil — bukan
+ * tiap kali halaman dibuka.
+ *
+ * Menutup dirinya sendiri supaya tidak menutupi isi daftar yang baru saja
+ * berubah karena aksi tadi, dan selalu punya tombol tutup. Timer disimpan
+ * supaya bisa dibatalkan ketika tombolnya ditekan lebih dulu: tanpa itu,
+ * satu timer sia-sia tetap menahan lima detik untuk toast yang sudah
+ * hilang.
+ *
+ * Batas lima detik sama dengan toast di area admin
+ * (resources/js/konten-admin.js) supaya terbuka dan tertutup dengan
+ * kecepatan yang sama di kedua sisi.
+ */
+const BATAS_TOAST_MS = 5000;
+
+function initToast() {
+    const toast = document.querySelector("[data-toast]");
+
+    if (!toast) {
+        return;
+    }
+
+    let jam = null;
+
+    const tutup = () => {
+        if (jam !== null) {
+            window.clearTimeout(jam);
+            jam = null;
+        }
+
+        toast.remove();
+    };
+
+    toast.querySelectorAll("[data-toast-tutup]").forEach((tombol) => {
+        tombol.addEventListener("click", tutup);
+    });
+
+    jam = window.setTimeout(tutup, BATAS_TOAST_MS);
+}
+
+/*
  * Halaman "Hasil Quiz" (kartu besar): angka nilai menghitung naik dari 0.
  *
  * Angka akhirnya sudah tertulis di HTML, jadi animasi ini murni kosmetik dan
@@ -920,3 +965,4 @@ initQuizMuat();
 initMuatLebih();
 initKonfirmasi();
 initUiuxNilai();
+initToast();
