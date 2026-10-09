@@ -1,6 +1,10 @@
 @props([
     // Satu baris dari App\Support\DaftarMateriAdmin::petikan().
     'materi',
+    // Kartu di baris teratas dimuat lebih dulu (eager + prioritas tinggi)
+    // supaya thumbnail di viewport pertama tidak sempat tampil sebagai
+    // gradasi placeholder saat halaman baru dibuka.
+    'prioritas' => false,
 ])
 
 @php
@@ -49,7 +53,10 @@
     <div class="ad-kartu-daftar__gambar">
         @if (filled($materi['thumbnail']))
             <img class="ad-kartu-daftar__foto" src="{{ $materi['thumbnail'] }}"
-                alt="Thumbnail materi {{ $materi['judul'] }}" loading="lazy">
+                alt="Thumbnail materi {{ $materi['judul'] }}"
+                loading="{{ $prioritas ? 'eager' : 'lazy' }}"
+                @if ($prioritas) fetchpriority="high" @endif
+                decoding="async">
         @else
             <span class="ad-kartu-daftar__ikon" aria-hidden="true">{{ $kategori['ikon'] }}</span>
         @endif

@@ -24,7 +24,7 @@
 <div data-reveal-stagger data-quiz-daftar
     {{ $attributes->class(['grid grid-cols-1 min-[360px]:grid-cols-2 gap-4 min-w-0 sm:gap-5 lg:grid-cols-3 xl:grid-cols-4']) }}>
     @forelse ($daftar as $quiz)
-        <x-quiz.kartu :quiz="$quiz" :kata-kunci="$kataKunci" />
+        <x-quiz.kartu :quiz="$quiz" :kata-kunci="$kataKunci" :prioritas="$loop->index < 8" />
     @empty
         {{-- Slot kosong; halaman biasanya merender pesan "belum ada quiz"
              sendiri di luar grid ini. --}}

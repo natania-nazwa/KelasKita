@@ -523,7 +523,7 @@ Modifier --materi dan --kuis bukan hiasan: keduanya yang
                      baris itu cuma ruang kosong yang sia-sia. --}}
                 <div class="ad-konten-daftar" data-konten-daftar>
                     @foreach ($daftar as $baris)
-                        <x-admin.konten-kartu :kartu="$baris" />
+                        <x-admin.konten-kartu :kartu="$baris" :prioritas="$loop->index < 8" />
                     @endforeach
                 </div>
 

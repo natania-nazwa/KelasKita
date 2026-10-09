@@ -211,7 +211,7 @@
             @endif
         @else
             @foreach ($daftar as $materi)
-                <x-admin.materi-kartu :materi="$materi" />
+                <x-admin.materi-kartu :materi="$materi" :prioritas="$loop->index < 8" />
             @endforeach
         @endif
     </div>

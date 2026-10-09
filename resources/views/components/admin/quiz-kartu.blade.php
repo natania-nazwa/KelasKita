@@ -1,6 +1,10 @@
 @props([
     // Satu baris dari App\Support\DaftarQuizAdmin::petikan().
     'quiz',
+    // Kartu di baris teratas dimuat lebih dulu (eager + prioritas tinggi)
+    // supaya thumbnail di viewport pertama tidak sempat tampil sebagai
+    // gradasi placeholder saat halaman baru dibuka.
+    'prioritas' => false,
 ])
 
 @php
@@ -69,7 +73,10 @@
     <div class="ad-kartu-daftar__gambar">
         @if (filled($quiz['thumbnail']))
             <img class="ad-kartu-daftar__foto" src="{{ $quiz['thumbnail'] }}"
-                alt="Thumbnail quiz {{ $quiz['judul'] }}" loading="lazy">
+                alt="Thumbnail quiz {{ $quiz['judul'] }}"
+                loading="{{ $prioritas ? 'eager' : 'lazy' }}"
+                @if ($prioritas) fetchpriority="high" @endif
+                decoding="async">
         @else
             <span class="ad-kartu-daftar__ikon" aria-hidden="true">{{ $kategori['ikon'] }}</span>
         @endif

@@ -100,9 +100,9 @@
                 class="mt-5 grid grid-cols-1 gap-5 min-w-0 sm:grid-cols-2 xl:grid-cols-3">
                 @foreach ($daftar as $kartu)
                     @if ($tab === 'quiz')
-                        <x-karya.kartu-quiz :quiz="$kartu" />
+                        <x-karya.kartu-quiz :quiz="$kartu" :prioritas="$loop->index < 9" />
                     @else
-                        <x-karya.kartu-materi :materi="$kartu" />
+                        <x-karya.kartu-materi :materi="$kartu" :prioritas="$loop->index < 9" />
                     @endif
                 @endforeach
             </div>

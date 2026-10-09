@@ -31,7 +31,7 @@
 
 <div data-reveal-stagger {{ $attributes->class(['grid grid-cols-1 min-[360px]:grid-cols-2 gap-4 min-w-0 sm:gap-5 lg:grid-cols-4']) }}>
     @forelse ($daftar as $materi)
-        <x-materi.kartu :materi="$materi" :kata-kunci="$kataKunci" />
+        <x-materi.kartu :materi="$materi" :kata-kunci="$kataKunci" :prioritas="$loop->index < 8" />
     @empty
         {{-- Slot kosong; halaman biasanya merender pesan "belum ada
              materi" sendiri di luar grid ini. --}}

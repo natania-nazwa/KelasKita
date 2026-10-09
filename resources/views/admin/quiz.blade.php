@@ -235,7 +235,7 @@
             @endif
         @else
             @foreach ($daftar as $quiz)
-                <x-admin.quiz-kartu :quiz="$quiz" />
+                <x-admin.quiz-kartu :quiz="$quiz" :prioritas="$loop->index < 8" />
             @endforeach
         @endif
     </div>

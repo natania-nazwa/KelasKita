@@ -1,6 +1,10 @@
 @props([
     'quiz',
     'kataKunci' => '',
+    // Kartu di baris teratas dimuat lebih dulu (eager + prioritas tinggi)
+    // supaya thumbnail di viewport pertama tidak sempat tampil sebagai
+    // gradasi placeholder saat halaman baru dibuka.
+    'prioritas' => false,
 ])
 
 @php
@@ -52,7 +56,10 @@
     {{-- A. Thumbnail: tinggi seragam (16:9), membulat di bagian atas. --}}
     <div class="kartu-quiz__gambar">
         @if (filled($quiz['thumbnail'] ?? null))
-            <img src="{{ $quiz['thumbnail'] }}" alt="" loading="lazy" class="kartu-quiz__foto">
+            <img src="{{ $quiz['thumbnail'] }}" alt=""
+                loading="{{ $prioritas ? 'eager' : 'lazy' }}"
+                @if ($prioritas) fetchpriority="high" @endif
+                decoding="async" class="kartu-quiz__foto">
         @else
             {{-- Tanpa gambar di database, banner memakai gradasi warna
                  kategori + ikon mapel sebagai gantinya (lihat

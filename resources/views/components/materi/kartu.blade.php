@@ -1,6 +1,10 @@
 @props([
     'materi',
     'kataKunci' => '',
+    // Kartu di baris teratas dimuat lebih dulu (eager + prioritas tinggi)
+    // supaya thumbnail di viewport pertama tidak sempat tampil sebagai
+    // gradasi placeholder saat halaman baru dibuka.
+    'prioritas' => false,
 ])
 
 @php
@@ -59,7 +63,10 @@
     {{-- A. Thumbnail: tinggi seragam, membulat di bagian atas. --}}
     <div class="kartu-materi__gambar">
         @if (filled($materi['thumbnail'] ?? null))
-            <img src="{{ $materi['thumbnail'] }}" alt="" loading="lazy" class="kartu-materi__foto">
+            <img src="{{ $materi['thumbnail'] }}" alt=""
+                loading="{{ $prioritas ? 'eager' : 'lazy' }}"
+                @if ($prioritas) fetchpriority="high" @endif
+                decoding="async" class="kartu-materi__foto">
         @else
             {{-- Tanpa kolom gambar di database, banner memakai gradasi
                  warna kategori + ikon mapel sebagai gantinya. --}}

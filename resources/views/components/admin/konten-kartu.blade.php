@@ -1,6 +1,10 @@
 @props([
     // Satu kartu dari App\Support\DaftarKonten::petikan().
     'kartu',
+    // Kartu di baris teratas dimuat lebih dulu (eager + prioritas tinggi)
+    // supaya thumbnail di viewport pertama tidak sempat tampil sebagai
+    // gradasi placeholder saat halaman baru dibuka.
+    'prioritas' => false,
 ])
 
 {{--
@@ -55,7 +59,10 @@
     {{-- A. Thumbnail: tinggi seragam (16:9), sama seperti kartu pengguna. --}}
     <div class="kartu-materi__gambar">
         @if (filled($kartu['thumbnail'] ?? null))
-            <img src="{{ $kartu['thumbnail'] }}" alt="" loading="lazy" class="kartu-materi__foto">
+            <img src="{{ $kartu['thumbnail'] }}" alt=""
+                loading="{{ $prioritas ? 'eager' : 'lazy' }}"
+                @if ($prioritas) fetchpriority="high" @endif
+                decoding="async" class="kartu-materi__foto">
         @else
             <span class="kartu-materi__gambar-ikon" aria-hidden="true">{{ $kategori['ikon'] }}</span>
         @endif
