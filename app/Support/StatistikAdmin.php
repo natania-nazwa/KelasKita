@@ -46,9 +46,20 @@ final class StatistikAdmin
      * diambil bersama supaya membuka dashboard tetap beberapa query
      * tetap, bukan bertambahnya sebanding dengan isi database.
      *
-     * "perubahan" di sini adalah jumlah konten BARU 30 hari terakhir,
-     * bukan jumlah seluruh konten. Kartu di dashboard menampilkan
-     * nomor itu sebagai "12% dari bulan lalu".
+     * "materi" dan "quiz" di sini BUKAN total seluruh konten, tapi
+     * jumlah yang bertambah dalam 30 hari terakhir (dari yang sudah
+     * terbit). Kartu di dashboard sengaja menampilkan laju
+     * pertumbuhan, bukan akumulasi: total yang membesar terus akan
+     * membuat angka kartu terasa diam dan tidak berguna dipakai
+     * memantau. Angka yang sama persis diambil dari
+     * "perubahan", jadi baris "12% dari bulan lalu" di bawahnya
+     * dibandingkan dengan rentang sepanjang yang sama.
+     *
+     * Pending dan yang ditolak tidak masuk ke hitungan ini; keduanya
+     * tetap terlihat lewat "materi_menunggu" dan "quiz_menunggu".
+     *
+     * "pengguna" tetap akumulasi, jadi baris keterangan di bawah
+     * kartu pengguna memakai "perubahan.pengguna".
      *
      * @return array{
      *     pengguna: int,
@@ -65,8 +76,6 @@ final class StatistikAdmin
      */
     public static function ringkasan(): array
     {
-        $jumlahMateri = (int) Materi::query()->count();
-        $jumlahQuiz = (int) Quiz::query()->count();
         $jumlahPengguna = (int) User::query()->count();
 
         $materiMenunggu = (int) Materi::query()->menunggu()->count();
@@ -76,21 +85,23 @@ final class StatistikAdmin
             ->selesai()
             ->avg('nilai');
 
+        $perubahan = [
+            'pengguna' => self::perubahanBaru(User::query()),
+            'materi' => self::perubahanBaru(Materi::query()->terbit()),
+            'quiz' => self::perubahanBaru(Quiz::query()->terbit()),
+        ];
+
         return [
             'pengguna' => $jumlahPengguna,
-            'materi' => $jumlahMateri,
-            'quiz' => $jumlahQuiz,
+            'materi' => $perubahan['materi']['bulan_ini'],
+            'quiz' => $perubahan['quiz']['bulan_ini'],
             'materi_menunggu' => $materiMenunggu,
             'quiz_menunggu' => $quizMenunggu,
             'pengguna_aktif' => self::penggunaAktif(),
             'quiz_dikerjakan' => (int) PengerjaanQuiz::query()->selesai()->count(),
             'rata_nilai' => round((float) ($nilai ?? 0), 1),
             'materi_dipelajari' => (int) DB::table('tb_simpanan_materi')->distinct()->count('materi_id'),
-            'perubahan' => [
-                'pengguna' => self::perubahanBaru(User::query()),
-                'materi' => self::perubahanBaru(Materi::query()),
-                'quiz' => self::perubahanBaru(Quiz::query()),
-            ],
+            'perubahan' => $perubahan,
         ];
     }
 

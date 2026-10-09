@@ -230,6 +230,203 @@ html {
 
 /*
  * ============================================================
+    DIALOG AKSES QUIZ (landing page, tamu)
+ * ============================================================
+ *
+ * Dialog yang muncul begitu tamu menekan tombol "Lihat Quiz" di hero.
+ * Isinya cuma memberitahukan bahwa quiz-nya ada dan harus login dulu,
+ * tidak pernah memuat soal atau daftar quiz.
+ *
+ * Wadah dan panel memakai kelas .modal / .modal__panel yang sudah
+ * dipakai dialog di halaman Profil dan Admin, jadi buka/tutup-nya
+ * mekanismenya sama: display:none sebagai keadaan awal, kelas .is-buka
+ * membuatnya flex. Bagian di bawah ini hanya menimpa ukuran, warna,
+ * ornamen, dan tombol kapsulnya.
+ */
+.kkm-akses {
+    padding: 1.25rem;
+}
+
+/*
+ * Selector ditulis berpasangan dengan .modal__panel supaya properti di
+ * bawah ini tetap menang. Dua aturan ini sama-sama di luar @layer dan
+ * specificity-nya sama, jadi urutan di file yang menentukan — dan blok
+ * .modal ada jauh setelah blok ini.
+ */
+.modal__panel.kkm-akses__panel {
+    position: relative;
+    max-width: 26rem;
+    overflow: hidden;
+    border-radius: 1.5rem;
+    border: 1px solid rgba(124, 77, 255, 0.14);
+    background-color: #fbfaff;
+    box-shadow:
+        0 34px 70px -32px rgba(48, 32, 128, 0.55),
+        0 0 0 1px rgba(255, 255, 255, 0.6) inset;
+}
+
+/*
+ * Isi panel naik pelan dari bawah sambil memudar saat dialog dibuka.
+ * .is-buka dipasang initAksesQuiz() ketika tombol hero ditekan.
+ */
+.kkm-akses__isi {
+    position: relative;
+    padding: 2.5rem 1.5rem 2rem;
+    text-align: center;
+    opacity: 0;
+    transform: translate3d(0, 1.5rem, 0);
+    transition:
+        opacity 0.45s cubic-bezier(0.22, 1, 0.36, 1),
+        transform 0.45s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.kkm-akses.is-buka .kkm-akses__isi {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+}
+
+/*
+ * Ornamen latar: dua gumpalan lavender buram di sudut kiri atas dan
+ * kanan bawah panel. Opitasinya rendah supaya tidak mengganggu teks.
+ */
+.kkm-akses__bola {
+    position: absolute;
+    width: 15rem;
+    height: 15rem;
+    border-radius: 9999px;
+    pointer-events: none;
+}
+
+.kkm-akses__bola--kiri {
+    top: -7rem;
+    left: -5rem;
+    background: radial-gradient(circle, rgba(155, 109, 255, 0.3), rgba(155, 109, 255, 0) 68%);
+}
+
+.kkm-akses__bola--kanan {
+    right: -6rem;
+    bottom: -8rem;
+    background: radial-gradient(circle, rgba(196, 181, 253, 0.4), rgba(196, 181, 253, 0) 68%);
+}
+
+.kkm-akses__ikon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 4rem;
+    height: 4rem;
+    border-radius: 1.375rem;
+    color: #7c4dff;
+    background-image: linear-gradient(140deg, #f3eeff 0%, #e2d7ff 100%);
+    box-shadow: 0 16px 30px -18px rgba(124, 77, 255, 0.8);
+}
+
+.kkm-akses__tutup {
+    position: absolute;
+    top: 0.75rem;
+    right: 0.75rem;
+    z-index: 2;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.25rem;
+    height: 2.25rem;
+    border-radius: 9999px;
+    color: #302080;
+    background-color: rgba(124, 77, 255, 0.08);
+    transition:
+        background-color 0.2s ease,
+        color 0.2s ease;
+}
+
+.kkm-akses__tutup:hover {
+    color: #fff;
+    background-color: #7c4dff;
+}
+
+.kkm-akses__tutup:focus-visible {
+    outline: 3px solid rgba(124, 77, 255, 0.45);
+    outline-offset: 2px;
+}
+
+/* "Lihat Quiz": gradasi ungu lembut, jadi teksnya dipotong mengikuti gradasi. */
+.kkm-akses__gradasi {
+    display: block;
+    background-image: linear-gradient(100deg, #9b6dff 0%, #7c4dff 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    -webkit-text-fill-color: transparent;
+}
+
+.kkm-akses__tombol {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
+    width: 100%;
+    max-width: 19rem;
+    margin-top: 1.75rem;
+    padding: 1.0625rem 2rem;
+    border-radius: 9999px;
+    font-size: 1rem;
+    font-weight: 600;
+    line-height: 1;
+    color: #fff;
+    text-align: center;
+    background-image: linear-gradient(100deg, #9b6dff 0%, #7c4dff 52%, #6a3ef0 100%);
+    box-shadow:
+        0 18px 34px -16px rgba(124, 77, 255, 0.8),
+        0 2px 6px -2px rgba(48, 32, 128, 0.25);
+    transition:
+        transform 0.3s ease,
+        box-shadow 0.3s ease,
+        background-image 0.35s ease;
+}
+
+.kkm-akses__tombol:hover {
+    transform: translateY(-2px);
+    background-image: linear-gradient(100deg, #ab7dff 0%, #8a5cff 52%, #6a3ef0 100%);
+    box-shadow:
+        0 26px 46px -20px rgba(124, 77, 255, 0.9),
+        0 3px 8px -2px rgba(48, 32, 128, 0.3);
+}
+
+.kkm-akses__tombol:active {
+    transform: translateY(0);
+}
+
+.kkm-akses__tombol:focus-visible {
+    outline: 3px solid rgba(124, 77, 255, 0.45);
+    outline-offset: 3px;
+}
+
+@media (min-width: 480px) {
+    .kkm-akses__tombol {
+        width: auto;
+        min-width: 15rem;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .kkm-akses__isi,
+    .kkm-akses__tombol,
+    .kkm-akses__tutup {
+        transition: none;
+    }
+
+    .kkm-akses__isi {
+        opacity: 1;
+        transform: none;
+    }
+
+    .kkm-akses__tombol:hover {
+        transform: none;
+    }
+}
+
+/*
+ * ============================================================
    KARTU KATEGORI (landing page)
    ============================================================
  *
@@ -7238,8 +7435,25 @@ html {
         color: color-mix(in oklab, var(--color-dark) 58%, transparent);
     }
 
+    /* Garis penghubung hanya bermakna saat tiga langkahnya memang
+       sejajar mendatar, yaitu di lebar desktop. Di HP dan tablet garis
+       itu menggantung tanpa konteks, jadi disembunyikan sampai batas
+       yang sama dengan "mobile" di seluruh aplikasi (batas lg
+       Tailwind, 1024px). Bukan 30rem: banyak HP sekarang lebih lebar
+       dari 480px, jadi batas lama tidak menutup semua kasus mobile.
+
+       Selektornya harus tetap memuat :not(:last-child) seperti aturan
+       dasarnya. Kalau hanya ".lobi-langkah__item::after", aturan ini
+       kalah spesifisitas dan garisnya tetap tampil di HP. */
+    @media (max-width: 63.999rem) {
+        .lobi-langkah__item:not(:last-child)::after {
+            content: none;
+        }
+    }
+
     /* Di layar sempit tiga kolom mulai sempit, jadi dikembalikan ke
-       satu kolom dan garis penghubung disembunyikan. */
+       satu kolom. Garis penghubungnya sudah dihapus oleh aturan di
+       atas, jadi blok ini cuma mengubah susunannya. */
     @media (max-width: 30rem) {
         .lobi-langkah {
             grid-template-columns: minmax(0, 1fr);
@@ -7260,10 +7474,6 @@ html {
 
         .lobi-langkah__teks {
             margin: 0;
-        }
-
-        .lobi-langkah__item::after {
-            content: none;
         }
     }
 

@@ -287,13 +287,51 @@ class DashboardAdminHalamanTest extends TestCase
             ->assertViewHas('ringkasan', $ringkasan)
             ->assertViewHas('loginMingguan', StatistikAdmin::loginMingguan());
 
-        // Dua pengguna, dua materi, satu quiz, satu materi dan satu quiz
-        // yang menunggu verifikasi.
+        // Dua pengguna. Kartu materi dan quiz menampilkan yang bertambah
+        // dalam 30 hari terakhir, jadi satu materi terbit yang dihitung;
+        // materi dan quiz pending tidak masuk ke kartu tapi tetap tercatat
+        // di antrean verifikasi.
         $this->assertSame(2, $ringkasan['pengguna']);
-        $this->assertSame(2, $ringkasan['materi']);
-        $this->assertSame(1, $ringkasan['quiz']);
+        $this->assertSame(1, $ringkasan['materi']);
+        $this->assertSame(0, $ringkasan['quiz']);
         $this->assertSame(1, $ringkasan['materi_menunggu']);
         $this->assertSame(1, $ringkasan['quiz_menunggu']);
+    }
+
+    public function test_kartu_materi_dan_quiz_mengabaikan_konten_lama_dan_yang_belum_terbit(): void
+    {
+        $admin = $this->buatAdmin();
+        $siswa = $this->buatPengguna(['nama' => 'Sari', 'email' => 'sari@example.com']);
+        $pelajaran = $this->buatPelajaran('Pemrograman');
+
+        $materiBaru = $this->buatMateri($pelajaran, $siswa, 'Materi Baru');
+        $quizBaru = $this->buatQuiz($pelajaran, $siswa, 'Quiz Baru');
+        $materiLama = $this->buatMateri($pelajaran, $siswa, 'Materi Lama');
+        $quizLama = $this->buatQuiz($pelajaran, $siswa, 'Quiz Lama');
+
+        $this->buatMateri($pelajaran, $siswa, 'Materi Pending', Materi::STATUS_PENDING);
+        $this->buatQuiz($pelajaran, $siswa, 'Quiz Pending', Quiz::STATUS_PENDING);
+
+        // Dipindahkan ke luar jendela 30 hari, jadi tidak boleh menambah
+        // angka kartu meski statusnya sudah terbit.
+        $materiLama->forceFill(['created_at' => now()->subDays(45)])->save();
+        $quizLama->forceFill(['created_at' => now()->subDays(45)])->save();
+
+        $ringkasan = StatistikAdmin::ringkasan();
+
+        $this->actingAs($admin)
+            ->get('/admin/dashboard')
+            ->assertOk()
+            ->assertSee('Materi')
+            ->assertSee('Quiz');
+
+        $this->assertSame(1, $ringkasan['materi']);
+        $this->assertSame(1, $ringkasan['quiz']);
+
+        // Angka kartu sama persis dengan jumlah baru pada rentang yang
+        // sama, jadi baris persentase di bawahnya bisa dibandingkan.
+        $this->assertSame($ringkasan['perubahan']['materi']['bulan_ini'], $ringkasan['materi']);
+        $this->assertSame($ringkasan['perubahan']['quiz']['bulan_ini'], $ringkasan['quiz']);
     }
 
     public function test_kartu_menunggu_verifikasi_menampilkan_rincian_asli(): void

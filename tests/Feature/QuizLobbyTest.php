@@ -291,6 +291,36 @@ class QuizLobbyTest extends TestCase
      * =====================================================================
      */
 
+    /**
+     * Garis putus-putus yang menyambung angka 1-2-3 di blok "Cara kerjanya"
+     * harus hilang di posisi mobile, dan tetap ada di desktop.
+     *
+     * Dua-duanya dikunci di sini karena perbaikannya mudah hilang diam-diam.
+     * Aturan dasarnya memakai :not(:last-child), jadi aturan yang
+     * menyembunyikannya di layar kecil wajib memakai selektor yang sama:
+     * kalau ditulis polos sebagai ".lobi-langkah__item::after", garisnya
+     * kalah spesifisitas dan tetap tampil di HP. Aturan dengan :not() yang
+     * salah tidak akan ketahuan kalau hanya dilihat di lebar desktop.
+     */
+    public function test_garis_penghubung_langkah_hilang_di_mobile_dan_tetap_di_desktop(): void
+    {
+        $peserta = $this->buatPengguna();
+
+        $this->actingAs($peserta)
+            ->get(route('user.sesi.gabung'))
+            ->assertOk()
+            ->assertSee('Cara kerjanya')
+            ->assertSee('lobi-langkah__item', false);
+
+        $css = preg_replace('#/\*.*?\*/#s', '', (string) file_get_contents(resource_path('css/app.css')));
+
+        $this->assertMatchesRegularExpression(
+            '/@media\s*\(max-width:\s*63\.999rem\)\s*\{\s*\.lobi-langkah__item:not\(:last-child\)::after\s*\{\s*content:\s*none/',
+            (string) $css,
+            'Garis penghubung harus disembunyikan sampai batas lg (1024px), dengan selektor :not(:last-child) yang sama seperti aturan dasarnya.'
+        );
+    }
+
     public function test_peserta_bisa_gabung_dengan_kode_dan_diarahkan_ke_lobby(): void
     {
         $host = $this->buatPengguna();

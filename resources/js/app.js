@@ -128,6 +128,70 @@ function initReveal() {
     targets.forEach((el) => observer.observe(el));
 }
 
+/**
+ * Landing page: tombol "Lihat Quiz".
+ *
+ * Tombol ini tidak pernah membawa langsung ke /user/quiz. Saat ditekan,
+ * yang muncul adalah dialog kecil berisi pengingat untuk login — bukan
+ * scroll ke bawah dan bukan soal quiz. Isinya sama untuk semua orang;
+ * yang menyesuaikan hanya tombol aksinya di dalam dialog, ditentukan
+ * server lewat @auth/@guest di markup.
+ *
+ * Buka/tutup mengikuti pola .modal yang sudah dipakai dialog di halaman
+ * Profil dan Admin: display:none sebagai keadaan awal, kelas .is-buka
+ * membuatnya flex. Kalau JavaScript mati, dialog tetap tidak pernah
+ * menutupi halaman — tombol hero cukup kehilangan efeknya.
+ *
+ * Berhenti sendiri di halaman lain karena elemen-elemen ini cuma ada di
+ * landing page.
+ */
+function initAksesQuiz() {
+    const pemicu = document.querySelector("[data-quiz-buka]");
+    const dialog = document.querySelector("[data-quiz-akses]");
+
+    if (!pemicu || !dialog) {
+        return;
+    }
+
+    const tombolMasuk = dialog.querySelector("[data-quiz-masuk]");
+
+    const tutup = () => {
+        dialog.classList.remove("is-buka");
+        dialog.setAttribute("aria-hidden", "true");
+
+        // Fokus dikembalikan ke tombol pemicu supaya navigasi keyboard
+        // tidak melompat ke awal halaman.
+        pemicu.focus();
+    };
+
+    pemicu.addEventListener("click", (acara) => {
+        acara.preventDefault();
+
+        dialog.classList.add("is-buka");
+        dialog.setAttribute("aria-hidden", "false");
+
+        // Langsung ke tombolnya: satu-satunya aksi di dialog ini.
+        tombolMasuk?.focus();
+    });
+
+    dialog.querySelectorAll("[data-quiz-tutup]").forEach((tombol) => {
+        tombol.addEventListener("click", tutup);
+    });
+
+    // Klik area gelap di luar panel juga membatalkan.
+    dialog.addEventListener("click", (acara) => {
+        if (acara.target === dialog) {
+            tutup();
+        }
+    });
+
+    document.addEventListener("keydown", (acara) => {
+        if (acara.key === "Escape" && dialog.classList.contains("is-buka")) {
+            tutup();
+        }
+    });
+}
+
 function initScrollProgress() {
     const bar = document.querySelector("[data-scroll-progress]");
 
@@ -841,6 +905,7 @@ function initSaringLangsung() {
 initReveal();
 initScrollProgress();
 initNavSpy();
+initAksesQuiz();
 initCari();
 initSaringLangsung();
 initBookmark();
