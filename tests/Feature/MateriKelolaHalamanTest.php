@@ -906,10 +906,9 @@ class MateriKelolaHalamanTest extends TestCase
  * =============================================================
  * BARIS META DI KARTU KATALOG
  * =============================================================
- * Kartu katalog menampilkan kategori dan jumlah bab. Yang TIDAK ikut di sini
- * adalah perubahan dari kebocoran isi materi mentah: itu masalah kartu Konten
- * Pembelajaran (yang tidak punya isian deskripsi sama sekali) dan sudah
- * dijaga test-nya di KontenPembelajaranTest.
+ * Kartu katalog menampilkan kategori dan jumlah bab, bukan deskripsi. Yang
+ * TIDAK ikut di sini adalah kebocoran isi materi mentah; test yang menjaga
+ * hal itu ada di KontenPembelajaranTest.
  */
 
     public function test_kartu_katalog_menampilkan_kategori_dan_jumlah_bab(): void

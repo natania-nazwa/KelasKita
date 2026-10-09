@@ -91,21 +91,18 @@ final class DaftarKonten
             'judul' => $materi ? $item->nama : $item->judul,
 
             /*
-             * Hanya kolom deskripsi, tidak lewat Materi::ringkasan().
+             * Hanya kolom deskripsi, tanpa dipotong di sini.
              *
-             * ringkasan() sengaja jatuh ke isi materi kalau deskripsinya
-             * kosong, supaya materi lama yang tidak pernah punya deskripsi
-             * tetap punya sesuatu untuk ditampilkan. Di daftar ini itu
-             * justru salah: form Tambah Materi tidak punya isian deskripsi
-             * sama sekali, jadi setiap materi yang dibuat dari Konten
-             * Pembelajaran akan memamerkan 120 karakter pertama isi
-             * materinya sendiri — termasuk penanda babnya ("Bab 1: …").
-             * Itu bukan ringkasan, dan admin membacanya sebagai kalau
-             * kartu ini rusak.
+             * Yang di bawah judul pada kartu ini selalu deskripsi yang
+             * ditulis pengarangnya, tidak pernah isi materi — isi materi
+             * disusun dari beberapa bab, jadi 120 karakter pertamanya
+             * adalah kepala bab ("Bab 1: …") dan terbaca sebagai kartu
+             * yang rusak.
              *
-             * Kalau deskripsinya memang kosong, kartu tidak menampilkannya
-             * (lihat components/admin/konten-kartu). Materi tanpa deskripsi
-             * tetap terbaca dari judul, jumlah bab, durasi, dan tanggalnya.
+             * Kalau deskripsinya memang kosong, kartu tidak
+             * menampilkannya (lihat components/admin/konten-kartu).
+             * Materi tanpa deskripsi tetap terbaca dari judul, jumlah
+             * bab, durasi, dan tanggalnya.
              */
             'deskripsi' => $item->deskripsi,
             'jumlah' => $materi ? $item->jumlahBab() : $item->jumlahSoal(),

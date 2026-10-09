@@ -35,6 +35,8 @@ function initTambahMateri(akar) {
 
     const judulMateri = $("[data-judul-materi]");
     const judulCount = $("[data-judul-count]");
+    const deskripsi = $("[data-deskripsi]");
+    const deskripsiCount = $("[data-deskripsi-count]");
     const kategori = $("[data-kategori]");
     const tips = $("[data-tips]");
     const tipsCount = $("[data-tips-count]");
@@ -97,9 +99,9 @@ function initTambahMateri(akar) {
      * Elemen pratinjau.
      *
      * Kepala pratinjau dirender sekali oleh Blade (x-materi.detail-kepala)
-     * dan hanya perlu ditimpa isinya: judul, kategori, tingkat kesulitan, dan
-     * thumbnail. Semuanya milik form dan masih hidup di browser, jadi tidak
-     * pernah dikirim ke server.
+     * dan hanya perlu ditimpa isinya: judul, deskripsi, kategori, tingkat
+     * kesulitan, dan thumbnail. Semuanya milik form dan masih hidup di
+     * browser, jadi tidak pernah dikirim ke server.
      *
      * Badan pratinjau â€” Daftar Isi, kartu seksi, blok kode, navigasi antar
      * bab â€” tidak dirender di sini. App\Support\IsiMateri dan
@@ -112,6 +114,7 @@ function initTambahMateri(akar) {
         bar: $("[data-preview-bar]"),
 
         judul: $("[data-pratinjau-judul]"),
+        deskripsi: $("[data-pratinjau-deskripsi]"),
         kategori: $("[data-pratinjau-kategori]"),
         kategoriIkon: $("[data-pratinjau-kategori-ikon]"),
         kesulitan: $("[data-pratinjau-kesulitan]"),
@@ -776,6 +779,19 @@ function initTambahMateri(akar) {
     }
 
     /*
+     * Deskripsi ikut ditulis ke kepala pratinjau, persis seperti di halaman
+     * detail: di bawah judul, dan disembunyikan kalau isiannya kosong.
+     * Elemennya sendiri selalu ada di markup, jadi yang ditulis JavaScript
+     * hanya teksnya dan kelihatan/tidaknya.
+     */
+    function terangkanDeskripsi() {
+        const teks = deskripsi.value.trim();
+
+        p.deskripsi.textContent = teks;
+        p.deskripsi.classList.toggle("hidden", !teks);
+    }
+
+    /*
      * Warna lencana dan ikon kategori diambil dari <option> kategori di
      * form, bukan dari daftar hardcode di JavaScript. Jadi katalog di
      * App\Models\Pelajaran tetap satu-satunya sumber warna kategori.
@@ -826,6 +842,7 @@ function initTambahMateri(akar) {
      */
     function renderKepalaPratinjau() {
         p.judul.textContent = judulMateri.value.trim() || "Judul materi belum diisi";
+        terangkanDeskripsi();
         terangkanKategori();
         terangkanKesulitan();
         terangkanWaktuBaca();
@@ -1014,17 +1031,26 @@ function initTambahMateri(akar) {
         judulCount.textContent = `${judulMateri.value.length}/100`;
     }
 
+    function hitungDeskripsi() {
+        deskripsiCount.textContent = `${deskripsi.value.length}/220`;
+    }
+
     function hitungTips() {
         tipsCount.textContent = `${tips.value.length}/500`;
     }
 
     /*
-     * Tiga isian ini ikut dibaca pratinjau, jadi perubahannya memicu
-     * render ulang: judul, kategori (nama, ikon, dan warna lencana), dan
-     * tingkat kesulitan.
+     * Empat isian ini ikut dibaca pratinjau, jadi perubahannya memicu
+     * render ulang: judul, deskripsi, kategori (nama, ikon, dan warna
+     * lencana), dan tingkat kesulitan.
      */
     judulMateri.addEventListener("input", () => {
         hitungJudul();
+        jadwalPratinjau();
+    });
+
+    deskripsi.addEventListener("input", () => {
+        hitungDeskripsi();
         jadwalPratinjau();
     });
 
@@ -1369,6 +1395,7 @@ function initTambahMateri(akar) {
     renderBab();
     muatPratinjau();
     hitungJudul();
+    hitungDeskripsi();
     hitungTips();
 }
 

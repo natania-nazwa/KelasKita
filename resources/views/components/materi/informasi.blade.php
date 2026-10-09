@@ -41,6 +41,31 @@
                 class="kolom-form mt-1.5">
         </div>
 
+        {{--
+            Deskripsi materi: satu kalimat yang memberi tahu pembaca materi ini
+            membahas apa, ditulis di bawah judul di kartu daftar dan di
+            kepala halaman detail. Yang di bawah judul itu dibaca semua orang,
+            jadi isinya bukan cuplikan isi bab.
+        --}}
+        <div>
+            <div class="flex items-center justify-between gap-3">
+                <label for="deskripsi" class="label-form">Deskripsi Materi</label>
+
+                <span data-deskripsi-count class="text-[11px] font-semibold tabular-nums text-muted">0/220</span>
+            </div>
+
+            <textarea id="deskripsi" name="deskripsi" rows="3" maxlength="220" data-deskripsi
+                placeholder="Contoh: Pengenalan sintaks PHP beserta variabel, fungsi, dan contoh kode sederhana."
+                class="kolom-form mt-1.5">{{ old('deskripsi', $materi?->deskripsi) }}</textarea>
+
+            <p class="mt-1.5 text-xs leading-relaxed text-muted">
+                Ditampilkan di bawah judul pada kartu materi dan halaman detail. Boleh dikosongkan.
+            </p>
+
+            <p class="mt-1.5 text-xs font-medium text-[#c2414a] {{ $errors->has('deskripsi') ? '' : 'hidden' }}"
+                role="alert">{{ $errors->first('deskripsi') }}</p>
+        </div>
+
         {{-- Kategori + tingkat kesulitan --}}
         <div class="grid min-w-0 gap-4 sm:grid-cols-2">
             <div>

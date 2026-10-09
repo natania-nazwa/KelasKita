@@ -359,22 +359,19 @@ class Materi extends Model
 
     /**
      * Cuplikan materi untuk ditampilkan di kartu.
+     *
+     * Yang di bawah judul pada kartu adalah deskripsi yang ditulis
+     * pengarangnya, dan tidak pernah isi materi. Isi materi disusun dari
+     * beberapa bab (lihat resources/js/materi-tambah.js), jadi 120 karakter
+     * pertamanya adalah kepala bab ("Bab 1: Pendahuluan …"), bukan ringkasan
+     * — dan membacanya sebagai ringkasan hanya membuat kartu terlihat rusak.
+     *
+     * Materi yang deskripsinya kosong tidak punya baris ini. Judul, jumlah
+     * bab, dan waktu bacanya tetap terbaca tanpa deskripsi.
      */
     public function ringkasan(int $jumlah = 110): string
     {
-        return Str::limit(
-            trim((string) ($this->ringkasan_teks ?? $this->deskripsi ?? $this->isi)),
-            $jumlah
-        );
-    }
-
-    public function getRingkasanTeksAttribute(): ?string
-    {
-        if (filled($this->deskripsi)) {
-            return $this->deskripsi;
-        }
-
-        return filled($this->isi) ? Str::limit(strip_tags($this->isi), 160) : null;
+        return Str::limit(trim((string) $this->deskripsi), $jumlah);
     }
 
     /**

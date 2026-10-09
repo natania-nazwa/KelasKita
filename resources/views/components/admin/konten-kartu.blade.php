@@ -82,10 +82,9 @@
 
         {{--
             Deskripsi hanya ditulis kalau pengarangnya memang mengisinya.
-            Form Tambah Materi tidak punya isian deskripsi, jadi sebagian
-            besar materi di sini tidak memilikinya — dan menampilkan baris
-            kosong hanya akan menyisakan ruang kosong di antara judul dan
-            baris informasi.
+            Materi yang sudah terbit sebelum form punya isian deskripsi belum
+            memilikinya — dan menampilkan baris kosong hanya akan menyisakan
+            ruang kosong di antara judul dan baris informasi.
         --}}
         @if (filled($kartu['deskripsi']))
             <p class="kartu-materi__deskripsi">{{ $kartu['deskripsi'] }}</p>

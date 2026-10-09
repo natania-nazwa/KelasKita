@@ -13,8 +13,8 @@
     App\Support\SorotKode bekerja di PHP. Menyalin aturannya ke JavaScript
     hanya akan menghasilkan versi kedua yang pasti menyimpang. Yang tetap
     dikerjakan di sisi klien cuma bagian yang benar-benar milik form: judul,
-    kategori, tingkat kesulitan, dan thumbnail — semuanya masih berupa berkas
-    di browser dan belum pernah menyentuh server.
+    deskripsi, kategori, tingkat kesulitan, dan thumbnail — semuanya masih
+    berupa isian atau berkas di browser dan belum pernah menyentuh server.
 
     Endpoint-nya mengembalikan fragment (Daftar Isi + kartu seksi), bukan
     halaman utuh, dan ukurannya kecil: pemanggilnya cuma menukar isi satu
@@ -69,10 +69,9 @@
     $detailPratinjau = [
         'judul' => old('nama', $materi?->nama) ?: 'Judul materi belum diisi',
         'slug' => '',
-        // Form tidak punya isian deskripsi, jadi sama seperti halaman detail
-        // untuk materi yang memang tidak berdeskripsi, bagian ini tidak
-        // dirender.
-        'deskripsi' => null,
+        // Deskripsi ikut ditulis ke kepala pratinjau oleh
+        // resources/js/materi-tambah.js, sama seperti judul di atasnya.
+        'deskripsi' => old('deskripsi', $materi?->deskripsi),
         'thumbnail' => $materi?->thumbnail ? \App\Support\BerkasMateri::url($materi->thumbnail) : null,
         'tingkat_kesulitan' => old('tingkat_kesulitan', $materi?->tingkat_kesulitan ?? 'Mudah'),
         'waktu_baca' => $waktuBaca,

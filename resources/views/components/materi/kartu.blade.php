@@ -103,7 +103,14 @@
 
         <h2 class="kartu-materi__judul">{!! $tebalkan($materi['judul']) !!}</h2>
 
-        <p class="kartu-materi__deskripsi">{!! $tebalkan($materi['deskripsi']) !!}</p>
+        {{--
+            Deskripsi di bawah judul. Materi yang belum punya deskripsi tidak
+            menampilkan baris ini sama sekali, supaya tidak menyisakan jarak
+            kosong di antara judul dan baris informasi.
+        --}}
+        @if (filled($materi['deskripsi']))
+            <p class="kartu-materi__deskripsi">{!! $tebalkan($materi['deskripsi']) !!}</p>
+        @endif
 
         {{-- mt-auto: baris info terdorong ke bawah, jadi semua kartu
              dalam satu baris tetap sejajar. --}}

@@ -1504,12 +1504,12 @@ class KontenPembelajaranTest extends TestCase
  * =============================================================
  * DESKRIPSI KARTU: TIDAK BOLEH JATUH KE ISI MATERI
  * =============================================================
- * Form Tambah Materi tidak punya isian deskripsi, jadi materi yang dibuat dari
- * sini hampir selalu deskripsinya kosong. Kalau kartu memakai
- * Materi::ringkasan() — yang sengaja jatuh ke isi materi kalau deskripsi
- * kosong — yang tampil di bawah judul adalah 120 karakter pertama isi materi
- * beserta penanda babnya: "Bab 1: Pendahuluan …". Itu bukan ringkasan, dan
- * admin membacanya sebagai kartu yang rusak.
+ * Yang tampil di bawah judul kartu adalah deskripsi yang ditulis
+ * pengarangnya. Materi yang belum punya deskripsi — termasuk materi lama
+ * yang terbit sebelum form punya isian deskripsi — tidak boleh memamerkan
+ * isi materinya sendiri: 120 karakter pertama isi materi adalah kepala
+ * babnya ("Bab 1: Pendahuluan …"). Itu bukan ringkasan, dan admin
+ * membacanya sebagai kartu yang rusak.
      */
     public function test_kartu_tidak_menampilkan_isi_materi_sebagai_deskripsi(): void
     {

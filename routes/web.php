@@ -23,10 +23,19 @@ use Illuminate\Support\Facades\Route;
  * sama dengan yang muncul di filter Materi, filter Quiz, dan form tambah
  * konten.
  */
+/*
+ * Cache-Control: no-store di halaman ini bukan untuk kontennya, tapi
+ * karena halaman dirender berbeda untuk tamu dan yang sudah login:
+ * tombol "Lihat Quiz" dan tombol aksinya di dalam dialognya ikut
+ * menyesuaikan. Dengan no-store, browser tidak boleh menyimpan
+ * halaman ini dan memulihkannya dari bfcache atau disk cache, jadi
+ * tab yang dibuka sebelum perubahan tidak akan terus menunjuk ke
+ * tujuan yang sudah usang.
+ */
 Route::get('/', function () {
-    return view('landing.index', [
+    return response()->view('landing.index', [
         'kartuKategori' => DaftarKategoriLanding::kartu(),
-    ]);
+    ])->header('Cache-Control', 'no-store, private');
 })->name('landing');
 
 /*

@@ -133,9 +133,9 @@ function initReveal() {
  *
  * Tombol ini tidak pernah membawa langsung ke /user/quiz. Saat ditekan,
  * yang muncul adalah dialog kecil berisi pengingat untuk login — bukan
- * scroll ke bawah dan bukan soal quiz. Isinya sama untuk semua orang;
- * yang menyesuaikan hanya tombol aksinya di dalam dialog, ditentukan
- * server lewat @auth/@guest di markup.
+ * scroll ke bawah dan bukan soal quiz. Isi dialognya satu untuk semua
+ * orang: yang menjaga daftar quiz tetap tertutup adalah middleware
+ * "auth" di route /user/quiz, bukan tombolnya.
  *
  * Buka/tutup mengikuti pola .modal yang sudah dipakai dialog di halaman
  * Profil dan Admin: display:none sebagai keadaan awal, kelas .is-buka
@@ -153,8 +153,6 @@ function initAksesQuiz() {
         return;
     }
 
-    const tombolMasuk = dialog.querySelector("[data-quiz-masuk]");
-
     const tutup = () => {
         dialog.classList.remove("is-buka");
         dialog.setAttribute("aria-hidden", "true");
@@ -170,8 +168,17 @@ function initAksesQuiz() {
         dialog.classList.add("is-buka");
         dialog.setAttribute("aria-hidden", "false");
 
-        // Langsung ke tombolnya: satu-satunya aksi di dialog ini.
-        tombolMasuk?.focus();
+        /*
+         * Fokus ditaruh ke panel dialog, BUKAN langsung ke tombol
+         * aksinya.
+         *
+         * Kalau fokus langsung ke tautan "Buka Daftar Quiz", satu
+         * penekanan Space atau Enter berikutnya — yang biasa orang
+         * tekan untuk menggulir halaman — langsung mengaktifkan tautan
+         * itu dan mengarahkan ke /user/quiz. Fokus di panel membuat
+         * tombol aksi tetap satu Tab di depan, seperti dialog biasa.
+         */
+        dialog.focus({ preventScroll: true });
     });
 
     dialog.querySelectorAll("[data-quiz-tutup]").forEach((tombol) => {

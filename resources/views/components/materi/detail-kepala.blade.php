@@ -92,9 +92,16 @@
             {{-- B. Judul. --}}
             <h1 class="kartu-kepala__judul" data-pratinjau-judul>{{ $detail['judul'] }}</h1>
 
-            @if (filled($detail['deskripsi']))
-                <p class="kartu-kepala__deskripsi">{{ $detail['deskripsi'] }}</p>
-            @endif
+            {{--
+                Deskripsi di bawah judul.
+
+                Elemennya selalu dirender, lalu disembunyikan lewat kelas
+                "hidden" kalau kosong — bukan lewat @if. Pratinjau menulis
+                deskripsi form ke elemen ini setiap kali isian berubah, jadi
+                elemen yang hilang tidak akan pernah bisa ditulis ulang.
+            --}}
+            <p class="kartu-kepala__deskripsi {{ filled($detail['deskripsi']) ? '' : 'hidden' }}"
+                data-pratinjau-deskripsi>{{ $detail['deskripsi'] }}</p>
 
             {{--
                 C. Metadata + tombol Simpan. Tombolnya berada di baris yang

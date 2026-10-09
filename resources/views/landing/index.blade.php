@@ -260,11 +260,14 @@
          keadaan awal, kelas .is-buka membuatnya flex. initAksesQuiz()
          di resources/js/app.js yang memasang pemicunya.
 
-         Dialog dirender untuk semua orang, jadi isi dan jarak barang
-         yang sama muncul baik untuk tamu maupun yang sudah login. Yang
-         membedakan hanya tombol aksinya: tamu mendapat "Login
-         Sekarang" ke route('login'), yang sudah login mendapat "Buka
-         Daftar Quiz" ke route('user.quiz').
+         Yang membedakan tidak ada: isi dialog dan tombolnya sama untuk
+         tamu maupun yang sudah login. Dulu tombolnya punya dua wajah
+         ("Login Sekarang" untuk tamu, "Buka Daftar Quiz" untuk yang
+         sudah login), dan itu saja yang membuat alurnya terasa
+         berbeda-bedanya. Sekarang hanya ada "Login Sekarang".
+
+         Yang menjaga daftar quiz tetap di luar jangkauan tamu adalah
+         middleware "auth" di route /user/quiz, bukan tombolnya.
 
          Posisi di markup diletakkan tepat setelah hero karena .modal
          berposition: fixed, jadi tidak bergantung urutan di
@@ -275,6 +278,7 @@
             id="quiz"
             class="modal kkm-akses"
             data-quiz-akses
+            tabindex="-1"
             role="dialog"
             aria-modal="true"
             aria-labelledby="quiz-akses-judul"
@@ -339,65 +343,36 @@
                     </h2>
 
                     {{--
-    Kalimatnya sama persis untuk semua orang, kecuali bagian terakhir.
-    Untuk tamu, kalimat "kamu perlu login terlebih dahulu" itu
-    benar. Untuk yang sudah login kalimat itu akan salah baca, jadi
-    hanya klausa terakhirnya yang diganti tanpa mengubah sisa
-    kalimatnya.
---}}
-<p
+                        Teks dan tombolnya sengaja satu untuk semua orang.
+                        Gate adalah "auth" di dalam route /user/quiz, bukan
+                        tombolnya: dari landing page tidak pernah ada tombol
+                        yang melompat langsung ke daftar quiz, jadi alurnya
+                        selalu sama — klik, baca, lalu putuskan mau login atau
+                        menutup dialog.
+                    --}}
+                    <p
                         id="quiz-akses-pesan"
                         class="mt-3.5 text-[15px] sm:text-base font-light leading-relaxed text-[#77769D]"
-                    >Kamu bisa melihat semua quiz yang tersedia di KelasKita. @authSekarang kamu bisa langsung membuka daftar quiznya. @elseNamun, untuk mengaksesnya, kamu perlu login terlebih dahulu. @endif</p>
+                    >Kamu bisa melihat semua quiz yang tersedia di KelasKita. Namun, untuk mengaksesnya, kamu perlu login terlebih dahulu.</p>
 
-                    {{--
-    Tombol aksi menyesuaikan dengan keadaan. Tamu belum boleh masuk
-    ke daftar quiz, jadi yang ditawarkan adalah login dulu; yang sudah
-    login tidak perlu login ulang, jadi tombolnya langsung ke daftar
-    quiz. Ikon kiri juga menyesuaikan supaya maksudnya jelas sebelum
-    teksnya dibaca.
---}}
-@auth
-    <a href="{{ route('user.quiz') }}" class="kkm-akses__tombol" data-quiz-masuk>
-        <svg
-            class="h-5 w-5 shrink-0"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2"
-            viewBox="0 0 24 24"
-            xmlns="http://www.w3.org/2000/svg"
-            aria-hidden="true"
-        >
-            <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                d="{{ \App\Support\Ikon::path('centang') }}"
-            />
-        </svg>
+                    <a href="{{ route('login') }}" class="kkm-akses__tombol" data-quiz-masuk>
+                        <svg
+                            class="h-5 w-5 shrink-0"
+                            fill="none"
+                            stroke="currentColor"
+                            stroke-width="2"
+                            viewBox="0 0 24 24"
+                            xmlns="http://www.w3.org/2000/svg"
+                            aria-hidden="true"
+                        >
+                            <path
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                d="{{ \App\Support\Ikon::path('gembok') }}"
+                            />
+                        </svg>
 
-        <span>Buka Daftar Quiz</span>
-@endauth
-
-@guest
-    <a href="{{ route('login') }}" class="kkm-akses__tombol" data-quiz-masuk>
-        <svg
-            class="h-5 w-5 shrink-0"
-            fill="none"
-            stroke="currentColor"
-            stroke-width="2"
-            viewBox="0 0 24 24"
-            xmlns="http://www.w3.org/2000/svg"
-            aria-hidden="true"
-        >
-            <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                d="{{ \App\Support\Ikon::path('gembok') }}"
-            />
-        </svg>
-
-        <span>Login Sekarang</span>
-@endguest
+                        <span>Login Sekarang</span>
 
                         <svg
                             class="h-5 w-5 shrink-0"

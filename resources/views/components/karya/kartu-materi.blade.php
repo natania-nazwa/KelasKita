@@ -71,7 +71,11 @@
             @endif
         </h2>
 
-        <p class="kartu-materi__deskripsi">{{ $materi['deskripsi'] }}</p>
+        {{-- Sama seperti kartu di halaman Materi: materi tanpa deskripsi tidak
+             menyisakan baris kosong di bawah judul. --}}
+        @if (filled($materi['deskripsi']))
+            <p class="kartu-materi__deskripsi">{{ $materi['deskripsi'] }}</p>
+        @endif
 
         {{-- Jumlah bab, perkiraan waktu baca, dan tanggal dibuat. --}}
         <div class="karya-info mt-3.5">

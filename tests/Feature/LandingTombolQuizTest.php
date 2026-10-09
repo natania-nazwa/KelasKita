@@ -73,7 +73,7 @@ class LandingTombolQuizTest extends TestCase
         $this->assertStringNotContainsString('is-buka', $dialog[0]);
     }
 
-    public function test_dialog_sama_untuk_tamu_dan_yang_sudah_login(): void
+    public function test_dialog_sama_penuhnya_untuk_tamu_dan_yang_sudah_login(): void
     {
         $cek = function (?User $pengguna = null) {
             $permintaan = $pengguna ? $this->actingAs($pengguna) : $this;
@@ -81,34 +81,33 @@ class LandingTombolQuizTest extends TestCase
             return $permintaan->get('/')->assertOk();
         };
 
-        // Judul dan kalimat pembuka sama persis untuk keduanya.
+        /*
+         * Dulu dialog punya dua wajah: "Login Sekarang" untuk tamu dan
+         * "Buka Daftar Quiz" untuk yang sudah login. Itu yang membuat
+         * alurnya terasa berbeda-bedanya. Sekarang isinya harus identik,
+         * jadi kedua keadaan diperiksa terhadap assertion yang sama.
+         */
         foreach ([$cek(), $cek($this->buatPengguna())] as $halaman) {
             $halaman
                 ->assertSee('Lihat Quiz')
                 ->assertSee('Mudah &amp; Seru', false)
-                ->assertSee('Kamu bisa melihat semua quiz yang tersedia di KelasKita.');
+                ->assertSee('Kamu bisa melihat semua quiz yang tersedia di KelasKita.')
+                ->assertSee('kamu perlu login terlebih dahulu.')
+                ->assertSee('Login Sekarang')
+                ->assertSee('href="'.route('login').'"', false);
         }
     }
 
-    public function test_tamu_mendapat_tombol_login_yang_menuju_halaman_login(): void
+    public function test_tidak_ada_tautan_langsung_ke_daftar_quiz_di_landing(): void
     {
-        $this->get('/')
-            ->assertOk()
-            ->assertSee('Login Sekarang')
-            ->assertSee('kamu perlu login terlebih dahulu.')
-            ->assertSee('href="'.route('login').'"', false)
-            ->assertDontSee(route('user.quiz'), false);
-    }
-
-    public function test_yang_sudah_login_mendapat_tombol_langsung_ke_daftar_quiz(): void
-    {
-        $this->actingAs($this->buatPengguna())
-            ->get('/')
-            ->assertOk()
-            ->assertSee('Buka Daftar Quiz')
-            ->assertSee('href="'.route('user.quiz').'"', false)
-            // Tidak ada lagi ajakan login untuk orang yang sudah login.
-            ->assertDontSee('Login Sekarang');
+        // TAMU maupun yang sudah login: landing page tidak pernah punya
+        // tautan langsung ke daftar quiz. Satu-satunya jalan ke sana
+        // adalah lewat route /user/quiz yang dijaga middleware "auth".
+        foreach ([$this->get('/'), $this->actingAs($this->buatPengguna())->get('/')] as $halaman) {
+            $halaman
+                ->assertOk()
+                ->assertDontSee(route('user.quiz'), false);
+        }
     }
 
     public function test_halaman_quiz_tetap_melindungi_isinya_dari_tamu(): void
@@ -134,12 +133,8 @@ class LandingTombolQuizTest extends TestCase
 
         $this->assertAuthenticated();
 
-        // 4. Setelah login, tombolnya membuka daftar quiz dan tidak
-        //    menawarkan login lagi.
-        $this->get('/')
-            ->assertOk()
-            ->assertSee('Buka Daftar Quiz')
-            ->assertSee('href="'.route('user.quiz').'"', false)
-            ->assertDontSee('Login Sekarang');
+        // 4. Daftar quiz tetap hanya bisa dibuka lewat route-nya sendiri,
+        //    yang dijaga middleware "auth".
+        $this->get('/user/quiz')->assertOk();
     }
 }
