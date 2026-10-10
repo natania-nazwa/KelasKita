@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\JawabanQuiz;
 use App\Models\Pelajaran;
 use App\Models\PengerjaanQuiz;
+use App\Models\Quiz;
 use App\Models\Soal;
 use App\Support\DaftarHasil;
 use Illuminate\Http\Request;
@@ -40,9 +41,18 @@ class HasilDetailController extends Controller
         $durasi = DaftarHasil::durasiLabel($pengerjaan->durasiDetik());
         $kategori = $this->kategori($pengerjaan);
 
+        /*
+         * Tombol "Lihat Halaman Quiz" hanya untuk quiz yang benar-benar
+         * tayang. Quiz berstatus lain (draft, pending, ditolak) maupun yang
+         * memakai kode menolak pengunjung selain pembuatnya di halaman
+         * detail (QuizDetailController), jadi tombolnya ikut disembunyikan
+         * di hasil supaya peserta tidak membuka tautan yang berakhir 404.
+         */
+        $quiz = $pengerjaan->quiz;
+
         return view('user.hasil-detail', [
             'pengerjaan' => $pengerjaan,
-            'quiz' => $pengerjaan->quiz,
+            'quiz' => $quiz,
             'kategori' => $kategori,
             'status' => $pengerjaan->status(),
             'statusLabel' => $pengerjaan->labelStatus(),
@@ -56,6 +66,9 @@ class HasilDetailController extends Controller
             'adaRiwayatSesi' => $pengerjaan->sesi_id !== null && $pengerjaan->sesi !== null,
             'tautanSesi' => $pengerjaan->sesi !== null
                 ? route('user.sesi.hasil', $pengerjaan->sesi)
+                : null,
+            'tautanQuiz' => $quiz !== null && $quiz->status === Quiz::STATUS_PUBLISHED
+                ? route('user.quiz.detail', $quiz)
                 : null,
         ]);
     }

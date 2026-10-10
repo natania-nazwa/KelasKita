@@ -544,6 +544,45 @@ class HasilHalamanTest extends TestCase
     }
 
     /**
+     * Tombol "Lihat Halaman Quiz" hanya untuk quiz yang benar-benar tayang:
+     * quiz berstatus lain menolak pengunjung selain pembuatnya di halaman
+     * detail, dan quiz mode kode tidak pernah terbit. Menampilkan tombol
+     * pada pengerjaan quiz seperti itu berarti menyiapkan peserta untuk
+     * membuka tautan yang berakhir 404.
+     */
+    public function test_tombol_lihat_halaman_quiz_hanya_untuk_quiz_yang_terbit(): void
+    {
+        $user = $this->buatPengguna();
+        $terbit = $this->buatQuiz('Quiz Terbit');
+        $draft = $this->buatQuiz('Quiz Draft');
+        $draft->update(['status' => Quiz::STATUS_DRAFT]);
+        $kode = $this->buatQuiz('Quiz Kode');
+        $kode->update([
+            'visibilitas' => Quiz::VISIBILITAS_PRIVAT,
+            'status' => Quiz::STATUS_DRAFT,
+            'kode_akses' => 'KODE7X',
+        ]);
+
+        // Quiz terbit: tombol tampil dan menuju halaman detail-nya.
+        $pengerjaanTerbit = $this->buatPengerjaan($user, $terbit, nilai: 80, benar: 4, salah: 1, soal: 5);
+        $this->actingAs($user)
+            ->get('/user/hasil/'.$pengerjaanTerbit->getKey())
+            ->assertOk()
+            ->assertSee('Lihat Halaman Quiz')
+            ->assertSee(route('user.quiz.detail', $terbit));
+
+        // Quiz draft dan quiz mode kode: tombol tidak ikut dirender.
+        foreach ([$draft, $kode] as $quiz) {
+            $pengerjaan = $this->buatPengerjaan($user, $quiz, nilai: 70, benar: 4, salah: 1, soal: 5);
+
+            $this->actingAs($user)
+                ->get('/user/hasil/'.$pengerjaan->getKey())
+                ->assertOk()
+                ->assertDontSee('Lihat Halaman Quiz');
+        }
+    }
+
+    /**
      * Wadah <ul> pilihan dan butir <li>-nya harus punya kelas berbeda.
      *
      * .hasil-soal__pilihan memang display:flex untuk menyusun huruf +

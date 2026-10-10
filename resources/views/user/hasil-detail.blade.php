@@ -238,8 +238,12 @@
             <div class="mt-5 flex flex-wrap justify-center gap-3">
                 <a href="{{ route('user.hasil') }}" class="tombol-garis">Kembali ke Hasil</a>
 
-                @if ($quiz !== null)
-                    <a href="{{ route('user.quiz.detail', $quiz) }}" class="tombol-garis">Lihat Halaman Quiz</a>
+                {{-- Hanya quiz yang benar-benar tayang punya halaman detail
+                     yang bisa dibuka peserta (quiz mode kode tidak pernah
+                     terbit, dan quiz lain yang belum terbit menolak
+                     pengunjung selain pembuatnya). --}}
+                @if ($tautanQuiz !== null)
+                    <a href="{{ $tautanQuiz }}" class="tombol-garis">Lihat Halaman Quiz</a>
                 @endif
             </div>
         </div>
