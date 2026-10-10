@@ -506,17 +506,16 @@ class HasilHalamanTest extends TestCase
     }
 
     /**
-     * Halaman detail satu pengerjaan tidak punya yang bisa dicari, jadi
-     * kolom cari global hilang di top bar desktop maupun di header
-     * mobile — yang tersisa dari daftar `user.hasil*` karena rinde
-     * mencocokkan wildcard.
+     * Halaman detail satu pengerjaan tidak punya yang bisa dicari dan
+     * hanya berisi rincian jawaban satu pengerjaan, jadi seluruh kepala
+     * halaman ikut pergi: kolom cari, lonceng notifikasi, dan chip akun
+     * (pp) semuanya disembunyikan, sama seperti halaman hasil quiz lain.
      *
-     * Top bar dan lonceng harus tetap ada: keduanya tidak bergantung
-     * pada ada atau tidaknya daftar yang bisa disaring, dan ikut
-     * hilang bersama kolom cari berarti peserta kehilangan jalan ke
-     * notifikasi tepat di halaman yang baru dibuka dari daftarnya.
+     * Sebelumnya halaman ini hanya menyembunyikan kolom cari dan tetap
+     * menampilkan lonceng; sekarang ketiganya pergi supaya peserta
+     * langsung fokus ke angka nilai dan rincian jawabannya.
      */
-    public function test_halaman_detail_menyingkirkan_kolom_cari_tetapi_menampilkan_notifikasi(): void
+    public function test_halaman_detail_menyingkirkan_kolom_cari_lonceng_dan_chip_akun(): void
     {
         $user = $this->buatPengguna();
         $quiz = $this->buatQuiz('HTML Dasar');
@@ -536,8 +535,12 @@ class HasilHalamanTest extends TestCase
         $detail->assertDontSee('id="cari-topbar"', false);
         $detail->assertDontSee('id="cari-mobile"', false);
 
-        $detail->assertSee('data-app-topbar', false);
-        $detail->assertSee('data-notif', false);
+        // Top bar desktop hilang seluruhnya, jadi lonceng desktop ikut pergi.
+        $detail->assertDontSee('data-app-topbar', false);
+
+        // Lonceng notifikasi mobile dan chip akun (pp) ikut disembunyikan.
+        $detail->assertDontSee('data-notif', false);
+        $detail->assertDontSee('Menu profil', false);
     }
 
     /**

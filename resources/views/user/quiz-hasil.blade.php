@@ -3,7 +3,10 @@
 @section('title', 'Hasil Quiz | ' . $quiz->judul)
 
 @section('content')
-    <div class="kanvas-halaman -m-6 min-h-[calc(100dvh-4rem)] p-6 lg:-m-10 lg:p-10">
+    {{-- min-h-[100dvh], bukan 100dvh dikurangi 4rem seperti halaman lain:
+         halaman ini tidak memakai top bar, jadi tinggi yang tersedia
+         memang satu layar penuh. --}}
+    <div class="kanvas-halaman -m-6 min-h-[100dvh] p-6 lg:-m-10 lg:p-10">
 
         <div class="mx-auto w-full max-w-3xl">
 

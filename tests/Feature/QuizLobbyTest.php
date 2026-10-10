@@ -503,6 +503,30 @@ class QuizLobbyTest extends TestCase
             ->assertSee('Menunggu host memulai quiz');
     }
 
+    /**
+     * Lobby sesi adalah ruang tunggu yang fokus ke kode dan peserta, jadi
+     * top bar dihapus di sini: pencarian global, tombol notifikasi, dan
+     * chip akun tidak boleh ikut terender. Di header mobile chip akun
+     * (foto profil) juga ikut hilang, karena halaman ini tidak menyediakan
+     * tautan keluar sama sekali.
+     */
+    public function test_halaman_lobby_tanpa_top_bar(): void
+    {
+        $host = $this->buatPengguna();
+        $quiz = $this->buatQuiz($host);
+        $this->buatSoal($quiz);
+        $sesi = $this->buatSesi($quiz, $host);
+
+        $respons = $this->actingAs($host)
+            ->get(route('user.sesi.lobby', $sesi))
+            ->assertOk();
+
+        $respons->assertDontSee('data-app-topbar', false)
+            ->assertDontSee('id="cari-topbar"', false)
+            ->assertDontSee('Notifikasi', false)
+            ->assertDontSee('Menu profil', false);
+    }
+
     public function test_endpoint_status_mengirim_daftar_peserta_untuk_polling(): void
     {
         $host = $this->buatPengguna();
@@ -739,6 +763,28 @@ class QuizLobbyTest extends TestCase
             ->assertOk()
             ->assertSee('Kamu belum mengerjakan soal')
             ->assertDontSee('Rekap nilai peserta');
+    }
+
+    /**
+     * Halaman rekap nilai sesi menutup satu layar penuh dengan angka, jadi
+     * top bar dihapus di sini: pencarian global, tombol notifikasi, dan chip
+     * akun tidak boleh ikut terender, sama seperti halaman lobby-nya.
+     */
+    public function test_halaman_hasil_sesi_tanpa_top_bar(): void
+    {
+        $host = $this->buatPengguna();
+        $quiz = $this->buatQuiz($host);
+        $this->buatSoal($quiz);
+        $sesi = $this->buatSesi($quiz, $host, SesiQuiz::STATUS_SELESAI);
+
+        $respons = $this->actingAs($host)
+            ->get(route('user.sesi.hasil', $sesi))
+            ->assertOk();
+
+        $respons->assertDontSee('data-app-topbar', false)
+            ->assertDontSee('id="cari-topbar"', false)
+            ->assertDontSee('Notifikasi', false)
+            ->assertDontSee('Menu profil', false);
     }
 
     /**

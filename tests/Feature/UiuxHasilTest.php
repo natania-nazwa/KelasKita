@@ -175,6 +175,27 @@ class UiuxHasilTest extends TestCase
     }
 
     /**
+     * Halaman hasil menutup satu layar penuh dengan nilai, jadi top bar
+     * dihapus di sini: pencarian global, tombol notifikasi, dan chip akun
+     * tidak boleh ikut terender, sama seperti halaman lobby-nya.
+     */
+    public function test_halaman_hasil_tanpa_top_bar(): void
+    {
+        $user = $this->buatPengguna();
+        $quiz = $this->buatQuiz();
+        $this->buatPengerjaan($user, $quiz, nilai: 80, benar: 4, salah: 1, soal: 5, menit: 15);
+
+        $respons = $this->actingAs($user)
+            ->get('/user/uiux-design/hasil')
+            ->assertOk();
+
+        $respons->assertDontSee('data-app-topbar', false)
+            ->assertDontSee('id="cari-topbar"', false)
+            ->assertDontSee('Notifikasi', false)
+            ->assertDontSee('Menu profil', false);
+    }
+
+    /**
      * Penjelasan rumus nilai harus ikut tampil, dan contohnya ditulis dari
      * angka yang benar-benar ada di halaman supaya tidak pernah bertentangan
      * dengan nilai besar di atasnya.

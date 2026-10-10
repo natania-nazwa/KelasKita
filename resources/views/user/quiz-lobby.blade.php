@@ -3,8 +3,11 @@
 @section('title', ($adalahHost ? 'Lobby Quiz' : 'Menunggu Quiz Dimulai') . ' | KelasKita')
 
 @section('content')
+    {{-- min-h-[100dvh], bukan 100dvh dikurangi 4rem seperti halaman lain:
+         halaman ini tidak memakai top bar, jadi tinggi yang tersedia
+         memang satu layar penuh. --}}
     <div
-        class="kanvas-halaman -m-6 min-h-[calc(100dvh-4rem)] p-6 lg:-m-10 lg:p-10"
+        class="kanvas-halaman -m-6 min-h-[100dvh] p-6 lg:-m-10 lg:p-10"
         data-lobi
         data-tautan-status="{{ route('user.sesi.data', $sesi) }}"
         data-tautan-soal="{{ route('user.judulsoal.soal', [$quiz->slug, 1]) }}?sesi={{ $sesi->getKey() }}"

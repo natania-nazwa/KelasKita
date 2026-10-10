@@ -294,6 +294,26 @@
                  * semuanya hanya mengalihkan perhatian dari soal yang sedang
                  * dikerjakan.
                  *
+                 * "Lobby sesi": satu-satunya tugas halaman ini adalah
+                 * menunggu host memulai quiz, jadi pencarian global,
+                 * notifikasi, dan chip akun hanya mengalihkan perhatian dari
+                 * kode, jumlah peserta, dan status sesi yang sedang ditunggu.
+                 *
+                 * "Hasil quiz": dua halaman nilai (hasil pengerjaan dan
+                 * rekap sesi) juga menutup satu layar penuh dengan angka
+                 * nilai, tanpa daftar yang bisa dicari, tanpa notifikasi
+                 * yang harus dibaca, dan tanpa menu akun. Chip akun di
+                 * header mobile ikut hilang lewat $sembunyiAkun di bawah,
+                 * karena di sini peserta hanya membutuhkan tautan pulang
+                 * dan lihat detail/peringkat, bukan dirinya sendiri.
+                 *
+                 * "Detail hasil" (/user/hasil/{pengerjaan}): rincian
+                 * satu pengerjaan, bukan daftar yang bisa dicari. Sebelumnya
+                 * halaman ini hanya menyembunyikan kolom cari dan tetap
+                 * memakai lonceng + chip akun (lihat $sembunyiCari); sekarang
+                 * ia dinaikkan ke sini supaya ketiganya pergi, konsisten
+                 * dengan halaman hasil quiz yang baru.
+                 *
                  * "Karya Saya": di halaman itu pencarian global kembar dari
                  * kolom cari yang sudah ada di dalam halaman (komponen
                  * karya.cari), notifikasi tidak pernah dibaca, dan chip akun
@@ -312,6 +332,10 @@
                  */
                 $sembunyiTopbar = request()->routeIs(
                     'user.sesi.gabung',
+                    'user.sesi.lobby',
+                    'user.sesi.hasil',
+                    'user.uiux.hasil',
+                    'user.hasil.detail',
                     'user.jadwal',
                     'user.materi.tambah',
                     'user.materi.edit',
@@ -326,21 +350,34 @@
 
                 /*
                  * Halaman yang masih memakai top bar, tapi tidak punya
-                 * yang bisa dicari. Hanya kolom cari yang hilang;
-                 * notifikasi dan identitas pengguna tetap di tempatnya,
-                 * karena keduanya tidak bergantung pada ada atau tidaknya
-                 * daftar yang bisa disaring.
-                 *
-                 * Satu-satunya halaman di daftar ini adalah detail hasil
-                 * (/user/hasil/{pengerjaan}). Cabang user.hasil* pada
-                 * $cariTopbar di bawah ikut mencakupnya, padahal isinya
-                 * satu pengerjaan dengan rincian jawabannya, bukan daftar
-                 * — mengetik "biologi" di sana tidak menyaring apa pun,
-                 * hanya melempar peserta ke daftar hasil. Lonceng di
-                 * header mobile juga sengaja tetap ada di sini, jadi ia
-                 * dipisah dari $tampilCari (lihat x-app.header-mobile).
+                 * yang bisa dicari. Saat ini tidak ada halaman yang
+                 * memakainya: detail hasil (/user/hasil/{pengerjaan})
+                 * dinaikkan ke $sembunyiTopbar di atas sehingga top bar
+                 * dan chip akunnya ikut hilang. Supaya kolom cari tetap
+                 * bisa disembunyikan tanpa repot di masa depan, variabel
+                 * ini dipertahankan dan tinggal diisi nama rutenya.
                  */
-                $sembunyiCari = request()->routeIs('user.hasil.detail');
+                $sembunyiCari = request()->routeIs('_tidak_ada_halaman_');
+
+                /*
+                 * Halaman yang top bar-nya disembunyikan tapi masih
+                 * menunjukkan chip akun di header mobile. Di lobby sesi,
+                 * peserta hanya menunggu host memulai, jadi foto profil
+                 * (pp) miliknya sendiri tidak berguna di sana — chip akun
+                 * di header mobile ikut dihilangkan supaya halaman benar-
+                 * benar hanya berisi ruang tunggu. Halaman hasil quiz
+                 * (pengerjaan dan rekap sesi) ikut kehilangan chip akunnya
+                 * karena nilainya yang utama, bukan akun yang sedang dibuka.
+                 * Ini terpisah dari $sembunyiTopbar karena halaman top bar
+                 * tersembunyi lain (jadwal, materi, dsb.) masih memakai
+                 * chip akun.
+                 */
+                $sembunyiAkun = request()->routeIs(
+                    'user.sesi.lobby',
+                    'user.sesi.hasil',
+                    'user.uiux.hasil',
+                    'user.hasil.detail',
+                );
             @endphp
 
             @php
@@ -482,7 +519,7 @@
             --}}
             <x-app.header-mobile :aksi="$cariTopbar['aksi']" :placeholder="$cariTopbar['placeholder']"
                 :param="$cariTopbar['param']" :tampil-cari="! $sembunyiTopbar && ! $sembunyiCari"
-                :tampil-lonceng="! $sembunyiTopbar" :menu="$menu"
+                :tampil-lonceng="! $sembunyiTopbar" :tampil-akun="! $sembunyiAkun" :menu="$menu"
                 :admin="auth()->user()?->isAdmin() === true" />
 
             <main class="p-6 lg:p-10">

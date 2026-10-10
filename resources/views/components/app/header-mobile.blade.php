@@ -27,6 +27,14 @@
      */
     'tampilLonceng' => null,
     /*
+     * Halaman yang top bar-nya disembunyikan juga dihilangkan chip akunnya
+     * di baris pertama, supaya pp (foto profil) tidak ikut terender di
+     * halaman yang sedang fokus menunggu (mis. lobby sesi). Nilai bawaan
+     * true: hanya halaman yang mengatur prop ini false yang kehilangan
+     * chip akunnya.
+     */
+    'tampilAkun' => true,
+    /*
      * Menu lengkap dari layout. Item bertanda "bawah" sudah tampil di
      * navigasi bawah, jadi yang tersisa hanya menu tambahan: Jadwal,
      * Hasil, Simpan, dan tautan Admin kalau peran pengguna berlaku.
@@ -94,6 +102,7 @@
                 2.5rem dari x-profil.avatar sudah melewati target sentuh
                 40px tanpa bantuan padding sama sekali.
             --}}
+            @if ($tampilAkun)
             <details class="group relative">
                 <summary
                     class="flex min-h-10 min-w-10 cursor-pointer list-none items-center justify-center rounded-full transition hover:opacity-80 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary [&::-webkit-details-marker]:hidden"
@@ -130,6 +139,7 @@
                     </form>
                 </div>
             </details>
+            @endif
         </div>
     </div>
 
