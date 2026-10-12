@@ -95,6 +95,7 @@ final class TinjauanMateri
                     'inisial' => $pembuat?->inisial() ?? '?',
                     'warna' => $avatar['warna'],
                     'warna_gelap' => $avatar['warna_gelap'],
+                    'foto' => $pembuat?->fotoProfilUrl(),
                 ],
                 'tautan_setujui' => route('admin.materi.setujui', $item->slug),
                 'tautan_tolak' => route('admin.materi.tolak', $item->slug),

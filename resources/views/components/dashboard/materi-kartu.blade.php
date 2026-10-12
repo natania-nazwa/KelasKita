@@ -17,7 +17,7 @@
      *   slug, judul, deskripsi, thumbnail, tingkat_kesulitan, waktu_baca,
      *   jumlah_bab, jumlah_materi, tautan,
      *   kategori => [nama, slug, ikon, warna, warna_gelap],
-     *   pembuat  => [nama, inisial, warna, warna_gelap]
+     *   pembuat  => [nama, inisial, warna, warna_gelap, foto]
      */
 
     $kategori = $materi['kategori'];
@@ -93,9 +93,19 @@
              dalam satu baris tetap sama tinggi. --}}
         <div class="dash-materi__meta">
             <span class="dash-materi__pembuat">
-                <span class="dash-avatar"
+                @php $fotoPembuat = $pembuat['foto'] ?? null; @endphp
+                <span @class([
+                    'dash-avatar',
+                    'dash-avatar--foto' => (bool) $fotoPembuat,
+                ])
                     style="--a: {{ $pembuat['warna'] }}; --a-gelap: {{ $pembuat['warna_gelap'] }};"
-                    aria-hidden="true">{{ $pembuat['inisial'] }}</span>
+                    aria-hidden="true">
+                    @if ($fotoPembuat)
+                        <img src="{{ $fotoPembuat }}" alt="" class="dash-avatar__foto" loading="lazy" decoding="async">
+                    @else
+                        {{ $pembuat['inisial'] }}
+                    @endif
+                </span>
 
                 <span class="dash-materi__nama">{{ $pembuat['nama'] }}</span>
             </span>

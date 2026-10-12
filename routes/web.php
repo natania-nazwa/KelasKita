@@ -779,6 +779,33 @@ Route::middleware(['auth', 'admin'])
 
         /*
          * =============================================================
+         * MASUKAN & SARAN
+         * =============================================================
+         * Sisi baca dari halaman "Masukan & Saran" milik pengguna. Di sini
+         * admin melihat seluruh kiriman, menyaringnya, dan menandai status
+         * tindak lanjutnya.
+         *
+         * Tiga route sengaja dipisah dari Pengaturan: halaman ini bukan
+         * pengaturan, dan menu sidebar-nya berdiri sendiri. Ia diletakkan
+         * tepat setelah Pengguna supaya urutan menu mengikuti alur kerja
+         * admin (lihat layouts/admin.blade.php).
+         *
+         *   - GET  /masukan-saran                daftar + pencarian + filter
+         *   - PUT  /masukan-saran/{masukan}/status   ubah status tindak lanjut
+         *   - GET  /masukan-saran/{masukan}/lampiran  sajikan lampiran
+         *
+         * Status dikirim lewat PUT biasa supaya tetap jalan tanpa
+         * JavaScript; nilai yang sah dibatasi di controller, bukan hanya
+         * dengan menyembunyikan pilihan di halaman.
+         */
+        Route::get('/masukan-saran', Admin\MasukanSaranController::class)->name('masukan-saran');
+        Route::put('/masukan-saran/{masukanSaran}/status', [Admin\MasukanSaranController::class, 'updateStatus'])
+            ->name('masukan-saran.status');
+        Route::get('/masukan-saran/{masukanSaran}/lampiran', [Admin\MasukanSaranController::class, 'lampiran'])
+            ->name('masukan-saran.lampiran');
+
+        /*
+         * =============================================================
          * PENGATURAN
          * =============================================================
          * Pusat pengaturan admin. Semuanya satu grup route di bawah

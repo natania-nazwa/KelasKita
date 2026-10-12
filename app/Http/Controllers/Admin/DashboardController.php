@@ -60,7 +60,7 @@ class DashboardController extends Controller
      * jenis yang lain, jadi keduanya diambil dan digabung dengan
      * berdasarkan waktu yang sama.
      *
-     * @return Collection<int, array{judul: string, detail: string, inisial: string, warna: string, warna_gelap: string, ikon: string, waktu: string}>
+     * @return Collection<int, array{judul: string, detail: string, inisial: string, warna: string, warna_gelap: string, foto: ?string, ikon: string, waktu: string}>
      */
     private function aktivitasTerbaru(): Collection
     {
@@ -110,7 +110,7 @@ class DashboardController extends Controller
      * Field ini tidak pernah ditampilkan: fungsinya hanya jadi kunci
      * pengurutan setelah materi dan quiz digabung.
      *
-     * @return array{judul: string, detail: string, inisial: string, warna: string, warna_gelap: string, ikon: string, waktu: string, peringkat: int}
+     * @return array{judul: string, detail: string, inisial: string, warna: string, warna_gelap: string, foto: ?string, ikon: string, waktu: string, peringkat: int}
      */
     private function barisAktivitas(
         ?User $pembuat,
@@ -128,6 +128,7 @@ class DashboardController extends Controller
             'inisial' => $pembuat?->inisial() ?? 'A',
             'warna' => $avatar['warna'],
             'warna_gelap' => $avatar['warna_gelap'],
+            'foto' => $pembuat?->fotoProfilUrl(),
             'ikon' => $ikon,
             'waktu' => $waktu?->diffForHumans() ?? 'baru saja',
             'peringkat' => $waktu?->getTimestamp() ?? 0,

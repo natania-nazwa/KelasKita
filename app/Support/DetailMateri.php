@@ -58,7 +58,7 @@ final class DetailMateri
      *     dilihat: string,
      *     tersimpan: bool,
      *     kategori: array{nama: string, ikon: string, warna: string, warna_gelap: string},
-     *     pembuat: ?array{nama: string, inisial: string, warna: string, warna_gelap: string},
+     *     pembuat: ?array{nama: string, inisial: string, warna: string, warna_gelap: string, foto: ?string},
      *     seksi: array<int, array<string, mixed>>,
      *     tautan_daftar: string,
      *     tautan_latihan: string
@@ -99,6 +99,7 @@ final class DetailMateri
                 'inisial' => $pembuat->inisial(),
                 'warna' => $pembuat->warnaAvatar()['warna'],
                 'warna_gelap' => $pembuat->warnaAvatar()['warna_gelap'],
+                'foto' => $pembuat->fotoProfilUrl(),
             ] : null,
             'seksi' => IsiMateri::seksi($materi->isi, $materi->nama),
             'tautan_daftar' => $tautanDaftar ?? route('user.materi'),

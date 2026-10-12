@@ -234,6 +234,8 @@ class SmokeSemuaHalamanTest extends TestCase
             'Pengguna' => route('admin.pengguna'),
             'Pengguna admin' => route('admin.pengguna', ['peran' => 'admin']),
             'Pengguna nonaktif' => route('admin.pengguna', ['status' => 'nonaktif']),
+            'Masukan & Saran' => route('admin.masukan-saran'),
+            'Masukan & Saran baru' => route('admin.masukan-saran', ['status' => 'baru']),
             'Pengaturan' => route('admin.pengaturan'),
             'Pengaturan profil' => route('admin.pengaturan.profil'),
             'Pengaturan keamanan' => route('admin.pengaturan.keamanan'),

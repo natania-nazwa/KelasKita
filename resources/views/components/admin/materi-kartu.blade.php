@@ -28,7 +28,7 @@
      *   judul, thumbnail, tingkat_kesulitan, jumlah_bab, tanggal_label,
      *   tanggal_jam, status, status_label, boleh_edit,
      *   kategori => [nama, ikon, warna, warna_gelap],
-     *   pembuat  => [nama, inisial, warna, warna_gelap],
+     *   pembuat  => [nama, inisial, warna, warna_gelap, foto],
      *   tautan_detail, tautan_edit, tautan_hapus
      *
      * Kartu tidak bisa diklik seluruhnya. Dulu ada pola "stretched link" di

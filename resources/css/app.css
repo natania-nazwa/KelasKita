@@ -649,6 +649,7 @@ html {
     font-weight: 700;
     line-height: 1;
     user-select: none;
+    overflow: hidden;
 }
 
 .avatar-user {
@@ -662,6 +663,21 @@ html {
     width: 1.75rem;
     height: 1.75rem;
     font-size: 0.625rem;
+}
+
+/* Foto profil di avatar kartu materi/quiz: memenuhi lingkaran avatar. */
+.kartu-materi__avatar--foto,
+.kartu-quiz__avatar--foto {
+    overflow: hidden;
+}
+
+.kartu-materi__avatar__foto,
+.kartu-quiz__avatar__foto {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: inherit;
 }
 
 /* ============================================================
@@ -1982,6 +1998,7 @@ html {
     font-weight: 700;
     line-height: 1;
     user-select: none;
+    overflow: hidden;
 }
 
 .kartu-quiz__pembuat-nama {

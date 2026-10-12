@@ -2,6 +2,7 @@
     'inisial',
     'warna' => null,
     'warnaGelap' => null,
+    'foto' => null,
     'judul',
     'detail' => null,
     'waktu' => null,
@@ -19,7 +20,7 @@
 
 <div {{ $attributes->class(['ad-aktivitas__baris']) }}>
     <span class="relative shrink-0">
-        <x-admin.avatar :inisial="$inisial" :warna="$warna" :warna-gelap="$warnaGelap" ukuran="sedang" />
+        <x-admin.avatar :inisial="$inisial" :warna="$warna" :warna-gelap="$warnaGelap" :foto="$foto" ukuran="sedang" />
 
         <span class="ad-aktivitas__jenis" aria-hidden="true">
             <x-admin.ikon :nama="$ikon" ukuran="w-2.5 h-2.5" :tebal="2.4" />

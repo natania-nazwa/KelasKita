@@ -14,7 +14,8 @@ return new class extends Migration
      * Satu baris untuk satu kiriman dari halaman "Masukan & Saran". Isinya
      * murni catatan masuk: penggunanya tidak pernah membaca kembali baris
      * ini di dalam aplikasi, karena halamannya hanya punya form kirim, tanpa
-     * daftar, riwayat, atau status.
+     * daftar maupun riwayat. Kolom "status" hanya diurus admin lewat halaman
+     * masukan di area admin, bukan oleh pengirimnya.
      *
      * "pengguna_id" diambil dari sesi login dan tidak pernah dari field
      * form, jadi tidak ada jalan mengirim masukan atas nama orang lain.
@@ -41,11 +42,23 @@ return new class extends Migration
             // Path relatif di disk publik, atau null kalau tanpa lampiran.
             $table->string('lampiran')->nullable();
 
+            /*
+             * Status tindak lanjut dari sisi admin. Nilainya "baru",
+             * "diproses", atau "selesai" (lihat konstanta di model
+             * MasukanSaran). Bawaannya "baru" karena setiap kiriman memang
+             * dimulai belum ditangani.
+             */
+            $table->string('status', 20)->default('baru');
+
             $table->timestamps();
 
             // Baris selalu dibaca per pengguna (mis. menelusuri kiriman
             // satu orang), jadi kolomnya berdiri sendiri sebagai indeks.
             $table->index('pengguna_id');
+
+            // Daftar admin bisa disaring per status, jadi kolomnya juga
+            // berdiri sendiri sebagai indeks.
+            $table->index('status');
         });
     }
 

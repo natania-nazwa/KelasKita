@@ -152,8 +152,8 @@
                             --}}
                             <td data-label="Nama">
                                 <div class="ad-tabel__nama">
-                                    <x-admin.avatar :inisial="$pengguna->inisial()" :warna="$avatar['warna']"
-                                        :warna-gelap="$avatar['warna_gelap']" ukuran="kecil" />
+<x-admin.avatar :inisial="$pengguna->inisial()" :warna="$avatar['warna']"
+    :warna-gelap="$avatar['warna_gelap']" :foto="$pengguna->fotoProfilUrl()" ukuran="kecil" />
 
                                     <span class="ad-tabel__judul">{{ $pengguna->nama }}</span>
                                 </div>

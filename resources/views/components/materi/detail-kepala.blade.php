@@ -33,7 +33,7 @@
      *   judul, deskripsi, thumbnail, tingkat_kesulitan, waktu_baca, tanggal,
      *   dilihat, tersimpan,
      *   kategori => [nama, ikon, warna, warna_gelap],
-     *   pembuat  => [nama, inisial, warna, warna_gelap]
+     *   pembuat  => [nama, inisial, warna, warna_gelap, foto]
      */
 
     $kategori = $detail['kategori'];
@@ -113,9 +113,19 @@
 
                 @if ($pembuat)
                     <span class="kartu-kepala__butir">
-                        <span class="kartu-materi__avatar"
+                        @php $fotoPembuat = $pembuat['foto'] ?? null; @endphp
+                        <span @class([
+                            'kartu-materi__avatar',
+                            'kartu-materi__avatar--foto' => (bool) $fotoPembuat,
+                        ])
                             style="--a: {{ $pembuat['warna'] }}; --a-gelap: {{ $pembuat['warna_gelap'] }};"
-                            aria-hidden="true">{{ $pembuat['inisial'] }}</span>
+                            aria-hidden="true">
+                            @if ($fotoPembuat)
+                                <img src="{{ $fotoPembuat }}" alt="" class="kartu-materi__avatar__foto" loading="lazy" decoding="async">
+                            @else
+                                {{ $pembuat['inisial'] }}
+                            @endif
+                        </span>
 
                         <span class="font-semibold text-dark/75" data-pratinjau-pembuat>{{ $pembuat['nama'] }}</span>
                     </span>

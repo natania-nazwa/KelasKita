@@ -22,7 +22,7 @@ use App\Models\Quiz;
  *   sisa_pengajuan, dibuat_pada,
  *   tautan, tautan_edit, tautan_hapus, tautan_mulai, tautan_mulai_sesi,
  *   kategori => [nama, slug, ikon, warna, warna_gelap],
- *   pembuat => [nama, inisial, warna, warna_gelap]
+ *   pembuat => [nama, inisial, warna, warna_gelap, foto]
  *
  * Kartu di halaman Quiz hanya memakai sebagian dari kunci ini; sisanya dipakai
  * kartu pengelolaan di "Karya Saya".
@@ -99,6 +99,7 @@ final class DaftarQuiz
                     'inisial' => $pembuat?->inisial() ?? '?',
                     'warna' => $avatar['warna'],
                     'warna_gelap' => $avatar['warna_gelap'],
+                    'foto' => $pembuat?->fotoProfilUrl(),
                 ],
                 /*
                  * Tautan dibentuk dari modelnya, bukan dari getKey(): route

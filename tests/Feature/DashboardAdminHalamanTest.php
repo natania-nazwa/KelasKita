@@ -365,6 +365,30 @@ class DashboardAdminHalamanTest extends TestCase
             ->assertSee('Belum ada aktivitas');
     }
 
+    public function test_aktivitas_terbaru_menampilkan_foto_profil_pembuat(): void
+    {
+        $admin = $this->buatAdmin();
+        $siswa = $this->buatPengguna([
+            'nama' => 'Sari',
+            'email' => 'sari@example.com',
+            'foto_profil' => 'foto-profil/sari.png',
+        ]);
+        $pelajaran = $this->buatPelajaran('Pemrograman');
+
+        $this->buatMateri($pelajaran, $siswa, 'Materi Berfoto');
+
+        $html = $this->actingAs($admin)
+            ->get('/admin/dashboard')
+            ->assertOk()
+            ->getContent();
+
+        // Avatar di baris "Aktivitas Terbaru" memakai foto, bukan inisial.
+        $this->assertMatchesRegularExpression(
+            '/<img[^>]*src="[^"]*storage\/foto-profil\/sari\.png"[^>]*>/',
+            $html,
+        );
+    }
+
     public function test_donat_pelajaran_menampilkan_porsi_dihitung_dari_pengerjaan(): void
     {
         $admin = $this->buatAdmin();

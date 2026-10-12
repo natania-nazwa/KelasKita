@@ -1100,6 +1100,197 @@ function initDetailPengguna() {
     });
 }
 
+/* ---------- 9. Dialog detail masukan & saran ---------- */
+/*
+ * Satu dialog untuk semua baris di halaman Masukan & Saran, diisi dari peta
+ * JSON di halaman itu sendiri. Sama seperti dialog detail Pengguna, peta
+ * dibaca sekali saat halaman dimuat, jadi membuka dialog tidak menembak
+ * request apa pun dan daftar yang panjang tetap hanya punya satu kotak detail.
+ *
+ * Bedanya, dialog ini juga memuat form status. Tujuan form dan pilihan
+ * statusnya diatur dari data baris yang dibuka, dan tombol simpannya
+ * dinonaktifkan begitu dikirim supaya penekanan ganda tidak mengirim
+ * perubahan yang sama dua kali.
+ */
+function initDetailMasukan() {
+    const dialog = document.querySelector("[data-dialog-masukan]");
+    const sumber = document.querySelector("[data-detail-masukan]");
+
+    if (!dialog || !sumber) {
+        return;
+    }
+
+    let peta = {};
+
+    try {
+        peta = JSON.parse(sumber.textContent) || {};
+    } catch {
+        // Peta rusak tidak boleh membuat seluruh halaman error. Tombolnya
+        // dinonaktifkan supaya tidak ada dialog kosong yang terbuka.
+        document.querySelectorAll("[data-masukan-buka]").forEach((tombol) => {
+            tombol.disabled = true;
+        });
+
+        return;
+    }
+
+    const medan = {
+        judul: dialog.querySelector("[data-masukan-judul]"),
+        detail: dialog.querySelector("[data-masukan-detail]"),
+        nama: dialog.querySelector("[data-masukan-nama]"),
+        email: dialog.querySelector("[data-masukan-email]"),
+        dikirim: dialog.querySelector("[data-masukan-dikirim]"),
+        status: dialog.querySelector("[data-masukan-status]"),
+        lampiranBaris: dialog.querySelector("[data-masukan-lampiran-baris]"),
+        lampiran: dialog.querySelector("[data-masukan-lampiran]"),
+        form: dialog.querySelector("[data-masukan-form-status]"),
+        pilihStatus: dialog.querySelector("[data-masukan-pilih-status]"),
+        kirim: dialog.querySelector("[data-masukan-kirim]"),
+    };
+
+    let pemicu = null;
+
+    const tutup = () => {
+        dialog.classList.remove("is-buka");
+        dialog.setAttribute("aria-hidden", "true");
+        document.body.style.overflow = "";
+
+        pemicu?.focus();
+        pemicu = null;
+    };
+
+    /** Elemen yang boleh menerima fokus di dalam dialog. */
+    const fokusable = () =>
+        Array.from(
+            dialog.querySelectorAll(
+                'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])',
+            ),
+        ).filter((el) => el.offsetParent !== null);
+
+    const isi = (masukan) => {
+        const tampil = (el, nilai) => {
+            if (el) {
+                el.textContent = nilai;
+            }
+        };
+
+        tampil(medan.judul, masukan.judul);
+        tampil(medan.detail, masukan.detail);
+        tampil(medan.nama, masukan.nama);
+        tampil(medan.email, masukan.email);
+        tampil(medan.dikirim, masukan.dikirim_jam ? `${masukan.dikirim} · ${masukan.dikirim_jam}` : masukan.dikirim);
+
+        // Lencana status memakai kelas yang sama dengan di tabel, jadi
+        // warnanya ikut berubah dari data yang sama.
+        if (medan.status) {
+            medan.status.textContent = masukan.status_label;
+            medan.status.className = `ad-lencana ad-lencana--${masukan.status_nada}`;
+        }
+
+        // Lampiran hanya muncul kalau ada. Tautannya diarahkan ke route admin
+        // yang menyajikan berkas, bukan ke disk publik langsung.
+        if (medan.lampiranBaris && medan.lampiran) {
+            if (masukan.lampiran_url) {
+                medan.lampiran.href = masukan.lampiran_url;
+                medan.lampiranBaris.removeAttribute("hidden");
+            } else {
+                medan.lampiran.removeAttribute("href");
+                medan.lampiranBaris.setAttribute("hidden", "");
+            }
+        }
+
+        // Form status: tujuan dan pilihan awalnya dari baris yang dibuka.
+        if (medan.form) {
+            medan.form.action = masukan.status_url;
+        }
+
+        if (medan.pilihStatus) {
+            medan.pilihStatus.value = masukan.status;
+        }
+
+        if (medan.kirim) {
+            medan.kirim.disabled = false;
+        }
+    };
+
+    document.querySelectorAll("[data-masukan-buka]").forEach((tombol) => {
+        tombol.addEventListener("click", () => {
+            const masukan = peta[tombol.dataset.masukanBuka];
+
+            // Baris yang tidak ada di peta tidak mungkin terjadi, tapi kalau
+            // terjadi dialognya lebih baik tidak terbuka sama sekali.
+            if (!masukan) {
+                return;
+            }
+
+            pemicu = tombol;
+            isi(masukan);
+
+            dialog.classList.add("is-buka");
+            dialog.setAttribute("aria-hidden", "false");
+            document.body.style.overflow = "hidden";
+
+            dialog.querySelector("[data-masukan-tutup]")?.focus();
+        });
+    });
+
+    dialog.querySelectorAll("[data-masukan-tutup]").forEach((el) => {
+        el.addEventListener("click", tutup);
+    });
+
+    // Klik area gelap di luar kartu dialog juga menutupnya.
+    dialog.addEventListener("click", (event) => {
+        if (event.target === dialog) {
+            tutup();
+        }
+    });
+
+    // Satu perubahan status hanya boleh terkirim sekali, supaya penekanan
+    // ganda tidak mengirim PUT yang sama dua kali.
+    if (medan.form) {
+        medan.form.addEventListener("submit", () => {
+            if (medan.kirim) {
+                medan.kirim.disabled = true;
+            }
+        });
+    }
+
+    document.addEventListener("keydown", (event) => {
+        if (!dialog.classList.contains("is-buka")) {
+            return;
+        }
+
+        if (event.key === "Escape") {
+            tutup();
+
+            return;
+        }
+
+        if (event.key !== "Tab") {
+            return;
+        }
+
+        const daftar = fokusable();
+
+        if (!daftar.length) {
+            return;
+        }
+
+        const awal = daftar[0];
+        const akhir = daftar[daftar.length - 1];
+
+        // Tab dari elemen terakhir kembali ke yang pertama, dan sebaliknya,
+        // supaya fokus tidak pernah keluar dari dialog.
+        if (event.shiftKey && document.activeElement === awal) {
+            event.preventDefault();
+            akhir.focus();
+        } else if (!event.shiftKey && document.activeElement === akhir) {
+            event.preventDefault();
+            awal.focus();
+        }
+    });
+}
+
 initDrawer();
 initDropdownAkun();
 initNotifikasiTopbar();
@@ -1108,3 +1299,4 @@ initTutupPanel();
 initDialogHapus();
 initVerifikasi();
 initDetailPengguna();
+initDetailMasukan();

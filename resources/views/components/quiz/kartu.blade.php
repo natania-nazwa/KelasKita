@@ -17,7 +17,7 @@
      *   id, slug, judul, deskripsi, thumbnail, durasi, jumlah_soal,
      *   status, status_label, visibilitas, saya, tautan,
      *   kategori  => [nama, slug, ikon, warna, warna_gelap],
-     *   pembuat   => [nama, inisial, warna, warna_gelap]
+     *   pembuat   => [nama, inisial, warna, warna_gelap, foto]
      *
      * Seluruh kartu dibungkus <a>, kecuali tombol bookmark di dalam
      * thumbnail: bookmark memakai event.stopPropagation() di
@@ -120,13 +120,23 @@
         {{-- mt-auto: baris info terdorong ke bawah, jadi semua kartu
              dalam satu baris tetap sejajar. --}}
         <div class="kartu-quiz__meta">
-            <span class="kartu-quiz__pembuat">
-                <span class="kartu-quiz__avatar"
-                    style="--a: {{ $pembuat['warna'] }}; --a-gelap: {{ $pembuat['warna_gelap'] }};"
-                    aria-hidden="true">{{ $pembuat['inisial'] }}</span>
-
-                <span class="kartu-quiz__pembuat-nama">{{ $pembuat['nama'] }}</span>
+<span class="kartu-quiz__pembuat">
+            @php $fotoPembuat = $pembuat['foto'] ?? null; @endphp
+            <span @class([
+                'kartu-quiz__avatar',
+                'kartu-quiz__avatar--foto' => (bool) $fotoPembuat,
+            ])
+                style="--a: {{ $pembuat['warna'] }}; --a-gelap: {{ $pembuat['warna_gelap'] }};"
+                aria-hidden="true">
+                @if ($fotoPembuat)
+                    <img src="{{ $fotoPembuat }}" alt="" class="kartu-quiz__avatar__foto" loading="lazy" decoding="async">
+                @else
+                    {{ $pembuat['inisial'] }}
+                @endif
             </span>
+
+            <span class="kartu-quiz__pembuat-nama">{{ $pembuat['nama'] }}</span>
+        </span>
 
             {{-- ml-auto: kalau baris info harus melipat di kartu sempit,
                  chip tetap menempel di pinggir kanan. --}}

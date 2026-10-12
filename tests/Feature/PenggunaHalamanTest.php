@@ -166,6 +166,28 @@ class PenggunaHalamanTest extends TestCase
         $this->get(route('admin.pengguna'))->assertRedirect(route('login'));
     }
 
+    public function test_tabel_pengguna_menampilkan_foto_profil_dan_bukan_inisial(): void
+    {
+        $this->buatPengguna([
+            'nama' => 'Rina Ayu',
+            'email' => 'rina@example.com',
+            'foto_profil' => 'foto-profil/rina.png',
+        ]);
+
+        $html = $this->actingAs($this->buatAdmin())
+            ->get(route('admin.pengguna'))
+            ->assertOk()
+            ->getContent();
+
+        // Foto tampil sebagai gambar avatar di tabel, bukan huruf inisial.
+        // JSON dialog detail juga memuat URL foto, jadi yang dicek khusus
+        // tag <img> supaya membuktikan tabelnya yang merender gambar.
+        $this->assertMatchesRegularExpression(
+            '/<img[^>]*src="[^"]*storage\/foto-profil\/rina\.png"[^>]*>/',
+            $html,
+        );
+    }
+
     /*
      * =================================================================
      * Hitungan karya dan aktivitas

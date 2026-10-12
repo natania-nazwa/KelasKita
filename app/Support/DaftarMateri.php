@@ -55,7 +55,7 @@ final class DaftarMateri
      *   catatan_admin, sisa_pengajuan, dibuat_pada,
      *   tautan, tautan_edit, tautan_hapus,
      *   kategori => [nama, slug, ikon, warna, warna_gelap],
-     *   pembuat  => [nama, inisial, warna, warna_gelap],
+     *   pembuat  => [nama, inisial, warna, warna_gelap, foto],
      *   jumlah_materi
      *
      * Kartu di halaman Materi hanya memakai sebagian dari kunci ini; sisanya
@@ -104,6 +104,7 @@ final class DaftarMateri
                     'inisial' => $pembuat?->inisial() ?? '?',
                     'warna' => $avatar['warna'],
                     'warna_gelap' => $avatar['warna_gelap'],
+                    'foto' => $pembuat?->fotoProfilUrl(),
                 ],
                 'jumlah_materi' => (int) ($jumlahPerKategori[$item->pelajaran_id] ?? 0),
                 'tautan' => route('user.materi.detail', $item->slug),

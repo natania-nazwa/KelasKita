@@ -179,6 +179,27 @@
             'href' => route('admin.pengguna'),
             'aktif' => request()->routeIs('admin.pengguna'),
         ],
+        [
+            /*
+             * "Masukan & Saran" muncul setelah Pengguna dan sebelum
+             * "Pengaturan" (yang ada di $menuBawah di bawah pemisah). Ikonnya
+             * ("pesan") sama dengan yang dipakai halaman milik pengguna, jadi
+             * satu kiriman dikenali dengan lambang yang sama di dua sisi.
+             *
+             * Menu ini sengaja tidak ikut navigasi bawah: barisan di sana
+             * dipatok enam menu (lihat $menuNavigasiBawah), dan menambah
+             * baris ketujuh membuat labelnya terpotong di layar 320px. Di
+             * layar kecil halaman ini tetap terbuka lewat drawer sidebar
+             * (768-1023px); di bawah itu, sama seperti Pengaturan, belum ada
+             * jalur langsung.
+             */
+            'kunci' => 'masukan',
+            'label' => 'Masukan & Saran',
+            'bawahLabel' => 'Masukan',
+            'ikon' => 'pesan',
+            'href' => route('admin.masukan-saran'),
+            'aktif' => request()->routeIs('admin.masukan-saran*'),
+        ],
     ];
 
     /*
@@ -337,7 +358,7 @@
         {{-- Akun + keluar --}}
         <div class="ad-sisi__kaki">
             <div class="ad-sisi__akun">
-                <x-admin.avatar :inisial="$admin?->inisial() ?? 'A'" ukuran="sedang" />
+                <x-admin.avatar :inisial="$admin?->inisial() ?? 'A'" :foto="$admin?->fotoProfilUrl()" ukuran="sedang" />
 
                 <span class="ad-sisi__akun-teks">
                     <span class="ad-sisi__akun-nama">{{ $admin?->nama ?? 'Admin' }}</span>
@@ -422,7 +443,7 @@
 
                 <a href="{{ route('admin.pengaturan.profil') }}" class="ad-hp__tombol ad-hp__tombol--avatar"
                     aria-label="Profil {{ $admin?->nama ?? 'admin' }}">
-                    <x-admin.avatar :inisial="$admin?->inisial() ?? 'A'" ukuran="kecil" />
+                    <x-admin.avatar :inisial="$admin?->inisial() ?? 'A'" :foto="$admin?->fotoProfilUrl()" ukuran="kecil" />
                 </a>
             </span>
         </header>

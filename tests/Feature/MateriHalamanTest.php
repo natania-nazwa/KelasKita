@@ -124,6 +124,29 @@ class MateriHalamanTest extends TestCase
             ->assertSee('Materi Siti');
     }
 
+    public function test_kartu_menampilkan_foto_profil_pembuat_materi(): void
+    {
+        $budi = $this->buatPengguna();
+        $siti = $this->buatPengguna([
+            'nama' => 'Siti',
+            'email' => 'siti@example.com',
+            'foto_profil' => 'foto-profil/siti.png',
+        ]);
+        $pelajaran = $this->buatPelajaran('Pemrograman', 'pemrograman');
+        $this->buatMateri($pelajaran, $siti, 'Materi Siti');
+
+        $html = $this->actingAs($budi)
+            ->get('/user/materi')
+            ->assertOk()
+            ->getContent();
+
+        // Avatar pembuat di kartu memakai foto, bukan huruf inisial.
+        $this->assertMatchesRegularExpression(
+            '/<img[^>]*src="[^"]*storage\/foto-profil\/siti\.png"[^>]*>/',
+            $html,
+        );
+    }
+
     public function test_halaman_materi_menampilkan_20_kartu_lalu_paginasi(): void
     {
         $user = $this->buatPengguna();

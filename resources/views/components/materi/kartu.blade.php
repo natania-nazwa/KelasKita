@@ -17,7 +17,7 @@
      *   id, slug, judul, deskripsi, thumbnail, tingkat_kesulitan,
      *   waktu_baca, jumlah_bab, tautan, jumlah_materi,
      *   kategori  => [nama, slug, ikon, warna, warna_gelap],
-     *   pembuat   => [nama, inisial, warna, warna_gelap]
+     *   pembuat   => [nama, inisial, warna, warna_gelap, foto]
      */
 
     $kategori = $materi['kategori'];
@@ -122,13 +122,23 @@
         {{-- mt-auto: baris info terdorong ke bawah, jadi semua kartu
              dalam satu baris tetap sejajar. --}}
         <div class="kartu-materi__meta">
-            <span class="kartu-materi__pembuat">
-                <span class="kartu-materi__avatar"
-                    style="--a: {{ $pembuat['warna'] }}; --a-gelap: {{ $pembuat['warna_gelap'] }};"
-                    aria-hidden="true">{{ $pembuat['inisial'] }}</span>
-
-                <span class="kartu-materi__pembuat-nama">{{ $pembuat['nama'] }}</span>
+<span class="kartu-materi__pembuat">
+            @php $fotoPembuat = $pembuat['foto'] ?? null; @endphp
+            <span @class([
+                'kartu-materi__avatar',
+                'kartu-materi__avatar--foto' => (bool) $fotoPembuat,
+            ])
+                style="--a: {{ $pembuat['warna'] }}; --a-gelap: {{ $pembuat['warna_gelap'] }};"
+                aria-hidden="true">
+                @if ($fotoPembuat)
+                    <img src="{{ $fotoPembuat }}" alt="" class="kartu-materi__avatar__foto" loading="lazy" decoding="async">
+                @else
+                    {{ $pembuat['inisial'] }}
+                @endif
             </span>
+
+            <span class="kartu-materi__pembuat-nama">{{ $pembuat['nama'] }}</span>
+        </span>
 
             {{-- F. Waktu baca dan jumlah bab materi ini. ml-auto pada
                  kelompoknya menjaga chip tetap rata kanan saat melipat

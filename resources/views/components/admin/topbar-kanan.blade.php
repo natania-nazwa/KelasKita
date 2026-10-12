@@ -138,7 +138,7 @@
     <div class="ad-atas__akun">
         <button type="button" class="ad-atas__akun-tombol" data-akun-tombol aria-expanded="false"
             aria-controls="akun-menu">
-            <x-admin.avatar :inisial="$admin?->inisial() ?? 'A'" ukuran="kecil" />
+            <x-admin.avatar :inisial="$admin?->inisial() ?? 'A'" :foto="$admin?->fotoProfilUrl()" ukuran="kecil" />
 
             <span class="ad-atas__akun-teks">
                 <span class="ad-atas__akun-nama">{{ $admin?->nama ?? 'Admin' }}</span>
@@ -150,7 +150,7 @@
 
         <div class="ad-atas__akun-menu" id="akun-menu" data-akun-menu>
             <div class="ad-atas__akun-menu-kepala">
-                <x-admin.avatar :inisial="$admin?->inisial() ?? 'A'" ukuran="sedang" />
+                <x-admin.avatar :inisial="$admin?->inisial() ?? 'A'" :foto="$admin?->fotoProfilUrl()" ukuran="sedang" />
 
                 <span class="min-w-0">
                     <span class="ad-atas__akun-menu-nama">{{ $admin?->nama ?? 'Admin' }}</span>

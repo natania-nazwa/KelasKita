@@ -45,7 +45,7 @@ final class DaftarMateriAdmin
      *   tanggal => Carbon, tanggal_label, tanggal_jam,
      *   status, status_label, boleh_edit,
      *   kategori => [nama, ikon, warna, warna_gelap],
-     *   pembuat  => [nama, inisial, warna, warna_gelap],
+     *   pembuat  => [nama, inisial, warna, warna_gelap, foto],
      *   tautan_detail, tautan_edit, tautan_hapus
      *
      * Isi materi tidak ikut dipetakan di sini. Kartu di daftar menampilkan
@@ -143,6 +143,7 @@ final class DaftarMateriAdmin
                 'inisial' => $pembuat?->inisial() ?? '?',
                 'warna' => $avatar['warna'],
                 'warna_gelap' => $avatar['warna_gelap'],
+                'foto' => $pembuat?->fotoProfilUrl(),
             ],
             ...self::tautan($item),
         ];

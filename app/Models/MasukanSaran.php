@@ -13,17 +13,68 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * langsung karena tebakan default untuk model bernama User adalah "user_id"
  * — sama seperti relasi Preferensi dan PengerjaanQuiz di User.
  *
- * Baris ini hanya ditulis, tidak pernah dibaca kembali di dalam aplikasi.
- * Halamannya sengaja tanpa daftar dan riwayat, jadi modelnya pun tidak punya
- * scope atau accessor tambahan.
+ * Pengirimnya hanya menulis baris ini; yang membacanya kembali adalah admin
+ * lewat halaman "Masukan & Saran" di area admin. Di sana admin juga
+ * memperbarui kolom "status" menandai kiriman mana yang masih baru, sedang
+ * diproses, atau sudah selesai ditangani.
  */
-#[Fillable(['pengguna_id', 'judul', 'detail', 'lampiran'])]
+#[Fillable(['pengguna_id', 'judul', 'detail', 'lampiran', 'status'])]
 class MasukanSaran extends Model
 {
+    /**
+     * Status tindak lanjut: belum ditangani.
+     */
+    public const STATUS_BARU = 'baru';
+
+    /**
+     * Status tindak lanjut: sedang ditangani.
+     */
+    public const STATUS_DIPROSES = 'diproses';
+
+    /**
+     * Status tindak lanjut: sudah selesai ditangani.
+     */
+    public const STATUS_SELESAI = 'selesai';
+
+    /**
+     * Semua status yang sah, urut dari yang paling baru dibuat.
+     *
+     * Dipakai controller untuk membatasi nilai yang diterima dan untuk
+     * menyusun tab filter, jadi tidak ada nilai status yang bisa masuk akal
+     * tapi tidak ada di sini.
+     *
+     * @var array<int, string>
+     */
+    public const STATUS = [self::STATUS_BARU, self::STATUS_DIPROSES, self::STATUS_SELESAI];
+
     /**
      * Nama tabel tidak mengikuti default Laravel ("masukan_sarans").
      */
     protected $table = 'tb_masukan_saran';
+
+    /**
+     * Label status untuk tampilan, mis. "Sudah Ditangani".
+     */
+    public static function labelStatus(string $status): string
+    {
+        return match ($status) {
+            self::STATUS_DIPROSES => 'Diproses',
+            self::STATUS_SELESAI => 'Sudah Ditangani',
+            default => 'Baru',
+        };
+    }
+
+    /**
+     * Nada warna lencana status, mengikuti varian x-admin.lencana.
+     */
+    public static function nadaStatus(string $status): string
+    {
+        return match ($status) {
+            self::STATUS_DIPROSES => 'info',
+            self::STATUS_SELESAI => 'sukses',
+            default => 'abu',
+        };
+    }
 
     /**
      * Pengguna yang mengirim masukan ini.

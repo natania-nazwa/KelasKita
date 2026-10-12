@@ -85,6 +85,7 @@
             'inisial' => $pengguna->inisial(),
             'warna' => $pengguna->warnaAvatar()['warna'],
             'warna_gelap' => $pengguna->warnaAvatar()['warna_gelap'],
+            'foto' => $pengguna->fotoProfilUrl(),
         ] : null,
     ];
 @endphp

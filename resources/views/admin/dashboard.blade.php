@@ -205,9 +205,9 @@
 
                 <div class="ad-kartu__badan ad-kartu__badan--padat">
                     @forelse ($aktivitas as $item)
-                        <x-admin.aktivitas :inisial="$item['inisial']" :warna="$item['warna']"
-                            :warna-gelap="$item['warna_gelap']" :judul="$item['judul']" :detail="$item['detail']"
-                            :waktu="$item['waktu']" :ikon="$item['ikon']" />
+<x-admin.aktivitas :inisial="$item['inisial']" :warna="$item['warna']"
+    :warna-gelap="$item['warna_gelap']" :foto="$item['foto']" :judul="$item['judul']" :detail="$item['detail']"
+    :waktu="$item['waktu']" :ikon="$item['ikon']" />
                     @empty
                         <x-admin.kosong ikon="jam" judul="Belum ada aktivitas"
                             teks="Materi atau quiz yang dibuat pengguna akan muncul di sini." />

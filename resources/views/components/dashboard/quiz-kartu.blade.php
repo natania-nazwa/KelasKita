@@ -11,7 +11,7 @@
      *   id, slug, judul, deskripsi, thumbnail, durasi, jumlah_soal,
      *   tingkat_kesulitan, saya, tautan,
      *   kategori => [nama, slug, ikon, warna, warna_gelap],
-     *   pembuat  => [nama, inisial, warna, warna_gelap]
+     *   pembuat  => [nama, inisial, warna, warna_gelap, foto]
      *
      * Susunannya sengaja meniru kartu materi (x-dashboard.materi-kartu):
      * banner 16:9 di atas, garis aksen, judul, deskripsi, lalu baris meta.
@@ -91,9 +91,19 @@
              dalam satu baris tetap sama tinggi. --}}
         <div class="dash-quiz__meta">
             <span class="dash-quiz__pembuat">
-                <span class="dash-avatar"
+                @php $fotoPembuat = $pembuat['foto'] ?? null; @endphp
+                <span @class([
+                    'dash-avatar',
+                    'dash-avatar--foto' => (bool) $fotoPembuat,
+                ])
                     style="--a: {{ $pembuat['warna'] }}; --a-gelap: {{ $pembuat['warna_gelap'] }};"
-                    aria-hidden="true">{{ $pembuat['inisial'] }}</span>
+                    aria-hidden="true">
+                    @if ($fotoPembuat)
+                        <img src="{{ $fotoPembuat }}" alt="" class="dash-avatar__foto" loading="lazy" decoding="async">
+                    @else
+                        {{ $pembuat['inisial'] }}
+                    @endif
+                </span>
 
                 <span class="dash-quiz__nama">{{ $pembuat['nama'] }}</span>
             </span>

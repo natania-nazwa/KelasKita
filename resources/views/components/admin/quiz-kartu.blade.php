@@ -31,7 +31,7 @@
      *   judul, thumbnail, tingkat_kesulitan, durasi_label, jumlah_soal,
      *   pakai_kode, tanggal_label, tanggal_jam, status, status_label,
      *   boleh_edit, kategori => [nama, ikon, warna, warna_gelap],
-     *   pembuat => [nama, inisial, warna, warna_gelap],
+     *   pembuat => [nama, inisial, warna, warna_gelap, foto],
      *   tautan_detail, tautan_edit, tautan_hapus
      *
      * Kartu tidak bisa diklik seluruhnya. Satu-satunya jalan ke quiz adalah

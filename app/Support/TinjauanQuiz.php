@@ -99,6 +99,7 @@ final class TinjauanQuiz
                     'inisial' => $pembuat?->inisial() ?? '?',
                     'warna' => $avatar['warna'],
                     'warna_gelap' => $avatar['warna_gelap'],
+                    'foto' => $pembuat?->fotoProfilUrl(),
                 ],
                 'tautan_setujui' => route('admin.quiz.setujui', $item),
                 'tautan_tolak' => route('admin.quiz.tolak', $item),
