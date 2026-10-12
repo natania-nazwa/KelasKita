@@ -549,7 +549,6 @@ function initVerifikasi() {
     }
 
     const sisi = halaman.querySelector("[data-vf-panel]");
-    const daftar = halaman.querySelector("[data-vf-daftar]");
     const saring = halaman.querySelector("[data-vf-saring]");
     const saringBuka = halaman.querySelector("[data-vf-saring-buka]");
     const toast = halaman.querySelector("[data-vf-toast]");
@@ -561,6 +560,15 @@ function initVerifikasi() {
     if (!sisi || !urlPanel) {
         return;
     }
+
+    /*
+     * Penanda bahwa JavaScript aktif. Di layar sempit, panel review
+     * ditampilkan sebagai lapisan (lihat admin.css) supaya memilih baris
+     * tidak perlu menggulir ke bawah daftar. Tanpa kelas ini -- yaitu saat
+     * JavaScript mati -- panel tetap turun sebagai kolom biasa di bawah
+     * daftar, sehingga tautan "pilih" dari URL tetap terbaca.
+     */
+    halaman.classList.add("ad-vf--hp");
 
     let pemicu = null;
     let urutanMuat = 0;
@@ -651,11 +659,9 @@ function initVerifikasi() {
             sisi.innerHTML = "";
         }
 
-        muatPanel(baris.dataset.jenis, baris.dataset.id).then(() => {
-            if (hpKecil()) {
-                sisi.scrollIntoView({ behavior: "smooth", block: "start" });
-            }
-        });
+        // Muat isi panel. Di layar sempit panel tampil sebagai lapisan di
+        // atas daftar, jadi tidak ada lagi yang perlu digulir setelahnya.
+        muatPanel(baris.dataset.jenis, baris.dataset.id);
     };
 
     const kosongkanPanel = () => {
@@ -684,10 +690,6 @@ function initVerifikasi() {
 
             halaman.classList.remove("ad-vf--keluar");
         }, 400);
-
-        if (hpKecil()) {
-            daftar?.scrollIntoView({ behavior: "smooth", block: "start" });
-        }
     };
 
     const pindahTab = (tombol) => {
@@ -764,6 +766,13 @@ function initVerifikasi() {
     };
 
     halaman.addEventListener("click", (event) => {
+        // Di layar sempit panel tampil sebagai lapisan: klik tirai gelap di
+        // luar kartunya menutup panel, persis seperti dialog keputusan.
+        if (event.target === sisi) {
+            kosongkanPanel();
+            return;
+        }
+
         const tab = event.target.closest("[data-vf-tab]");
 
         if (tab) {
@@ -878,8 +887,16 @@ function initVerifikasi() {
             return;
         }
 
-        tutupDialog(dialogSetujui?.classList.contains("is-buka") ? dialogSetujui : null);
-        tutupDialog(dialogTolak?.classList.contains("is-buka") ? dialogTolak : null);
+        const setujuiTerbuka = dialogSetujui?.classList.contains("is-buka");
+        const tolakTerbuka = dialogTolak?.classList.contains("is-buka");
+
+        tutupDialog(setujuiTerbuka ? dialogSetujui : null);
+        tutupDialog(tolakTerbuka ? dialogTolak : null);
+
+        // Dialog keputusan lebih dulu; baru lapisan panel di layar sempit.
+        if (!setujuiTerbuka && !tolakTerbuka && hpKecil() && halaman.classList.contains("ad-vf--dengan-panel")) {
+            kosongkanPanel();
+        }
     });
 
     if (toast) {

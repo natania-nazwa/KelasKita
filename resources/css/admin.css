@@ -6479,6 +6479,60 @@ body.tubuh-admin {
     }
 }
 
+/* ---------- Panel review sebagai lapisan di layar sempit ----------
+ *
+ * Di bawah 1200px, daftar dan panel tidak lagi berdampingan. Supaya
+ * memilih baris tidak memaksa admin menggulir ke bawah daftar, panel
+ * review tampil sebagai lapisan penuh seperti dialog: kartunya naik dari
+ * bawah layar di atas tirai gelap, sementara daftar tetap di tempatnya.
+ *
+ * Kelas "ad-vf--hp" hanya ditambahkan JavaScript saat halaman aktif, jadi
+ * saat JavaScript mati panel tetap turun sebagai kolom biasa di bawah
+ * daftar dan tautan "pilih" dari URL tetap terbaca.
+ */
+@media (max-width: 1199px) {
+    .ad-vf--hp.ad-vf--dengan-panel .ad-vf-panel {
+        position: fixed;
+        z-index: 60;
+        inset: 0;
+        display: flex;
+        align-items: flex-end;
+        justify-content: center;
+        background-color: rgba(41, 36, 92, 0.5);
+    }
+
+    .ad-vf--hp.ad-vf--dengan-panel .ad-vf-panel__kartu {
+        width: 100%;
+        max-width: 40rem;
+        max-height: 90vh;
+        border-radius: 1.25rem 1.25rem 0 0;
+    }
+
+    /* Isi kartu yang menggulir sendiri kalau lebih tinggi dari layar. */
+    .ad-vf--hp.ad-vf--dengan-panel .ad-vf-panel__badan {
+        flex: 1;
+        min-height: 0;
+        overflow-y: auto;
+        overscroll-behavior: contain;
+    }
+
+    /* Tombol kembali jadi satu-satunya jalan menutup lapisan ini. */
+    .ad-vf--hp.ad-vf--dengan-panel .ad-vf-panel__panah {
+        display: inline-grid;
+    }
+}
+
+@media (min-width: 640px) and (max-width: 1199px) {
+    .ad-vf--hp.ad-vf--dengan-panel .ad-vf-panel {
+        align-items: center;
+        padding: 1.5rem;
+    }
+
+    .ad-vf--hp.ad-vf--dengan-panel .ad-vf-panel__kartu {
+        border-radius: 1.5rem;
+    }
+}
+
 @media (prefers-reduced-motion: reduce) {
     .ad-sisi,
     .ad-sisi__tirai,
