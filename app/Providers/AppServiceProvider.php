@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use App\Models\MasukanSaran;
 use App\Models\Materi;
 use App\Models\Preferensi;
 use App\Models\Quiz;
@@ -37,6 +38,13 @@ class AppServiceProvider extends ServiceProvider
             $view->with('jumlahVerifikasi',
                 Materi::query()->menunggu()->count() + Quiz::query()->menunggu()->count()
             );
+
+            /*
+             * Badge "Masukan & Saran" di sidebar admin: jumlah kiriman yang
+             * belum ditindaklanjuti (status masih "baru"). Sama seperti badge
+             * Verifikasi, angkanya dihitung per render supaya selalu segar.
+             */
+            $view->with('jumlahMasukan', MasukanSaran::query()->baru()->count());
 
             /*
              * Tema dan aturan konfirmasi publish untuk area admin.

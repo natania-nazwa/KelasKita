@@ -87,6 +87,15 @@
         ?? (\App\Models\Materi::query()->menunggu()->count() + \App\Models\Quiz::query()->menunggu()->count());
 
     /*
+     * Jumlah masukan & saran yang belum ditindaklanjuti (status "baru"),
+     * ditampilkan sebagai angka di sebelah menu "Masukan & Saran" — sama
+     * seperti angka menunggu di menu "Verifikasi". Dibagikan oleh view
+     * composer di App\Providers\AppServiceProvider; nilai bawaan dipakai
+     * kalau halaman dirender tanpa composer (mis. saat view diuji langsung).
+     */
+    $jumlahMasukan = $jumlahMasukan ?? \App\Models\MasukanSaran::query()->baru()->count();
+
+    /*
      * Menu admin. "jumlah" dipakai untuk menampilkan angka konten yang
      * menunggu keputusan di sebelah menu Verifikasi.
      *
@@ -190,8 +199,8 @@
              * dipatok enam menu (lihat $menuNavigasiBawah), dan menambah
              * baris ketujuh membuat labelnya terpotong di layar 320px. Di
              * layar kecil halaman ini tetap terbuka lewat drawer sidebar
-             * (768-1023px); di bawah itu, sama seperti Pengaturan, belum ada
-             * jalur langsung.
+             * (768-1023px); di bawah itu jalurnya lewat ikon "pesan" di
+             * header ponsel, di sebelah kiri ikon Pengaturan.
              */
             'kunci' => 'masukan',
             'label' => 'Masukan & Saran',
@@ -199,6 +208,7 @@
             'ikon' => 'pesan',
             'href' => route('admin.masukan-saran'),
             'aktif' => request()->routeIs('admin.masukan-saran*'),
+            'jumlah' => $jumlahMasukan,
         ],
     ];
 
@@ -436,6 +446,21 @@
             </a>
 
             <span class="ad-hp__aksi">
+                {{--
+                    Jalan pintas ke "Masukan & Saran" untuk layar kecil. Di
+                    bawah 768px sidebar disembunyikan, dan menu ini sengaja
+                    tidak ikut navigasi bawah (barisnya dipatok enam tautan),
+                    jadi tanpa ikon ini halaman itu tidak punya jalur langsung
+                    sama sekali. Ikonnya "pesan", sama dengan ikon menunya di
+                    sidebar desktop, supaya satu halaman dikenali dengan
+                    lambang yang sama di dua tempat. Ditaruh sebelum ikon roda
+                    supaya berdiri di sebelah kirinya.
+                --}}
+                <a href="{{ route('admin.masukan-saran') }}" class="ad-hp__tombol ad-hp__tombol--polos"
+                    aria-label="Masukan &amp; Saran">
+                    <x-admin.ikon nama="pesan" ukuran="w-5 h-5" />
+                </a>
+
                 <a href="{{ route('admin.pengaturan') }}" class="ad-hp__tombol ad-hp__tombol--polos"
                     aria-label="Pengaturan">
                     <x-admin.ikon nama="roda" ukuran="w-5 h-5" />

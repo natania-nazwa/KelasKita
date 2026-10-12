@@ -34,7 +34,7 @@
     <section class="ad-seksi">
         <div class="ad-kepala">
             <div class="ad-kepala__teks">
-                <div class="flex items-center gap-3.5">
+                <div class="flex items-start gap-3.5">
                     <span
                         class="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-ungu-line bg-ungu-bg text-ungu sm:h-12 sm:w-12"
                         aria-hidden="true">
@@ -51,6 +51,20 @@
                     </div>
                 </div>
             </div>
+
+            {{--
+                Tombol kembali, hanya di layar kecil. Di >= 768px sidebar sudah
+                menyediakan Dashboard, jadi tombolnya disembunyikan (md:hidden)
+                supaya tidak tampil berdua dengan menu di sidebar; di bawah itu
+                inilah jalan pulang yang jelas dari halaman ini. Diletakkan di
+                dalam kepala halaman (isi konten), sama seperti Pengaturan.
+            --}}
+            <a href="{{ route('admin.dashboard') }}"
+                class="ad-tombol ad-tombol--garis shrink-0 md:hidden">
+                <x-admin.ikon nama="panah-kiri" />
+
+                Kembali ke Dashboard
+            </a>
         </div>
     </section>
 
@@ -147,11 +161,21 @@
                             </td>
 
                             <td data-label="Judul Saran">
-                                <span class="ad-tabel__judul">{{ $masukan->judul }}</span>
+                                {{--
+                                    Dua baris dalam satu sel: judul di atas,
+                                    cuplikan isi di bawahnya. Dibungkus
+                                    flex-col supaya keduanya bertumpuk (span
+                                    yang bersebelahan akan jatuh sebaris) dan
+                                    cuplikannya bisa dipotong dengan elipsis
+                                    lewat .ad-tabel__sub.
+                                --}}
+                                <div class="flex min-w-0 flex-col">
+                                    <span class="ad-tabel__judul">{{ $masukan->judul }}</span>
 
-                                <span class="ad-tabel__sub">
-                                    {{ \Illuminate\Support\Str::limit($masukan->detail, 70) }}
-                                </span>
+                                    <span class="ad-tabel__sub">
+                                        {{ \Illuminate\Support\Str::limit($masukan->detail, 70) }}
+                                    </span>
+                                </div>
                             </td>
 
                             <td data-label="Pengguna">
@@ -170,8 +194,12 @@
                             </td>
 
                             <td data-label="Tanggal Dikirim">
-                                <span class="tabular-nums">{{ $masukan->created_at?->translatedFormat('d M Y') }}</span>
-                                <span class="ad-tabel__sub tabular-nums">{{ $masukan->created_at?->format('H:i') }}</span>
+                                {{-- Sama seperti kolom judul: tanggal di atas,
+                                     jam di bawah, supaya tidak jatuh sebaris. --}}
+                                <div class="flex min-w-0 flex-col">
+                                    <span class="tabular-nums">{{ $masukan->created_at?->translatedFormat('d M Y') }}</span>
+                                    <span class="ad-tabel__sub tabular-nums">{{ $masukan->created_at?->format('H:i') }}</span>
+                                </div>
                             </td>
 
                             <td data-label="Status">

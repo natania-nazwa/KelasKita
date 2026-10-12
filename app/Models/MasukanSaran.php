@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
@@ -74,6 +75,19 @@ class MasukanSaran extends Model
             self::STATUS_SELESAI => 'sukses',
             default => 'abu',
         };
+    }
+
+    /**
+     * Kiriman yang belum ditindaklanjuti admin.
+     *
+     * Inilah "belum dibaca": selama admin belum mengubah statusnya dari
+     * "baru", kiriman itu masih ikut menghitung. Dipakai badge sidebar admin
+     * supaya jumlahnya dihitung dari satu tempat, sama seperti
+     * Materi::scopeMenunggu() untuk badge "Verifikasi".
+     */
+    public function scopeBaru(Builder $query): Builder
+    {
+        return $query->where('status', self::STATUS_BARU);
     }
 
     /**
