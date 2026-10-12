@@ -135,7 +135,7 @@
         </div>
     @else
         <div class="ad-seksi ad-tabel__bungkus">
-            <table class="ad-tabel">
+            <table class="ad-tabel ad-tabel--masukan">
                 <thead>
                     <tr>
                         <th scope="col">No</th>

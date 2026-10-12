@@ -2993,6 +2993,93 @@ body.tubuh-admin {
     .ad-tabel__aksi {
         justify-content: flex-end;
     }
+
+    /* ---------- Kartu masukan: judul jadi kepala kartu ---------- */
+    /*
+     * Baris masukan tidak dibaca sebagai daftar label/nilai, melainkan satu
+     * kartu: nomor dan judul di kepala, sisanya baris ringkas. Grid ini yang
+     * menyusun ulang sel-selnya, jadi di <= 767px tiap baris tampil sebagai:
+     *
+     *   [1] Judul saran (tebal, dua baris)   ]
+     *       [ avatar + pengguna | tanggal    ]
+     *       [ status badge      | tombol Lihat]
+     *
+     * Hanya menempel di .ad-tabel--masukan, jadi tabel /admin/pengguna tetap
+     * memakai bentuk label/nilai seperti sebelumnya.
+     *
+     * Nomor tetap ditampilkan sebagai bulatan kecil di kiri (menandai urutan
+     * masukan), dan semua label (::before) dimatikan karena judul, pengguna,
+     * tanggal, dan status sudah terbaca dari bentuknya. Nama pengguna dibalik
+     * ke avatar-dulu supaya sejajar dengan headernya, bukan avatar-di-kanan
+     * seperti baris pengguna biasa.
+     */
+    .ad-tabel--masukan tbody tr {
+        display: grid;
+        grid-template-columns: auto minmax(0, 1fr) auto;
+        grid-template-areas:
+            'no judul judul'
+            'no pengguna tanggal'
+            'no status aksi';
+        align-items: center;
+        gap: 0.55rem 0.75rem;
+        padding: 0.85rem 0.5rem;
+    }
+
+    .ad-tabel--masukan td {
+        display: block;
+        width: auto;
+        padding: 0;
+        text-align: left;
+    }
+
+    .ad-tabel--masukan td::before {
+        content: none;
+    }
+
+    .ad-tabel--masukan .ad-tabel__nomor {
+        grid-area: no;
+        align-self: start;
+        display: flex;
+        width: 1.6rem;
+        height: 1.6rem;
+        align-items: center;
+        justify-content: center;
+        border-radius: 9999px;
+        background-color: var(--ad-primary-light);
+        font-size: 0.75rem;
+        font-weight: 700;
+        color: var(--ad-primary);
+    }
+
+    .ad-tabel--masukan .ad-tabel__nama {
+        justify-content: flex-start;
+    }
+
+    .ad-tabel--masukan .ad-tabel__nama > .ad-avatar {
+        order: 0;
+    }
+
+    .ad-tabel--masukan td[data-label='Judul Saran'] {
+        grid-area: judul;
+    }
+
+    .ad-tabel--masukan td[data-label='Pengguna'] {
+        grid-area: pengguna;
+    }
+
+    .ad-tabel--masukan td[data-label='Tanggal Dikirim'] {
+        grid-area: tanggal;
+        text-align: right;
+    }
+
+    .ad-tabel--masukan td[data-label='Status'] {
+        grid-area: status;
+    }
+
+    .ad-tabel--masukan td[data-label=''] {
+        grid-area: aksi;
+        justify-self: end;
+    }
 }
 
 /* ---------- Dialog ---------- */
