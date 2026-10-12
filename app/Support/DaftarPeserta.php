@@ -14,7 +14,7 @@ use App\Models\PesertaQuiz;
  * sumbernya diganti API, cukup ganti isi petakan() tanpa menyentuh markup.
  *
  * Bentuk array per peserta:
- *   id, nama, inisial, warna, warna_gelap, status, status_label,
+ *   id, nama, inisial, warna, warna_gelap, foto, status, status_label,
  *   bergabung_pada, baru => bool (hanya baris baru di respons polling)
  *
  * Daftar di lobby juga dipakai endpoint JSON yang dipanggil JavaScript,
@@ -47,6 +47,7 @@ final class DaftarPeserta
                 'inisial' => $pengguna?->inisial() ?? '?',
                 'warna' => $avatar['warna'],
                 'warna_gelap' => $avatar['warna_gelap'],
+                'foto' => $pengguna?->fotoProfilUrl(),
                 'status' => (string) $item->status,
                 'status_label' => self::labelStatus((string) $item->status),
                 'bergabung_pada' => $item->bergabung_pada?->format('H:i'),

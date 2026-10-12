@@ -237,6 +237,18 @@ class User extends Authenticatable
     }
 
     /**
+     * Masukan dan saran yang dikirim pengguna ini.
+     *
+     * Foreign key-nya ditulis langsung sebagai "pengguna_id", sama seperti
+     * pengerjaanQuiz(): tebakan default untuk model bernama User adalah
+     * "user_id", sedangkan tabelnya memakai "pengguna_id".
+     */
+    public function masukanSaran(): HasMany
+    {
+        return $this->hasMany(MasukanSaran::class, 'pengguna_id');
+    }
+
+    /**
      * Folder tempat foto profil disimpan di disk publik.
      *
      * Dipakai User::fotoProfilUrl() dan App\Support\BerkasProfil supaya

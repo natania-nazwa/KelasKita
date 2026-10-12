@@ -177,11 +177,22 @@ function initPolling() {
         // Nama ditulis lewat textContent, bukan innerHTML, supaya nama yang
         // mengandung tanda kutip atau tag tidak diurai sebagai HTML.
         const avatar = document.createElement("span");
-        avatar.className = "lobi-daftar__avatar";
+        avatar.className = orang.foto ? "lobi-daftar__avatar lobi-daftar__avatar--foto" : "lobi-daftar__avatar";
         avatar.style.setProperty("--a", orang.warna);
         avatar.style.setProperty("--a-gelap", orang.warna_gelap);
         avatar.setAttribute("aria-hidden", "true");
-        avatar.textContent = orang.inisial;
+        if (orang.foto) {
+            avatar.innerHTML = "";
+            const gambar = document.createElement("img");
+            gambar.src = orang.foto;
+            gambar.alt = "";
+            gambar.className = "lobi-daftar__foto";
+            gambar.setAttribute("loading", "lazy");
+            gambar.setAttribute("decoding", "async");
+            avatar.appendChild(gambar);
+        } else {
+            avatar.textContent = orang.inisial;
+        }
 
         const nama = document.createElement("span");
         nama.className = "lobi-daftar__nama";

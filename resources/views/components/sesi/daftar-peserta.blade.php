@@ -10,8 +10,8 @@
      * hanya menerima array polos: tidak ada kueri database di dalam
      * markup. Shape satu baris:
      *
-     *   id, pengguna_id, nama, inisial, warna, warna_gelap, status,
-     *   status_label, bergabung_pada
+ *   id, pengguna_id, nama, inisial, warna, warna_gelap, foto, status,
+ *   status_label, bergabung_pada
      *
      * Baris punya data-lobi-peserta berisi id peserta. Polling di
      * resources/js/quiz-lobby.js membandingkan daftar lama dengan daftar
@@ -23,8 +23,15 @@
 <div class="lobi-daftar mt-5" data-lobi-daftar role="list">
     @forelse ($peserta as $orang)
         <div class="lobi-daftar__item" data-lobi-peserta="{{ $orang['id'] }}" role="listitem">
-            <span class="lobi-daftar__avatar" style="--a: {{ $orang['warna'] }}; --a-gelap: {{ $orang['warna_gelap'] }};"
-                aria-hidden="true">{{ $orang['inisial'] }}</span>
+            @php $fotoPeserta = $orang['foto'] ?? null; @endphp
+            <span class="lobi-daftar__avatar {{ $fotoPeserta ? 'lobi-daftar__avatar--foto' : '' }}" style="--a: {{ $orang['warna'] }}; --a-gelap: {{ $orang['warna_gelap'] }};"
+                aria-hidden="true">
+                @if ($fotoPeserta)
+                    <img src="{{ $fotoPeserta }}" alt="" class="lobi-daftar__foto" loading="lazy" decoding="async">
+                @else
+                    {{ $orang['inisial'] }}
+                @endif
+            </span>
 
             <span class="lobi-daftar__nama" title="{{ $orang['nama'] }}">{{ $orang['nama'] }}</span>
 

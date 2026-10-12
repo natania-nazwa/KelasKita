@@ -103,6 +103,7 @@ final class PeringkatGlobal
                 'inisial' => $orang->inisial(),
                 'warna' => $warna['warna'],
                 'warna_gelap' => $warna['warna_gelap'],
+                'foto' => $orang->fotoProfilUrl(),
                 'skor' => (int) $baris->dijawab,
                 'nilai' => (int) $baris->nilai,
                 'saya' => (int) $orang->getKey() === $idPengguna,

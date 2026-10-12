@@ -194,6 +194,7 @@ class SmokeSemuaHalamanTest extends TestCase
             'Sesi lobby' => route('user.sesi.lobby', $sesi),
             'Sesi data' => route('user.sesi.data', $sesi),
             'Profil' => route('user.profil'),
+            'Masukan & Saran' => route('user.masukan-saran'),
         ];
 
         $this->cekHalaman($halamanUser, $user);

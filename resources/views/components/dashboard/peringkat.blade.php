@@ -32,9 +32,16 @@
                     'dash-peringkat__no--perunggu' => $baris['medali'] === 'perunggu',
                 ])>{{ $baris['peringkat'] }}</span>
 
-                <span class="dash-avatar"
+                @php $fotoDash = $baris['foto'] ?? null; @endphp
+                <span class="dash-avatar {{ $fotoDash ? 'dash-avatar--foto' : '' }}"
                     style="--a: {{ $baris['warna'] }}; --a-gelap: {{ $baris['warna_gelap'] }};"
-                    aria-hidden="true">{{ $baris['inisial'] }}</span>
+                    aria-hidden="true">
+                    @if ($fotoDash)
+                        <img src="{{ $fotoDash }}" alt="" class="dash-avatar__foto" loading="lazy" decoding="async">
+                    @else
+                        {{ $baris['inisial'] }}
+                    @endif
+                </span>
 
                 <span class="min-w-0 flex-1">
                     <span class="dash-peringkat__nama">

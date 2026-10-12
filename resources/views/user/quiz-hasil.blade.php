@@ -142,9 +142,16 @@
                                     <span class="lobi-peringkat {{ $baris['peringkat'] === 1 ? 'lobi-peringkat--emas' : '' }} {{ $baris['peringkat'] === 2 ? 'lobi-peringkat--perak' : '' }} {{ $baris['peringkat'] === 3 ? 'lobi-peringkat--perunggu' : '' }}"
                                         aria-label="Peringkat {{ $baris['peringkat'] }}">{{ $baris['peringkat'] }}</span>
 
-                                    <span class="lobi-daftar__avatar"
+                                    @php $fotoHasil = $baris['foto'] ?? null; @endphp
+                                    <span class="lobi-daftar__avatar {{ $fotoHasil ? 'lobi-daftar__avatar--foto' : '' }}"
                                         style="--a: {{ $baris['warna'] }}; --a-gelap: {{ $baris['warna_gelap'] }};"
-                                        aria-hidden="true">{{ $baris['inisial'] }}</span>
+                                        aria-hidden="true">
+                                        @if ($fotoHasil)
+                                            <img src="{{ $fotoHasil }}" alt="" class="lobi-daftar__foto" loading="lazy" decoding="async">
+                                        @else
+                                            {{ $baris['inisial'] }}
+                                        @endif
+                                    </span>
 
                                     <span class="lobi-daftar__nama" title="{{ $baris['nama'] }}">{{ $baris['nama'] }}</span>
 

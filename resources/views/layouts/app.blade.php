@@ -186,6 +186,18 @@
                 'ikon' => 'M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z',
                 'bawah' => true,
             ],
+            // "Masukan & Saran" sengaja di baris terakhir dan bukan item
+            // navigasi bawah: navigasi bawah sudah pas lima tujuan, dan
+            // halaman ini lebih jarang dibuka daripada kelimanya. Di mobile
+            // ia terjangkau lewat tombol "Menu lainnya" di header, sama
+            // seperti Jadwal, Hasil, dan Simpan.
+            [
+                'route' => 'user.masukan-saran',
+                'pola' => ['user.masukan-saran'],
+                'label' => 'Masukan & Saran',
+                'ikon' => \App\Support\Ikon::path('pesan'),
+                'bawah' => false,
+            ],
         ];
 
         $menuAktif = fn (array $item) => collect($item['pola'])
@@ -211,7 +223,7 @@
             <nav class="flex-1 overflow-y-auto px-4 py-6 space-y-1">
                 @foreach ($menu as $item)
                     <a href="{{ route($item['route']) }}"
-                        class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium {{ $menuAktif($item) ? 'bg-primary text-white' : 'text-primary/80 hover:bg-lavender hover:text-primary-dark' }}">
+                        class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium transition-all duration-150 ease-in-out transform {{ $menuAktif($item) ? 'bg-primary text-white' : 'text-primary/80 hover:bg-lavender hover:text-primary-dark hover:translate-x-0.5' }}">
 
                         <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                             <path stroke-linecap="round" stroke-linejoin="round" d="{{ $item['ikon'] }}" />
@@ -346,6 +358,7 @@
                     'user.judulsoal.*',
                     'user.profil',
                     'user.karya-saya',
+                    'user.masukan-saran',
                 );
 
                 /*

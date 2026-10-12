@@ -3414,6 +3414,19 @@ html {
     font-weight: 700;
     line-height: 1;
     user-select: none;
+    overflow: hidden;
+}
+
+.dash-avatar--foto {
+    overflow: hidden;
+}
+
+.dash-avatar__foto {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: inherit;
+    display: block;
 }
 
 /* Kalender bulanan */
@@ -7628,6 +7641,19 @@ html {
         font-weight: 700;
         line-height: 1;
         user-select: none;
+        overflow: hidden;
+    }
+
+    .lobi-daftar__avatar--foto {
+        overflow: hidden;
+    }
+
+    .lobi-daftar__foto {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        border-radius: inherit;
+        display: block;
     }
 
     .lobi-daftar__nama {
@@ -12855,6 +12881,19 @@ html {
     font-weight: 700;
     line-height: 1;
     user-select: none;
+    overflow: hidden;
+}
+
+.peringkat-podium__avatar--foto {
+    overflow: hidden;
+}
+
+.peringkat-podium__foto {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: inherit;
+    display: block;
 }
 
 .peringkat-podium__petak--1 .peringkat-podium__avatar {
@@ -12966,6 +13005,19 @@ html {
     font-weight: 700;
     line-height: 1;
     user-select: none;
+    overflow: hidden;
+}
+
+.peringkat-daftar__avatar--foto {
+    overflow: hidden;
+}
+
+.peringkat-daftar__foto {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: inherit;
+    display: block;
 }
 
 .peringkat-daftar__nama {

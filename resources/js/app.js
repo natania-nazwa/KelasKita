@@ -84,6 +84,9 @@ import "./profil.js";
 // Lonceng notifikasi di top bar halaman user (tandai terbaca saat diklik).
 import "./notifikasi.js";
 
+// Halaman "Masukan & Saran" (penghitung karakter, nama lampiran, tombol kirim).
+import "./masukan-saran.js";
+
 /*
  * Area admin KelasKita (drawer sidebar, dropdown akun, dialog tinjau).
  *

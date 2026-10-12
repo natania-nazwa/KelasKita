@@ -100,9 +100,16 @@
 
                             <span class="sr-only">Peringkat {{ $baris['peringkat'] }},</span>
 
-                            <span class="peringkat-podium__avatar"
+                            @php $fotoPodium = $baris['foto'] ?? null; @endphp
+                            <span class="peringkat-podium__avatar {{ $fotoPodium ? 'peringkat-podium__avatar--foto' : '' }}"
                                 style="--a: {{ $baris['warna'] }}; --a-gelap: {{ $baris['warna_gelap'] }};"
-                                aria-hidden="true">{{ $baris['inisial'] }}</span>
+                                aria-hidden="true">
+                                @if ($fotoPodium)
+                                    <img src="{{ $fotoPodium }}" alt="" class="peringkat-podium__foto" loading="lazy" decoding="async">
+                                @else
+                                    {{ $baris['inisial'] }}
+                                @endif
+                            </span>
 
                             <p class="peringkat-podium__nama" title="{{ $baris['nama'] }}">{{ $baris['nama'] }}</p>
 
@@ -159,9 +166,16 @@
                                     {{ $baris['peringkat'] }}
                                 </span>
 
-                                <span class="peringkat-daftar__avatar"
+                                @php $fotoDaftar = $baris['foto'] ?? null; @endphp
+                                <span class="peringkat-daftar__avatar {{ $fotoDaftar ? 'peringkat-daftar__avatar--foto' : '' }}"
                                     style="--a: {{ $baris['warna'] }}; --a-gelap: {{ $baris['warna_gelap'] }};"
-                                    aria-hidden="true">{{ $baris['inisial'] }}</span>
+                                    aria-hidden="true">
+                                    @if ($fotoDaftar)
+                                        <img src="{{ $fotoDaftar }}" alt="" class="peringkat-daftar__foto" loading="lazy" decoding="async">
+                                    @else
+                                        {{ $baris['inisial'] }}
+                                    @endif
+                                </span>
 
                                 <div class="min-w-0 flex-1">
                                     <p class="peringkat-daftar__nama" title="{{ $baris['nama'] }}">{{ $baris['nama'] }}</p>

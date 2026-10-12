@@ -479,6 +479,22 @@ Route::middleware('auth')
 
         /*
          * =============================================================
+         * MASUKAN & SARAN
+         * =============================================================
+         * Satu halaman yang merangkap form kirim: GET menampilkan formnya,
+         * POST menyimpannya. Tidak ada rute lain (daftar, detail, ubah,
+         * hapus) karena pengguna hanya perlu mengirim, bukan membaca
+         * kembali kirimannya.
+         *
+         * Pemilik baris diambil dari sesi login di controller, bukan dari
+         * field form, jadi tidak ada URL atau isian yang bisa dipakai
+         * mengirim masukan atas nama orang lain.
+         */
+        Route::get('/masukan-saran', User\MasukanSaranController::class)->name('masukan-saran');
+        Route::post('/masukan-saran', [User\MasukanSaranController::class, 'store'])->name('masukan-saran.store');
+
+        /*
+         * =============================================================
          * NOTIFIKASI
          * =============================================================
          * Dua rute notifikasi, dan keduanya hanya menandai: satu baris
