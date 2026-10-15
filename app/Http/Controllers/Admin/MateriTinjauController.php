@@ -11,13 +11,15 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 
 /**
- * Keputusan admin atas satu materi: menyetujui atau menolak.
+ * Keputusan admin atas satu materi: menandai sedang diproses, menyetujui,
+ * atau menolak.
  *
- * Dua action ini hanya boleh dijalankan untuk materi yang benar-benar sedang
- * menunggu. Materi draft tidak bisa disetujui (belum pernah diajukan), dan
- * materi yang sudah terbit atau ditolak tidak bisa diputuskan lagi dari
- * halaman ini: kalau tetap dipaksakan, jawabannya 404 supaya angka status
- * di halaman review tidak pernah berbeda dengan isi tabelnya.
+ * Ketiganya hanya boleh dijalankan untuk materi yang benar-benar sedang
+ * menunggu atau sudah ditandai diproses. Materi draft tidak bisa disetujui
+ * (belum pernah diajukan), dan materi yang sudah terbit atau ditolak tidak
+ * bisa diputuskan lagi dari halaman ini: kalau tetap dipaksakan, jawabannya
+ * 404 supaya angka status di halaman review tidak pernah berbeda dengan isi
+ * tabelnya.
  *
  * Keduanya mengembalikan admin ke tab status yang sedang dibuka, supaya
  * menolak satu materi tidak membuat admin kehilangan tempatnya.
@@ -31,6 +33,26 @@ use Illuminate\Http\Request;
  */
 class MateriTinjauController extends Controller
 {
+    /**
+     * Tandai materi ini sedang dikerjakan admin.
+     *
+     * Statusnya berubah dari "pending" ke "diproses" saja: isinya belum
+     * dinilai, jadi materi tetap tidak tayang, dan keputusan setujui/tolak
+     * tetap bisa diambil setelahnya. Idempoten: memanggil ulang pada materi
+     * yang sudah diproses tidak mengubah apa pun.
+     */
+    public function proses(Request $request, string $materi): RedirectResponse
+    {
+        $item = $this->materiMenunggu($materi);
+
+        $item->tandaiDiproses();
+
+        return $this->kembaliKeTinjauan(
+            $request,
+            'Materi "'.$item->nama.'" ditandai sedang diproses.'
+        );
+    }
+
     public function setujui(Request $request, string $materi): RedirectResponse
     {
         $item = $this->materiMenunggu($materi);
@@ -62,7 +84,8 @@ class MateriTinjauController extends Controller
     }
 
     /**
-     * Cari materi dari slug, dan pastikan statusnya "menunggu".
+     * Cari materi dari slug, dan pastikan statusnya masih dalam antrean
+     * keputusan: "pending" atau "diproses".
      *
      * Tidak ada = 404. Status lain juga 404, bukan 403: bukan soal hak akses,
      * tapi soal materi ini memang tidak sedang diputuskan.
@@ -71,7 +94,10 @@ class MateriTinjauController extends Controller
     {
         $item = Materi::query()->where('slug', $slug)->firstOrFail();
 
-        abort_unless($item->status === Materi::STATUS_PENDING, 404);
+        abort_unless(
+            in_array($item->status, [Materi::STATUS_PENDING, Materi::STATUS_DIPROSES], true),
+            404
+        );
 
         return $item;
     }

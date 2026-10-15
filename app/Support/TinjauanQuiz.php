@@ -50,6 +50,7 @@ final class TinjauanQuiz
      *   visibilitas, pakai_kode, status, warna_status, status_label,
      *   catatan_admin, catatan_pengajuan, jumlah_ditolak,
      *   sisa_pengajuan, dibuat_pada, tautan_setujui, tautan_tolak,
+     *   tautan_proses,
      *   kategori => [nama, ikon, warna, warna_gelap],
      *   pembuat  => [nama, inisial, warna, warna_gelap]
      *
@@ -103,6 +104,7 @@ final class TinjauanQuiz
                 ],
                 'tautan_setujui' => route('admin.quiz.setujui', $item),
                 'tautan_tolak' => route('admin.quiz.tolak', $item),
+                'tautan_proses' => route('admin.quiz.proses', $item),
             ];
         }
 

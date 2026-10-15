@@ -49,18 +49,19 @@ class VerifikasiController extends Controller
     ];
 
     /**
-     * Tab status: menunggu | disetujui | ditolak
+     * Tab status: menunggu | diproses | disetujui | ditolak
      *
      * Berbeda dari halaman Tinjau Materi dan Tinjau Quiz yang punya
-     * empat status, di sini admin hanya butuh tiga: pekerjaan yang
-     * belum selesai, yang sudah disetujui, dan yang ditolak. Status
-     * "draft" tidak masuk karena isinya milik pembuatnya dan belum
-     * pernah ditawarkan ke admin.
+     * empat status, di sini admin butuh empat: pekerjaan yang belum
+     * disentuh, yang sedang dikerjakan, yang sudah disetujui, dan yang
+     * ditolak. Status "draft" tidak masuk karena isinya milik pembuatnya
+     * dan belum pernah ditawarkan ke admin.
      *
      * @var array<string, string>
      */
     private const STATUS = [
         'menunggu' => 'Menunggu',
+        'diproses' => 'Diproses',
         'disetujui' => 'Disetujui',
         'ditolak' => 'Ditolak',
     ];
@@ -418,6 +419,7 @@ class VerifikasiController extends Controller
     private function statusMateri(string $status): string
     {
         return match ($status) {
+            'diproses' => Materi::STATUS_DIPROSES,
             'disetujui' => Materi::STATUS_PUBLISHED,
             'ditolak' => Materi::STATUS_REJECTED,
             default => Materi::STATUS_PENDING,
@@ -430,6 +432,7 @@ class VerifikasiController extends Controller
     private function statusQuiz(string $status): string
     {
         return match ($status) {
+            'diproses' => Quiz::STATUS_DIPROSES,
             'disetujui' => Quiz::STATUS_PUBLISHED,
             'ditolak' => Quiz::STATUS_REJECTED,
             default => Quiz::STATUS_PENDING,
@@ -488,6 +491,7 @@ class VerifikasiController extends Controller
                 $this->cariMateri(Materi::query(), $kataKunci)->kategori($kategori),
                 [
                     Materi::STATUS_PENDING => 'menunggu',
+                    Materi::STATUS_DIPROSES => 'diproses',
                     Materi::STATUS_PUBLISHED => 'disetujui',
                     Materi::STATUS_REJECTED => 'ditolak',
                 ]
@@ -499,6 +503,7 @@ class VerifikasiController extends Controller
                 $this->cariQuiz(Quiz::query(), $kataKunci)->kategori($kategori),
                 [
                     Quiz::STATUS_PENDING => 'menunggu',
+                    Quiz::STATUS_DIPROSES => 'diproses',
                     Quiz::STATUS_PUBLISHED => 'disetujui',
                     Quiz::STATUS_REJECTED => 'ditolak',
                 ]

@@ -155,6 +155,7 @@ class MasukanSaranAdminTest extends TestCase
 
         $this->assertSame(3, $statistik['total']);
         $this->assertSame(1, $statistik['baru']);
+        $this->assertSame(1, $statistik['diproses']);
         $this->assertSame(1, $statistik['selesai']);
     }
 

@@ -196,10 +196,10 @@ class MasukanSaranController extends Controller
     }
 
     /**
-     * Tiga angka utama kartu statistik, semuanya dihitung dari database dan
-     * tidak ikut berubah saat filter atau pencarian sedang dipakai.
+     * Angka kartu statistik, semuanya dihitung dari database dan tidak ikut
+     * berubah saat filter atau pencarian sedang dipakai.
      *
-     * @return array{total: int, baru: int, selesai: int}
+     * @return array{total: int, baru: int, diproses: int, selesai: int}
      */
     private function statistik(): array
     {
@@ -211,6 +211,7 @@ class MasukanSaranController extends Controller
         return [
             'total' => (int) $jumlah->sum(),
             'baru' => (int) ($jumlah[MasukanSaran::STATUS_BARU] ?? 0),
+            'diproses' => (int) ($jumlah[MasukanSaran::STATUS_DIPROSES] ?? 0),
             'selesai' => (int) ($jumlah[MasukanSaran::STATUS_SELESAI] ?? 0),
         ];
     }

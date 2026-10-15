@@ -5276,6 +5276,19 @@ body.tubuh-admin {
     color: var(--ad-teks-peringatan);
 }
 
+/* "Diproses" pakai tint biru: pekerjaannya sedang berjalan, bukan
+ * tertahan (kuning "Menunggu") dan bukan selesai (hijau "Disetujui"). */
+.ad-vf-pil--diproses {
+    border-color: var(--ad-cucian-info);
+    background-color: var(--ad-cucian-info);
+    color: var(--ad-teks-info);
+}
+
+.ad-vf-pil--diproses b {
+    background-color: var(--ad-cucian-info);
+    color: var(--ad-teks-info);
+}
+
 .ad-vf-pil--disetujui {
     border-color: var(--ad-cucian-sukses);
     background-color: var(--ad-cucian-sukses);
@@ -5323,6 +5336,14 @@ body.tubuh-admin {
 .ad-vf-pil--menunggu.ad-vf-pil--aktif b {
     background-color: var(--ad-cucian-peringatan);
     color: var(--ad-teks-peringatan);
+}
+
+/* Status aktif "Diproses": isian soft biru, sejajar dengan perlakuan
+ * "Menunggu" di atas. */
+.ad-vf-pil--diproses.ad-vf-pil--aktif {
+    border-color: var(--ad-cucian-info);
+    background-color: var(--ad-cucian-info);
+    color: var(--ad-teks-info);
 }
 
 .ad-vf-pil--disetujui.ad-vf-pil--aktif {
@@ -6171,6 +6192,13 @@ body.tubuh-admin {
     flex: 1;
     min-width: 7rem;
     justify-content: center;
+}
+
+/* Tombol "Tandai Diproses" dikirim lewat form sendiri. Form-nya tidak
+ * mengambil ruang tata letak supaya tombolnya tetap sejajar dengan tombol
+ * keputusan lain di kaki panel. */
+.ad-vf-panel__kaki > form {
+    display: contents;
 }
 
 .ad-vf-panel__kaki-ket {

@@ -22,6 +22,7 @@ use Illuminate\Support\Str;
  *
  *   draft     = baru dibuat, belum diajukan, tidak tampil di halaman Materi
  *   pending   = sudah diajukan, menunggu keputusan admin
+ *   diproses  = ditandai admin sedang diperiksa, belum diputuskan
  *   published = disetujui admin, tampil untuk semua pengguna
  *   rejected  = ditolak admin, lihat catatan_admin
  */
@@ -47,6 +48,8 @@ class Materi extends Model
     public const STATUS_DRAFT = 'draft';
 
     public const STATUS_PENDING = 'pending';
+
+    public const STATUS_DIPROSES = 'diproses';
 
     public const STATUS_PUBLISHED = 'published';
 
@@ -254,6 +257,23 @@ class Materi extends Model
     }
 
     /**
+     * Admin menandai materi ini sedang dalam pemeriksaan.
+     *
+     * Hanya berlaku dari status "pending": materi yang belum pernah diajukan
+     * atau yang sudah diputuskan tidak punya arti "sedang diproses". Isinya
+     * belum dinilai, jadi materi tetap tidak tayang, dan keputusan
+     * setujui/tolak tetap bisa diambil setelah ini.
+     */
+    public function tandaiDiproses(): void
+    {
+        if ($this->status !== self::STATUS_PENDING) {
+            return;
+        }
+
+        $this->forceFill(['status' => self::STATUS_DIPROSES])->save();
+    }
+
+    /**
      * Admin menyetujui materi ini, lalu materi langsung tayang.
      */
     public function setujui(): void
@@ -288,6 +308,7 @@ class Materi extends Model
     {
         return match ($this->status) {
             self::STATUS_PENDING => 'Menunggu Persetujuan',
+            self::STATUS_DIPROSES => 'Sedang Diproses',
             self::STATUS_PUBLISHED => 'Dipublikasikan',
             self::STATUS_REJECTED => 'Ditolak',
             default => 'Draft',
@@ -304,6 +325,7 @@ class Materi extends Model
     {
         return match ($this->status) {
             self::STATUS_PENDING => 'menunggu',
+            self::STATUS_DIPROSES => 'diproses',
             self::STATUS_PUBLISHED => 'terbit',
             self::STATUS_REJECTED => 'ditolak',
             default => 'draft',

@@ -341,6 +341,7 @@ class VerifikasiQaTest extends TestCase
 
         $this->buatMateri($pemilik, Materi::STATUS_PENDING, 'Materi Antre');
         $this->buatMateri($pemilik, Materi::STATUS_PENDING, 'Materi Antre Dua');
+        $this->buatMateri($pemilik, Materi::STATUS_DIPROSES, 'Materi Diproses');
         $this->buatMateri($pemilik, Materi::STATUS_PUBLISHED, 'Materi Tayang');
         $this->buatMateri($pemilik, Materi::STATUS_REJECTED, 'Materi Ditolak');
         $this->buatQuiz($pemilik, Quiz::STATUS_PENDING, 'Quiz Antre');
@@ -351,7 +352,7 @@ class VerifikasiQaTest extends TestCase
             ->assertOk();
 
         $this->assertSame(
-            ['menunggu' => 3, 'disetujui' => 2, 'ditolak' => 1],
+            ['menunggu' => 3, 'diproses' => 1, 'disetujui' => 2, 'ditolak' => 1],
             $this->jumlahPil($respons->getContent()),
             'Tiap pil status harus menampilkan jumlah konten berstatus itu.'
         );
@@ -831,5 +832,156 @@ class VerifikasiQaTest extends TestCase
             $respons->getContent(),
             'Tanpa JavaScript, baris harus membuka halaman penuh lewat query pilih.'
         );
+    }
+
+    /*
+     * ====================================================================
+     * STATUS "DIPROSES"
+     * ====================================================================
+     */
+
+    public function test_tab_status_diproses_hanya_menampilkan_konten_diproses(): void
+    {
+        $pemilik = $this->buatPengguna();
+        $admin = $this->buatAdmin();
+
+        $this->buatMateri($pemilik, Materi::STATUS_PENDING, 'Materi Antre');
+        $this->buatMateri($pemilik, Materi::STATUS_DIPROSES, 'Materi Dikerjakan');
+
+        $this->actingAs($admin)
+            ->get(route('admin.verifikasi', ['status' => 'diproses']))
+            ->assertOk()
+            ->assertSee('Materi Dikerjakan')
+            ->assertDontSee('Materi Antre');
+    }
+
+    public function test_halaman_verifikasi_menampilkan_kartu_ringkasan_diproses(): void
+    {
+        $pemilik = $this->buatPengguna();
+        $admin = $this->buatAdmin();
+
+        $this->buatMateri($pemilik, Materi::STATUS_DIPROSES, 'Materi Dikerjakan');
+
+        $respons = $this->actingAs($admin)
+            ->get(route('admin.verifikasi'))
+            ->assertOk();
+
+        $isi = $respons->getContent();
+
+        $this->assertStringContainsString(
+            'ad-stat--info',
+            $isi,
+            'Kartu ringkasan "Diproses" harus tampil di halaman Verifikasi.'
+        );
+
+        $this->assertStringContainsString(
+            'status=diproses',
+            $isi,
+            'Kartu "Diproses" harus menautkan ke daftar berstatus diproses.'
+        );
+    }
+
+    public function test_admin_menandai_materi_diproses_dari_verifikasi(): void
+    {
+        $admin = $this->buatAdmin();
+        $materi = $this->buatMateri($this->buatPengguna(), Materi::STATUS_PENDING, 'Materi Mulai');
+
+        $this->actingAs($admin)
+            ->from(route('admin.verifikasi'))
+            ->post(route('admin.materi.proses', $materi->slug), [
+                'kembali' => 'admin.verifikasi',
+            ])
+            ->assertRedirect(route('admin.verifikasi'))
+            ->assertSessionHas('sukses');
+
+        $this->assertSame(Materi::STATUS_DIPROSES, $materi->refresh()->status);
+        $this->assertNull($materi->dipublish_pada);
+    }
+
+    public function test_admin_menandai_quiz_diproses_dari_verifikasi(): void
+    {
+        $admin = $this->buatAdmin();
+        $quiz = $this->buatQuiz($this->buatPengguna(), Quiz::STATUS_PENDING, 'Quiz Mulai');
+
+        $this->actingAs($admin)
+            ->from(route('admin.verifikasi'))
+            ->post(route('admin.quiz.proses', $quiz), [
+                'kembali' => 'admin.verifikasi',
+            ])
+            ->assertRedirect(route('admin.verifikasi'))
+            ->assertSessionHas('sukses');
+
+        $this->assertSame(Quiz::STATUS_DIPROSES, $quiz->refresh()->status);
+    }
+
+    public function test_materi_diproses_masih_bisa_disetujui(): void
+    {
+        $admin = $this->buatAdmin();
+        $materi = $this->buatMateri($this->buatPengguna(), Materi::STATUS_DIPROSES, 'Materi Lanjut');
+
+        $this->actingAs($admin)
+            ->from(route('admin.verifikasi'))
+            ->post(route('admin.materi.setujui', $materi->slug), [
+                'kembali' => 'admin.verifikasi',
+            ])
+            ->assertRedirect(route('admin.verifikasi'))
+            ->assertSessionHas('sukses');
+
+        $this->assertSame(Materi::STATUS_PUBLISHED, $materi->refresh()->status);
+    }
+
+    public function test_panel_materi_pending_mempunyai_tombol_tandai_diproses(): void
+    {
+        $admin = $this->buatAdmin();
+        $materi = $this->buatMateri($this->buatPengguna(), Materi::STATUS_PENDING, 'Materi Panel');
+
+        $this->actingAs($admin)
+            ->get(route('admin.verifikasi.panel', ['jenis' => 'materi', 'id' => $materi->id]))
+            ->assertOk()
+            ->assertSee('Tandai Diproses')
+            ->assertSee(route('admin.materi.proses', $materi->slug), false);
+    }
+
+    public function test_panel_materi_diproses_bisa_diputuskan_tanpa_tombol_tandai(): void
+    {
+        $admin = $this->buatAdmin();
+        $materi = $this->buatMateri($this->buatPengguna(), Materi::STATUS_DIPROSES, 'Materi Panel');
+
+        $this->actingAs($admin)
+            ->get(route('admin.verifikasi.panel', ['jenis' => 'materi', 'id' => $materi->id]))
+            ->assertOk()
+            ->assertSee('data-vf-buka-setujui', false)
+            ->assertDontSee('Tandai Diproses');
+    }
+
+    public function test_materi_published_tidak_bisa_ditandai_diproses(): void
+    {
+        $admin = $this->buatAdmin();
+        $materi = $this->buatMateri($this->buatPengguna(), Materi::STATUS_PUBLISHED, 'Materi Tayang');
+
+        $this->actingAs($admin)
+            ->post(route('admin.materi.proses', $materi->slug), [
+                'kembali' => 'admin.verifikasi',
+            ])
+            ->assertNotFound();
+
+        $this->assertSame(Materi::STATUS_PUBLISHED, $materi->refresh()->status);
+    }
+
+    public function test_quiz_diproses_masih_bisa_ditolak(): void
+    {
+        $admin = $this->buatAdmin();
+        $quiz = $this->buatQuiz($this->buatPengguna(), Quiz::STATUS_DIPROSES, 'Quiz Dikerjakan');
+
+        $this->actingAs($admin)
+            ->from(route('admin.verifikasi'))
+            ->post(route('admin.quiz.tolak', $quiz), [
+                'kembali' => 'admin.verifikasi',
+                'alasan' => 'Soal belum lengkap.',
+            ])
+            ->assertRedirect(route('admin.verifikasi'))
+            ->assertSessionHas('sukses');
+
+        $this->assertSame(Quiz::STATUS_REJECTED, $quiz->refresh()->status);
     }
 }

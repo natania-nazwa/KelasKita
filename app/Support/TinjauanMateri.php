@@ -50,7 +50,7 @@ final class TinjauanMateri
      *   id, slug, judul, deskripsi, isi, tingkat_kesulitan, waktu_baca,
      *   jumlah_bab, status, warna_status, status_label, catatan_admin,
      *   catatan_pengajuan, jumlah_ditolak, sisa_pengajuan, dibuat_pada,
-     *   tautan_setujui, tautan_tolak,
+     *   tautan_setujui, tautan_tolak, tautan_proses,
      *   kategori => [nama, ikon, warna, warna_gelap],
      *   pembuat  => [nama, inisial, warna, warna_gelap]
      *
@@ -99,6 +99,7 @@ final class TinjauanMateri
                 ],
                 'tautan_setujui' => route('admin.materi.setujui', $item->slug),
                 'tautan_tolak' => route('admin.materi.tolak', $item->slug),
+                'tautan_proses' => route('admin.materi.proses', $item->slug),
             ];
         }
 

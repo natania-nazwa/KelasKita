@@ -11,13 +11,15 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 
 /**
- * Keputusan admin atas satu quiz: menyetujui atau menolak.
+ * Keputusan admin atas satu quiz: menandai sedang diproses, menyetujui,
+ * atau menolak.
  *
- * Dua action ini hanya boleh dijalankan untuk quiz yang benar-benar sedang
- * menunggu. Quiz draft tidak bisa disetujui (belum pernah diajukan), dan quiz
- * yang sudah terbit atau ditolak tidak bisa diputuskan lagi dari halaman ini:
- * kalau tetap dipaksakan, jawabannya 404 supaya angka status di halaman
- * review tidak pernah berbeda dengan isi tabelnya.
+ * Ketiganya hanya boleh dijalankan untuk quiz yang benar-benar sedang
+ * menunggu atau sudah ditandai diproses. Quiz draft tidak bisa disetujui
+ * (belum pernah diajukan), dan quiz yang sudah terbit atau ditolak tidak
+ * bisa diputuskan lagi dari halaman ini: kalau tetap dipaksakan, jawabannya
+ * 404 supaya angka status di halaman review tidak pernah berbeda dengan isi
+ * tabelnya.
  *
  * Keduanya mengembalikan admin ke tab status yang sedang dibuka, supaya
  * menolak satu quiz tidak membuat admin kehilangan tempatnya.
@@ -31,6 +33,26 @@ use Illuminate\Http\Request;
  */
 class QuizTinjauController extends Controller
 {
+    /**
+     * Tandai quiz ini sedang dikerjakan admin.
+     *
+     * Statusnya berubah dari "pending" ke "diproses" saja: isinya belum
+     * dinilai, jadi quiz tetap tidak tayang, dan keputusan setujui/tolak
+     * tetap bisa diambil setelah ini. Idempoten: memanggil ulang pada quiz
+     * yang sudah diproses tidak mengubah apa pun.
+     */
+    public function proses(Request $request, Quiz $quiz): RedirectResponse
+    {
+        $item = $this->quizMenunggu($quiz);
+
+        $item->tandaiDiproses();
+
+        return $this->kembaliKeTinjauan(
+            $request,
+            'Quiz "'.$item->judul.'" ditandai sedang diproses.'
+        );
+    }
+
     public function setujui(Request $request, Quiz $quiz): RedirectResponse
     {
         $item = $this->quizMenunggu($quiz);
@@ -62,14 +84,18 @@ class QuizTinjauController extends Controller
     }
 
     /**
-     * Pastikan quiz ini benar-benar sedang menunggu keputusan.
+     * Pastikan quiz ini masih dalam antrean keputusan: "pending" atau
+     * "diproses".
      *
      * Status lain 404, bukan 403: bukan soal hak akses, tapi soal quiz ini
      * memang tidak sedang diputuskan.
      */
     private function quizMenunggu(Quiz $quiz): Quiz
     {
-        abort_unless($quiz->status === Quiz::STATUS_PENDING, 404);
+        abort_unless(
+            in_array($quiz->status, [Quiz::STATUS_PENDING, Quiz::STATUS_DIPROSES], true),
+            404
+        );
 
         return $quiz;
     }

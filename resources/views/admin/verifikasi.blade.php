@@ -72,7 +72,28 @@
             ->all();
 
         $ikonJenis = ['semua' => 'papan', 'materi' => 'buku', 'quiz' => 'file-teks'];
-        $ikonStatus = ['menunggu' => 'jam', 'disetujui' => 'centang', 'ditolak' => 'silang'];
+        $ikonStatus = ['menunggu' => 'jam', 'diproses' => 'roda', 'disetujui' => 'centang', 'ditolak' => 'silang'];
+
+        /*
+         * Kartu ringkasan di atas filter: satu kartu per status, memakai
+         * angka dan tautan yang sama persis dengan pil status di bawahnya
+         * supaya keduanya tidak pernah berbeda. "Diproses" adalah status
+         * yang ditandai admin sendiri ketika mulai mengerjakan sebuah
+         * konten, jadi kartunya menunjukkan pekerjaan yang sedang berjalan.
+         */
+        $nadaStatus = [
+            'menunggu' => 'peringatan',
+            'diproses' => 'info',
+            'disetujui' => 'sukses',
+            'ditolak' => 'merah',
+        ];
+
+        $keteranganStatus = [
+            'menunggu' => 'Belum ditinjau admin',
+            'diproses' => 'Sedang dikerjakan admin',
+            'disetujui' => 'Sudah tayang untuk pengguna',
+            'ditolak' => 'Menunggu perbaikan pemilik',
+        ];
 
         /*
          * Tautan pilihan panel: mempertahankan seluruh query yang sedang
@@ -214,6 +235,20 @@
                         width="828" height="552" loading="eager" />
                 </div>
             </div>
+        </section>
+
+        {{-- ==================== RINGKASAN STATUS ==================== --}}
+        {{--
+            Kartu jumlah per status. Angka dan tautannya sama dengan pil
+            status di bawah, jadi menekan kartu "Diproses" menyaring daftar
+            persis seperti menekan pilnya.
+        --}}
+        <section class="ad-seksi ad-grid ad-grid--statistik" aria-label="Ringkasan status verifikasi">
+            @foreach ($tabStatus as $butir)
+                <x-admin.statistik :ikon="$ikonStatus[$butir['nilai']]" :label="$butir['label']"
+                    :nilai="$butir['jumlah']" :nada="$nadaStatus[$butir['nilai']] ?? null"
+                    :keterangan="$keteranganStatus[$butir['nilai']] ?? null" :href="$butir['href']" />
+            @endforeach
         </section>
 
         {{-- ==================== FILTER ==================== --}}

@@ -70,11 +70,14 @@
 
     {{-- ==================== RINGKASAN ==================== --}}
     <section class="ad-seksi ad-grid ad-grid--statistik" aria-label="Ringkasan masukan">
-        <x-admin.statistik ikon="pesan" label="Total Masukan" :nilai="$statistik['total']" nada="info"
+        <x-admin.statistik ikon="pesan" label="Total Masukan" :nilai="$statistik['total']"
             keterangan="Seluruh kiriman yang tercatat" />
 
         <x-admin.statistik ikon="jam" label="Masukan Baru" :nilai="$statistik['baru']" nada="kuning"
             keterangan="Belum ditindaklanjuti" />
+
+        <x-admin.statistik ikon="roda" label="Diproses" :nilai="$statistik['diproses']" nada="info"
+            keterangan="Sedang ditindaklanjuti" />
 
         <x-admin.statistik ikon="centang" label="Sudah Ditangani" :nilai="$statistik['selesai']" nada="sukses"
             keterangan="Sudah selesai ditindaklanjuti" />

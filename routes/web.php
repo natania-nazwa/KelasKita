@@ -704,15 +704,25 @@ Route::middleware(['auth', 'admin'])
          * yang sudah terbit tetap terbit setelah diperbarui, karena admin
          * adalah pihak yang menyetujui konten.
          */
+        /*
+         * Menandai materi sedang dikerjakan admin. Sama seperti dua route
+         * keputusan di bawah, hanya berlaku untuk materi yang masih menunggu
+         * keputusan; statusnya berubah dari "pending" ke "diproses" tanpa
+         * memutuskan apa pun.
+         */
+        Route::post('/materi/{materi}/proses', [Admin\MateriTinjauController::class, 'proses'])
+            ->name('materi.proses');
+
         Route::get('/materi/{materi}/edit', [Admin\MateriKelolaController::class, 'edit'])->name('materi.edit');
         Route::put('/materi/{materi}', [Admin\MateriKelolaController::class, 'update'])->name('materi.update');
         Route::delete('/materi/{materi}', [Admin\MateriKelolaController::class, 'destroy'])->name('materi.destroy');
 
         /*
          * Dua aksi di bawah memakai slug materi dan hanya berlaku untuk materi
-         * yang statusnya masih "menunggu": controller mengembalikan 404 untuk
-         * status lain. Route tetap dipakai halaman Verifikasi, yang mengirim
-         * field "kembali" supaya admin kembali ke sana setelah memutuskan.
+         * yang statusnya masih menunggu keputusan ("pending" atau "diproses"):
+         * controller mengembalikan 404 untuk status lain. Route tetap dipakai
+         * halaman Verifikasi, yang mengirim field "kembali" supaya admin
+         * kembali ke sana setelah memutuskan.
          */
         Route::post('/materi/{materi}/setujui', [Admin\MateriTinjauController::class, 'setujui'])->name('materi.setujui');
         Route::post('/materi/{materi}/tolak', [Admin\MateriTinjauController::class, 'tolak'])->name('materi.tolak');
@@ -729,8 +739,8 @@ Route::middleware(['auth', 'admin'])
          * masih draft dikelola pemiliknya di "Karya Saya".
          *
          * Karena itu halaman ini tidak lagi menjadi tempat memutuskan
-         * persetujuan; dua route setujui/tolak di bawah tetap ada karena
-         * dipakai halaman Verifikasi.
+         * persetujuan; tiga route keputusan di bawah (proses, setujui,
+         * tolak) tetap ada karena dipakai halaman Verifikasi.
          *
          * Detail, edit, dan hapus adalah pasangan dari route milik pengguna
          * (user.quiz.detail / .edit / .destroy) yang menolak admin dengan
@@ -744,11 +754,13 @@ Route::middleware(['auth', 'admin'])
         Route::delete('/quiz/{quiz}', [Admin\QuizKelolaController::class, 'destroy'])->name('quiz.destroy');
 
         /*
-         * Dua aksi di bawah memakai id quiz dan hanya berlaku untuk quiz yang
-         * statusnya masih "menunggu": controller mengembalikan 404 untuk
-         * status lain. Route tetap dipakai halaman Verifikasi, yang mengirim
-         * field "kembali" supaya admin kembali ke sana setelah memutuskan.
+         * Tiga aksi di bawah memakai id quiz, dan hanya berlaku untuk quiz
+         * yang statusnya masih dalam antrean keputusan ("menunggu" atau
+         * "diproses"): controller mengembalikan 404 untuk status lain. Route
+         * tetap dipakai halaman Verifikasi, yang mengirim field "kembali"
+         * supaya admin kembali ke sana setelah memutuskan.
          */
+        Route::post('/quiz/{quiz}/proses', [Admin\QuizTinjauController::class, 'proses'])->name('quiz.proses');
         Route::post('/quiz/{quiz}/setujui', [Admin\QuizTinjauController::class, 'setujui'])->name('quiz.setujui');
         Route::post('/quiz/{quiz}/tolak', [Admin\QuizTinjauController::class, 'tolak'])->name('quiz.tolak');
 

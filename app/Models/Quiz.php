@@ -32,6 +32,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * Status quiz mengikuti alur persetujuan admin:
  *   draft     = baru dibuat, belum diajukan
  *   pending   = menunggu persetujuan admin
+ *   diproses  = ditandai admin sedang diperiksa, belum diputuskan
  *   published = sudah disetujui, tampil untuk semua pengguna
  *   rejected  = ditolak admin (lihat catatan_admin)
  */
@@ -58,6 +59,8 @@ class Quiz extends Model
     public const STATUS_DRAFT = 'draft';
 
     public const STATUS_PENDING = 'pending';
+
+    public const STATUS_DIPROSES = 'diproses';
 
     public const STATUS_PUBLISHED = 'published';
 
@@ -219,13 +222,14 @@ class Quiz extends Model
      * Verifikasi tanpa ada admin yang berhak memutuskannya. Keduanya kembali
      * ke draft, sama dengan quiz mode kode yang baru dibuat.
      *
-     * Hanya turun dari "published" dan "pending". Status lain tidak disentuh
-     * supaya alasan penolakan dan hitungan pengajuan ulang tidak ikut hilang
-     * hanya karena pemilik atau admin mengganti cara aksesnya.
+     * Hanya turun dari "published", "pending", dan "diproses". Status lain
+     * tidak disentuh supaya alasan penolakan dan hitungan pengajuan ulang
+     * tidak ikut hilang hanya karena pemilik atau admin mengganti cara
+     * aksesnya.
      */
     public function tarikDariDaftar(): void
     {
-        if (! in_array($this->status, [self::STATUS_PUBLISHED, self::STATUS_PENDING], true)) {
+        if (! in_array($this->status, [self::STATUS_PUBLISHED, self::STATUS_PENDING, self::STATUS_DIPROSES], true)) {
             return;
         }
 
@@ -377,6 +381,23 @@ class Quiz extends Model
     }
 
     /**
+     * Admin menandai quiz ini sedang dalam pemeriksaan.
+     *
+     * Hanya berlaku dari status "pending": quiz yang belum pernah diajukan
+     * atau yang sudah diputuskan tidak punya arti "sedang diproses". Isinya
+     * belum dinilai, jadi quiz tetap tidak tayang, dan keputusan
+     * setujui/tolak tetap bisa diambil setelah ini.
+     */
+    public function tandaiDiproses(): void
+    {
+        if ($this->status !== self::STATUS_PENDING) {
+            return;
+        }
+
+        $this->forceFill(['status' => self::STATUS_DIPROSES])->save();
+    }
+
+    /**
      * Admin menyetujui quiz ini, lalu quiz langsung tayang.
      */
     public function setujui(): void
@@ -473,6 +494,7 @@ class Quiz extends Model
     {
         return match ($this->status) {
             self::STATUS_PENDING => 'Menunggu Persetujuan',
+            self::STATUS_DIPROSES => 'Sedang Diproses',
             self::STATUS_PUBLISHED => 'Dipublikasikan',
             self::STATUS_REJECTED => 'Ditolak',
             default => 'Draft',
@@ -491,6 +513,7 @@ class Quiz extends Model
     {
         return match ($this->status) {
             self::STATUS_PENDING => 'menunggu',
+            self::STATUS_DIPROSES => 'diproses',
             self::STATUS_PUBLISHED => 'terbit',
             self::STATUS_REJECTED => 'ditolak',
             default => 'draft',
