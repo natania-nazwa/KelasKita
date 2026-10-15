@@ -24,22 +24,7 @@
 
     $jenis = $ada ? (string) $rincian['jenis'] : '';
     $status = $ada ? (string) $rincian['status'] : '';
-
-    /*
-     * Keputusan hanya mungkin selama kontennya belum final: "pending"
-     * (belum disentuh) atau "diproses" (sedang dikerjakan admin). Materi
-     * yang sudah tayang atau ditolak tidak bisa diputuskan lagi.
-     */
-    $bisaPutuskan = $ada && in_array($status, [
-        \App\Models\Materi::STATUS_PENDING,
-        \App\Models\Materi::STATUS_DIPROSES,
-    ], true);
-
-    /*
-     * Tombol "Tandai Diproses" hanya muncul untuk konten yang masih benar-
-     * benar menunggu; konten yang sudah diproses tidak perlu ditandai lagi.
-     */
-    $bisaDiproses = $ada && $status === \App\Models\Materi::STATUS_PENDING;
+    $bisaPutuskan = $ada && $status === \App\Models\Materi::STATUS_PENDING;
 
     $labelPanel = $ada ? (string) $rincian['label_jenis'] : 'Panel Review';
     $ikonPanel = $jenis === 'quiz' ? 'file-teks' : 'buku';
@@ -341,19 +326,6 @@
     {{-- ==================== KAKI ==================== --}}
     <footer class="ad-vf-panel__kaki" data-vf-kaki>
         @if ($bisaPutuskan)
-            @if ($bisaDiproses)
-                <form method="POST" action="{{ $rincian['tautan_proses'] }}">
-                    @csrf
-
-                    <input type="hidden" name="kembali" value="admin.verifikasi">
-
-                    <button type="submit" class="ad-tombol ad-tombol--garis">
-                        <x-admin.ikon nama="roda" ukuran="w-4 h-4" />
-                        Tandai Diproses
-                    </button>
-                </form>
-            @endif
-
             <button type="button" class="ad-tombol ad-tombol--garis" data-vf-buka-tolak>
                 <x-admin.ikon nama="silang" ukuran="w-4 h-4" />
                 Tolak
