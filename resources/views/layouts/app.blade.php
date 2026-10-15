@@ -550,6 +550,31 @@
     @unless ($sembunyiNavBawah)
         <x-app.nav-bawah :menu="$menu" />
     @endunless
+
+    {{--
+        Toast hasil aksi materi dan quiz: "Materi "X" berhasil dihapus.",
+        "Quiz "Y" tersimpan...", dan pesan gagal saat isian belum lengkap
+        atau aksi ditolak. Kartu kecil di pojok kanan bawah, menutup
+        dirinya sendiri setelah lima detik atau saat tombol silangnya
+        ditekan (resources/js/app.js).
+
+        Dirender dari layout dan dibatasi ke rute materi serta quiz, bukan
+        dari tiap halaman, supaya seluruh halaman itu memakai satu kartu
+        yang sama dan halaman lain tidak ikut berubah. Pesan gagal
+        didahulukan agar kegagalan tidak tertutup oleh kabar berhasil
+        kalau keduanya kebetulan ada.
+    --}}
+    @if (request()->routeIs('user.materi*', 'user.quiz*', 'user.karya-saya'))
+        @php
+            $toastGalat = filled(session('galat')) ? session('galat') : ($errors->any() ? $errors->first() : null);
+        @endphp
+
+        @if (filled($toastGalat))
+            <x-app.toast jenis="galat" :pesan="$toastGalat" />
+        @elseif (filled(session('sukses')))
+            <x-app.toast :pesan="session('sukses')" />
+        @endif
+    @endif
 </body>
 
 </html>

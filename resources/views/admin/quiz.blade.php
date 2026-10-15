@@ -93,18 +93,7 @@
         </div>
     </section>
 
-    {{-- =====================
-         PESAN
-    ====================== --}}
-    @if (session('sukses'))
-        <div class="ad-seksi ad-alert ad-alert--sukses" role="status">
-            <span class="ad-alert__ikon" aria-hidden="true">
-                <x-admin.ikon nama="tanda-centang" ukuran="w-3.5 h-3.5" :tebal="2.6" />
-            </span>
-
-            <p class="min-w-0 font-medium">{{ session('sukses') }}</p>
-        </div>
-    @endif
+    {{-- Toast hasil aksi dipindahkan ke layouts/admin.blade.php. --}}
 
     {{-- =====================
          FILTER

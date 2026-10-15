@@ -329,14 +329,7 @@ Modifier --materi dan --kuis bukan hiasan: keduanya yang
         </div>
     </div>
 
-    {{-- =====================
-         TOAST
-    ======================
-         Hasil aksi setelah redirect: simpan, terbitkan, duplikat, atau
-         hapus. Muncul mengambang di pojok kanan bawah dan menutup dirinya
-         sendiri setelah lima detik atau saat tombol silangnya ditekan
-         (resources/js/konten-admin.js). --}}
-    <x-admin.toast :judul="session('sukses')" :pesan="session('suksesDetail')" />
+    {{-- Toast hasil aksi dipindahkan ke layouts/admin.blade.php. --}}
 
     {{-- =====================
          TAB DAN BARIS ALAT

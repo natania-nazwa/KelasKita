@@ -6865,6 +6865,19 @@ body.tubuh-admin {
     color: var(--ad-sukses);
 }
 
+/*
+ * Varian gagal: nada merah dari --ad-bahaya, dipakai tepi kartu dan ikon
+ * lingkaran supaya sejalan dengan alert bahaya di halaman admin lain.
+ */
+.ad-toast--galat {
+    border-color: color-mix(in oklab, var(--ad-bahaya) 35%, var(--ad-garis));
+}
+
+.ad-toast--galat .ad-toast__ikon {
+    background-color: color-mix(in oklab, var(--ad-bahaya) 16%, var(--ad-white));
+    color: var(--ad-bahaya);
+}
+
 .ad-toast__teks {
     display: flex;
     min-width: 0;

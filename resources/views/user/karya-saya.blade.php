@@ -20,37 +20,7 @@
     --}}
     <div class="kanvas-halaman -m-6 min-h-[100dvh] p-5 sm:p-6 lg:-m-10 lg:p-8 xl:p-10">
 
-        {{-- Kabar berhasil menambah, mengubah, atau menghapus karya. --}}
-        @if (session('sukses'))
-            <div data-reveal
-                class="mb-5 flex items-start gap-3 rounded-2xl border border-lavender bg-white px-4 py-3 text-sm text-dark shadow-[0_14px_30px_-26px_rgba(33,26,58,0.5)]">
-                <span class="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary"
-                    aria-hidden="true">
-                    <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" stroke-width="2.4" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="m4.5 12.75 6 6 9-13.5" />
-                    </svg>
-                </span>
-
-                <p class="min-w-0 font-medium">{{ session('sukses') }}</p>
-            </div>
-        @endif
-
-        {{-- Kabar gagal membuka sesi dari kartu quiz, mis. quiznya belum
-             punya soal. --}}
-        @if ($errors->any())
-            <div data-reveal role="alert"
-                class="mb-5 flex items-start gap-3 rounded-2xl border border-[#f3c9cb] bg-white px-4 py-3 text-sm font-medium text-[#a8323c]">
-                <span class="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#fdecee] text-[#c2414a]"
-                    aria-hidden="true">
-                    <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                        <path stroke-linecap="round" stroke-linejoin="round"
-                            d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z" />
-                    </svg>
-                </span>
-
-                <p class="min-w-0 font-medium">{{ $errors->first() }}</p>
-            </div>
-        @endif
+        {{-- Toast hasil aksi dipindahkan ke layouts/app.blade.php. --}}
 
         {{-- =========================
              JUDUL HALAMAN

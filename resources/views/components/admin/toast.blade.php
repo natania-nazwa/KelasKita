@@ -1,16 +1,27 @@
 @props([
     'judul' => null,
     'pesan' => null,
-    'ikon' => 'tanda-centang',
+    'ikon' => null,
+
+    // "sukses" (bawaan) untuk kabar hasil aksi yang berhasil, "galat"
+    // untuk pesan yang gagal — isian belum lengkap, aksi ditolak, dan
+    // sejenisnya. Menentukan warna ikon dan tepi kartunya, sekaligus
+    // memilih ikon bawaan kalau pemanggil tidak menentukan sendiri.
+    'jenis' => 'sukses',
 ])
+
+@php
+    $galat = $jenis === 'galat';
+    $ikon ??= $galat ? 'peringatan' : 'tanda-centang';
+@endphp
 
 {{--
     Toast hasil aksi: "Berhasil dipublikasikan", "Draft berhasil disimpan",
     dan pesan sejenis setelah simpan, hapus, atau duplikat.
 
-    Sumbernya selalu flash session "sukses" + "suksesDetail", jadi toast ini
-    hanya muncul kalau ada aksi yang benar-benar baru saja berhasil — bukan
-    tiap kali halaman dibuka.
+    Sumbernya selalu flash session "sukses" + "suksesDetail" (atau "galat"),
+    jadi toast ini hanya muncul kalau ada aksi yang benar-benar baru saja
+    terjadi — bukan tiap kali halaman dibuka.
 
     Letaknya di pojok kanan bawah, menumpuk di atas sidebar yang tetap
     terlihat, dan menutup dirinya sendiri setelah lima detik
@@ -19,7 +30,7 @@
 --}}
 
 @if (filled($judul))
-    <div class="ad-toast" data-konten-toast role="status" aria-live="polite">
+    <div @class(['ad-toast', 'ad-toast--galat' => $galat]) data-konten-toast role="status" aria-live="polite">
         <span class="ad-toast__ikon" aria-hidden="true">
             <x-admin.ikon :nama="$ikon" ukuran="w-4 h-4" :tebal="2.4" />
         </span>

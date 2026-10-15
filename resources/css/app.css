@@ -11406,10 +11406,10 @@ html {
    sama dengan toast di area admin (components/admin/toast.blade.php),
    hanya warnanya yang mengikuti palet halaman pengguna.
 
-   Muncul dari flash session "sukses" (lihat x-app.toast), jadi hanya ada
-   setelah aksi yang benar-benar baru saja berhasil. Menutup dirinya
-   sendiri setelah lima detik dan selalu punya tombol tutup, sehingga
-   membaca pesannya tidak bergantung pada JavaScript.
+   Muncul dari flash session "sukses" atau "galat" (lihat x-app.toast), jadi
+   hanya ada setelah aksi yang benar-benar baru saja berhasil atau gagal.
+   Menutup dirinya sendiri setelah lima detik dan selalu punya tombol tutup,
+   sehingga membaca pesannya tidak bergantung pada JavaScript.
 
    Warna latar dan teksnya sengaja pakai kelas utilitas, bukan hex di
    sini: .bg-white sudah ditimpa menjadi gelap oleh blok tema gelap, jadi
@@ -11452,6 +11452,15 @@ html {
     border-radius: 9999px;
     background-color: #0f9d76;
     color: #fff;
+}
+
+/*
+ * Varian gagal: ikon memerah senada dengan tepi kartu. Warna ikon dan tepi
+ * diambil dari palet kesalahan yang sudah dipakai banner di halaman
+ * pengguna supaya nada merahnya konsisten.
+ */
+.app-toast--galat .app-toast__ikon {
+    background-color: #c2414a;
 }
 
 .app-toast__teks {

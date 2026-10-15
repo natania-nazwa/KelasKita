@@ -477,7 +477,7 @@
         {{--
             Topbar area admin sekarang hanya tombol buka sidebar. Kotak
             pencarian, lonceng notifikasi, dan menu akun tidak lagi dirender di
-            halaman mana pun di area ini; alasannya ada di blok @php di atas
+            halaman mana pun di area ini; alasannya ada di blok PHP di atas
             file ini.
 
             Header memakai kelas .ad-atas--ringkas karena itu yang
@@ -524,7 +524,7 @@
         tanpa JS pun admin tetap bisa berpindah halaman, dan tidak ada satu
         pun baris JavaScript baru yang perlu ditulis untuk navigasi ini.
 
-        Isinya disaring dari $menuUtama di blok @php di atas, jadi ikon,
+        Isinya disaring dari $menuUtama di blok PHP di atas, jadi ikon,
         tujuan tautan, angka yang menunggu di Verifikasi, dan penanda halaman
         aktif selalu sama dengan sidebar desktop. Halaman yang tidak punya
         salah satu dari enam menu ini -- misalnya /admin/pengaturan dan form
@@ -563,6 +563,25 @@
             @endforeach
         </ul>
     </nav>
+    {{--
+        Toast hasil aksi materi dan quiz di area admin. Dirender dari layout
+        dan dibatasi ke rute yang berubah karena aksi materi/quiz, bukan dari
+        tiap halaman, supaya tidak dobel. Pesan galat didahulukan, lalu sukses.
+    --}}
+    @if (request()->routeIs('admin.materi*', 'admin.quiz*', 'admin.konten*'))
+        @php
+            $toastJudul = session('sukses');
+            $toastPesan = session('suksesDetail');
+            $toastGalat = session('galat');
+            $toastGalatDetail = session('catatan');
+        @endphp
+
+        @if (filled($toastGalat))
+            <x-admin.toast jenis="galat" :judul="$toastGalat" :pesan="$toastGalatDetail" />
+        @elseif (filled($toastJudul))
+            <x-admin.toast :judul="$toastJudul" :pesan="$toastPesan" />
+        @endif
+    @endif
 </div>
 
 </body>

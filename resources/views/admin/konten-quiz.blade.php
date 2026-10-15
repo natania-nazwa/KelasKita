@@ -231,5 +231,5 @@
     --}}
     <x-admin.dialog-terbit />
 
-    <x-admin.toast :judul="session('sukses')" :pesan="session('suksesDetail')" />
+    {{-- Toast hasil aksi dipindahkan ke layouts/admin.blade.php. --}}
 @endsection
