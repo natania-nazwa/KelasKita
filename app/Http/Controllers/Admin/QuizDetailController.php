@@ -38,7 +38,7 @@ class QuizDetailController extends Controller
 
         $quiz->loadMissing(['pelajaran', 'pembuat']);
 
-        $daftarSoal = $quiz->soal()->aktif()->terurut()->get();
+        $daftarSoal = $quiz->soal()->aktif()->terurut()->with('pilihanSoal')->get();
 
         return view('admin.quiz-detail', [
             'quiz' => $quiz,

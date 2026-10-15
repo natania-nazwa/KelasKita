@@ -4,6 +4,7 @@ namespace App\Support;
 
 use App\Models\Quiz;
 use App\Models\Soal;
+use App\Models\SoalPilihan;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -35,31 +36,32 @@ final class SimpanSoalQuiz
      * Urutan diambil dari posisi baris di form, bukan dari nama field, jadi
      * baris yang dihapus di tengah tidak membuat nomor meleset.
      *
+     * Penulisan sengaja diborong, bukan satu create() per soal dan satu
+     * create() per pilihan. Database produksi berada di server terpisah
+     * dengan latensi per-perjalanan lebih dari satu detik, sehingga quiz
+     * 22 soal (22 + 88 baris) menempuh 111 perjalanan berurutan dan melewati
+     * batas waktu Cloudflare sebelum selesai. Satu insert borongan untuk
+     * soal, satu pengambilan id, lalu satu insert borongan untuk pilihan
+     * memangkasnya jadi beberapa perjalanan saja.
+     *
      * @param  array<int, array<string, mixed>>  $soal
      */
     public static function ganti(Quiz $quiz, array $soal): void
     {
-        DB::transaction(function () use ($quiz, $soal) {
-            $quiz->soal()->delete();
+        $disiapkan = [];
+        $urutan = 0;
 
-            $urutan = 0;
-
-            foreach ($soal as $baris) {
-                if (! is_array($baris) || blank($baris['pertanyaan'] ?? null)) {
-                    continue;
-                }
-
-                $urutan++;
-
-                $simpan = self::baris($baris, $urutan);
-
-                $soalTersimpan = $quiz->soal()->create($simpan['soal']);
-
-                foreach ($simpan['pilihan'] as $pilihan) {
-                    $soalTersimpan->pilihanSoal()->create($pilihan);
-                }
+        foreach ($soal as $baris) {
+            if (! is_array($baris) || blank($baris['pertanyaan'] ?? null)) {
+                continue;
             }
-        });
+
+            $urutan++;
+
+            $disiapkan[] = self::baris($baris, $urutan);
+        }
+
+        self::tulis($quiz, $disiapkan, hapusDulu: true);
     }
 
     /**
@@ -80,45 +82,119 @@ final class SimpanSoalQuiz
      */
     public static function salin(Quiz $asal, Quiz $tujuan): void
     {
-        DB::transaction(function () use ($asal, $tujuan) {
-            $urutan = 0;
+        $disiapkan = [];
+        $urutan = 0;
 
-            foreach ($asal->soal()->terurut()->with('pilihanSoal')->get() as $baris) {
-                $urutan++;
+        foreach ($asal->soal()->terurut()->with('pilihanSoal')->get() as $baris) {
+            $urutan++;
 
-                /*
-                 * id, created_at, dan updated_at sengaja dibuang: yang
-                 * disalin hanya isi soalnya. Urutannya juga ditulis ulang
-                 * dari posisi baris di quiz asal, supaya soal yang
-                 * dinonaktifkan tidak menyisakan nomor bolong.
-                 */
-                $salin = $baris->getAttributes();
+            /*
+             * id, created_at, dan updated_at sengaja dibuang: yang
+             * disalin hanya isi soalnya. Urutannya juga ditulis ulang
+             * dari posisi baris di quiz asal, supaya soal yang
+             * dinonaktifkan tidak menyisakan nomor bolong.
+             */
+            $salin = $baris->getAttributes();
 
-                unset($salin['id'], $salin['quiz_id'], $salin['created_at'], $salin['updated_at']);
+            unset($salin['id'], $salin['quiz_id'], $salin['created_at'], $salin['updated_at']);
 
-                $salin['quiz_id'] = $tujuan->getKey();
-                $salin['urutan'] = $urutan;
+            $salin['urutan'] = $urutan;
 
-                $soalBaru = $tujuan->soal()->create($salin);
+            /*
+             * Urutan baris pilihan dihitung dari posisinya di daftar,
+             * bukan disalin dari baris asal. Soal lama yang belum punya
+             * baris di tb_soal_pilihan dibaca lewat kolom pilihan_a
+             * sampai pilihan_f, dan baris tiruan itu tidak punya
+             * urutan — menyalinnya akan menulis kosong ke kolom yang
+             * wajib terisi.
+             */
+            $pilihan = [];
+            $posisi = 0;
 
-                /*
-                 * Urutan baris pilihan dihitung dari posisinya di daftar,
-                 * bukan disalin dari baris asal. Soal lama yang belum punya
-                 * baris di tb_soal_pilihan dibaca lewat kolom pilihan_a
-                 * sampai pilihan_f, dan baris tiruan itu tidak punya
-                 * urutan — menyalinnya akan menulis kosong ke kolom yang
-                 * wajib terisi.
-                 */
-                $posisi = 0;
+            foreach ($baris->daftarPilihan() as $item) {
+                $pilihan[] = [
+                    'huruf' => $item->huruf,
+                    'teks' => $item->teks,
+                    'urutan' => ++$posisi,
+                    'benar' => $item->benar,
+                ];
+            }
 
-                foreach ($baris->daftarPilihan() as $pilihan) {
-                    $soalBaru->pilihanSoal()->create([
-                        'huruf' => $pilihan->huruf,
-                        'teks' => $pilihan->teks,
-                        'urutan' => ++$posisi,
-                        'benar' => $pilihan->benar,
-                    ]);
+            $disiapkan[] = ['soal' => $salin, 'pilihan' => $pilihan];
+        }
+
+        self::tulis($tujuan, $disiapkan, hapusDulu: false);
+    }
+
+    /**
+     * Tulis seluruh soal yang sudah disiapkan dengan sedikit mungkin
+     * perjalanan ke database.
+     *
+     * Satu transaksi, satu insert borongan untuk tb_soal, satu pengambilan id
+     * untuk memetakan urutan ke id, lalu satu insert borongan untuk
+     * tb_soal_pilihan. Bentuknya sengaja tidak lewat Eloquent create() per
+     * baris karena jumlah perjalanannya yang jadi masalah, bukan ukuran
+     * datanya.
+     *
+     * created_at dan updated_at ditulis sendiri: insert() borongan lewat
+     * query builder tidak menyentuh timestamp Eloquent, sama seperti di
+     * App\Support\NotifikasiKonten.
+     *
+     * @param  array<int, array{soal: array<string, mixed>, pilihan: array<int, array<string, mixed>>}>  $disiapkan
+     */
+    private static function tulis(Quiz $quiz, array $disiapkan, bool $hapusDulu): void
+    {
+        $sekarang = now();
+
+        DB::transaction(function () use ($quiz, $disiapkan, $hapusDulu, $sekarang) {
+            if ($hapusDulu) {
+                $quiz->soal()->delete();
+            }
+
+            if ($disiapkan === []) {
+                return;
+            }
+
+            $barisSoal = array_map(fn (array $siap): array => [
+                'quiz_id' => $quiz->getKey(),
+                ...$siap['soal'],
+                'created_at' => $sekarang,
+                'updated_at' => $sekarang,
+            ], $disiapkan);
+
+            Soal::query()->insert($barisSoal);
+
+            /*
+             * Pemetaan urutan ke id baru: tiap baris soal sudah punya
+             * "urutan" yang unik dari posisinya di form, jadi kolom itulah
+             * yang dipakai untuk menautkan pilihan ke soal yang benar tanpa
+             * perlu satu insert per baris demi mendapatkan id-nya.
+             */
+            $idPerUrutan = Soal::query()
+                ->where('quiz_id', $quiz->getKey())
+                ->pluck('id', 'urutan');
+
+            $barisPilihan = [];
+
+            foreach ($disiapkan as $siap) {
+                $idSoal = $idPerUrutan[$siap['soal']['urutan']] ?? null;
+
+                if ($idSoal === null) {
+                    continue;
                 }
+
+                foreach ($siap['pilihan'] as $pilihan) {
+                    $barisPilihan[] = [
+                        'soal_id' => $idSoal,
+                        ...$pilihan,
+                        'created_at' => $sekarang,
+                        'updated_at' => $sekarang,
+                    ];
+                }
+            }
+
+            if ($barisPilihan !== []) {
+                SoalPilihan::query()->insert($barisPilihan);
             }
         });
     }

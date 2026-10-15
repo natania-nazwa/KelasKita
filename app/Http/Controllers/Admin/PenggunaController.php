@@ -135,15 +135,23 @@ class PenggunaController extends Controller
      * Dipakai baik oleh controller (sumber kebenaran penjagaan) maupun oleh
      * view (untuk menyembunyikan tombol), jadi aturannya tidak mungkin
      * berbeda antara apa yang terlihat dan apa yang benar-benar diizinkan.
+     *
+     * Jumlah admin bisa dikirim oleh pemanggil yang meloop banyak baris:
+     * tanpa itu, tiap baris admin di halaman akan menghitung ulang jumlah
+     * admin yang sama lewat satu query sendiri-sendiri.
      */
-    private function terkunci(User $pengguna, ?User $penggunaSaatIni): ?string
+    private function terkunci(User $pengguna, ?User $penggunaSaatIni, ?int $jumlahAdmin = null): ?string
     {
         if ($penggunaSaatIni !== null && $pengguna->is($penggunaSaatIni)) {
             return 'Akun Anda sendiri tidak bisa dihapus.';
         }
 
-        if ($pengguna->isAdmin() && User::query()->where('peran', User::PERAN_ADMIN)->count() <= 1) {
-            return 'Admin satu-satunya tidak bisa dihapus.';
+        if ($pengguna->isAdmin()) {
+            $jumlahAdmin ??= (int) User::query()->where('peran', User::PERAN_ADMIN)->count();
+
+            if ($jumlahAdmin <= 1) {
+                return 'Admin satu-satunya tidak bisa dihapus.';
+            }
         }
 
         return null;
@@ -162,10 +170,21 @@ class PenggunaController extends Controller
     private function aksi(LengthAwarePaginator $daftar, ?User $penggunaSaatIni): array
     {
         $hasil = [];
+        $jumlahAdmin = null;
 
         foreach ($daftar as $pengguna) {
+            /*
+             * Dihitung paling banyak sekali untuk seluruh halaman, dan hanya
+             * kalau memang ada baris admin. Angka yang sama dipakai semua
+             * baris admin di halaman ini, jadi halaman tidak lagi menembak
+             * satu COUNT per baris admin.
+             */
+            if ($pengguna->isAdmin() && $jumlahAdmin === null) {
+                $jumlahAdmin = (int) User::query()->where('peran', User::PERAN_ADMIN)->count();
+            }
+
             $hasil[$pengguna->getKey()] = [
-                'alasan' => $this->terkunci($pengguna, $penggunaSaatIni),
+                'alasan' => $this->terkunci($pengguna, $penggunaSaatIni, $jumlahAdmin),
             ];
         }
 

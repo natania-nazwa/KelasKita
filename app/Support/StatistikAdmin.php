@@ -76,30 +76,88 @@ final class StatistikAdmin
      */
     public static function ringkasan(): array
     {
-        $jumlahPengguna = (int) User::query()->count();
+        $batasIni = now()->subDays(30);
+        $batasLalu = now()->subDays(60);
 
-        $materiMenunggu = (int) Materi::query()->menunggu()->count();
-        $quizMenunggu = (int) Quiz::query()->menunggu()->count();
+        /*
+         * Tiap tabel dihitung dengan satu query agregasi bersyarat, bukan
+         * satu COUNT per angka.
+         *
+         * Sebelumnya method ini menempuh 16 perjalanan ke database untuk lima
+         * baris kartu: satu COUNT untuk tiap status, tiga COUNT untuk tiap
+         * "perubahan baru" (total, 30 hari, 30-60 hari), plus rata-rata dan
+         * jumlah pengerjaan yang sebetulnya bisa jadi satu. Di database
+         * produksi yang letaknya terpisah, tiap perjalanan berharga sekitar
+         * satu detik, jadi enam perjalanan di sini langsung terasa.
+         *
+         * SUM(CASE WHEN ...) dipakai, bukan FILTER (WHERE ...) yang khusus
+         * PostgreSQL, supaya query yang sama tetap jalan di SQLite yang
+         * dipakai pengujian.
+         */
+        $pengguna = self::perubahanBaru(User::query());
 
-        $nilai = PengerjaanQuiz::query()
+        $materi = Materi::query()
+            ->selectRaw(
+                'SUM(CASE WHEN status = ? THEN 1 ELSE 0 END) AS terbit_total, '.
+                'SUM(CASE WHEN status = ? THEN 1 ELSE 0 END) AS menunggu, '.
+                'SUM(CASE WHEN status = ? AND created_at >= ? THEN 1 ELSE 0 END) AS terbit_ini, '.
+                'SUM(CASE WHEN status = ? AND created_at >= ? AND created_at <= ? THEN 1 ELSE 0 END) AS terbit_lalu',
+                [
+                    Materi::STATUS_PUBLISHED,
+                    Materi::STATUS_PENDING,
+                    Materi::STATUS_PUBLISHED, $batasIni,
+                    Materi::STATUS_PUBLISHED, $batasLalu, $batasIni,
+                ]
+            )
+            ->first();
+
+        $quiz = Quiz::query()
+            ->selectRaw(
+                'SUM(CASE WHEN status = ? THEN 1 ELSE 0 END) AS terbit_total, '.
+                'SUM(CASE WHEN status = ? THEN 1 ELSE 0 END) AS menunggu, '.
+                'SUM(CASE WHEN status = ? AND created_at >= ? THEN 1 ELSE 0 END) AS terbit_ini, '.
+                'SUM(CASE WHEN status = ? AND created_at >= ? AND created_at <= ? THEN 1 ELSE 0 END) AS terbit_lalu',
+                [
+                    Quiz::STATUS_PUBLISHED,
+                    Quiz::STATUS_PENDING,
+                    Quiz::STATUS_PUBLISHED, $batasIni,
+                    Quiz::STATUS_PUBLISHED, $batasLalu, $batasIni,
+                ]
+            )
+            ->first();
+
+        /*
+         * Rata-rata dan jumlah pengerjaan selesai diambil dari satu query:
+         * keduanya membaca tabel dan filter yang sama persis.
+         */
+        $pengerjaan = PengerjaanQuiz::query()
             ->selesai()
-            ->avg('nilai');
+            ->selectRaw('COUNT(*) AS jumlah, AVG(nilai) AS rata')
+            ->first();
 
         $perubahan = [
-            'pengguna' => self::perubahanBaru(User::query()),
-            'materi' => self::perubahanBaru(Materi::query()->terbit()),
-            'quiz' => self::perubahanBaru(Quiz::query()->terbit()),
+            'pengguna' => $pengguna,
+            'materi' => self::rangkumPerubahan(
+                (int) ($materi->terbit_total ?? 0),
+                (int) ($materi->terbit_ini ?? 0),
+                (int) ($materi->terbit_lalu ?? 0),
+            ),
+            'quiz' => self::rangkumPerubahan(
+                (int) ($quiz->terbit_total ?? 0),
+                (int) ($quiz->terbit_ini ?? 0),
+                (int) ($quiz->terbit_lalu ?? 0),
+            ),
         ];
 
         return [
-            'pengguna' => $jumlahPengguna,
+            'pengguna' => $pengguna['total'],
             'materi' => $perubahan['materi']['bulan_ini'],
             'quiz' => $perubahan['quiz']['bulan_ini'],
-            'materi_menunggu' => $materiMenunggu,
-            'quiz_menunggu' => $quizMenunggu,
+            'materi_menunggu' => (int) ($materi->menunggu ?? 0),
+            'quiz_menunggu' => (int) ($quiz->menunggu ?? 0),
             'pengguna_aktif' => self::penggunaAktif(),
-            'quiz_dikerjakan' => (int) PengerjaanQuiz::query()->selesai()->count(),
-            'rata_nilai' => round((float) ($nilai ?? 0), 1),
+            'quiz_dikerjakan' => (int) ($pengerjaan->jumlah ?? 0),
+            'rata_nilai' => round((float) ($pengerjaan->rata ?? 0), 1),
             'materi_dipelajari' => (int) DB::table('tb_simpanan_materi')->distinct()->count('materi_id'),
             'perubahan' => $perubahan,
         ];
@@ -118,12 +176,41 @@ final class StatistikAdmin
      */
     public static function perubahanBaru(Builder $query): array
     {
-        $total = (int) $query->count();
-        $bulanIni = (int) (clone $query)->where('created_at', '>=', now()->subDays(30))->count();
-        $bulanLalu = (int) (clone $query)
-            ->whereBetween('created_at', [now()->subDays(60), now()->subDays(30)])
-            ->count();
+        $batasIni = now()->subDays(30);
+        $batasLalu = now()->subDays(60);
 
+        /*
+         * Tiga angka (total, 30 hari terakhir, 30 hari sebelumnya) diambil
+         * dari satu query, bukan tiga COUNT berurutan. SUM(CASE WHEN ...)
+         * dipilih supaya tetap jalan di PostgreSQL maupun SQLite.
+         */
+        $baris = (clone $query)
+            ->selectRaw(
+                'COUNT(*) AS total, '.
+                'SUM(CASE WHEN created_at >= ? THEN 1 ELSE 0 END) AS bulan_ini, '.
+                'SUM(CASE WHEN created_at >= ? AND created_at <= ? THEN 1 ELSE 0 END) AS bulan_lalu',
+                [$batasIni, $batasLalu, $batasIni]
+            )
+            ->first();
+
+        return self::rangkumPerubahan(
+            (int) ($baris->total ?? 0),
+            (int) ($baris->bulan_ini ?? 0),
+            (int) ($baris->bulan_lalu ?? 0),
+        );
+    }
+
+    /**
+     * Ubah tiga angka mentah jadi bentuk "perubahan" yang dipakai view.
+     *
+     * Dipisah supaya method yang menghitung per tabel dengan agregasi
+     * bersyarat (ringkasan()) dan method yang menerima Builder
+     * (perubahanBaru()) menghasilkan persen dan arah yang sama persis.
+     *
+     * @return array{total: int, bulan_ini: int, bulan_lalu: int, persen: float|null, arah: string}
+     */
+    private static function rangkumPerubahan(int $total, int $bulanIni, int $bulanLalu): array
+    {
         $selisih = $bulanIni - $bulanLalu;
 
         return [
@@ -192,10 +279,10 @@ final class StatistikAdmin
      *              membandingkan tanggal, bukan membacanya
      *   "selesai" tanggal ISO akhir minggu
      *
-     * Setiap minggu dihitung dengan satu COUNT sendiri, bukan satu
-     * GROUP BY, supaya query-nya tidak butuh dialek SQL khusus database
-     * dan tetap jalan di database pengujian (SQLite) maupun di
-     * PostgreSQL. Enam kolom terindeks dibaca, jadi biayanya kecil.
+     * Seluruh minggu dihitung dalam satu query dengan SUM(CASE WHEN ...),
+     * bukan satu COUNT per minggu. Bentuk ini sengaja tidak memakai GROUP BY
+     * berbasis fungsi tanggal supaya tidak butuh dialek SQL khusus dan tetap
+     * jalan di database pengujian (SQLite) maupun di PostgreSQL.
      *
      * @return array<int, array{label: string, bulan: string, rentang: string, mulai: string, selesai: string, nilai: int}>
      */
@@ -204,12 +291,39 @@ final class StatistikAdmin
         $minggu = $minggu > 0 ? $minggu : self::mingguLogin();
         $awalMingguIni = now()->startOfWeek();
 
-        $hasil = [];
+        /*
+         * Rentang tiap minggu disusun lebih dulu, lalu seluruh minggu
+         * dihitung dalam SATU query dengan SUM(CASE WHEN ...). Dulu tiap
+         * minggu menembak satu COUNT sendiri (enam perjalanan ke database);
+         * dengan latensi produksi, enam perjalanan itu terasa di setiap
+         * pembukaan dashboard. SUM(CASE WHEN ...) dipakai, bukan GROUP BY
+         * berbasis fungsi tanggal, supaya tetap jalan sama di PostgreSQL
+         * maupun SQLite.
+         */
+        $rentang = [];
 
         for ($mundur = $minggu - 1; $mundur >= 0; $mundur--) {
             $mulai = $awalMingguIni->copy()->subWeeks($mundur);
-            $selesai = $mulai->copy()->endOfWeek();
 
+            $rentang[] = [$mulai, $mulai->copy()->endOfWeek()];
+        }
+
+        $ekspresi = [];
+        $ikatan = [];
+
+        foreach ($rentang as $posisi => [$mulai, $selesai]) {
+            $ekspresi[] = 'SUM(CASE WHEN created_at >= ? AND created_at <= ? THEN 1 ELSE 0 END) AS minggu_'.$posisi;
+            $ikatan[] = $mulai;
+            $ikatan[] = $selesai;
+        }
+
+        $baris = DB::table('tb_riwayat_login')
+            ->selectRaw(implode(', ', $ekspresi), $ikatan)
+            ->first();
+
+        $hasil = [];
+
+        foreach ($rentang as $posisi => [$mulai, $selesai]) {
             $samaBulan = $mulai->isSameMonth($selesai) && $mulai->isSameYear($selesai);
 
             $hasil[] = [
@@ -224,9 +338,7 @@ final class StatistikAdmin
                     : $mulai->translatedFormat('j M').'–'.$selesai->translatedFormat('j M Y'),
                 'mulai' => $mulai->toDateString(),
                 'selesai' => $selesai->toDateString(),
-                'nilai' => (int) DB::table('tb_riwayat_login')
-                    ->whereBetween('created_at', [$mulai, $selesai])
-                    ->count(),
+                'nilai' => (int) ($baris->{'minggu_'.$posisi} ?? 0),
             ];
         }
 
@@ -257,10 +369,24 @@ final class StatistikAdmin
             ->get()
             ->map(fn (Materi $item): array => self::barisTinjauMateri($item));
 
+        /*
+         * Soal aktif dimuat sekaligus, dan jumlahnya dihitung lewat alias
+         * "jumlah_soal_termuat" yang dibaca Quiz::jumlahSoal() — sama seperti
+         * daftar quiz di halaman lain. Dulu jumlahnya dihitung dengan alias
+         * "soal" (menyisakan atribut "soal_count" yang tidak dipakai),
+         * sementara baris ringkas membaca "jumlah_soal" yang tidak pernah
+         * terisi; akibatnya angka soal di kartu ini kosong, dan
+         * ringkasanSoal() menembak satu query per quiz. Dengan bentuk ini
+         * tidak ada lagi query per baris.
+         */
         $quiz = Quiz::query()
             ->menunggu()
-            ->with(['pelajaran', 'pembuat'])
-            ->withCount(['soal' => fn ($soal) => $soal->aktif()])
+            ->with([
+                'pelajaran',
+                'pembuat',
+                'soal' => fn ($soal) => $soal->aktif()->orderBy('urutan'),
+            ])
+            ->withCount(['soal as jumlah_soal_termuat' => fn ($soal) => $soal->aktif()])
             ->latest()
             ->limit($batas)
             ->get()
@@ -332,7 +458,7 @@ final class StatistikAdmin
             'jenis' => 'quiz',
             'label_jenis' => 'Quiz',
             'judul' => $quiz->judul,
-            'rincian' => $quiz->jumlah_soal.' soal • mode '.(strtoupper($quiz->visibilitas) === Quiz::VISIBILITAS_PUBLIK ? 'publik' : 'kode'),
+            'rincian' => $quiz->jumlahSoal().' soal • mode '.(strtoupper($quiz->visibilitas) === Quiz::VISIBILITAS_PUBLIK ? 'publik' : 'kode'),
             'deskripsi' => (string) $quiz->deskripsi ?: 'Tanpa deskripsi.',
             // Ringkasan isi buat modal: daftar pertanyaannya, bukan isi
             // mentah, supaya admin cepat menilai tanpa digulir jauh.
@@ -361,11 +487,18 @@ final class StatistikAdmin
      */
     public static function ringkasanSoal(Quiz $quiz, int $batas = 5): string
     {
-        $soal = $quiz->soal()
-            ->aktif()
-            ->orderBy('urutan')
-            ->limit($batas)
-            ->get(['pertanyaan', 'tingkat_kesulitan']);
+        /*
+         * Kalau pemanggil sudah memuat relasi "soal" (sudah difilter aktif
+         * dan terurut), pakai itu apa adanya supaya tidak ada query per
+         * quiz. Kalau belum, ambil sendiri seperti sebelumnya.
+         */
+        $soal = $quiz->relationLoaded('soal')
+            ? $quiz->soal->take($batas)->values()
+            : $quiz->soal()
+                ->aktif()
+                ->orderBy('urutan')
+                ->limit($batas)
+                ->get(['pertanyaan', 'tingkat_kesulitan']);
 
         if ($soal->isEmpty()) {
             return 'Quiz ini belum punya soal aktif.';
@@ -378,8 +511,8 @@ final class StatistikAdmin
                 .'  ('.$item->tingkat_kesulitan.')';
         })->all();
 
-        if ($quiz->jumlah_soal > $batas) {
-            $baris[] = '… dan '.($quiz->jumlah_soal - $batas).' soal lainnya.';
+        if ($quiz->jumlahSoal() > $batas) {
+            $baris[] = '… dan '.($quiz->jumlahSoal() - $batas).' soal lainnya.';
         }
 
         return implode("\n", $baris);

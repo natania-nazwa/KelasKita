@@ -170,7 +170,7 @@
     </div>
 
 {{-- ==================== DIALOG TAMBAH / UBAH ==================== --}}
-@php($bukaPelajaran = $errors->has(['nama', 'slug', 'deskripsi', 'aktif']))
+@php($bukaPelajaran = $errors->hasAny(['nama', 'slug', 'deskripsi', 'aktif']))
 
 <div @class(['ad-dialog', 'is-buka' => $bukaPelajaran])
     data-atur-dialog="atur-pelajaran" role="dialog" aria-modal="true"

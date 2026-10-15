@@ -122,7 +122,9 @@ class KontenQuizController extends Controller
             'quiz' => $quiz,
             // Semua soal, bukan hanya yang aktif: kalau ada soal yang
             // dinonaktifkan, form edit harus tetap bisa melihatnya.
-            'soal' => $quiz->soal()->terurut()->get(),
+            // pilihanSoal dimuat sekaligus supaya IsianSoalQuiz::baris()
+            // tidak menembak satu query per soal.
+            'soal' => $quiz->soal()->terurut()->with('pilihanSoal')->get(),
             'kodeAwal' => $quiz->kode_akses ?? KodeQuiz::unik(),
         ]);
     }

@@ -21,7 +21,7 @@
 --}}
 
 {{-- ==================== 1. UBAH PASSWORD ==================== --}}
-@php($bukaKeamanan = $errors->has(['kata_sandi_lama', 'kata_sandi_baru', 'kata_sandi_baru_konfirmasi']))
+@php($bukaKeamanan = $errors->hasAny(['kata_sandi_lama', 'kata_sandi_baru', 'kata_sandi_baru_konfirmasi']))
 
 <div @class(['ad-dialog', 'is-buka' => $bukaKeamanan])
     data-atur-dialog="atur-keamanan" role="dialog" aria-modal="true"
@@ -129,7 +129,7 @@
 </div>
 
 {{-- ==================== 2. NOTIFIKASI ==================== --}}
-@php($bukaNotifikasi = $errors->has([
+@php($bukaNotifikasi = $errors->hasAny([
     'notifikasi_konten_terbit',
     'notifikasi_konten_draft',
     'notifikasi_aktivitas_kuis',
@@ -253,7 +253,7 @@
 </div>
 
 {{-- ==================== 3. PENGATURAN PUBLIKASI ==================== --}}
-@php($bukaPublikasi = $errors->has(['status_konten_default', 'konfirmasi_publikasi']))
+@php($bukaPublikasi = $errors->hasAny(['status_konten_default', 'konfirmasi_publikasi']))
 
 <div @class(['ad-dialog', 'is-buka' => $bukaPublikasi])
     data-atur-dialog="atur-publikasi" role="dialog" aria-modal="true"

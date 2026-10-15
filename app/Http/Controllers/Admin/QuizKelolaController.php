@@ -51,7 +51,9 @@ class QuizKelolaController extends Controller
             // Semua soal, bukan hanya yang aktif: kalau ada soal yang
             // dinonaktifkan, form edit harus tetap bisa melihat dan
             // mengembalikannya, bukan diam-diam menghapusnya.
-            'soal' => $quiz->soal()->terurut()->get(),
+            // pilihanSoal dimuat sekaligus supaya IsianSoalQuiz::baris()
+            // tidak menembak satu query per soal.
+            'soal' => $quiz->soal()->terurut()->with('pilihanSoal')->get(),
             // Quiz tanpa kode (mis. quiz publik yang belum pernah punya
             // kode) tetap membuka form dengan kode acak, supaya admin bisa
             // memakai tombol "Generate Kode" tanpa mengetik dari nol.

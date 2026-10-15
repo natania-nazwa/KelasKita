@@ -34,7 +34,7 @@ class QuizKelolaController extends Controller
         return view('user.quiz-tambah', [
             'kategori' => Pelajaran::query()->aktif()->urutKatalog()->get(),
             'quiz' => $quiz,
-            'soal' => $quiz->soal()->terurut()->get(),
+            'soal' => $quiz->soal()->terurut()->with('pilihanSoal')->get(),
             // Quiz tanpa kode (mis. quiz publik yang belum pernah punya
             // kode) tetap membuka form dengan kode acak, supaya peserta
             // bisa memakai tombol "Generate Kode" tanpa mengetik dari nol.
