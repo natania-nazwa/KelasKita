@@ -536,6 +536,85 @@ class VerifikasiQaTest extends TestCase
             ->assertSee('data-vf-id="'.$materi->id.'"', false);
     }
 
+    /*
+     * ====================================================================
+     * THUMBNAIL DARI PENGGUNA
+     * ====================================================================
+     */
+
+    public function test_daftar_verifikasi_memakai_thumbnail_yang_diunggah_pengguna(): void
+    {
+        $pemilik = $this->buatPengguna();
+        $admin = $this->buatAdmin();
+        $materi = $this->buatMateri($pemilik, Materi::STATUS_PENDING, 'Materi Bersampul');
+        $materi->update(['thumbnail' => 'thumbnails/unggah-pengguna.jpg']);
+
+        $muka = $this->actingAs($admin)->get(route('admin.verifikasi'))->assertOk();
+
+        // Berkas yang diunggah pengguna yang ditampilkan, bukan ikon mapel.
+        $muka->assertSee('ad-vf-item__gambar', false)
+            ->assertSee(asset('storage/thumbnails/unggah-pengguna.jpg'), false)
+            ->assertSee('alt="Thumbnail Materi Bersampul"', false);
+    }
+
+    public function test_daftar_verifikasi_memakai_ikon_kategori_saat_tanpa_thumbnail(): void
+    {
+        $pemilik = $this->buatPengguna();
+        $admin = $this->buatAdmin();
+        $materi = $this->buatMateri($pemilik, Materi::STATUS_PENDING, 'Materi Tanpa Sampul');
+        $materi->update(['thumbnail' => null]);
+
+        $this->actingAs($admin)
+            ->get(route('admin.verifikasi'))
+            ->assertOk()
+            ->assertSee('ad-vf-item__ikon', false)
+            ->assertDontSee('ad-vf-item__gambar', false);
+    }
+
+    public function test_panel_review_memakai_thumbnail_yang_diunggah_pengguna(): void
+    {
+        $pemilik = $this->buatPengguna();
+        $admin = $this->buatAdmin();
+        $materi = $this->buatMateri($pemilik, Materi::STATUS_PENDING, 'Materi Panel Bersampul');
+        $materi->update(['thumbnail' => 'thumbnails/unggah-panel.jpg']);
+
+        $this->actingAs($admin)
+            ->get(route('admin.verifikasi.panel', ['jenis' => 'materi', 'id' => $materi->id]))
+            ->assertOk()
+            ->assertSee('ad-vf-panel__identitas-gambar', false)
+            ->assertSee('ad-vf-thumbnail', false)
+            ->assertSee(asset('storage/thumbnails/unggah-panel.jpg'), false)
+            ->assertDontSee('ad-vf-panel__identitas-ikon', false);
+    }
+
+    public function test_panel_review_memakai_ikon_kategori_saat_tanpa_thumbnail(): void
+    {
+        $pemilik = $this->buatPengguna();
+        $admin = $this->buatAdmin();
+        $quiz = $this->buatQuiz($pemilik, Quiz::STATUS_PENDING, 'Quiz Tanpa Sampul');
+
+        $this->actingAs($admin)
+            ->get(route('admin.verifikasi.panel', ['jenis' => 'quiz', 'id' => $quiz->id]))
+            ->assertOk()
+            ->assertSee('ad-vf-panel__identitas-ikon', false)
+            ->assertDontSee('ad-vf-panel__identitas-gambar', false)
+            ->assertDontSee('ad-vf-thumbnail', false);
+    }
+
+    public function test_daftar_verifikasi_memakai_thumbnail_quiz_yang_diunggah_pengguna(): void
+    {
+        $pemilik = $this->buatPengguna();
+        $admin = $this->buatAdmin();
+        $quiz = $this->buatQuiz($pemilik, Quiz::STATUS_PENDING, 'Quiz Bersampul');
+        $quiz->update(['thumbnail' => 'thumbnails-quiz/unggah-quiz.jpg']);
+
+        $this->actingAs($admin)
+            ->get(route('admin.verifikasi', ['jenis' => 'quiz']))
+            ->assertOk()
+            ->assertSee('ad-vf-item__gambar', false)
+            ->assertSee(asset('storage/thumbnails-quiz/unggah-quiz.jpg'), false);
+    }
+
     public function test_query_pilih_format_salah_tidak_memicu_error(): void
     {
         $pemilik = $this->buatPengguna();

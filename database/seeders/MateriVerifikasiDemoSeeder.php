@@ -47,6 +47,7 @@ class MateriVerifikasiDemoSeeder extends Seeder
             'tingkat_kesulitan' => 'Sedang',
             'estimasi_waktu' => '1 jam 15 menit',
             'deskripsi' => 'Menyelesaikan persamaan linear satu variabel, dari bentuk dasar sampai penerapannya di soal cerita.',
+            'thumbnail' => 'https://images.unsplash.com/photo-1503676260728-1c00da094a0b?auto=format&fit=crop&w=1120&h=600&q=75',
             'tips' => 'Selalu periksa hasilnya dengan memasukkan nilai variabel kembali ke persamaan awal.',
             'isi' => <<<'ISI'
             # Apa Itu Persamaan Linear Satu Variabel
@@ -157,6 +158,7 @@ class MateriVerifikasiDemoSeeder extends Seeder
             'tingkat_kesulitan' => 'Mudah',
             'estimasi_waktu' => '1 jam',
             'deskripsi' => 'Mengenal ciri, struktur, dan unsur teks berita serta cara menemukan gagasan utamanya.',
+            'thumbnail' => 'https://images.unsplash.com/photo-1504711434969-e33886168f5c?auto=format&fit=crop&w=1120&h=600&q=75',
             'tips' => 'Saat membaca berita, tandai dulu unsur 5W+1H-nya sebelum menilai isinya.',
             'isi' => <<<'ISI'
             # Apa Itu Teks Berita
@@ -230,6 +232,7 @@ class MateriVerifikasiDemoSeeder extends Seeder
             'tingkat_kesulitan' => 'Sedang',
             'estimasi_waktu' => '1 jam 10 menit',
             'deskripsi' => 'Mengelompokkan makhluk hidup berdasarkan cirinya, dari tingkat takson sampai sistem lima kingdom.',
+            'thumbnail' => 'https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&w=1120&h=600&q=75',
             'tips' => 'Hafalkan urutan takson dengan jembatan keledai, misalnya "Kami Punya Celana Cokelat Hubungan Keluarga Sultan".',
             'isi' => <<<'ISI'
             # Mengapa Makhluk Hidup Diklasifikasikan
@@ -309,6 +312,7 @@ class MateriVerifikasiDemoSeeder extends Seeder
             'tingkat_kesulitan' => 'Sedang',
             'estimasi_waktu' => '1 jam 20 menit',
             'deskripsi' => 'Menyusun langkah penyelesaian masalah dengan algoritma serta menggambarkannya sebagai flowchart.',
+            'thumbnail' => 'https://images.unsplash.com/photo-1461749280684-dccba630e2f6?auto=format&fit=crop&w=1120&h=600&q=75',
             'tips' => 'Tulis algoritmanya dalam kalimat biasa dulu sebelum menggambar flowchart-nya.',
             'isi' => <<<'ISI'
             # Apa Itu Algoritma
@@ -405,6 +409,7 @@ class MateriVerifikasiDemoSeeder extends Seeder
             'tingkat_kesulitan' => 'Mudah',
             'estimasi_waktu' => '1 jam',
             'deskripsi' => 'Memakai simple present untuk kebiasaan dan fakta, lengkap dengan bentuk negatif dan tanya.',
+            'thumbnail' => 'https://images.unsplash.com/photo-1456513080510-7bf3a84b82f8?auto=format&fit=crop&w=1120&h=600&q=75',
             'tips' => 'Ingat rumusnya: he, she, it menambah -s, sedangkan I, you, we, they tidak.',
             'isi' => <<<'ISI'
             # Kapan Simple Present Dipakai
@@ -492,6 +497,7 @@ class MateriVerifikasiDemoSeeder extends Seeder
             'tingkat_kesulitan' => 'Sedang',
             'estimasi_waktu' => '1 jam 15 menit',
             'deskripsi' => 'Rangkaian peristiwa sekitar proklamasi 17 Agustus 1945, dari Rengasdengklok sampai maknanya.',
+            'thumbnail' => 'https://images.unsplash.com/photo-1461360370896-922624d12aa1?auto=format&fit=crop&w=1120&h=600&q=75',
             'tips' => 'Susun peristiwanya dalam urutan waktu supaya mudah diingat, dari Rengasdengklok sampai pembacaan teks.',
             'isi' => <<<'ISI'
             # Latar Belakang
@@ -558,6 +564,7 @@ class MateriVerifikasiDemoSeeder extends Seeder
             'tingkat_kesulitan' => 'Sedang',
             'estimasi_waktu' => '1 jam 10 menit',
             'deskripsi' => 'Bentuk dan faktor interaksi sosial serta peran lembaga sosial dalam masyarakat.',
+            'thumbnail' => 'https://images.unsplash.com/photo-1529156069898-49953e39b3ac?auto=format&fit=crop&w=1120&h=600&q=75',
             'tips' => 'Contoh interaksi sosial paling gampang ditemukan di sekitar rumah, mulai dari tawar-menawar di pasar.',
             'isi' => <<<'ISI'
             # Interaksi Sosial
@@ -638,6 +645,7 @@ class MateriVerifikasiDemoSeeder extends Seeder
             'tingkat_kesulitan' => 'Sedang',
             'estimasi_waktu' => '1 jam 20 menit',
             'deskripsi' => 'Merapikan tabel basis data lewat bentuk normal pertama sampai ketiga beserta contoh kasusnya.',
+            'thumbnail' => 'https://images.unsplash.com/photo-1519389950473-47ba0277781c?auto=format&fit=crop&w=1120&h=600&q=75',
             'tips' => 'Kalau satu kolom menyimpan dua informasi, biasanya di situlah normalisasi perlu dilakukan.',
             'isi' => <<<'ISI'
             # Mengapa Perlu Normalisasi
@@ -766,9 +774,10 @@ class MateriVerifikasiDemoSeeder extends Seeder
                     'slug' => str($baris['nama'])->slug()->toString(),
                     'deskripsi' => $baris['deskripsi'],
                     'isi' => $baris['isi'],
-                    // Tanpa berkas: kartu yang tidak punya thumbnail sudah
-                    // punya tempat kosongnya sendiri.
-                    'thumbnail' => null,
+                    // Gambar contoh diambil dari URL penuh, bukan berkas
+                    // unggahan, jadi tidak perlu ada berkas di disk publik
+                    // dan kartunya tampil bergambar seperti materi lain.
+                    'thumbnail' => $baris['thumbnail'],
                     'tingkat_kesulitan' => $baris['tingkat_kesulitan'],
                     'estimasi_waktu' => $baris['estimasi_waktu'],
                     'tips' => $baris['tips'],

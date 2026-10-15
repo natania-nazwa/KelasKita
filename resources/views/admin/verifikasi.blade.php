@@ -349,10 +349,18 @@
                                 data-judul="{{ $baris['judul'] }}"
                                 @if ($aktif) aria-current="true" @endif>
 
-                                <span class="ad-vf-item__ikon ad-vf-item__ikon--{{ $baris['jenis'] }}"
-                                    aria-hidden="true">
-                                    <x-admin.ikon :nama="$ikonJenis[$baris['jenis']]" ukuran="w-5 h-5" />
-                                </span>
+                                @if (filled($baris['thumbnail'] ?? null))
+                                    <span class="ad-vf-item__gambar">
+                                        <img src="{{ $baris['thumbnail'] }}"
+                                            alt="Thumbnail {{ $baris['judul'] }}" loading="lazy"
+                                            decoding="async">
+                                    </span>
+                                @else
+                                    <span class="ad-vf-item__ikon ad-vf-item__ikon--{{ $baris['jenis'] }}"
+                                        aria-hidden="true">
+                                        <x-admin.ikon :nama="$ikonJenis[$baris['jenis']]" ukuran="w-5 h-5" />
+                                    </span>
+                                @endif
 
                                 <span class="ad-vf-item__isi">
                                     <span class="ad-vf-item__baris">

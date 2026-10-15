@@ -46,7 +46,7 @@ final class TinjauanQuiz
      * Petakan sekumpulan quiz ke bentuk array yang dipakai tabel review.
      *
      * Bentuk array per baris:
-     *   id, judul, deskripsi, tingkat_kesulitan, durasi, jumlah_soal,
+     *   id, judul, deskripsi, thumbnail, tingkat_kesulitan, durasi, jumlah_soal,
      *   visibilitas, pakai_kode, status, warna_status, status_label,
      *   catatan_admin, catatan_pengajuan, jumlah_ditolak,
      *   sisa_pengajuan, dibuat_pada, tautan_setujui, tautan_tolak,
@@ -76,6 +76,7 @@ final class TinjauanQuiz
                 'id' => $item->getKey(),
                 'judul' => $item->judul,
                 'deskripsi' => (string) $item->deskripsi,
+                'thumbnail' => BerkasQuiz::url($item->thumbnail),
                 'tingkat_kesulitan' => (string) $item->tingkat_kesulitan,
                 'durasi' => (int) ($item->durasi ?? 0),
                 'jumlah_soal' => $item->jumlahSoal(),

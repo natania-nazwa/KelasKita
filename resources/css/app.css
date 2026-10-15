@@ -6705,13 +6705,21 @@ html {
        Warnanya diambil dari warna kategori kartu (--k), bukan ungu brand.
        Semua kartu dalam satu baris memakai kategori yang berbeda, dan
        chip yang ikut warna kartunya membuat kelompok informasi tiap karya
-       mudah dicocokkan dengan thumbnail-nya. */
+       mudah dicocokkan dengan thumbnail-nya.
+
+       margin-top:auto menempelkan baris ini (beserta baris tombol
+       sesudahnya) ke dasar kartu. Dulu dorongan itu ada di .karya-aksi,
+       jadi baris tanggal tertinggal di atas sementara tombolnya turun
+       sendiri — celah di antaranya membesar pada kartu yang isinya pendek.
+       padding-top menjaga jarak minimum saat kartunya sudah tinggi. */
     .karya-info {
         display: flex;
         flex-wrap: wrap;
         align-items: center;
         gap: 0.4rem;
         min-width: 0;
+        margin-top: auto;
+        padding-top: 0.875rem;
     }
 
     .karya-info__butir {
@@ -6795,16 +6803,16 @@ html {
     }
 
     /* ---------- Baris aksi (lihat / edit / hapus) ----------
-       margin-top:auto + garis pemisah, sama seperti .kartu-materi__meta:
-       baris ini menempel di dasar kartu sehingga semua kartu dalam satu
-       baris tetap sejajar, berapa pun tinggi isinya. */
+       Garis pemisah + padding-top tetap: jaraknya ke baris informasi di
+       atasnya selalu sama. Dorongan ke dasar kartu dilakukan oleh
+       .karya-info (margin-top:auto), jadi baris tanggal dan tombol turun
+       bersama alih-alih berpisah jauh. */
     .karya-aksi {
         display: flex;
         flex-wrap: wrap;
         align-items: center;
         gap: 0.45rem;
         min-width: 0;
-        margin-top: auto;
         padding-top: 0.9rem;
         border-top: 1px dashed color-mix(in oklab, var(--k) 24%, var(--color-lavender));
     }

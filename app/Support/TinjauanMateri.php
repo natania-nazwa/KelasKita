@@ -47,7 +47,7 @@ final class TinjauanMateri
      * Petakan sekumpulan materi ke bentuk array yang dipakai tabel review.
      *
      * Bentuk array per baris:
-     *   id, slug, judul, deskripsi, isi, tingkat_kesulitan, waktu_baca,
+     *   id, slug, judul, deskripsi, thumbnail, isi, tingkat_kesulitan, waktu_baca,
      *   jumlah_bab, status, warna_status, status_label, catatan_admin,
      *   catatan_pengajuan, jumlah_ditolak, sisa_pengajuan, dibuat_pada,
      *   tautan_setujui, tautan_tolak, tautan_proses,
@@ -72,6 +72,7 @@ final class TinjauanMateri
                 'slug' => $item->slug,
                 'judul' => $item->nama,
                 'deskripsi' => (string) $item->deskripsi,
+                'thumbnail' => BerkasMateri::url($item->thumbnail),
                 'isi' => (string) $item->isi,
                 'tingkat_kesulitan' => (string) $item->tingkat_kesulitan,
                 'waktu_baca' => $item->waktuBaca(),

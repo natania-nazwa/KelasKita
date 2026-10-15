@@ -75,9 +75,16 @@
         @else
             {{-- Identitas singkat konten yang sedang dibuka. --}}
             <div class="ad-vf-panel__identitas">
-                <span class="ad-vf-panel__identitas-ikon" style="background-color: {{ $kategori['warna'] }};">
-                    <x-admin.ikon :nama="$ikonPanel" ukuran="w-5 h-5" />
-                </span>
+                @if (filled($rincian['thumbnail'] ?? null))
+                    <span class="ad-vf-panel__identitas-gambar">
+                        <img src="{{ $rincian['thumbnail'] }}" alt="Thumbnail {{ $rincian['judul'] }}"
+                            loading="lazy" decoding="async">
+                    </span>
+                @else
+                    <span class="ad-vf-panel__identitas-ikon" style="background-color: {{ $kategori['warna'] }};">
+                        <x-admin.ikon :nama="$ikonPanel" ukuran="w-5 h-5" />
+                    </span>
+                @endif
 
                 <div class="ad-vf-panel__identitas-teks">
                     <p class="ad-vf-panel__identitas-judul">{{ $rincian['judul'] }}</p>
@@ -125,6 +132,13 @@
             {{-- ==================== PRATINJAU ==================== --}}
             <div class="ad-vf-panel__isi" id="vf-isi-pratinjau" role="tabpanel"
                 aria-labelledby="vf-tab-pratinjau" data-vf-isi="pratinjau">
+                @if (filled($rincian['thumbnail'] ?? null))
+                    <figure class="ad-vf-thumbnail">
+                        <img src="{{ $rincian['thumbnail'] }}" alt="Thumbnail {{ $rincian['judul'] }}"
+                            loading="lazy" decoding="async">
+                    </figure>
+                @endif
+
                 @if ($jenis === 'materi')
                     @foreach ($rincian['seksi'] as $seksi)
                         <section class="ad-vf-seksi">

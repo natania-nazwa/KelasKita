@@ -4402,6 +4402,14 @@ body.tubuh-admin {
  * Tombol tiga titik dikecilkan sedikit supaya setinggi baris teksnya, bukan
  * menambah tinggi kartu. Popovernya tetap keluar ke bawah seperti
  * sebelumnya; kartu ini memang sengaja tidak memakai overflow: hidden.
+ *
+ * margin-top: auto yang menempelkan baris ini ke dasar kartu, bersama
+ * kaki di bawahnya. Dulu dorongan itu ada di .ad-kartu-daftar__kaki:
+ * baris tanggal tertinggal di atas lalu kaki turun sendiri, jadi celah
+ * di antaranya membesar pada kartu yang isinya pendek — kartu pertama
+ * satu baris (paling tinggi) terlihat rapat, sisanya bolong.
+ * Jarak minimum ke baris meta tetap datang dari margin-top milik
+ * <p class="ad-kartu-daftar__tanggal"> di dalamnya.
  */
 .ad-kartu-daftar__tanggal-baris {
     display: flex;
@@ -4409,6 +4417,7 @@ body.tubuh-admin {
     align-items: center;
     justify-content: space-between;
     gap: 0.5rem;
+    margin-top: auto;
 }
 
 .ad-kartu-daftar__tanggal-baris .ad-titik__tombol {
@@ -4431,8 +4440,10 @@ body.tubuh-admin {
  * Jadi saat kolomnya memang sempit, tombolnya turun ke baris sendiri di
  * bawah lencana. Itu lebih baik daripada keluar layar.
  *
- * margin-top: auto yang mendorong kaki ke bawah, jadi baris status dan
- * tombolnya sejajar di semua kartu walaupun judulnya beda panjang.
+ * padding-top: 0.75rem yang menjaga jaraknya ke baris tanggal di atas
+ * selalu sama. Dorongan ke dasar kartu dilakukan oleh
+ * .ad-kartu-daftar__tanggal-baris (margin-top: auto), supaya tanggal,
+ * lencana status, dan tombol turun bersama dan tidak berpisah jauh.
  */
 .ad-kartu-daftar__kaki {
     display: flex;
@@ -4441,7 +4452,6 @@ body.tubuh-admin {
     align-items: center;
     justify-content: space-between;
     gap: 0.5rem;
-    margin-top: auto;
     padding-top: 0.75rem;
 }
 
@@ -5522,6 +5532,28 @@ body.tubuh-admin {
     color: var(--ad-teks-sukses);
 }
 
+/* Thumbnail milik pengguna di baris daftar. Yang di sini bukan gambar
+ * kategori, melainkan berkas yang benar-benar diunggah pemilik konten, jadi
+ * admin menilai sampul yang sama persis dengan yang akan tayang. Konten yang
+ * belum punya thumbnail tetap memakai ikon di atas. */
+.ad-vf-item__gambar {
+    display: block;
+    flex-shrink: 0;
+    width: 3.75rem;
+    aspect-ratio: 16 / 9;
+    overflow: hidden;
+    border: 1px solid var(--ad-garis);
+    border-radius: 10px;
+    background-color: var(--ad-permukaan-lembut);
+}
+
+.ad-vf-item__gambar img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
 .ad-vf-item__isi {
     display: flex;
     flex-direction: column;
@@ -5748,6 +5780,45 @@ body.tubuh-admin {
     height: 2.75rem;
     border-radius: 14px;
     color: #fff;
+}
+
+/* Thumbnail milik pengguna di kepala panel. Menggantikan kotak warna
+ * kategori supaya sampul yang sedang dinilai terlihat sejak baris identitas,
+ * bukan baru setelah tab Pratinjau dibuka. */
+.ad-vf-panel__identitas-gambar {
+    display: block;
+    flex-shrink: 0;
+    width: 4.5rem;
+    aspect-ratio: 16 / 9;
+    overflow: hidden;
+    border: 1px solid var(--ad-garis);
+    border-radius: 12px;
+    background-color: var(--ad-permukaan-lembut);
+}
+
+.ad-vf-panel__identitas-gambar img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+/* Thumbnail ukuran penuh di awal tab Pratinjau. Lebarnya mengikuti panel,
+ * bukan thumbnail kecil di kepala, supaya admin bisa menilai apakah gambar
+ * yang diunggah pengguna layak dipakai sebagai sampul. */
+.ad-vf-thumbnail {
+    margin-bottom: 1.1rem;
+    overflow: hidden;
+    border: 1px solid var(--ad-garis);
+    border-radius: 0.9rem;
+    background-color: var(--ad-permukaan-lembut);
+}
+
+.ad-vf-thumbnail img {
+    display: block;
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    object-fit: cover;
 }
 
 .ad-vf-panel__identitas-teks {
