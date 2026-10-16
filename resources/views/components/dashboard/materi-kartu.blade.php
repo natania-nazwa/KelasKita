@@ -52,7 +52,7 @@
 
         {{-- B. Lencana tingkat kesulitan, melayang di pojok kiri atas. --}}
         @if (filled($materi['tingkat_kesulitan'] ?? null))
-            <span class="dash-materi__kesulitan capitalize {{ $warnaKesulitan[$kesulitan] ?? 'bg-white/90 text-dark/60' }}">
+            <span class="dash-materi__kesulitan capitalize {{ $warnaKesulitan[$kesulitan] ?? 'bg-white/90 text-dark/60 dash-kesulitan--netral' }}">
                 {{ $materi['tingkat_kesulitan'] }}
             </span>
         @endif

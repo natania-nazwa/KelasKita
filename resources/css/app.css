@@ -10982,6 +10982,7 @@ html {
 [data-theme='gelap'] :is(
         .kartu-materi__lencana,
         .kartu-quiz__lencana,
+        .dash-materi__lencana,
         .dash-quiz__lencana
     ) {
     background-color: color-mix(in oklab, var(--k) 16%, #191336);
@@ -10993,6 +10994,304 @@ html {
 
 [data-theme='gelap'] :is(.kartu-quiz__milik, .dash-quiz__milik) {
     background-color: color-mix(in oklab, var(--color-primary) 14%, #191336);
+}
+
+/* ---------- (5d) Kartu dashboard user ----------
+   Blok ini melengkapi aturan dasbor di atas khusus untuk halaman
+   user/dashboard: kartu Ringkasan Belajar, banner selamat datang,
+   kartu aksi cepat, kartu Materi/Quiz Terbaru, dan sisa teks redup di
+   panel sidebar. Semua targetnya hanya dipakai oleh
+   user/dashboard.blade.php dan components/dashboard/*, jadi halaman
+   lain tidak ikut berubah.
+
+   Warna yang menempel di markup (pastel statistik, gradasi banner,
+   chip putih, teks pekat dari --k-gelap) ditulis dalam hex hardcoded
+   untuk mode terang sehingga tidak ikut terbalik oleh token --color-*.
+   Karena itu tiap permukaan diberi kelas jangkar di markup, lalu
+   diganti eksplisit di sini: tanpa !important, tanpa mengubah layout,
+   dan tanpa menyentuh satu pun kelas mode terang. */
+
+/* --- Kartu Ringkasan Belajar (statistik) ---
+   --sa: aksen terang kartu (chip ikon, garis atas, panah).
+   --sb: latar tint gelap. --sc: border setingkat lebih terang. */
+[data-theme='gelap'] .stat-ringkas--hijau {
+    --sa: #6ee7b7;
+    --sb: #172d29;
+    --sc: #2c4a41;
+}
+
+[data-theme='gelap'] .stat-ringkas--kuning {
+    --sa: #fcd34d;
+    --sb: #302817;
+    --sc: #4d4026;
+}
+
+[data-theme='gelap'] .stat-ringkas--oranye {
+    --sa: #fdba74;
+    --sb: #30251b;
+    --sc: #4d3c2a;
+}
+
+[data-theme='gelap'] .stat-ringkas--pink {
+    --sa: #f9a8d4;
+    --sb: #301d2b;
+    --sc: #4d2f43;
+}
+
+[data-theme='gelap'] .stat-ringkas {
+    background-color: var(--sb, #191336);
+    border-color: var(--sc, var(--color-lavender));
+}
+
+[data-theme='gelap'] .stat-ringkas__blob {
+    background-color: color-mix(in oklab, var(--sa) 14%, transparent);
+}
+
+[data-theme='gelap'] .stat-ringkas__bar {
+    background-image: linear-gradient(90deg, transparent, var(--sa));
+}
+
+[data-theme='gelap'] .stat-ringkas__chip {
+    background-color: color-mix(in oklab, var(--sa) 16%, var(--sb));
+    color: var(--sa);
+}
+
+[data-theme='gelap'] .stat-ringkas__label {
+    color: #c4c1d5;
+}
+
+[data-theme='gelap'] .stat-ringkas__nilai {
+    color: #f3f0ff;
+}
+
+[data-theme='gelap'] .stat-ringkas__ubah {
+    color: #c4c1d5;
+}
+
+[data-theme='gelap'] .stat-ringkas__ubah svg {
+    color: var(--sa);
+}
+
+/* --- Banner selamat datang --- */
+[data-theme='gelap'] .sapa-kartu {
+    background-image: linear-gradient(to right, #2b2358 0%, #221b4a 55%, #1e1844 100%);
+}
+
+[data-theme='gelap'] .sapa-blob {
+    background-color: rgba(236, 232, 255, 0.06);
+}
+
+[data-theme='gelap'] .sapa-tanggal {
+    background-color: rgba(30, 24, 62, 0.85);
+}
+
+[data-theme='gelap'] .sapa-streak--aktif {
+    background-color: rgba(194, 65, 74, 0.22);
+    color: #ff9ba0;
+}
+
+[data-theme='gelap'] .sapa-streak--aktif svg {
+    color: #ff8188;
+}
+
+[data-theme='gelap'] .sapa-streak--redup {
+    color: color-mix(in oklab, var(--color-dark) 62%, transparent);
+}
+
+[data-theme='gelap'] .sapa-streak--redup svg {
+    color: color-mix(in oklab, var(--color-dark) 50%, transparent);
+}
+
+[data-theme='gelap'] .sapa-tombol {
+    background-color: rgba(30, 24, 62, 0.9);
+    color: #b09bff;
+}
+
+[data-theme='gelap'] .sapa-tombol:hover,
+[data-theme='gelap'] .sapa-tombol:focus-visible {
+    background-color: #2c2460;
+}
+
+/* --- Kartu aksi cepat: latar gelap eksplisit per kartu.
+   --ka menggantikan --k-gelap (warna pekat, mis. #1d4ed8) untuk judul,
+   panah, dan kotak ikon karena warna pekat itu tenggelam di atas
+   latar gelap. Kartu tanpa varian tetap memakai aturan generik
+   berbasis --k di atas. */
+[data-theme='gelap'] .dash-aksi--materi {
+    --ka: #a78bfa;
+    --kbg: #21183d;
+    background-color: var(--kbg);
+    border-color: color-mix(in oklab, var(--ka) 32%, transparent);
+}
+
+[data-theme='gelap'] .dash-aksi--quiz {
+    --ka: #60a5fa;
+    --kbg: #1b2340;
+    background-color: var(--kbg);
+    border-color: color-mix(in oklab, var(--ka) 32%, transparent);
+}
+
+[data-theme='gelap'] .dash-aksi--kode {
+    --ka: #5eead4;
+    --kbg: #172d30;
+    background-color: var(--kbg);
+    border-color: color-mix(in oklab, var(--ka) 32%, transparent);
+}
+
+[data-theme='gelap'] .dash-aksi:hover,
+[data-theme='gelap'] .dash-aksi:focus-visible {
+    background-color: color-mix(in oklab, var(--ka, var(--k)) 9%, var(--kbg, #191336));
+}
+
+[data-theme='gelap'] .dash-aksi-judul {
+    color: var(--ka, var(--k));
+}
+
+[data-theme='gelap'] .dash-aksi-desk {
+    color: #c4c1d5;
+}
+
+[data-theme='gelap'] .dash-aksi-panah {
+    color: var(--ka, var(--k));
+}
+
+[data-theme='gelap'] .dash-aksi .dash-ikon-kotak {
+    background-color: color-mix(in oklab, var(--ka, var(--k)) 15%, var(--kbg, #191336));
+}
+
+/* --- Kartu Materi Terbaru / Quiz Terbaru --- */
+[data-theme='gelap'] :is(.dash-materi, .dash-quiz) {
+    background-color: #17132b;
+    border-color: #30264d;
+}
+
+/* Border hover tetap memakai aksen seperti mode terang, tapi dicampur
+   ke kartu gelap supaya tidak jadi garis terang di atas latar gelap. */
+[data-theme='gelap'] .dash-kartu--pindah:hover,
+[data-theme='gelap'] .dash-kartu--pindah:focus-visible {
+    border-color: color-mix(in oklab, var(--k) 45%, #30264d);
+}
+
+/* Banner tanpa foto: gradasi warna kategori dicampur kartu gelap,
+   bukan putih. Foto asli yang menutupi banner tidak terpengaruh. */
+[data-theme='gelap'] :is(.dash-materi__gambar, .dash-quiz__gambar) {
+    background:
+        radial-gradient(
+            circle at 78% 20%,
+            color-mix(in oklab, var(--k) 30%, transparent),
+            transparent 58%
+        ),
+        linear-gradient(
+            135deg,
+            color-mix(in oklab, var(--k) 16%, #17132b),
+            color-mix(in oklab, var(--k) 34%, #17132b)
+        );
+}
+
+/* Lencana kategori, badge durasi, dan penanda aksi di atas thumbnail:
+   latarnya sudah digelapkan di atas, teksnya harus ikut memakai aksen
+   terang karena --k-gelap dari data selalu warna pekat. */
+[data-theme='gelap'] :is(
+        .dash-materi__lencana,
+        .dash-quiz__lencana,
+        .dash-materi__aksi,
+        .dash-quiz__durasi
+    ) {
+    color: color-mix(in oklab, var(--k) 70%, #ece8ff);
+}
+
+[data-theme='gelap'] :is(.dash-materi__judul, .dash-quiz__judul) {
+    color: #f3f0ff;
+}
+
+[data-theme='gelap'] .dash-kartu--pindah:hover :is(.dash-materi__judul, .dash-quiz__judul),
+[data-theme='gelap'] .dash-kartu--pindah:focus-visible :is(.dash-materi__judul, .dash-quiz__judul) {
+    color: color-mix(in oklab, var(--k) 55%, #f3f0ff);
+}
+
+[data-theme='gelap'] :is(.dash-materi__deskripsi, .dash-quiz__deskripsi) {
+    color: #c4c1d5;
+}
+
+[data-theme='gelap'] :is(.dash-materi__aksen, .dash-quiz__aksen) {
+    background-image: linear-gradient(90deg, var(--k), color-mix(in oklab, var(--k) 45%, #17132b));
+}
+
+/* Badge kesulitan: tiga varian pastelnya punya latarnya sendiri di
+   atas thumbnail jadi dibiarkan; hanya fallback netral yang memakai
+   putih, jadi dialihkan ke kartu gelap. */
+[data-theme='gelap'] .dash-kesulitan--netral {
+    background-color: rgba(30, 24, 62, 0.94);
+    color: #c4c1d5;
+}
+
+/* --- Panel sidebar: permukaan dan teks yang di mode terang memakai
+   putih atau warna pekat --- */
+[data-theme='gelap'] .dash-akses {
+    background-color: #141030;
+}
+
+[data-theme='gelap'] .dash-akses:hover,
+[data-theme='gelap'] .dash-akses:focus-visible {
+    background-color: #221b45;
+}
+
+/* Kotak ikon: --k-gelap dari data (kepala, jadwal, aksi) selalu warna
+   pekat, jadi di atas tint gelap diganti campuran aksen terang. */
+[data-theme='gelap'] .dash-ikon-kotak {
+    color: color-mix(in oklab, var(--k) 45%, #ece8ff);
+}
+
+[data-theme='gelap'] .dash-lihat {
+    color: #b09bff;
+}
+
+[data-theme='gelap'] .dash-jadwal__mulai {
+    color: color-mix(in oklab, var(--k) 45%, #ece8ff);
+}
+
+[data-theme='gelap'] .dash-jadwal__selesai {
+    color: color-mix(in oklab, var(--color-dark) 52%, transparent);
+}
+
+[data-theme='gelap'] .dash-jadwal__kelas {
+    color: color-mix(in oklab, var(--color-dark) 60%, transparent);
+}
+
+[data-theme='gelap'] .dash-jadwal--lewat :is(.dash-jadwal__judul, .dash-jadwal__kelas) {
+    color: color-mix(in oklab, var(--color-dark) 52%, transparent);
+}
+
+[data-theme='gelap'] .dash-jadwal__sisa {
+    color: color-mix(in oklab, var(--color-dark) 60%, transparent);
+}
+
+[data-theme='gelap'] .dash-jadwal__sisa-tautan {
+    color: #b09bff;
+}
+
+[data-theme='gelap'] .dash-peringkat__skor {
+    color: #b09bff;
+}
+
+/* Nomor peringkat tanpa medali saja; varian emas/perak/perunggu tetap
+   memakai teks putih di atas gradasi medali masing-masing. */
+[data-theme='gelap'] .dash-peringkat__no:not([class*='--']) {
+    color: color-mix(in oklab, var(--color-dark) 60%, transparent);
+}
+
+[data-theme='gelap'] .kalender-hari {
+    color: color-mix(in oklab, var(--color-dark) 55%, transparent);
+}
+
+[data-theme='gelap'] .kalender-sel--luar {
+    color: color-mix(in oklab, var(--color-dark) 50%, transparent);
+}
+
+/* Label seksi kecil di atas kartu statistik: text-dark/40 terlalu
+   redup di atas latar #100d24 untuk teks sekecil ini. */
+[data-theme='gelap'] .label-seksi {
+    color: color-mix(in oklab, var(--color-dark) 60%, transparent);
 }
 
 [data-theme='gelap'] .kartu-quiz__durasi-teks {

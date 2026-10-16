@@ -14,6 +14,19 @@
      * latar kartu yang diberi warna, ikon dan teks tetap gelap.
      */
     $sorot = (bool) ($aksi['sorot'] ?? false);
+
+    /*
+     * Penanda varian warna untuk mode gelap (blok dashboard di app.css).
+     * Judul dipakai sebagai kuncinya karena ketiga kartu aksi memang selalu
+     * tiga itu; kartu baru dengan judul yang tidak dikenal cukup jatuh ke
+     * aturan gelap generik berbasis --k tanpa kehilangan warna sama sekali.
+     */
+    $varian = match ($aksi['judul']) {
+        'Jelajahi Materi' => 'materi',
+        'Buat Quiz' => 'quiz',
+        'Masukkan Kode' => 'kode',
+        default => null,
+    };
 @endphp
 
 <a href="{{ $aksi['tautan'] }}"
@@ -21,6 +34,7 @@
     @class([
         'dash-kartu dash-kartu--pindah dash-aksi min-w-0 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40',
         'dash-kartu--sorot' => $sorot,
+        'dash-aksi--'.$varian => $varian !== null,
     ])
     aria-label="{{ $aksi['judul'] }}: {{ $aksi['deskripsi'] }}">
 

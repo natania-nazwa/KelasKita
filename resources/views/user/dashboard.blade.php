@@ -66,15 +66,19 @@
         <div class="min-w-0 [&>section:first-child]:mt-0">
 
             {{-- Welcome --}}
+            {{-- Kelas sapa-* hanya jangkar aturan mode gelap di app.css:
+                 gradasi latar, chip tanggal/streak, dan tombol kedua punya
+                 warna hardcoded supaya tetap terang; di mode gelap semuanya
+                 diganti lewat satu blok di sana tanpa layout berubah. --}}
             <section data-reveal
-                class="group relative mt-6 flex min-h-[6cm] flex-col gap-5 overflow-hidden rounded-2xl border border-lavender bg-gradient-to-r from-lavender/70 via-[#f2eeff] to-[#e4dcff] p-5 shadow-[0_1px_2px_rgba(33,26,58,0.04)] transition duration-300 hover:shadow-[0_16px_40px_-24px_rgba(33,26,58,0.28)] sm:h-[6cm] sm:flex-row sm:items-center sm:justify-between sm:p-6">
+                class="sapa-kartu group relative mt-6 flex min-h-[6cm] flex-col gap-5 overflow-hidden rounded-2xl border border-lavender bg-gradient-to-r from-lavender/70 via-[#f2eeff] to-[#e4dcff] p-5 shadow-[0_1px_2px_rgba(33,26,58,0.04)] transition duration-300 hover:shadow-[0_16px_40px_-24px_rgba(33,26,58,0.28)] sm:h-[6cm] sm:flex-row sm:items-center sm:justify-between sm:p-6">
                 <span
-                    class="pointer-events-none absolute -top-16 -left-16 h-40 w-40 rounded-full bg-white/40 transition-transform duration-500 group-hover:scale-125"></span>
+                    class="sapa-blob pointer-events-none absolute -top-16 -left-16 h-40 w-40 rounded-full bg-white/40 transition-transform duration-500 group-hover:scale-125"></span>
 
                 <div class="relative max-w-md">
                     <div class="flex flex-wrap items-center gap-2">
                         <span
-                            class="inline-flex items-center gap-1.5 rounded-full bg-white/70 px-2.5 py-1 font-mono text-[11px] font-semibold tracking-[0.14em] text-primary uppercase lg:text-[10px]">
+                            class="sapa-tanggal inline-flex items-center gap-1.5 rounded-full bg-white/70 px-2.5 py-1 font-mono text-[11px] font-semibold tracking-[0.14em] text-primary uppercase lg:text-[10px]">
                             <svg class="h-3 w-3" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"
                                 xmlns="http://www.w3.org/2000/svg">
                                 <path stroke-linecap="round" stroke-linejoin="round"
@@ -85,7 +89,7 @@
 
                         <span
                             title="Streak {{ $streak['jumlah'] }} hari. Menyala selama masih ada kegiatan dalam 24 jam terakhir."
-                            class="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 font-mono text-[11px] font-bold tracking-[0.14em] uppercase lg:text-[10px] {{ $streak['aktif'] ? 'bg-[#fee4e2] text-[#dc2626]' : 'bg-dark/5 text-dark/40' }}">
+                            class="sapa-streak inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 font-mono text-[11px] font-bold tracking-[0.14em] uppercase lg:text-[10px] {{ $streak['aktif'] ? 'sapa-streak--aktif bg-[#fee4e2] text-[#dc2626]' : 'sapa-streak--redup bg-dark/5 text-dark/40' }}">
                             <svg class="h-3.5 w-3.5 {{ $streak['aktif'] ? 'text-[#ef4444]' : 'text-dark/35' }}"
                                 fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24"
                                 xmlns="http://www.w3.org/2000/svg">
@@ -118,7 +122,7 @@
                         </a>
 
                         <a href="{{ route('user.quiz') }}"
-                            class="inline-flex items-center gap-1.5 rounded-full bg-white/80 px-3.5 py-2 text-xs font-semibold text-primary transition hover:bg-white">
+                            class="sapa-tombol inline-flex items-center gap-1.5 rounded-full bg-white/80 px-3.5 py-2 text-xs font-semibold text-primary transition hover:bg-white">
                             Kerjakan Quiz
                         </a>
                     </div>
@@ -137,38 +141,42 @@
 
             {{-- Statistik --}}
             <div class="mt-6 flex items-center justify-between">
-                <p class="font-mono text-[11px] font-semibold tracking-[0.14em] text-dark/40 uppercase lg:text-[10px]">
+                <p class="label-seksi font-mono text-[11px] font-semibold tracking-[0.14em] text-dark/40 uppercase lg:text-[10px]">
                     Ringkasan Belajar
                 </p>
 
-                <p class="text-[12px] text-dark/40 lg:text-[11px]">Diperbarui hari ini</p>
+                <p class="label-seksi text-[12px] text-dark/40 lg:text-[11px]">Diperbarui hari ini</p>
             </div>
 
             <div data-reveal-stagger class="mt-3 grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-4">
                 @foreach ($ringkasan as $stat)
                     @php $warna = $warnaKartu[$stat['warna']]; @endphp
 
+                    {{-- Kelas stat-ringkas dan varian --hijau/kuning/oranye/pink
+                         hanya dipakai oleh blok mode gelap di app.css supaya
+                         tint pastel di atas bisa diganti palet gelap per kartu
+                         tanpa menyentuh kelas terang yang ada di sini. --}}
                     <div
-                        class="group relative overflow-hidden rounded-2xl border p-4 shadow-[0_1px_2px_rgba(33,26,58,0.03)] transition duration-300 hover:-translate-y-0.5 hover:shadow-[0_12px_30px_-16px_rgba(33,26,58,0.2)] {{ $warna['latar'] }}">
+                        class="stat-ringkas stat-ringkas--{{ $stat['warna'] }} group relative overflow-hidden rounded-2xl border p-4 shadow-[0_1px_2px_rgba(33,26,58,0.03)] transition duration-300 hover:-translate-y-0.5 hover:shadow-[0_12px_30px_-16px_rgba(33,26,58,0.2)] {{ $warna['latar'] }}">
                         <span
-                            class="pointer-events-none absolute -top-8 -right-8 h-20 w-20 rounded-full transition-transform duration-500 group-hover:scale-150 {{ $warna['blob'] }}"></span>
+                            class="stat-ringkas__blob pointer-events-none absolute -top-8 -right-8 h-20 w-20 rounded-full transition-transform duration-500 group-hover:scale-150 {{ $warna['blob'] }}"></span>
 
                         <span
-                            class="absolute inset-x-4 top-0 h-1 rounded-b-full bg-gradient-to-r {{ $warna['bar'] }}"></span>
+                            class="stat-ringkas__bar absolute inset-x-4 top-0 h-1 rounded-b-full bg-gradient-to-r {{ $warna['bar'] }}"></span>
 
                         <span
-                            class="relative flex h-9 w-9 items-center justify-center rounded-full shadow-[0_2px_8px_-3px_rgba(33,26,58,0.25)] {{ $warna['chip'] }}">
+                            class="stat-ringkas__chip relative flex h-9 w-9 items-center justify-center rounded-full shadow-[0_2px_8px_-3px_rgba(33,26,58,0.25)] {{ $warna['chip'] }}">
                             <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.8"
                                 viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="{{ $stat['ikon'] }}" />
                             </svg>
                         </span>
 
-                        <p class="relative mt-3 text-[13px] font-medium text-dark/55">{{ $stat['label'] }}</p>
+                        <p class="stat-ringkas__label relative mt-3 text-[13px] font-medium text-dark/55">{{ $stat['label'] }}</p>
 
-                        <p class="relative mt-0.5 text-2xl font-extrabold text-dark">{{ $stat['nilai'] }}</p>
+                        <p class="stat-ringkas__nilai relative mt-0.5 text-2xl font-extrabold text-dark">{{ $stat['nilai'] }}</p>
 
-                        <p class="relative mt-1 flex items-center gap-1 text-[12px] text-dark/45 lg:text-[11px]">
+                        <p class="stat-ringkas__ubah relative mt-1 flex items-center gap-1 text-[12px] text-dark/45 lg:text-[11px]">
                             <svg class="h-3.5 w-3.5 shrink-0 text-[#4f9e74]" fill="none" stroke="currentColor" stroke-width="2"
                                 viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                                 <path stroke-linecap="round" stroke-linejoin="round"
