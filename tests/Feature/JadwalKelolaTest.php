@@ -116,6 +116,22 @@ class JadwalKelolaTest extends TestCase
         $respons->assertSee('<option value="1" selected', false);
     }
 
+    public function test_form_tambah_tanpa_pencarian_lonceng_dan_foto_profil(): void
+    {
+        $respons = $this->actingAs($this->buatPengguna())
+            ->get('/user/jadwal/tambah?tanggal='.$this->tanggalSenin())
+            ->assertOk();
+
+        // Top bar desktop hilang seluruhnya, dan header mobile kehilangan
+        // baris pencarian, lonceng, serta chip akun (foto profil) — hanya
+        // tersisa logo dan tombol "Menu lainnya".
+        $respons->assertDontSee('data-app-topbar', false)
+            ->assertDontSee('id="cari-topbar"', false)
+            ->assertDontSee('id="cari-mobile"', false)
+            ->assertDontSee('aria-label="Notifikasi"', false)
+            ->assertDontSee('aria-label="Menu profil"', false);
+    }
+
     public function test_jadwal_baru_tersimpan_dan_muncul_di_halaman(): void
     {
         $user = $this->buatPengguna();

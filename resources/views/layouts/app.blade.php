@@ -289,6 +289,11 @@
                  * yang layak dipertahankan, jadi header-nya dihilang
                  * seluruhnya, bukan dikosongkan.
                  *
+                 * "Tambah Jadwal": di halaman form itu tugas pengguna hanya
+                 * mengisi isian, jadi pencarian, lonceng, dan chip akun
+                 * semuanya tidak menyumbang apa pun — sama seperti halaman
+                 * Tambah/Edit Materi dan Quiz di bawah.
+                 *
                  * "Tambah/Edit Materi" dan "Tambah/Edit Quiz": di halaman itu
                  * pengguna sudah tahu persis sedang mengerjakan apa, jadi
                  * pencarian global tidak relevan, notifikasi tidak pernah
@@ -349,6 +354,7 @@
                     'user.uiux.hasil',
                     'user.hasil.detail',
                     'user.jadwal',
+                    'user.jadwal.tambah',
                     'user.materi.tambah',
                     'user.materi.edit',
                     'user.materi.detail',
@@ -381,8 +387,12 @@
                  * benar hanya berisi ruang tunggu. Halaman hasil quiz
                  * (pengerjaan dan rekap sesi) ikut kehilangan chip akunnya
                  * karena nilainya yang utama, bukan akun yang sedang dibuka.
+                 * "Tambah Jadwal" juga masuk di sini: pencarian, lonceng,
+                 * dan pp semuanya ikut pergi dari halaman form itu (lihat
+                 * $sembunyiTopbar), jadi header mobile tinggal berisi logo
+                 * dan tombol menu lainnya.
                  * Ini terpisah dari $sembunyiTopbar karena halaman top bar
-                 * tersembunyi lain (jadwal, materi, dsb.) masih memakai
+                 * tersembunyi lain (materi, dsb.) masih memakai
                  * chip akun.
                  */
                 $sembunyiAkun = request()->routeIs(
@@ -390,6 +400,7 @@
                     'user.sesi.hasil',
                     'user.uiux.hasil',
                     'user.hasil.detail',
+                    'user.jadwal.tambah',
                 );
             @endphp
 
