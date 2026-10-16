@@ -471,4 +471,62 @@ class MasukanSaranAdminTest extends TestCase
 
         $this->assertStringContainsString('aria-label="Masukan &amp; Saran"', $dashboard);
     }
+
+    /**
+     * Ikon "Masukan & Saran" di header ponsel menyala ungu di halamannya.
+     *
+     * Menu ini tidak ikut navigasi bawah, jadi di bawah 768px ikonnya di
+     * header ponsel adalah satu-satunya penanda halaman mana yang sedang
+     * terbuka. Penandanya mengikuti gaya menu aktif di navigasi bawah: kelas
+     * .ad-hp__tombol--aktif (pil ungu di admin.css) plus aria-current,
+     * supaya terlihat oleh mata maupun pembaca layar.
+     *
+     * Dua sisi yang dijaga: di halaman ini ikonnya harus menyala, dan di
+     * halaman lain harus padam — hanya salah satu yang bisa membuat
+     * penandanya jadi tidak berguna (menyala di mana-mana) atau hilang
+     * (tidak pernah menyala).
+     */
+    public function test_ikon_masukan_saran_di_header_ponsel_menyala_di_halamannya(): void
+    {
+        $admin = $this->buatAdmin();
+
+        $penanda = '/<a[^>]*href="'.preg_quote(route('admin.masukan-saran'), '/').'"'
+            .'[^>]*class="[^"]*\bad-hp__tombol--aktif\b[^"]*"[^>]*aria-current="page"/';
+
+        $diHalamanMasukan = $this->actingAs($admin)
+            ->get(route('admin.masukan-saran'))
+            ->assertOk()
+            ->baseResponse
+            ->getContent();
+
+        $this->assertSame(
+            1,
+            preg_match($penanda, $diHalamanMasukan),
+            'Di halaman Masukan & Saran, ikon header ponselnya harus memakai kelas ad-hp__tombol--aktif dan aria-current.'
+        );
+
+        $diDashboard = $this->actingAs($admin)
+            ->get(route('admin.dashboard'))
+            ->assertOk()
+            ->baseResponse
+            ->getContent();
+
+        $this->assertSame(
+            0,
+            preg_match($penanda, $diDashboard),
+            'Ikon header ponsel tidak boleh ditandai aktif di halaman lain.'
+        );
+
+        /*
+         * Pil ungu-nya ada di admin.css. Komennya ditarik dulu supaya
+         * pencarian tidak cocok dengan penjelasan di dalam komentar.
+         */
+        $css = (string) preg_replace('#/\*.*?\*/#s', '', file_get_contents(resource_path('css/admin.css')));
+
+        $this->assertMatchesRegularExpression(
+            '/\.ad-hp__tombol--polos\.ad-hp__tombol--aktif\s*\{\s*background-color:\s*var\(--ad-cucian-ungu\);\s*color:\s*var\(--ad-primary\);/',
+            $css,
+            'admin.css harus punya aturan pil ungu untuk ikon header ponsel yang sedang aktif.'
+        );
+    }
 }

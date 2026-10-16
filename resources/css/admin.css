@@ -8940,6 +8940,20 @@ body.tubuh-admin {
         color: var(--ad-primary);
     }
 
+    /*
+     * Penanda aktif untuk ikon "Masukan & Saran" di header ponsel: pil ungu
+     * (lavender) di belakang ikon, sama seperti menu yang sedang terbuka di
+     * navigasi bawah (.ad-bawah__tautan--aktif .ad-bawah__ikon), plus warna
+     * ungu yang ditegaskan ulang supaya penandanya tidak bergantung pada
+     * urutan aturan. Selector dua kelas dipakai supaya menang atas
+     * .ad-hp__tombol--polos yang membuat latar transparan, tanpa
+     * !important.
+     */
+    .ad-hp__tombol--polos.ad-hp__tombol--aktif {
+        background-color: var(--ad-cucian-ungu);
+        color: var(--ad-primary);
+    }
+
     /* ---------- Navigasi bawah ---------- */
     /*
      * Bentuknya sama persis dengan navigasi bawah halaman pengguna

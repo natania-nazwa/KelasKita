@@ -455,14 +455,34 @@
                     sidebar desktop, supaya satu halaman dikenali dengan
                     lambang yang sama di dua tempat. Ditaruh sebelum ikon roda
                     supaya berdiri di sebelah kirinya.
+
+                    Halaman yang sedang terbuka ditandai lewat
+                    .ad-hp__tombol--aktif + aria-current: pil ungu di belakang
+                    ikon, sama seperti penanda aktif di navigasi bawah, jadi
+                    posisi halaman terbaca sekilas dari header ponsel.
                 --}}
-                <a href="{{ route('admin.masukan-saran') }}" class="ad-hp__tombol ad-hp__tombol--polos"
-                    aria-label="Masukan &amp; Saran">
+                @php
+                    $masukanAktif = request()->routeIs('admin.masukan-saran*');
+                @endphp
+                <a href="{{ route('admin.masukan-saran') }}"
+                    @class(['ad-hp__tombol ad-hp__tombol--polos', 'ad-hp__tombol--aktif' => $masukanAktif])
+                    aria-label="Masukan &amp; Saran" @if ($masukanAktif) aria-current="page" @endif>
                     <x-admin.ikon nama="pesan" ukuran="w-5 h-5" />
                 </a>
 
-                <a href="{{ route('admin.pengaturan') }}" class="ad-hp__tombol ad-hp__tombol--polos"
-                    aria-label="Pengaturan">
+                {{--
+                    Ikon Pengaturan memakai pola yang sama dengan jalan pintas
+                    di sebelah kirinya: polos tanpa kotak, dan menyala ungu
+                    (.ad-hp__tombol--aktif + aria-current) di seluruh sub-
+                    halaman Pengaturan — sama seperti menu Pengaturan di
+                    sidebar yang memakai pola admin.pengaturan*.
+                --}}
+                @php
+                    $pengaturanAktif = request()->routeIs('admin.pengaturan*');
+                @endphp
+                <a href="{{ route('admin.pengaturan') }}"
+                    @class(['ad-hp__tombol ad-hp__tombol--polos', 'ad-hp__tombol--aktif' => $pengaturanAktif])
+                    aria-label="Pengaturan" @if ($pengaturanAktif) aria-current="page" @endif>
                     <x-admin.ikon nama="roda" ukuran="w-5 h-5" />
                 </a>
 

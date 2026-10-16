@@ -204,7 +204,7 @@ class PengaturanAdminTest extends TestCase
                 'nama' => 'Admin Baru',
                 'email' => 'baru@example.com',
             ])
-            ->assertRedirect(route('admin.pengaturan'))
+            ->assertRedirect(route('admin.pengaturan.profil'))
             ->assertSessionHas('sukses');
 
         $admin->refresh();
@@ -253,7 +253,7 @@ class PengaturanAdminTest extends TestCase
 
         $this->actingAs($admin)
             ->delete(route('admin.pengaturan.profil.foto.destroy'))
-            ->assertRedirect(route('admin.pengaturan'))
+            ->assertRedirect(route('admin.pengaturan.profil'))
             ->assertSessionHas('sukses', 'Foto profil berhasil dihapus.');
 
         $setelah = $admin->fresh();
@@ -1052,5 +1052,55 @@ class PengaturanAdminTest extends TestCase
             ->assertRedirect(route('login'));
 
         $this->assertGuest();
+    }
+
+    /* ================================================================
+     * IKON PENGATURAN DI HEADER PONSEL
+     * ================================================================ */
+
+    /**
+     * Ikon Pengaturan di header ponsel menyala ungu di seluruh halamannya.
+     *
+     * Di bawah 768px sidebar tidak ada, jadi ikon roda di header ponsel
+     * adalah penanda halaman mana yang sedang terbuka — sama seperti menu
+     * Pengaturan di sidebar yang menyala untuk pola admin.pengaturan*. Ikonnya
+     * diberi kelas .ad-hp__tombol--aktif (pil ungu, aturannya di admin.css dan
+     * dijaga di MasukanSaranAdminTest) plus aria-current="page".
+     *
+     * Dua sisi yang dijaga: sub-halaman Pengaturan harus ikut menyala, dan
+     * halaman lain tidak — hanya salah satu yang membuat penandanya tidak
+     * berguna (menyala di mana-mana) atau hilang (tidak pernah menyala).
+     */
+    public function test_ikon_pengaturan_di_header_ponsel_menyala_di_halamannya(): void
+    {
+        $admin = $this->buatAdmin();
+
+        $penanda = '/<a[^>]*href="'.preg_quote(route('admin.pengaturan'), '/').'"'
+            .'[^>]*class="[^"]*\bad-hp__tombol--aktif\b[^"]*"[^>]*aria-current="page"/';
+
+        // Profil dipakai sebagai contoh sub-halaman: polanya admin.pengaturan*.
+        $diProfil = $this->actingAs($admin)
+            ->get(route('admin.pengaturan.profil'))
+            ->assertOk()
+            ->baseResponse
+            ->getContent();
+
+        $this->assertSame(
+            1,
+            preg_match($penanda, $diProfil),
+            'Di sub-halaman Pengaturan, ikon roda di header ponsel harus ditandai aktif dan ungu.'
+        );
+
+        $diDashboard = $this->actingAs($admin)
+            ->get(route('admin.dashboard'))
+            ->assertOk()
+            ->baseResponse
+            ->getContent();
+
+        $this->assertSame(
+            0,
+            preg_match($penanda, $diDashboard),
+            'Ikon roda di header ponsel tidak boleh ditandai aktif di halaman lain.'
+        );
     }
 }

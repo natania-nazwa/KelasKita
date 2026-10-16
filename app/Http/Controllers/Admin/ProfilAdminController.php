@@ -18,7 +18,7 @@ use Illuminate\View\View;
  * sehingga tidak ada cara lewat URL untuk mengedit akun orang lain.
  *
  * Yang membedakan hanya dua hal: halaman ini memakai design system admin, dan
- * setelah simpan kembali ke /admin/pengaturan, bukan ke /user/profil.
+ * setelah simpan kembali ke /admin/pengaturan/profil, bukan ke /user/profil.
  */
 class ProfilAdminController extends Controller
 {
@@ -51,7 +51,7 @@ class ProfilAdminController extends Controller
         $admin->fill([...$data, ...$fotoBaru])->save();
 
         return redirect()
-            ->route('admin.pengaturan')
+            ->route('admin.pengaturan.profil')
             ->with('sukses', 'Profil berhasil diperbarui.')
             ->with('suksesDetail', 'Nama, email, dan foto profil yang dipakai di seluruh area admin sudah ikut berubah.');
     }
@@ -73,7 +73,7 @@ class ProfilAdminController extends Controller
         $admin->fill(['foto_profil' => null])->save();
 
         return redirect()
-            ->route('admin.pengaturan')
+            ->route('admin.pengaturan.profil')
             ->with('sukses', 'Foto profil berhasil dihapus.');
     }
 }
