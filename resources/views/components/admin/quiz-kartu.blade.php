@@ -23,8 +23,9 @@
      * harus diperiksa dan berapa lama quiz itu dikerjakan.
      *
      * Mode publik atau kode sengaja tidak jadi baris tersendiri: statusnya
-     * sudah terbaca dari lencana di kaki kartu, dan baris tambahan hanya
-     * membuat kartu lebih tinggi tanpa menambah informasi baru.
+     * sudah terbaca dari lencana melayang di pojok kanan atas thumbnail,
+     * dan baris tambahan hanya membuat kartu lebih tinggi tanpa menambah
+     * informasi baru.
      *
      * Bentuk array per kartu datang dari App\Support\DaftarQuizAdmin, jadi
      * komponen ini tidak terikat Eloquent:
@@ -92,6 +93,17 @@
         @if (filled($quiz['tingkat_kesulitan']))
             <span @class(['ad-kartu-daftar__kesulitan', 'capitalize', $kelasKesulitan])>{{ $quiz['tingkat_kesulitan'] }}</span>
         @endif
+
+        {{--
+            Status melayang di pojok kanan atas thumbnail — letaknya sama
+            persis dengan lencana status di kartu Konten Pembelajaran
+            (konten-kartu.blade.php, karya-pojok). Gaya lencana-materi
+            dipertahankan; yang dipindah hanya posisinya, dari kaki kartu
+            ke atas gambar.
+        --}}
+        <div class="ad-kartu-daftar__status">
+            <x-admin.lencana-materi :status="$quiz['status']" :label="$quiz['status_label']" />
+        </div>
     </div>
 
     {{-- B. Isi kartu. --}}
@@ -177,9 +189,11 @@
         </div>
 
         {{--
-            Status + aksi. Tombolnya terdorong ke bawah kartu lewat
-            margin-top: auto pada .ad-kartu-daftar__kaki, jadi semua kartu
-            dalam satu baris tetap sejajar walaupun judulnya beda panjang.
+            Aksi. Tombolnya terdorong ke bawah kartu lewat margin-top: auto
+            pada .ad-kartu-daftar__kaki, jadi semua kartu dalam satu baris
+            tetap sejajar walaupun judulnya beda panjang. Lencana status
+            tidak lagi berdiri di sini — ia sudah pindah ke pojok kanan
+            atas thumbnail, jadi baris ini cuma tombol.
 
             Edit berdiri sebagai tombol, bukan hanya isi menu: quiz milik
             admin yang sedang login adalah hal yang paling sering diubah
@@ -188,8 +202,6 @@
             seperti di dalam menu.
         --}}
         <div class="ad-kartu-daftar__kaki">
-            <x-admin.lencana-materi :status="$quiz['status']" :label="$quiz['status_label']" />
-
             <div class="ad-kartu-daftar__aksi">
                 <a href="{{ $quiz['tautan_detail'] }}" class="ad-tombol ad-tombol--halus ad-tombol--kecil">
                     <x-admin.ikon nama="mata" ukuran="w-3.5 h-3.5" />
