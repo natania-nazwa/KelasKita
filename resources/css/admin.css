@@ -4157,33 +4157,6 @@ body.tubuh-admin {
 }
 
 /*
- * Seluruh baris dibuat sama tinggi.
- *
- * Pengukuran getBoundingClientRect (9 materi, 4 kolom, gap 20px) :
- * tinggi baris 1 = 344,63px sedangkan baris 2 dan 3 = 377,13px. Selisih
- * 32,5px itu datang dari kaki kartu yang membungkus: pada dua kartu
- * lencana status turun ke barisnya sendiri sehingga kaki naik dari 46,39px
- * menjadi 78,89px, dan baris yang memuatnya ikut lebih tinggi. Akibatnya
- * tepi bawah kartu baris pertama terlihat terangkat, dan jaraknya ke baris
- * kedua terbaca tidak sama dengan jarak baris-baris lainnya.
- *
- * Tinggi kartu dalam satu baris sebenarnya sudah seragam (grid default
- * align-items: stretch) dan row-gap sudah sama dengan column-gap. Yang
- * belum seragam adalah tinggi antar barisnya. grid-auto-rows: 1fr
- * menyamakan tinggi semua baris, sehingga seluruh ruang bebas di dalam
- * kartu — yang dikumpulkan .ad-kartu-daftar__tanggal-baris lewat
- * margin-top: auto — jadi berukuran sama di semua kartu. Tidak ada isi,
- * ukuran, warna, maupun posisi tombol dan tanggal yang berubah.
- *
- * Dibatasi ke halaman Materi saja lewat :has(): halaman Quiz memakai
- * .ad-daftar-kartu yang sama, tapi kartunya selalu ber-akhiran --kuis,
- * jadi tampilannya tidak ikut tersentuh.
- */
-.ad-daftar-kartu:has(> .ad-kartu-daftar:not(.ad-kartu-daftar--kuis)) {
-    grid-auto-rows: 1fr;
-}
-
-/*
  * Empty statestretched penuh satu baris.
  *
  * Pesan "belum ada data" bukan kartu di dalam daftar, jadi ia tidak boleh

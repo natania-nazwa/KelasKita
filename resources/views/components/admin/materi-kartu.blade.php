@@ -154,15 +154,19 @@
         </div>
 
         {{--
-            Status + aksi. Tombolnya terdorong ke bawah kartu lewat
-            margin-top: auto pada .ad-kartu-daftar__kaki, jadi semua kartu
-            dalam satu baris tetap sejajar walaupun judulnya beda panjang.
+            Status + aksi. Seluruh isi kaki didorong ke dasar kartu lewat
+            margin-top: auto pada .ad-kartu-daftar__tanggal-baris, jadi
+            semua kartu dalam satu baris tetap sejajar walaupun judulnya
+            beda panjang.
 
-Edit berdiri sebagai tombol, bukan hanya isi menu: materinya
-            milik admin yang sedang login adalah hal yang paling sering
-            diubah setelah dibaca, dan mencarinya di dalam menu tiga titik
-            menambah satu langkah tanpa alasan. Syaratnya tetap boleh_edit
-            yang sama seperti di dalam menu.
+            Aksinya sengaja hanya "Lihat". Dulu ada juga tombol Edit
+            berdiri untuk materi milik admin (boleh_edit), tapi tombol itu
+            membuat lebar isi kaki naik dari 203,81px menjadi 280,98px —
+            sedangkan kartu empat kolom hanya punya 234,13px isi. Kakinya
+            lalu membungkus ke baris kedua dan dua kartu admin itu jadi
+            32,5px lebih tinggi dari kartu lain, sehingga barisnya tidak
+            rata. Edit tetap ada di menu tiga titik di sebelah tanggal,
+            dengan syarat boleh_edit yang sama.
         --}}
         <div class="ad-kartu-daftar__kaki">
             <x-admin.lencana-materi :status="$materi['status']" :label="$materi['status_label']" />
@@ -173,14 +177,6 @@ Edit berdiri sebagai tombol, bukan hanya isi menu: materinya
 
                     Lihat
                 </a>
-
-                @if ($materi['boleh_edit'])
-                    <a href="{{ $materi['tautan_edit'] }}" class="ad-tombol ad-tombol--halus ad-tombol--kecil">
-                        <x-admin.ikon nama="pena" ukuran="w-3.5 h-3.5" />
-
-                        Edit
-                    </a>
-                @endif
             </div>
         </div>
     </div>
