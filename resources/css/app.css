@@ -11494,6 +11494,40 @@ html {
     box-shadow: none;
 }
 
+/* ---------- (5d) Editor isi materi ----------
+   Area tulis dan toolbar menulis warna teks harfiah di mode terang:
+   #3d3757 untuk isi materi dan #4b4566 untuk ikon B/I/U serta tombol
+   toolbar lainnya. Keduanya dibalik di mode gelap supaya teks yang
+   sedang diketik dan ikon format tetap terbaca di atas latar kartu. */
+[data-theme='gelap'] .kertas-editor,
+[data-theme='gelap'] .kertas-editor :is(h2, h3) {
+    color: #fff;
+}
+
+/* Kutipan punya warna teks sendiri yang juga ditulis harfiah, jadi ia
+   diturunkan ke arah terang, bukan dibiarkan ungu tua di atas gelap. */
+[data-theme='gelap'] .kertas-editor blockquote {
+    color: color-mix(in oklab, #4c4470 35%, #ece8ff);
+}
+
+[data-theme='gelap'] .alat-tombol {
+    color: #fff;
+}
+
+/* Aturan hover asli berada di @layer components, jadi ia kalah dari
+   aturan tanpa lapisan di atas. Ditimpa ulang di sini supaya tombol
+   tetap berganti warna saat disorot, bukan diam saja. */
+[data-theme='gelap'] .alat-tombol:hover {
+    background-color: var(--color-ungu-bg);
+    color: var(--color-ungu);
+}
+
+/* Tombol format yang aktif memakai teks putih, jadi latarnya dialihkan
+   ke primary yang memang dijaga cukup gelap untuk putih — --color-ungu
+   di mode gelap justru jadi ungu terang. */
+[data-theme='gelap'] .alat-tombol.is-aktif {
+    background-color: var(--color-primary);
+}
 
 /* Blok kode memakai latar batu kebiruan (#252b3a). Mode gelap menurunkan
    brightness-nya saja supaya tetap satu keluarga, bukan kembali ungu. */
