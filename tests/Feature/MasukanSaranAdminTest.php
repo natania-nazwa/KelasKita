@@ -337,7 +337,7 @@ class MasukanSaranAdminTest extends TestCase
      * seperti Pengaturan, dan disembunyikan di >= 768px lewat md:hidden supaya
      * tidak tampil berdua dengan menu Dashboard di sidebar.
      *
-     * Empat sisi yang dijaga, masing-masing bisa hilang sendiri:
+     * Lima sisi yang dijaga, masing-masing bisa hilang sendiri:
      *
      *   - tautannya benar-benar ke Dashboard, bukan ke halaman sebelumnya;
      *   - ikonnya panah-kiri. Dicek lewat jalur SVG-nya (Ikon::path), bukan
@@ -345,7 +345,13 @@ class MasukanSaranAdminTest extends TestCase
      *     merender nama atributnya ke HTML. Memakai jalur SVG sekaligus
      *     membuat test gagal kalau ikonnya diganti, bukan lolos diam-diam;
      *   - letaknya di dalam <main class="ad-isi">, bukan di header ponsel;
-     *   - kelas md:hidden ada, supaya tombolnya justru hilang di atas 768px.
+     *   - kelas md:hidden ada, supaya tombolnya justru hilang di atas 768px;
+     *   - admin.css punya aturan pasangan .ad-tombol.md:hidden, karena
+     *     .ad-tombol menulis display tanpa @layer sehingga md:hidden dari
+     *     Tailwind (di @layer utilities) kalah cascade dan tombolnya tetap
+     *     tampil di desktop tanpa aturan ini. Kedua sisi terakhir tidak boleh
+     *     saling menggantikan: kelas tanpa aturan = terlihat di desktop,
+     *     aturan tanpa kelas = tidak menempel pada tombolnya.
      */
     public function test_tombol_kembali_ke_dashboard_hanya_di_layar_kecil(): void
     {
@@ -370,6 +376,24 @@ class MasukanSaranAdminTest extends TestCase
             'hidden md:inline-flex',
             $isi,
             'Tombol kembali terbalik: disembunyikan justru di layar kecil.'
+        );
+
+        /*
+         * Kelas md:hidden saja tidak cukup: utilitasnya berada di
+         * @layer utilities sehingga kalah dari .ad-tombol yang menulis
+         * display tanpa lapisan. Yang menutup desktop adalah aturan
+         * pasangan di admin.css; komennya ditarik dulu supaya pencarian
+         * tidak cocok dengan penjelasan di dalam komentar.
+         */
+        $css = (string) preg_replace('#/\*.*?\*/#s', '', file_get_contents(resource_path('css/admin.css')));
+
+        $this->assertSame(
+            1,
+            preg_match(
+                '/@media \(min-width: 768px\)\s*\{\s*\.ad-tombol\.md\\\\:hidden\s*\{\s*display:\s*none;\s*\}\s*\}/',
+                $css
+            ),
+            'admin.css harus punya aturan .ad-tombol.md:hidden di media 768px supaya tombol kembali benar-benar hilang di desktop.'
         );
 
         $posisiKonten = strpos($isi, '<main class="ad-isi"');

@@ -58,6 +58,10 @@
                 supaya tidak tampil berdua dengan menu di sidebar; di bawah itu
                 inilah jalan pulang yang jelas dari halaman ini. Diletakkan di
                 dalam kepala halaman (isi konten), sama seperti Pengaturan.
+
+                md:hidden butuh pasangan di admin.css (.ad-tombol.md:hidden di
+                media 768px), karena .ad-tombol menulis display tanpa @layer
+                sehingga utilitas Tailwind-nya kalah cascade.
             --}}
             <a href="{{ route('admin.dashboard') }}"
                 class="ad-tombol ad-tombol--garis shrink-0 md:hidden">

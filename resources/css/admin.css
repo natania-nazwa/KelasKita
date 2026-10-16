@@ -2139,6 +2139,24 @@ body.tubuh-admin {
     outline-offset: 2px;
 }
 
+/*
+ * Tombol "Kembali ke Dashboard" di kepala halaman admin (Masukan & Saran,
+ * Pengaturan) hanya untuk ponsel. md:hidden tidak bisa bekerja sendiri:
+ * .ad-tombol menulis display: inline-flex tanpa @layer, dan aturan tanpa
+ * lapisan selalu mengalah utilitas Tailwind yang berada di @layer utilities,
+ * jadi tombolnya ikut tampil di desktop walau kelasnya sudah ada. Aturan ini
+ * menegaskan display: none di >= 768px — batas yang sama dengan .ad-hp dan
+ * .ad-bawah, yaitu saat sidebar mengambil alih peran tombol itu.
+ *
+ * Selector .ad-tombol.md\:hidden (dua kelas) supaya spesifikasinya selalu
+ * mengalah .ad-tombol tunggal tanpa perlu !important.
+ */
+@media (min-width: 768px) {
+    .ad-tombol.md\:hidden {
+        display: none;
+    }
+}
+
 /* Tautan teks ungu untuk "Lihat Semua". */
 .ad-tautan {
     display: inline-flex;
