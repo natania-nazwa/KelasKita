@@ -5463,6 +5463,12 @@ html {
         display: none;
     }
 
+    /* Mode gelap: menu menulis #fff langsung, jadi tanpa aturan ini kotaknya
+       tetap putih sementara isinya (--color-dark) sudah jadi terang. */
+    [data-theme='gelap'] .tipe-pilih__menu {
+        background-color: #191336;
+    }
+
     .tipe-pilih__opsi {
         list-style: none;
     }
@@ -10670,7 +10676,8 @@ html {
    dicampur dari --color-lavender dan --color-primary. */
 [data-theme='gelap'] .latar-atas,
 [data-theme='gelap'] .kanvas-materi,
-[data-theme='gelap'] .kanvas-halaman {
+[data-theme='gelap'] .kanvas-halaman,
+[data-theme='gelap'] .kanvas-jadwal {
     background-color: #100d24;
 }
 
@@ -10883,6 +10890,358 @@ html {
     background-color: #221b45;
 }
 
+/* ---------- (5b) Sisa permukaan putih dan pastel ----------
+   Kartu, chip, dan kotak ikon yang masih memakai putih harfiah atau
+   tint putih di halaman user: wizard, builder soal, panduan, dasbor,
+   jadwal, dan lobi. Rumusnya sama dengan blok karya di atas: putih
+   di dalam color-mix() diganti kartu gelap, sementara teks yang
+   memakai token sudah ikut terang sendiri. */
+
+/* Kartu dan tombol yang menulis #fff secara harfiah. */
+[data-theme='gelap'] :is(
+        .kartu-wizard,
+        .soal-kartu,
+        .builder-soal,
+        .publikasi-pilih,
+        .tombol-tambah-soal,
+        .soal-nav__tutup,
+        .area-unggah__ikon,
+        .stepper-item__lencana,
+        .panduan
+    ) {
+    background-color: #191336;
+}
+
+/* Kotak isian di dalam kartu soal: sama bentuknya dengan .kolom-form,
+   jadi latarnya naik satu tingkat dari kartu seperti mode terang. */
+[data-theme='gelap'] .soal-kolom {
+    background-color: #221b45;
+}
+
+[data-theme='gelap'] .panduan__langkah {
+    background-color: #221b45;
+    border-color: var(--color-ungu-line);
+}
+
+/* Nomor bulat memakai teks putih, jadi latarnya dialihkan ke primary
+   yang memang dijaga cukup gelap untuk putih — bukan --color-ungu yang
+   di mode gelap jadi ungu terang. */
+[data-theme='gelap'] .panduan__nomor {
+    background-color: var(--color-primary);
+}
+
+[data-theme='gelap'] .kartu-tips {
+    background-color: color-mix(in oklab, var(--color-ungu) 8%, #191336);
+}
+
+/* Kotak ikon di keadaan kosong duduk di atas latar ungu soft, jadi ia
+   naik sedikit lebih terang dari kartu supaya tetap kelihatan. */
+[data-theme='gelap'] .soal-kosong__ikon {
+    background-color: #221b45;
+}
+
+/* Stepper: yang selesai memakai tint ungu di atas kartu gelap, dan yang
+   aktif memakai primary yang memang dirancang untuk teks putih. */
+[data-theme='gelap'] .stepper-item.is-selesai .stepper-item__lencana {
+    background-color: color-mix(in oklab, var(--color-ungu) 16%, #191336);
+}
+
+[data-theme='gelap'] .stepper-item.is-aktif .stepper-item__lencana {
+    background-color: var(--color-primary);
+    border-color: var(--color-primary);
+}
+
+/* Kartu aksi dasbor: tint kategori di atas kartu, bukan di atas putih. */
+[data-theme='gelap'] .dash-aksi {
+    background-color: color-mix(in oklab, var(--k) 13%, #191336);
+}
+
+[data-theme='gelap'] .dash-aksi:hover,
+[data-theme='gelap'] .dash-aksi:focus-visible {
+    background-color: color-mix(in oklab, var(--k) 21%, #191336);
+}
+
+[data-theme='gelap'] .dash-kartu--sorot {
+    background-color: color-mix(in oklab, var(--k) 22%, #191336);
+}
+
+[data-theme='gelap'] .dash-kartu--sorot:hover,
+[data-theme='gelap'] .dash-kartu--sorot:focus-visible {
+    background-color: color-mix(in oklab, var(--k) 30%, #191336);
+}
+
+[data-theme='gelap'] .dash-ikon-kotak {
+    background-color: color-mix(in oklab, var(--k) 12%, #191336);
+}
+
+[data-theme='gelap'] .dash-aksi .dash-ikon-kotak {
+    background-color: color-mix(in oklab, var(--k) 30%, #191336);
+}
+
+/* Chip kategori di atas thumbnail dan chip di badan kartu. */
+[data-theme='gelap'] :is(
+        .kartu-materi__lencana,
+        .kartu-quiz__lencana,
+        .dash-quiz__lencana
+    ) {
+    background-color: color-mix(in oklab, var(--k) 16%, #191336);
+}
+
+[data-theme='gelap'] .kartu-quiz__durasi {
+    background-color: rgba(30, 24, 62, 0.94);
+}
+
+[data-theme='gelap'] :is(.kartu-quiz__milik, .dash-quiz__milik) {
+    background-color: color-mix(in oklab, var(--color-primary) 14%, #191336);
+}
+
+[data-theme='gelap'] .kartu-quiz__durasi-teks {
+    background-color: color-mix(in oklab, var(--k, var(--color-primary)) 10%, #191336);
+}
+
+[data-theme='gelap'] :is(.dash-jadwal__waktu, .jadwal-item__waktu) {
+    background-color: color-mix(in oklab, var(--k) 12%, #191336);
+}
+
+[data-theme='gelap'] .jadwal-item--lewat .jadwal-item__waktu {
+    background-color: color-mix(in oklab, var(--k) 7%, #191336);
+}
+
+[data-theme='gelap'] .jadwal-item__kategori {
+    background-color: color-mix(in oklab, var(--k) 10%, #191336);
+}
+
+[data-theme='gelap'] .jadwal-ikon-kotak {
+    background-color: color-mix(in oklab, var(--k) 12%, #191336);
+}
+
+[data-theme='gelap'] .jadwal-sekarang {
+    background-color: color-mix(in oklab, var(--k) 10%, #191336);
+}
+
+[data-theme='gelap'] .jadwal-pr {
+    background-color: color-mix(in oklab, var(--k) 7%, #191336);
+}
+
+[data-theme='gelap'] .jadwal-pr__label {
+    background-color: color-mix(in oklab, var(--k) 16%, #191336);
+}
+
+/* Panel kode dan kotak gabung di lobi memakai gradasi ungu muda. */
+[data-theme='gelap'] .lobi-kode {
+    background: linear-gradient(
+        135deg,
+        color-mix(in oklab, var(--color-ungu) 8%, #191336),
+        color-mix(in oklab, var(--color-ungu) 14%, #191336)
+    );
+}
+
+[data-theme='gelap'] .lobi-masuk {
+    background: linear-gradient(
+        135deg,
+        color-mix(in oklab, var(--color-ungu) 7%, #191336),
+        color-mix(in oklab, var(--color-ungu) 13%, #191336)
+    );
+    box-shadow: inset 0 1px 0 rgba(236, 232, 255, 0.05);
+}
+
+/* Kotak ikon lavender di panel hasil dan jadwal, mengikuti corak
+   .peringkat-kosong__ikon yang sudah lebih dulu digelapkan. */
+[data-theme='gelap'] :is(
+        .hasil-panel__ikon,
+        .hasil-kosong__ikon,
+        .jadwal-panel__ikon,
+        .jadwal-kartu__ikon,
+        .jadwal-kosong__ikon
+    ) {
+    background-color: color-mix(in oklab, var(--color-primary) 22%, #191336);
+}
+
+[data-theme='gelap'] .peringkat-kepala__ikon {
+    background: linear-gradient(
+        140deg,
+        color-mix(in oklab, var(--color-primary) 26%, #191336),
+        color-mix(in oklab, var(--color-primary) 14%, #191336)
+    );
+}
+
+[data-theme='gelap'] .hasil-kartu__ikon {
+    background-color: color-mix(in oklab, var(--h) 12%, #191336);
+}
+
+[data-theme='gelap'] .hasil-top__ikon {
+    background: linear-gradient(
+        140deg,
+        color-mix(in oklab, var(--k) 16%, #191336) 0%,
+        color-mix(in oklab, var(--k-gelap) 20%, #191336) 100%
+    );
+}
+
+[data-theme='gelap'] .hasil-motivasi {
+    background: linear-gradient(
+        150deg,
+        color-mix(in oklab, var(--color-ungu-soft) 15%, #191336) 0%,
+        color-mix(in oklab, var(--color-primary) 18%, #191336) 100%
+    );
+}
+
+/* Modal akses materi di halaman depan: kotak ikon dan tombol tutup. */
+[data-theme='gelap'] .kkm-akses__ikon {
+    background-image: linear-gradient(
+        140deg,
+        color-mix(in oklab, var(--color-ungu-soft) 16%, #191336),
+        color-mix(in oklab, var(--color-primary) 24%, #191336)
+    );
+    color: #a58bff;
+}
+
+[data-theme='gelap'] .kkm-akses__tutup {
+    color: #c4b5fd;
+}
+
+[data-theme='gelap'] .kkm-akses__tutup:hover {
+    color: #fff;
+}
+
+/* Detail kartu builder: kepala/kaki, kontrol kecil, dan keadaan hover
+   yang di mode terang memakai putih. */
+[data-theme='gelap'] .builder-soal:hover {
+    border-color: color-mix(in oklab, var(--color-ungu) 50%, #191336);
+}
+
+[data-theme='gelap'] :is(.builder-soal__kepala, .builder-soal__kaki) {
+    background-color: #191336;
+    border-color: color-mix(in oklab, var(--color-ungu-line) 55%, transparent);
+}
+
+[data-theme='gelap'] .builder-soal__gaget {
+    color: color-mix(in oklab, #cfc4fb 35%, #191336);
+}
+
+[data-theme='gelap'] .builder-tingkat:hover,
+[data-theme='gelap'] .builder-tingkat:focus-within {
+    background-color: #221b45;
+}
+
+[data-theme='gelap'] .tipe-pilih__tombol:hover,
+[data-theme='gelap'] .tipe-pilih__tombol[aria-expanded='true'] {
+    background-color: #221b45;
+}
+
+[data-theme='gelap'] .kode-bungkus__tombol:hover {
+    background-color: #221b45;
+}
+
+[data-theme='gelap'] .tab-karya__item:hover {
+    background-color: #221b45;
+}
+
+[data-theme='gelap'] .builder-indikator {
+    background-color: #191336;
+    border-color: color-mix(in oklab, var(--color-dark) 30%, #191336);
+}
+
+[data-theme='gelap'] .builder-benar {
+    background-color: color-mix(in oklab, #34a06a 16%, #191336);
+    color: color-mix(in oklab, #1f7a4d 55%, #ece8ff);
+}
+
+[data-theme='gelap'] .builder-pilihan-baris.is-tetap .builder-pilihan__kolom {
+    background-color: #221b45;
+}
+
+[data-theme='gelap'] .builder-pilihan-baris.is-benar .builder-pilihan__kolom {
+    background-color: color-mix(in oklab, #34a06a 12%, #191336);
+    border-color: color-mix(in oklab, #34a06a 45%, #191336);
+}
+
+[data-theme='gelap'] .builder-pilihan-baris.is-benar .builder-huruf {
+    border-color: color-mix(in oklab, #34a06a 45%, #191336);
+    color: color-mix(in oklab, #1f7a4d 55%, #ece8ff);
+}
+
+[data-theme='gelap'] .tombol-pilihan-tambah {
+    background-color: #191336;
+}
+
+[data-theme='gelap'] .tombol-pilihan-tambah:disabled {
+    border-color: color-mix(in oklab, var(--color-dark) 16%, #191336);
+    color: color-mix(in oklab, var(--color-dark) 34%, #191336);
+}
+
+[data-theme='gelap'] .publikasi-pilih__radio {
+    background-color: #191336;
+}
+
+[data-theme='gelap'] .publikasi-pilih.is-terpilih .publikasi-pilih__ikon {
+    background-color: var(--color-primary);
+}
+
+[data-theme='gelap'] .kolom-form--salah {
+    border-color: color-mix(in oklab, #d9535f 55%, #1c1738);
+    background-color: color-mix(in oklab, #c2414a 12%, #1c1738);
+}
+
+[data-theme='gelap'] .kolom-form--salah:focus {
+    border-color: #d9535f;
+}
+
+[data-theme='gelap'] .jadwal-kepala .kolom-cari,
+[data-theme='gelap'] .jadwal-kepala .pilih-kategori {
+    background-color: #221b45;
+}
+
+/* Kepala halaman Jadwal ikut jadi kartu gelap, jadi semua teks ungu
+   tua di dalamnya harus dibalik ke terang supaya tidak tenggelam. */
+[data-theme='gelap'] .jadwal-kepala__lencana {
+    background-color: color-mix(in oklab, var(--color-primary) 16%, #191336);
+    color: #c4b5fd;
+    box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--color-primary) 30%, transparent);
+}
+
+[data-theme='gelap'] .jadwal-kepala__judul {
+    color: var(--color-dark);
+}
+
+[data-theme='gelap'] .jadwal-kepala__deskripsi {
+    color: color-mix(in oklab, var(--color-dark) 70%, transparent);
+}
+
+[data-theme='gelap'] .jadwal-kepala__statistik > div {
+    background-color: #241c48;
+    box-shadow: inset 0 0 0 1px var(--color-lavender);
+}
+
+[data-theme='gelap'] .jadwal-kepala__angka {
+    color: #b09bff;
+}
+
+[data-theme='gelap'] .jadwal-kepala__satuan {
+    color: color-mix(in oklab, var(--color-dark) 55%, transparent);
+}
+
+/* Kepala hero Materi/Quiz sengaja dibiarkan seperti mode terang (lihat
+   daftar pengecualian di blok 3), jadi kolom cari dan filter kategori
+   di dalamnya harus kembali putih saat fokus — bukan jadi gelap seperti
+   kolom cari di halaman gelap lainnya. */
+[data-theme='gelap'] .materi-kepala .kolom-cari:focus,
+[data-theme='gelap'] .materi-kepala .pilih-kategori:focus,
+[data-theme='gelap'] .quiz-kepala .pilih-kategori:focus {
+    background-color: #fff;
+}
+
+/* Paginasi halaman Karya Saya memakai putih !important, jadi mode gelap
+   juga harus menimpa dengan !important. Tombol halaman aktif tetap
+   memakai gradasi ungu pekatnya; latar di bawahnya tak terlihat. */
+[data-theme='gelap'] .karya-hal nav a,
+[data-theme='gelap'] .karya-hal nav span {
+    background-color: #191336 !important;
+}
+
+[data-theme='gelap'] .karya-hal nav a:hover {
+    background-color: color-mix(in oklab, var(--color-primary) 8%, #191336) !important;
+}
+
 /* Halaman mengerjakan soal: kepala .soal-kepala sudah ungu penuh dengan
    teks putih, jadi tidak boleh ikut gelap. Yang perlu disesuaikan hanya
    isi dialog daftar soal, supaya yang "sudah dijawab" tetap kelihatan
@@ -10959,6 +11318,180 @@ html {
     border-color: #f0b429;
     background-color: #f0b429;
     color: #241a00;
+}
+
+/* ---------- (5c) Teks dan lencana merah/hijau/kuning ----------
+   Kotak galat, penanda wajib, dan badge status memakai warna hex
+   tetap di mode terang. Di mode gelap latarnya turun ke kartu gelap
+   dan teksnya dicampur dengan --color-dark supaya kontrasnya kembali
+   aman. */
+[data-theme='gelap'] .wajib {
+    color: color-mix(in oklab, #c2414a 45%, #ece8ff);
+}
+
+[data-theme='gelap'] .galat-kotak {
+    border-color: color-mix(in oklab, #c2414a 42%, #191336);
+    background-color: color-mix(in oklab, #c2414a 13%, #191336);
+    color: color-mix(in oklab, #a8323c 48%, #ece8ff);
+}
+
+[data-theme='gelap'] .soal-kartu__galat {
+    color: color-mix(in oklab, #a8323c 50%, #ece8ff);
+}
+
+[data-theme='gelap'] .lobi-masuk--galat {
+    background: linear-gradient(
+        135deg,
+        color-mix(in oklab, #c2414a 14%, #191336),
+        color-mix(in oklab, #c2414a 10%, #191336)
+    );
+}
+
+[data-theme='gelap'] .lobi-masuk--galat .lobi-masuk__input {
+    color: color-mix(in oklab, #a8323c 48%, #ece8ff);
+}
+
+[data-theme='gelap'] .lobi-masuk--galat:focus-within {
+    box-shadow:
+        inset 0 1px 0 rgba(236, 232, 255, 0.05),
+        0 0 0 4px rgba(168, 50, 60, 0.2);
+}
+
+[data-theme='gelap'] .builder-pilihan__hapus:hover {
+    border-color: color-mix(in oklab, #c2414a 35%, #191336);
+    background-color: color-mix(in oklab, #c2414a 12%, #191336);
+    color: color-mix(in oklab, #d05353 55%, #ece8ff);
+}
+
+[data-theme='gelap'] .karya-aksi__tombol--hapus:hover {
+    border-color: color-mix(in oklab, #c2414a 40%, #191336);
+    background-color: color-mix(in oklab, #c2414a 13%, #191336);
+    color: color-mix(in oklab, #a8323c 50%, #ece8ff);
+}
+
+[data-theme='gelap'] .tombol-garis--henti {
+    border-color: color-mix(in oklab, #c2414a 45%, #191336);
+    color: color-mix(in oklab, #a8323c 50%, #ece8ff);
+}
+
+[data-theme='gelap'] .tombol-garis--henti:hover {
+    border-color: color-mix(in oklab, #c2414a 55%, #191336);
+    background-color: color-mix(in oklab, #c2414a 14%, #191336);
+    color: color-mix(in oklab, #a8323c 55%, #ece8ff);
+}
+
+[data-theme='gelap'] .kode-bungkus--salah .kode-bungkus__tombol {
+    border-color: color-mix(in oklab, #d0505e 55%, #1c1738);
+}
+
+[data-theme='gelap'] .jadwal-item__aksi button:hover,
+[data-theme='gelap'] .jadwal-item__aksi button:focus-visible {
+    background-color: color-mix(in oklab, #c2414a 14%, #191336);
+    color: color-mix(in oklab, #c2414a 50%, #ece8ff);
+}
+
+/* Jawaban benar/salah di kartu hasil. Cincin hijau pada baris kunci
+   hanya dipasang untuk baris yang juga ditandai benar, supaya baris
+   kunci yang salah tidak kehilangan warna merahnya. */
+[data-theme='gelap'] :is(
+        .hasil-soal__pilihan--kunci,
+        .hasil-soal__pilihan--benar
+    ) {
+    background-color: color-mix(in oklab, #0f9d76 14%, #191336);
+    color: color-mix(in oklab, #0f7a5b 48%, #ece8ff);
+}
+
+[data-theme='gelap'] .hasil-soal__pilihan--benar {
+    border-color: color-mix(in oklab, #0f9d76 45%, transparent);
+}
+
+[data-theme='gelap'] .hasil-soal__pilihan--salah {
+    background-color: color-mix(in oklab, #c2414a 13%, #191336);
+    color: color-mix(in oklab, #a8323c 48%, #ece8ff);
+}
+
+[data-theme='gelap'] .hasil-soal__tag {
+    background-color: rgba(236, 232, 255, 0.1);
+}
+
+[data-theme='gelap'] .hasil-soal__tag--kunci {
+    color: color-mix(in oklab, #0f7a5b 50%, #ece8ff);
+}
+
+[data-theme='gelap'] .hasil-detail__kotak-nilai--benar {
+    color: color-mix(in oklab, #0f7a5b 50%, #ece8ff);
+}
+
+[data-theme='gelap'] .hasil-detail__kotak-nilai--salah {
+    color: color-mix(in oklab, #a8323c 50%, #ece8ff);
+}
+
+/* Badge status lobi, hasil, dan jadwal: rumus mengikuti .karya-status
+   — latar turun ke kartu gelap, teks dicampur --color-dark. */
+[data-theme='gelap'] .lobi-status--berjalan,
+[data-theme='gelap'] .lobi-daftar__status--selesai {
+    background-color: color-mix(in oklab, #5fd6ae 24%, #191336);
+    color: color-mix(in oklab, #0f7a5b 48%, #ece8ff);
+}
+
+[data-theme='gelap'] .lobi-daftar__status--mengerjakan {
+    background-color: color-mix(in oklab, #f6cd6b 26%, #191336);
+    color: color-mix(in oklab, #8a6208 48%, #ece8ff);
+}
+
+[data-theme='gelap'] .hasil-status--selesai,
+[data-theme='gelap'] .jadwal-status--sedang {
+    background-color: color-mix(in oklab, #0f9d76 14%, #191336);
+    color: color-mix(in oklab, #0f7a5b 48%, #ece8ff);
+}
+
+[data-theme='gelap'] .hasil-status--gagal {
+    background-color: color-mix(in oklab, #d0505e 14%, #191336);
+    color: color-mix(in oklab, #a8323c 48%, #ece8ff);
+}
+
+[data-theme='gelap'] .hasil-status--proses {
+    background-color: color-mix(in oklab, #d99a06 16%, #191336);
+    color: color-mix(in oklab, #8a6208 48%, #ece8ff);
+}
+
+[data-theme='gelap'] .jadwal-status--selesai {
+    background-color: color-mix(in oklab, var(--color-dark) 8%, #191336);
+}
+
+[data-theme='gelap'] .jadwal-pr__tempo--terlambat {
+    background-color: color-mix(in oklab, #d0505e 16%, #191336);
+    color: color-mix(in oklab, #a8323c 48%, #ece8ff);
+}
+
+[data-theme='gelap'] .jadwal-pr__tempo--sekarang {
+    background-color: color-mix(in oklab, #d99a06 18%, #191336);
+    color: color-mix(in oklab, #8a6208 48%, #ece8ff);
+}
+
+[data-theme='gelap'] .jadwal-pr__tempo--dekat {
+    background-color: color-mix(in oklab, #d99a06 12%, #191336);
+    color: color-mix(in oklab, #8a6208 48%, #ece8ff);
+}
+
+/* Medali mengikuti palet halaman Peringkat (emas/perak/perunggu di
+   atas kartu gelap), berlaku untuk lobi dan kartu hasil terbaik. */
+[data-theme='gelap'] :is(.lobi-peringkat--emas, .hasil-top__peringkat[data-medali='1']) {
+    background-color: color-mix(in oklab, #f6cd6b 26%, #191336);
+    color: #fde68a;
+    box-shadow: none;
+}
+
+[data-theme='gelap'] :is(.lobi-peringkat--perak, .hasil-top__peringkat[data-medali='2']) {
+    background-color: color-mix(in oklab, #cfd5e6 24%, #191336);
+    color: #dbe2f3;
+    box-shadow: none;
+}
+
+[data-theme='gelap'] :is(.lobi-peringkat--perunggu, .hasil-top__peringkat[data-medali='3']) {
+    background-color: color-mix(in oklab, #e0a578 26%, #191336);
+    color: #f3c39c;
+    box-shadow: none;
 }
 
 
@@ -11409,6 +11942,14 @@ html {
         0 18px 36px -22px rgba(33, 26, 58, 0.6);
 }
 
+/* Mode gelap: kotaknya menulis #fff langsung dan teks hijaunya ditulis
+   tetap — keduanya harus ikut gelap supaya pesan tidak jadi huruf gelap
+   di atas kartu putih yang menyilaukan. */
+[data-theme='gelap'] .jadwal-sukses {
+    background-color: #191336;
+    color: color-mix(in oklab, #0f7a5b 50%, var(--color-dark));
+}
+
 /*
  * Di bawah lg ada navigasi bawah tetap setinggi ±54px + safe-area.
  * Pesan sukses harus melayang DI ATAS NAVIGASI ITU: selain menutupi
@@ -11483,6 +12024,18 @@ html {
  */
 .app-toast--galat .app-toast__ikon {
     background-color: #c2414a;
+}
+
+/*
+ * Mode gelap: varian galat memakai utilitas arbitrer text-[#a8323c] dan
+ * border-[#f3c9cb] dari markup — merah gelap dan tepi putih kemerahan di
+ * atas kartu #191336 praktis tidak terlihat. Ditimpa di sini (aturan tanpa
+ * layer selalu menang atas @layer utilities), jadi mode terang tidak
+ * tersentuh.
+ */
+[data-theme='gelap'] .app-toast--galat {
+    border-color: color-mix(in oklab, #c2414a 45%, #191336);
+    color: color-mix(in oklab, #c2414a 45%, var(--color-dark));
 }
 
 .app-toast__teks {
@@ -13271,6 +13824,20 @@ html {
     border-radius: 1rem;
     background-color: #fff;
     box-shadow: 0 24px 44px -28px rgba(33, 26, 58, 0.6);
+}
+
+/*
+ * Mode gelap: panel lonceng menulis #fff langsung, jadi tanpa dua aturan
+ * ini kotaknya tetap putih (teks di dalamnya sudah terang, jadi hurufnya
+ * lenyap), dan cincin putih di titik notifikasi menebalkan kotak lonceng
+ * yang latarnya sudah gelap.
+ */
+[data-theme='gelap'] .notif__panel {
+    background-color: #191336;
+}
+
+[data-theme='gelap'] .notif__titik {
+    box-shadow: 0 0 0 2px var(--color-brand-bg);
 }
 
 /*

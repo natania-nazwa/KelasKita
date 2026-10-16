@@ -651,7 +651,7 @@ body.tubuh-admin {
     z-index: 20;
     top: 0;
     border-bottom: 1px solid var(--ad-garis);
-    background-color: rgba(247, 245, 255, 0.88);
+    background-color: color-mix(in oklab, var(--ad-latar) 88%, transparent);
     backdrop-filter: blur(10px);
 }
 
@@ -685,7 +685,7 @@ body.tubuh-admin {
     justify-content: center;
     border-radius: 0.85rem;
     border: 1px solid var(--ad-garis);
-    background-color: var(--ad-white);
+    background-color: var(--ad-permukaan);
     color: var(--ad-teks-ungu-terang);
     transition:
         border-color 0.18s ease,
@@ -737,7 +737,7 @@ body.tubuh-admin {
     width: 100%;
     border-radius: 9999px;
     border: 1px solid var(--ad-garis);
-    background-color: var(--ad-white);
+    background-color: var(--ad-permukaan);
     padding: 0.6rem 0.9rem 0.6rem 2.6rem;
     font-size: 0.8125rem;
     color: var(--ad-teks);
@@ -794,7 +794,7 @@ body.tubuh-admin {
     justify-content: center;
     border-radius: 9999px;
     border: 1px solid var(--ad-garis);
-    background-color: var(--ad-white);
+    background-color: var(--ad-permukaan);
     color: var(--ad-teks-ungu-terang);
     transition:
         border-color 0.18s ease,
@@ -814,7 +814,7 @@ body.tubuh-admin {
     height: 0.5rem;
     border-radius: 9999px;
     background-color: var(--ad-bahaya);
-    box-shadow: 0 0 0 2px var(--ad-white);
+    box-shadow: 0 0 0 2px var(--ad-permukaan);
 }
 
 .ad-atas__akun {
@@ -827,7 +827,7 @@ body.tubuh-admin {
     gap: 0.55rem;
     border-radius: 9999px;
     border: 1px solid var(--ad-garis);
-    background-color: var(--ad-white);
+    background-color: var(--ad-permukaan);
     padding: 0.3rem 0.7rem 0.3rem 0.3rem;
     transition:
         border-color 0.18s ease,
@@ -892,7 +892,7 @@ body.tubuh-admin {
     overflow: hidden;
     border-radius: 1rem;
     border: 1px solid var(--ad-garis);
-    background-color: var(--ad-white);
+    background-color: var(--ad-permukaan);
     box-shadow: var(--ad-bayangan-naik);
 }
 
@@ -998,7 +998,7 @@ body.tubuh-admin {
     flex-direction: column;
     border-radius: 1.4rem;
     border: 1px solid color-mix(in oklab, var(--ad-primary) 9%, var(--ad-garis));
-    background-color: var(--ad-white);
+    background-color: var(--ad-permukaan);
     background-image: linear-gradient(180deg, var(--ad-permukaan) 0%, var(--ad-permukaan) 62%, var(--ad-permukaan-lembut) 100%);
     box-shadow:
         0 1px 2px rgba(41, 36, 92, 0.035),
@@ -1509,7 +1509,7 @@ body.tubuh-admin {
     overflow: hidden;
     border-radius: 1.4rem;
     border: 1px solid color-mix(in oklab, var(--ad-nada) 20%, var(--ad-garis));
-    background-color: var(--ad-white);
+    background-color: var(--ad-permukaan);
     background-image: linear-gradient(
         165deg,
         color-mix(in oklab, var(--ad-nada) 6%, var(--ad-permukaan)) 0%,
@@ -1975,7 +1975,7 @@ body.tubuh-admin {
 }
 
 .ad-daftar-cepat .ad-cepat:hover {
-    background-color: var(--ad-white);
+    background-color: var(--ad-permukaan);
 }
 
 /* Baris progress tipis, dipakai untuk daftar peringkat pelajaran
@@ -2093,7 +2093,7 @@ body.tubuh-admin {
 
 .ad-tombol--garis {
     border: 1px solid var(--ad-garis);
-    background-color: var(--ad-white);
+    background-color: var(--ad-permukaan);
     color: var(--ad-teks);
 }
 
@@ -2249,7 +2249,7 @@ body.tubuh-admin {
     width: 100%;
     border-radius: 9999px;
     border: 1px solid var(--ad-garis);
-    background-color: var(--ad-white);
+    background-color: var(--ad-permukaan);
     padding: 0.6rem 0.9rem 0.6rem 2.5rem;
     font-size: 0.8125rem;
     color: var(--ad-teks);
@@ -2274,7 +2274,7 @@ body.tubuh-admin {
     appearance: none;
     border-radius: 9999px;
     border: 1px solid var(--ad-garis);
-    background-color: var(--ad-white);
+    background-color: var(--ad-permukaan);
     padding: 0.6rem 2.2rem 0.6rem 0.95rem;
     font-size: 0.8125rem;
     font-weight: 600;
@@ -2706,7 +2706,7 @@ body.tubuh-admin {
     align-items: center;
     justify-content: center;
     border-radius: 9999px;
-    background-color: var(--ad-white);
+    background-color: var(--ad-permukaan);
     box-shadow: 0 2px 6px -2px rgba(41, 36, 92, 0.45);
     color: var(--ad-teks-ungu-terang);
 }
@@ -2753,7 +2753,7 @@ body.tubuh-admin {
     gap: 0.85rem;
     border-radius: 1rem;
     border: 1px solid var(--ad-garis);
-    background-color: var(--ad-white);
+    background-color: var(--ad-permukaan);
     box-shadow: var(--ad-bayangan);
     padding: 1rem 1.05rem;
     transition:
@@ -2871,7 +2871,7 @@ body.tubuh-admin {
     overflow-x: auto;
     border-radius: 1.25rem;
     border: 1px solid var(--ad-garis);
-    background-color: var(--ad-white);
+    background-color: var(--ad-permukaan);
     box-shadow: var(--ad-bayangan);
 }
 
@@ -2883,7 +2883,7 @@ body.tubuh-admin {
 
 .ad-tabel th {
     white-space: nowrap;
-    background-color: color-mix(in oklab, var(--ad-primary-light) 45%, var(--ad-white));
+    background-color: color-mix(in oklab, var(--ad-primary-light) 45%, var(--ad-permukaan));
     padding: 0.8rem 1rem;
     text-align: left;
     font-size: 0.6875rem;
@@ -3130,7 +3130,7 @@ body.tubuh-admin {
     flex-direction: column;
     overflow: hidden;
     border-radius: 1.25rem 1.25rem 0 0;
-    background-color: var(--ad-white);
+    background-color: var(--ad-permukaan);
     box-shadow: 0 40px 80px -40px rgba(41, 20, 110, 0.8);
 }
 
@@ -3449,7 +3449,7 @@ body.tubuh-admin {
     margin-top: 0.4rem;
     border-radius: 0.85rem;
     border: 1px solid var(--ad-garis);
-    background-color: var(--ad-white);
+    background-color: var(--ad-permukaan);
     padding: 0.7rem 0.9rem;
     font-size: 0.875rem;
     color: var(--ad-teks);
@@ -3487,7 +3487,7 @@ body.tubuh-admin {
     gap: 0.7rem;
     border-radius: 1rem;
     border: 1px solid var(--ad-garis);
-    background-color: var(--ad-white);
+    background-color: var(--ad-permukaan);
     padding: 0.85rem 1rem;
     font-size: 0.8125rem;
     line-height: 1.6;
@@ -3529,7 +3529,7 @@ body.tubuh-admin {
     align-items: center;
     border-radius: 1.25rem;
     border: 1px dashed color-mix(in oklab, var(--ad-primary) 30%, var(--ad-garis));
-    background-color: color-mix(in oklab, var(--ad-primary-light) 35%, var(--ad-white));
+    background-color: color-mix(in oklab, var(--ad-primary-light) 35%, var(--ad-permukaan));
     padding: 2.25rem 1.25rem;
     text-align: center;
 }
@@ -3541,7 +3541,7 @@ body.tubuh-admin {
     align-items: center;
     justify-content: center;
     border-radius: 9999px;
-    background-color: var(--ad-white);
+    background-color: var(--ad-permukaan);
     box-shadow: 0 10px 22px -16px rgba(76, 47, 179, 0.9);
     color: var(--ad-teks-ungu-terang);
 }
@@ -3731,7 +3731,7 @@ body.tubuh-admin {
     justify-content: center;
     border-radius: 9999px;
     border: 1px solid var(--ad-garis);
-    background-color: var(--ad-white);
+    background-color: var(--ad-permukaan);
     padding: 0;
     font-size: 1rem;
     font-weight: 700;
@@ -3776,7 +3776,7 @@ body.tubuh-admin {
     width: 10.5rem;
     border-radius: 0.9rem;
     border: 1px solid var(--ad-garis);
-    background-color: var(--ad-white);
+    background-color: var(--ad-permukaan);
     box-shadow: var(--ad-bayangan-naik);
     padding: 0.3rem;
 }
@@ -4099,7 +4099,7 @@ body.tubuh-admin {
 .ad-paginasi nav[role="navigation"] > span {
     border: 1px solid var(--ad-garis);
     border-radius: 0.7rem;
-    background-color: var(--ad-white);
+    background-color: var(--ad-permukaan);
     color: var(--ad-teks-2);
     font-size: 0.8125rem;
     font-weight: 600;
@@ -4203,7 +4203,7 @@ body.tubuh-admin {
      */
     border-radius: 1.1rem;
     border: 1px solid var(--ad-garis);
-    background-color: var(--ad-white);
+    background-color: var(--ad-permukaan);
     box-shadow: var(--ad-bayangan);
     transition:
         border-color 0.2s ease,
@@ -4695,8 +4695,19 @@ body.tubuh-admin {
         linear-gradient(180deg, rgba(237, 231, 255, 0.5) 0%, rgba(255, 255, 255, 0) 70%);
 }
 
+/*
+ * Mode gelap: cucian lavender 0.5 di atas kotak gelap jadi pita terang yang
+ * menimpa judul dan keterangan — teks terang di atasnya jadi sulit terbaca.
+ * Cuciannya diturunkan ke nyaris transparan; hanya mode terang yang berubah.
+ */
+[data-theme='gelap'] .ad-daftar-kartu > .ad-kosong {
+    background-image:
+        radial-gradient(22rem 12rem at 50% -20%, rgba(109, 74, 255, 0.16), transparent 70%),
+        linear-gradient(180deg, rgba(237, 231, 255, 0.07) 0%, rgba(255, 255, 255, 0) 70%);
+}
+
 .ad-daftar-kartu > .ad-kosong .ad-kosong__ikon {
-    background-image: linear-gradient(140deg, var(--ad-primary-light) 0%, var(--ad-white) 70%);
+    background-image: linear-gradient(140deg, var(--ad-primary-light) 0%, var(--ad-permukaan) 70%);
     box-shadow:
         0 10px 22px -16px rgba(76, 47, 179, 0.9),
         inset 0 0 0 1px color-mix(in oklab, var(--ad-primary) 18%, transparent);
@@ -4870,14 +4881,14 @@ body.tubuh-admin {
 .ad-alat-kotak--kuis .ad-cari input,
 .ad-alat-kotak--kuis .ad-pilih {
     border-color: color-mix(in oklab, var(--ad-primary) 22%, var(--ad-garis));
-    background-color: color-mix(in oklab, var(--ad-primary-light) 42%, var(--ad-white));
+    background-color: color-mix(in oklab, var(--ad-primary-light) 42%, var(--ad-permukaan));
 }
 
 .ad-alat-kotak--kuis .ad-cari input:hover,
 .ad-alat-kotak--kuis .ad-pilih:hover,
 .ad-alat-kotak--kuis .ad-cari input:focus,
 .ad-alat-kotak--kuis .ad-pilih:focus {
-    background-color: var(--ad-white);
+    background-color: var(--ad-permukaan);
 }
 
 /*
@@ -4901,7 +4912,7 @@ body.tubuh-admin {
  * dari situ semua quiz yang sedang disaring bisa hilang dari daftar. */
 .ad-alat-kotak--kuis .ad-tombol--garis:hover {
     border-color: color-mix(in oklab, var(--ad-bahaya) 45%, var(--ad-garis));
-    background-color: color-mix(in oklab, var(--ad-bahaya) 10%, var(--ad-white));
+    background-color: color-mix(in oklab, var(--ad-bahaya) 10%, var(--ad-permukaan));
     color: var(--ad-teks-bahaya);
 }
 
@@ -5001,8 +5012,8 @@ body.tubuh-admin {
 
 /* Tombol "Lihat" dan menu tiga titik mengikuti warna kategori. */
 .ad-kartu-daftar--kuis .ad-kartu-daftar__aksi .ad-tombol--halus {
-    border-color: color-mix(in oklab, var(--k, var(--ad-primary)) 32%, var(--ad-white));
-    background-color: color-mix(in oklab, var(--k, var(--ad-primary)) 13%, var(--ad-white));
+    border-color: color-mix(in oklab, var(--k, var(--ad-primary)) 32%, var(--ad-permukaan));
+    background-color: color-mix(in oklab, var(--k, var(--ad-primary)) 13%, var(--ad-permukaan));
     color: var(--k-gelap, var(--ad-primary-dark));
 }
 
@@ -5015,6 +5026,29 @@ body.tubuh-admin {
 .ad-kartu-daftar--kuis .ad-titik__tombol {
     border-color: color-mix(in oklab, var(--k, var(--ad-primary)) 22%, var(--ad-garis));
     color: color-mix(in oklab, var(--k-gelap, var(--ad-primary-dark)) 65%, var(--ad-teks-2));
+}
+
+/*
+ * Mode gelap: --k-gelap dan --p-gelap memang warna gelap, dibuat untuk teks
+ * di atas kartu putih. Begitu kartunya memakai --ad-permukaan gelap, teks itu
+ * jadi gelap-di-atas-gelap, jadi kelima aturan di bawah mencerahkannya dengan
+ * dicampur warna teks terang — identitas kategori dan avatarnya tetap ada,
+ * cuma tidak lagi gelap. Mode terang tidak tersentuh: aturan aslinya tetap
+ * yang berlaku di luar data-theme='gelap'.
+ */
+[data-theme='gelap'] .ad-kartu-daftar--kuis:hover .ad-kartu-daftar__judul,
+[data-theme='gelap'] .ad-kartu-daftar--kuis:focus-within .ad-kartu-daftar__judul,
+[data-theme='gelap'] .ad-kartu-daftar--kuis .ad-kartu-daftar__meta,
+[data-theme='gelap'] .ad-kartu-daftar--kuis .ad-kartu-daftar__aksi .ad-tombol--halus {
+    color: color-mix(in oklab, var(--k-gelap, var(--ad-primary-dark)) 45%, var(--ad-teks));
+}
+
+[data-theme='gelap'] .ad-kartu-daftar--kuis .ad-kartu-daftar__truncate {
+    color: color-mix(in oklab, var(--p-gelap, var(--ad-teks)) 45%, var(--ad-teks));
+}
+
+[data-theme='gelap'] .ad-kartu-daftar--kuis .ad-titik__tombol {
+    color: color-mix(in oklab, var(--k-gelap, var(--ad-primary-dark)) 35%, var(--ad-teks-2));
 }
 
 /*
@@ -6970,7 +7004,7 @@ body.tubuh-admin {
     gap: 0.65rem;
     border: 1px solid var(--ad-garis);
     border-radius: 0.95rem;
-    background-color: var(--ad-white);
+    background-color: var(--ad-permukaan);
     padding: 0.8rem 0.9rem;
     box-shadow: var(--ad-bayangan-naik);
 }
@@ -6990,7 +7024,7 @@ body.tubuh-admin {
     align-items: center;
     justify-content: center;
     border-radius: 9999px;
-    background-color: color-mix(in oklab, var(--ad-sukses) 16%, var(--ad-white));
+    background-color: color-mix(in oklab, var(--ad-sukses) 16%, var(--ad-permukaan));
     color: var(--ad-sukses);
 }
 
@@ -7003,7 +7037,7 @@ body.tubuh-admin {
 }
 
 .ad-toast--galat .ad-toast__ikon {
-    background-color: color-mix(in oklab, var(--ad-bahaya) 16%, var(--ad-white));
+    background-color: color-mix(in oklab, var(--ad-bahaya) 16%, var(--ad-permukaan));
     color: var(--ad-bahaya);
 }
 
@@ -8637,7 +8671,7 @@ body.tubuh-admin {
     flex-direction: column;
     border: 1px solid var(--ad-garis);
     border-radius: 1rem;
-    background-color: var(--ad-white);
+    background-color: var(--ad-permukaan);
 }
 
 .ad-konten-kerangka__kotak,
