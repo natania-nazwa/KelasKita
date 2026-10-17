@@ -5,6 +5,7 @@ use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use App\Http\Controllers\Auth\RegisteredUserController;
 use App\Http\Controllers\User;
 use App\Support\DaftarKategoriLanding;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -33,8 +34,10 @@ use Illuminate\Support\Facades\Route;
  * tujuan yang sudah usang.
  */
 Route::get('/', function () {
+    $kartuKategori = Cache::flexible('landing.kartu', [600, 3600], fn () => DaftarKategoriLanding::kartu());
+
     return response()->view('landing.index', [
-        'kartuKategori' => DaftarKategoriLanding::kartu(),
+        'kartuKategori' => $kartuKategori,
     ])->header('Cache-Control', 'no-store, private');
 })->name('landing');
 

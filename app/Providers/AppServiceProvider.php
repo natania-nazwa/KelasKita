@@ -9,6 +9,7 @@ use App\Models\Quiz;
 use App\Support\NotifikasiAdmin;
 use App\Support\NotifikasiKonten;
 use Illuminate\Contracts\View\View as ViewContract;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
 
@@ -29,22 +30,24 @@ class AppServiceProvider extends ServiceProvider
     {
         /*
          * Badge "Verifikasi" di sidebar admin: jumlah konten yang sedang
-         * menunggu persetujuan. Dihitung per render supaya angka selalu
-         * segar, dan hanya untuk layout admin.
+         * menunggu persetujuan, dan badge "Masukan & Saran" untuk kiriman
+         * yang belum ditindaklanjuti. Keduanya dihitung sekali untuk semua
+         * halaman admin, bukan per render: dengan database yang letaknya
+         * terpisah, tiga COUNT di setiap pembukaan halaman langsung
+         * terasa. Cache-nya pendek saja — segar 30 detik, lalu masih
+         * disajikan sampai 180 detik sambil disegarkan di belakang layar —
+         * jadi badge menyusul paling lama beberapa detik.
          */
         View::composer('layouts.admin', function (ViewContract $view): void {
             $pengguna = auth()->user();
 
-            $view->with('jumlahVerifikasi',
-                Materi::query()->menunggu()->count() + Quiz::query()->menunggu()->count()
-            );
+            [$jumlahVerifikasi, $jumlahMasukan] = Cache::flexible('badge.admin', [30, 180], fn (): array => [
+                Materi::query()->menunggu()->count() + Quiz::query()->menunggu()->count(),
+                MasukanSaran::query()->baru()->count(),
+            ]);
 
-            /*
-             * Badge "Masukan & Saran" di sidebar admin: jumlah kiriman yang
-             * belum ditindaklanjuti (status masih "baru"). Sama seperti badge
-             * Verifikasi, angkanya dihitung per render supaya selalu segar.
-             */
-            $view->with('jumlahMasukan', MasukanSaran::query()->baru()->count());
+            $view->with('jumlahVerifikasi', $jumlahVerifikasi);
+            $view->with('jumlahMasukan', $jumlahMasukan);
 
             /*
              * Tema dan aturan konfirmasi publish untuk area admin.
@@ -53,28 +56,27 @@ class AppServiceProvider extends ServiceProvider
              * layout dan hampir semua halaman admin memakainya, jadi tidak ada
              * satu pun controller yang perlu tahu tentang tema.
              *
-             * Dua kolom ini dibaca dengan value() dan bukan lewat
+             * Dua kolom ini dibaca dengan first() dan bukan lewat
              * Preferensi::ambil(). ambil() membuat baris kalau belum ada, dan
              * baris preferensi tidak boleh lahir hanya karena admin membuka
              * halaman Dashboard: kolomnya sudah punya nilai bawaan yang sama
              * dengan yang dilihat model, jadi belum ada pun hasil membacanya.
+             * Dua kolom dibaca dalam satu query, bukan dua value() terpisah.
              *
              * Kalau barisnya memang belum ada, nilai bakunya dipakai: tema
              * terang dan konfirmasi publish menyala.
              */
-            $tema = Preferensi::query()
+            $preferensi = Preferensi::query()
                 ->where('pengguna_id', $pengguna?->getKey())
-                ->value('tema');
-
-            $konfirmasi = Preferensi::query()
-                ->where('pengguna_id', $pengguna?->getKey())
-                ->value('konfirmasi_publikasi');
+                ->first(['tema', 'konfirmasi_publikasi']);
 
             $view->with([
-                'temaAdmin' => $tema === Preferensi::TEMA_GELAP
+                'temaAdmin' => $preferensi?->tema === Preferensi::TEMA_GELAP
                     ? Preferensi::TEMA_GELAP
                     : Preferensi::TEMA_TERANG,
-                'konfirmasiPublikasi' => $konfirmasi === null ? '1' : (int) $konfirmasi,
+                'konfirmasiPublikasi' => $preferensi?->konfirmasi_publikasi === null
+                    ? '1'
+                    : (int) $preferensi->konfirmasi_publikasi,
             ]);
         });
 
@@ -91,6 +93,16 @@ class AppServiceProvider extends ServiceProvider
          * sekali. Header mobile hanya me-render lonceng ketika baris
          * keduanya ada (tampilCari), jadi keputusannya sama: dua daftar
          * putih jadi satu.
+         *
+         * Hasilnya dicache singkat per pengguna (segar 30 detik, masih
+         * disajikan sampai 120 detik sambil disegarkan): daftar dan angka
+         * ini muncul di setiap halaman, dan panelnya dirender dua kali
+         * (top bar desktop dan header mobile), jadi tanpa cache keduanya
+         * berarti beberapa perjalanan lambat di setiap halaman. Begitu ada
+         * notifikasi ditandai baca, model Notifikasi sendiri yang
+         * menghapus cache-nya, jadi titik merahnya langsung hilang. Nama
+         * host ikut masuk kunci cache karena isinya memuat tautan absolut
+         * yang berbeda antara domain produksi dan domain lokal.
          */
         View::composer(['components.app.topbar', 'components.app.header-mobile'], function (ViewContract $view): void {
             $data = $view->getData();
@@ -103,9 +115,24 @@ class AppServiceProvider extends ServiceProvider
 
             $pengguna = $data['pengguna'] ?? auth()->user();
 
+            if ($pengguna === null) {
+                $view->with(['notifikasi' => [], 'notifikasiBelumDibaca' => 0]);
+
+                return;
+            }
+
+            [$notifikasi, $notifikasiBelumDibaca] = Cache::flexible(
+                'notif.user.'.$pengguna->getKey().'.'.request()->getHost(),
+                [30, 120],
+                fn (): array => [
+                    NotifikasiKonten::daftar($pengguna),
+                    NotifikasiKonten::belumDibaca($pengguna),
+                ],
+            );
+
             $view->with([
-                'notifikasi' => NotifikasiKonten::daftar($pengguna),
-                'notifikasiBelumDibaca' => NotifikasiKonten::belumDibaca($pengguna),
+                'notifikasi' => $notifikasi,
+                'notifikasiBelumDibaca' => $notifikasiBelumDibaca,
             ]);
         });
 
@@ -119,13 +146,32 @@ class AppServiceProvider extends ServiceProvider
          * pada layout, supaya halaman yang sengaja tidak memakai lonceng
          * (semua halaman /admin/pengaturan*, lihat $topbarRingkas di
          * layouts/admin) tidak menjalankan dua query ini sama sekali.
+         *
+         * Sama seperti lonceng pengguna: dicache singkat per admin, dan
+         * cache-nya dihapus dari model Notifikasi begitu ada yang ditandai
+         * baca.
          */
         View::composer('components.admin.topbar-kanan', function (ViewContract $view): void {
             $admin = $view->getData()['admin'] ?? auth()->user();
 
+            if ($admin === null) {
+                $view->with(['notifikasiAdmin' => collect(), 'notifBelum' => 0]);
+
+                return;
+            }
+
+            [$notifikasiAdmin, $notifBelum] = Cache::flexible(
+                'notif.admin.'.$admin->getKey().'.'.request()->getHost(),
+                [30, 120],
+                fn (): array => [
+                    NotifikasiAdmin::daftar($admin),
+                    NotifikasiAdmin::belumDibaca($admin),
+                ],
+            );
+
             $view->with([
-                'notifikasiAdmin' => NotifikasiAdmin::daftar($admin),
-                'notifBelum' => NotifikasiAdmin::belumDibaca($admin),
+                'notifikasiAdmin' => $notifikasiAdmin,
+                'notifBelum' => $notifBelum,
             ]);
         });
     }

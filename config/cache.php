@@ -129,8 +129,18 @@ return [
     | storage. By default, no PHP classes will be unserialized from your
     | cache to prevent gadget chain attacks if your APP_KEY is leaked.
     |
+    | Aplikasi ini menyimpan tiga hal ke cache yang bukan skalar: Collection
+    | untuk daftar baris siap tampil (aktivitas terbaru dashboard admin dan
+    | daftar notifikasi admin), dan Carbon karena beberapa baris itu membawa
+    | kolom waktu (dibuat_pada, waktu). Tanpa diizinkan di sini, ketiganya
+    | kembali dari cache sebagai __PHP_Incomplete_Class dan halamannya gagal
+    | render. Kelas di luar daftar ini tetap ditolak saat dibaca.
     */
 
-    'serializable_classes' => false,
+    'serializable_classes' => [
+        'Illuminate\Support\Collection',
+        'Illuminate\Support\Carbon',
+        'Carbon\Carbon',
+    ],
 
 ];

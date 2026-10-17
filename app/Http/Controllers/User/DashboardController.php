@@ -17,6 +17,7 @@ use App\Support\MateriDibaca;
 use App\Support\PeringkatGlobal;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\View\View;
 
 /**
@@ -35,7 +36,8 @@ use Illuminate\View\View;
  *   aksesCepat    => [judul, deskripsi, ikon, warna, warna_gelap, tautan]
  *   materiTerbaru => hasil App\Support\DaftarMateri::petikan()
  *   quizTerbaru   => hasil App\Support\DaftarQuiz::petikan()
- *   jadwal        => hasil App\Support\DaftarJadwal::hariIni()
+ *   jadwal        => hasil App\Support\DaftarJadwal::hari(), dibangun dari
+ *                    peta per hari App\Support\DaftarJadwal::jadwalMinggu()
  *   peringkat     => hasil App\Support\PeringkatGlobal::daftar()
  *   kalender      => [nama_bulan, nama_hari, sel[], sebelumnya, berikutnya]
  *   streak        => hasil App\Support\AktivitasHarian::streak()
@@ -60,18 +62,51 @@ class DashboardController extends Controller
     {
         $pengguna = $request->user();
 
+        /*
+         * Seluruh isi dashboard diambil dari satu cache stale-while-
+         * revalidate milik pengguna ini. Halaman ini membaca banyak tabel
+         * sekaligus, dan di database produksi yang letaknya terpisah,
+         * menghitung ulang semuanya di setiap kunjungan berarti setengah
+         * menit per pembukaan halaman. Cache-nya segar 5 menit, lalu
+         * masih dilayani sampai satu jam sambil disegarkan di belakang
+         * layar — angka baru menyusul di kunjungan berikutnya, dan tidak
+         * ada yang menunggu hitungan penuh kecuali setelah dashboard sama
+         * sekali tidak dibuka selama satu jam. Nama host ikut masuk kunci
+         * cache karena beberapa kartu memuat tautan absolut.
+         *
+         * Peta jadwal ikut disimpan di dalam cache supaya kartu "Jadwal
+         * Hari Ini" dan kalender membaca sumber yang sama tanpa query
+         * kedua. Kalender sendiri dibangun di luar cache karena isinya
+         * bergantung pada parameter ?bulan= milik halaman, sedangkan
+         * petanya sudah ada di tangan.
+         */
+        $data = Cache::flexible(
+            'dashboard.user.'.$pengguna?->getKey().'.'.request()->getHost(),
+            [300, 3600],
+            fn (): array => [
+                'ringkasan' => $this->ringkasan($pengguna),
+                'aksiCepat' => $this->aksiCepat(),
+                'aksesCepat' => $this->aksesCepat(),
+                'materiTerbaru' => $this->materiTerbaru(),
+                'quizTerbaru' => $this->quizTerbaru($pengguna?->getKey()),
+                'petaJadwal' => DaftarJadwal::jadwalMinggu($pengguna?->getKey()),
+                'peringkat' => $this->peringkat($pengguna),
+                'streak' => $this->streak($pengguna),
+            ]
+        );
+
         return view('user.dashboard', [
             'pengguna' => $pengguna,
 
-            'ringkasan' => $this->ringkasan($pengguna),
-            'aksiCepat' => $this->aksiCepat(),
-            'aksesCepat' => $this->aksesCepat(),
-            'materiTerbaru' => $this->materiTerbaru(),
-            'quizTerbaru' => $this->quizTerbaru($pengguna?->getKey()),
-            'jadwal' => $this->jadwal($request),
-            'peringkat' => $this->peringkat($pengguna),
-            'kalender' => $this->kalender($request),
-            'streak' => $this->streak($pengguna),
+            'ringkasan' => $data['ringkasan'],
+            'aksiCepat' => $data['aksiCepat'],
+            'aksesCepat' => $data['aksesCepat'],
+            'materiTerbaru' => $data['materiTerbaru'],
+            'quizTerbaru' => $data['quizTerbaru'],
+            'jadwal' => DaftarJadwal::hari($data['petaJadwal']),
+            'peringkat' => $data['peringkat'],
+            'kalender' => $this->kalender($request, $data['petaJadwal']),
+            'streak' => $data['streak'],
         ]);
     }
 
@@ -325,20 +360,6 @@ class DashboardController extends Controller
     }
 
     /**
-     * Jadwal pelajaran hari ini.
-     *
-     * Datanya sengaja dibaca dari App\Support\DaftarJadwal, bukan ditulis
-     * ulang di sini, supaya baris pada kartu dashboard dijamin sama dengan
-     * baris di halaman /user/jadwal untuk tanggal yang sama. Kartu di
-     * dashboard memakai sebagian kecil dari kunci yang dikembalikan kelas
-     * itu (jam, judul, kelas, ikon, warna, status); sisanya dipakai di sana.
-     */
-    private function jadwal(Request $request): array
-    {
-        return DaftarJadwal::hariIni($request->user()?->getKey());
-    }
-
-    /**
      * Leaderboard di sidebar.
      *
      * Datanya diambil dari App\Support\PeringkatGlobal, bukan ditulis ulang
@@ -369,11 +390,9 @@ class DashboardController extends Controller
      * bukan pengingat jadwal orang lain, jadi tidak ada yang perlu disembunyikan
      * dengan filter di sini.
      */
-    private function kalender(Request $request): array
+    private function kalender(Request $request, array $peta): array
     {
         $bulan = $this->bulanTerpilih($request->query('bulan'));
-
-        $peta = DaftarJadwal::jadwalMinggu($request->user()?->getKey());
 
         $awal = $bulan->copy()->startOfMonth();
         $jumlahHari = (int) $awal->copy()->endOfMonth()->day;

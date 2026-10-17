@@ -40,10 +40,23 @@ final class KodeSesi
      */
     public static function baru(): string
     {
-        for ($percobaan = 0; $percobaan < self::PERCOBAAN_MAKS; $percobaan++) {
-            $kode = self::acak();
+        /*
+         * Semua kandidat diacak lebih dulu, lalu dicek dalam satu query.
+         * Versi sebelumnya menembak satu exists() per kandidat: di database
+         * yang letaknya terpisah, setiap percobaan berharga satu perjalanan
+         * penuh, dan benturan beruntun membuat pembuatan sesi lambat
+         * berkali-kali lipat.
+         */
+        $kandidat = [];
 
-            if (! SesiQuiz::query()->where('kode', $kode)->exists()) {
+        for ($percobaan = 0; $percobaan < self::PERCOBAAN_MAKS; $percobaan++) {
+            $kandidat[] = self::acak();
+        }
+
+        $dipakai = SesiQuiz::query()->whereIn('kode', $kandidat)->pluck('kode')->all();
+
+        foreach ($kandidat as $kode) {
+            if (! in_array($kode, $dipakai, true)) {
                 return $kode;
             }
         }

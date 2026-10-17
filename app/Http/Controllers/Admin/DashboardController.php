@@ -10,6 +10,7 @@ use App\Support\StatistikAdmin;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\View\View;
 
 /**
@@ -29,8 +30,19 @@ class DashboardController extends Controller
 
     public function __invoke(Request $request): View
     {
-        return view('admin.dashboard', [
-            'pengguna' => $request->user(),
+        /*
+         * Seluruh isi dashboard diambil dari satu cache stale-while-
+         * revalidate. Isinya bukan data per-admin, dan di database
+         * produksi yang letaknya terpisah, menghitung ulang semuanya di
+         * setiap kunjungan berarti hampir sepuluh perjalanan lambat per
+         * pembukaan halaman. Cache memakai nama host sebagai bagian dari
+         * kunci karena beberapa daftarnya memuat tautan absolut. Cache-nya
+         * segar 5 menit, lalu masih dilayani sampai satu jam sambil
+         * disegarkan di belakang layar — angka baru menyusul sendiri, dan
+         * tidak ada pengunjung yang menunggu hitungan penuh kecuali setelah
+         * dashboard sama sekali tidak dibuka selama satu jam.
+         */
+        $data = Cache::flexible('dashboard.admin.'.request()->getHost(), [300, 3600], fn (): array => [
             'ringkasan' => StatistikAdmin::ringkasan(),
             'perluDitinjau' => StatistikAdmin::perluDitinjau(),
             'aktivitas' => $this->aktivitasTerbaru(),
@@ -44,6 +56,11 @@ class DashboardController extends Controller
              */
             'pelajaranDisukai' => StatistikAdmin::pelajaranTerpopuler(),
             'loginMingguan' => StatistikAdmin::loginMingguan(),
+        ]);
+
+        return view('admin.dashboard', [
+            'pengguna' => $request->user(),
+            ...$data,
         ]);
     }
 

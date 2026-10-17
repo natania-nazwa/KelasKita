@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Facades\Cache;
 
 /**
  * Notifikasi milik satu pengguna (tabel tb_notifikasi).
@@ -190,6 +191,8 @@ class Notifikasi extends Model
         }
 
         $this->forceFill(['dibaca_pada' => now()])->save();
+
+        self::lupakanCache((int) $this->pengguna_id);
     }
 
     /**
@@ -207,10 +210,33 @@ class Notifikasi extends Model
      */
     public static function tandaiSemuaDibaca(int $penggunaId): int
     {
-        return self::query()
+        $jumlah = self::query()
             ->where('pengguna_id', $penggunaId)
             ->belumDibaca()
             ->update(['dibaca_pada' => now()]);
+
+        self::lupakanCache($penggunaId);
+
+        return $jumlah;
+    }
+
+    /**
+     * Hapus cache lonceng milik satu pengguna.
+     *
+     * Lonceng di topbar menyajikan daftar dan jumlahnya dari cache pendek
+     * milik view composer (lihat AppServiceProvider), dan notifikasi yang
+     * baru ditandai baca harus langsung terlihat perubahannya. Dua kunci
+     * dihapus sekaligus — lonceng pengguna dan lonceng admin — karena satu
+     * baris notifikasi dikirim ke salah satu di antaranya dan model ini
+     * tidak menyimpan ke mana ia dikirim. Nama host ikut dipakai karena
+     * hanya itu yang membedakan kunci produksi dan kunci lokal.
+     */
+    private static function lupakanCache(int $penggunaId): void
+    {
+        $host = request()->getHost();
+
+        Cache::forget('notif.user.'.$penggunaId.'.'.$host);
+        Cache::forget('notif.admin.'.$penggunaId.'.'.$host);
     }
 
     /**

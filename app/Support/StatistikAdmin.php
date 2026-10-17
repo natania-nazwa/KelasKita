@@ -223,21 +223,17 @@ final class StatistikAdmin
     }
 
     /**
-     * Berapa pengguna yang punya sesi hidup dalam 24 jam terakhir.
+     * Berapa pengguna yang aktif dalam 24 jam terakhir.
      *
-     * Membaca tabel "sessions" secara langsung: aplikasi memakai driver
-     * database dengan lifetime 120 menit, jadi last_activity berisi
-     * unix timestamp. Sesi yang sudah kedaluwarsa di luar 24 jam tidak
-     * dihitung supaya "pengguna aktif" tidak sama dengan "pernah
-     * pernah masuk".
+     * Dibaca dari kolom tb_pengguna.terakhir_aktivitas yang diperbarui
+     * middleware App\Http\Middleware\CatatAktivitasPengguna — definisi
+     * yang sama persis dengan scopeAktif di model User. Tabel "sessions"
+     * tidak lagi dipakai karena sesi kini disimpan di file: barisnya
+     * tidak pernah diperbarui dan angkanya akan beku.
      */
     public static function penggunaAktif(): int
     {
-        return (int) DB::table('sessions')
-            ->whereNotNull('user_id')
-            ->where('last_activity', '>', now()->subDay()->getTimestamp())
-            ->distinct()
-            ->count('user_id');
+        return User::query()->aktif()->count();
     }
 
     /**
