@@ -157,6 +157,26 @@ class JadwalKelolaTest extends TestCase
             ->assertSee('Praktikum Proyek');
     }
 
+    public function test_pesan_sukses_jadwal_memakai_kartu_toast_yang_bisa_ditutup(): void
+    {
+        $user = $this->buatPengguna();
+
+        // Halaman Jadwal dulu punya kartu hijau sendiri tanpa tombol tutup
+        // dan tanpa batas waktu. Sekarang pesannya memakai kartu toast yang
+        // sama dengan halaman materi dan quiz, jadi ada kait data-toast dan
+        // tombol tutup yang dipakai resources/js/app.js untuk memasang timer
+        // lima detik.
+        $respons = $this->actingAs($user)
+            ->withSession(['sukses' => 'Jadwal "Praktikum Proyek" berhasil ditambahkan.'])
+            ->get('/user/jadwal?tanggal='.$this->tanggalSenin())
+            ->assertOk();
+
+        $respons->assertSee('Jadwal "Praktikum Proyek" berhasil ditambahkan.')
+            ->assertSee('data-toast', false)
+            ->assertSee('data-toast-tutup', false)
+            ->assertDontSee('jadwal-sukses', false);
+    }
+
     public function test_jadwal_baru_menggantikan_empty_state_kosong(): void
     {
         $user = $this->buatPengguna();

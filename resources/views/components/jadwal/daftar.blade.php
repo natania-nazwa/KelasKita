@@ -100,12 +100,6 @@
                 </dl>
             </div>
 
-            <span class="jadwal-ikon-kotak" aria-hidden="true">
-                <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="{{ $item['ikon'] }}" />
-                </svg>
-            </span>
-
             {{-- Aksi edit dan hapus. Semua baris berasal dari tb_jadwal,
                  jadi semuanya bisa diubah dan dihapus.
 

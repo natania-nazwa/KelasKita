@@ -10221,7 +10221,7 @@ html {
     align-items: center;
     gap: 0.5rem 0.9rem;
     min-width: 0;
-    grid-template-columns: auto minmax(0, 1fr) auto auto;
+    grid-template-columns: auto minmax(0, 1fr) auto;
     border-radius: 0.875rem;
     border: 1px solid color-mix(in oklab, var(--color-lavender) 80%, transparent);
     background-color: #fff;
@@ -10375,25 +10375,6 @@ html {
     width: 0.1875rem;
     border-radius: 9999px;
     background: linear-gradient(180deg, var(--k) 0%, var(--k-gelap) 100%);
-}
-
-.jadwal-ikon-kotak {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-shrink: 0;
-    width: 2.25rem;
-    height: 2.25rem;
-    border-radius: 0.75rem;
-    background-color: color-mix(in oklab, var(--k) 12%, white);
-    color: var(--k-gelap);
-    transition:
-        transform 0.3s cubic-bezier(0.22, 1, 0.36, 1),
-        background-color 0.3s ease;
-}
-
-.jadwal-item:hover .jadwal-ikon-kotak {
-    transform: scale(1.06);
 }
 
 /* ---------- Badge status ---------- */
@@ -11327,10 +11308,6 @@ html {
     background-color: color-mix(in oklab, var(--k) 10%, #191336);
 }
 
-[data-theme='gelap'] .jadwal-ikon-kotak {
-    background-color: color-mix(in oklab, var(--k) 12%, #191336);
-}
-
 [data-theme='gelap'] .jadwal-sekarang {
     background-color: color-mix(in oklab, var(--k) 10%, #191336);
 }
@@ -12200,24 +12177,13 @@ html {
 }
 
 /* ---------- Aksi di tiap baris jadwal ----------
-   Edit dan hapus muncul saat baris itu disorot, jadi daftar tetap
-   bersih kalau tidak ada yang sedang dikerjakan. Di layar sentuh
-   (tanpa hover) keduanya selalu terlihat.
-
-   Ruangnya tetap dialokasikan walau opacity-nya 0, jadi baris tidak
-   melompat saat kursor lewat di atasnya. */
+   Edit dan hapus selalu terlihat, tanpa perlu hover: pengguna bisa
+   langsung melihat apa yang bisa dilakukan pada tiap baris. */
 .jadwal-item__aksi {
     display: flex;
     align-items: center;
     flex-shrink: 0;
     gap: 0.25rem;
-    opacity: 0;
-    transition: opacity 0.25s ease;
-}
-
-.jadwal-item:hover .jadwal-item__aksi,
-.jadwal-item:focus-within .jadwal-item__aksi {
-    opacity: 1;
 }
 
 .jadwal-item__aksi a,
@@ -12245,72 +12211,6 @@ html {
 .jadwal-item__aksi button:focus-visible {
     background-color: #fdecee;
     color: #c2414a;
-}
-
-@media (hover: none) {
-    /* Di perangkat sentuh tidak ada hover, jadi tombolnya tidak boleh
-       ikut hilang. */
-    .jadwal-item__aksi {
-        opacity: 1;
-    }
-}
-
-/* Di ponsel, ikon pelajaran disembunyikan: ia cuma pemanis (sudah
-   ada nama pelajaran di bawah judul), sementara ruangnya lebih
-   berguna diberikan ke tombol aksi. */
-@media (max-width: 639px) {
-    .jadwal-item {
-        grid-template-columns: auto minmax(0, 1fr) auto;
-    }
-
-    .jadwal-ikon-kotak {
-        display: none;
-    }
-}
-
-/* ---------- Pesan sukses ----------
-   Melayang di pojok kanan bawah supaya tidak mendorong isi halaman
-   saat jadwal baru saja disimpan atau dihapus. */
-.jadwal-sukses {
-    position: fixed;
-    right: 1.25rem;
-    bottom: 1.25rem;
-    z-index: 60;
-    display: flex;
-    align-items: flex-start;
-    gap: 0.5rem;
-    max-width: min(24rem, calc(100vw - 2.5rem));
-    border-radius: 0.75rem;
-    background-color: #fff;
-    padding: 0.75rem 1rem;
-    font-size: 0.8125rem;
-    font-weight: 600;
-    line-height: 1.5;
-    color: #0f7a5b;
-    box-shadow:
-        inset 0 0 0 1px color-mix(in oklab, #0f9d76 24%, transparent),
-        0 18px 36px -22px rgba(33, 26, 58, 0.6);
-}
-
-/* Mode gelap: kotaknya menulis #fff langsung dan teks hijaunya ditulis
-   tetap — keduanya harus ikut gelap supaya pesan tidak jadi huruf gelap
-   di atas kartu putih yang menyilaukan. */
-[data-theme='gelap'] .jadwal-sukses {
-    background-color: #191336;
-    color: color-mix(in oklab, #0f7a5b 50%, var(--color-dark));
-}
-
-/*
- * Di bawah lg ada navigasi bawah tetap setinggi ±54px + safe-area.
- * Pesan sukses harus melayang DI ATAS NAVIGASI ITU: selain menutupi
- * label menu kanan, toast ini tidak punya pointer-events:none jadi
- * ia benar-benar menelan ketukan di atasnya. z-index 60 > 40 tetap
- * dipertahankan supaya toast tetap di atas kartu.
- */
-@media (max-width: 1023px) {
-    .jadwal-sukses {
-        bottom: calc(5rem + env(safe-area-inset-bottom));
-    }
 }
 
 /* ---------- Toast hasil aksi ----------
@@ -12416,9 +12316,10 @@ html {
 }
 
 /*
- * Sama seperti .jadwal-sukses di atas: navigasi bawah tetap menempati
- * ±54px + safe-area, jadi toast harus melayang di atasnya. Tanpa ini,
- * toast benar-benar menelan ketukan di atas menu.
+ * Di bawah lg ada navigasi bawah tetap setinggi ±54px + safe-area.
+ * Toast harus melayang DI ATAS NAVIGASI ITU: tanpa ini, toast
+ * benar-benar menelan ketukan di atas menu. z-index 60 > 40 tetap
+ * dipertahankan supaya toast tetap di atas kartu.
  */
 @media (max-width: 1023px) {
     .app-toast {
@@ -14651,10 +14552,6 @@ html {
 
 [data-theme='gelap'] .jadwal-item--lewat .jadwal-item__kategori {
     opacity: 0.7;
-}
-
-[data-theme='gelap'] .jadwal-ikon-kotak {
-    color: color-mix(in oklab, var(--k) 45%, #ece8ff);
 }
 
 [data-theme='gelap'] .jadwal-sekarang__label {

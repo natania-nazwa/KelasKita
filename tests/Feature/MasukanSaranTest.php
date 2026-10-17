@@ -57,6 +57,25 @@ class MasukanSaranTest extends TestCase
             ->assertSee('Kirim Masukan');
     }
 
+    public function test_pesan_sukses_masukan_memakai_kartu_toast_yang_bisa_ditutup(): void
+    {
+        $user = $this->buatPengguna();
+
+        // Halaman Masukan & Saran dulu punya kartu sukses inline tanpa
+        // tombol tutup dan tanpa batas waktu. Sekarang pesannya memakai
+        // kartu toast yang sama dengan halaman lain: ada kait data-toast
+        // dan tombol tutup yang dipakai resources/js/app.js untuk memasang
+        // timer lima detik.
+        $respons = $this->actingAs($user)
+            ->withSession(['sukses' => 'Terima kasih! Masukan dan saranmu sudah kami terima.'])
+            ->get(route('user.masukan-saran'))
+            ->assertOk();
+
+        $respons->assertSee('Terima kasih! Masukan dan saranmu sudah kami terima.')
+            ->assertSee('data-toast', false)
+            ->assertSee('data-toast-tutup', false);
+    }
+
     public function test_masukan_tersimpan_dengan_pemilik_dari_sesi_login(): void
     {
         $user = $this->buatPengguna();

@@ -563,19 +563,22 @@
     @endunless
 
     {{--
-        Toast hasil aksi materi dan quiz: "Materi "X" berhasil dihapus.",
-        "Quiz "Y" tersimpan...", dan pesan gagal saat isian belum lengkap
-        atau aksi ditolak. Kartu kecil di pojok kanan bawah, menutup
-        dirinya sendiri setelah lima detik atau saat tombol silangnya
-        ditekan (resources/js/app.js).
+        Toast hasil aksi: "Materi "X" berhasil dihapus.", "Quiz "Y"
+        tersimpan...", "Jadwal "Z" berhasil dihapus.", dan pesan gagal saat
+        isian belum lengkap atau aksi ditolak. Kartu kecil di pojok kanan
+        bawah, menutup dirinya sendiri setelah lima detik atau saat tombol
+        silangnya ditekan (resources/js/app.js).
 
-        Dirender dari layout dan dibatasi ke rute materi serta quiz, bukan
-        dari tiap halaman, supaya seluruh halaman itu memakai satu kartu
-        yang sama dan halaman lain tidak ikut berubah. Pesan gagal
-        didahulukan agar kegagalan tidak tertutup oleh kabar berhasil
-        kalau keduanya kebetulan ada.
+        Dirender dari layout dan dibatasi ke rute materi, quiz, karya-saya,
+        jadwal, profil, serta masukan-saran, bukan dari tiap halaman, supaya
+        seluruh halaman itu memakai satu kartu yang sama dan halaman lain
+        tidak ikut berubah. Halaman Jadwal dulu punya kartu hijau sendiri
+        tanpa tombol tutup dan tanpa batas waktu, dan Profil serta
+        Masukan-Saran punya kartu inline; sekarang semuanya ikut kartu ini.
+        Pesan gagal didahulukan agar kegagalan tidak tertutup oleh kabar
+        berhasil kalau keduanya kebetulan ada.
     --}}
-    @if (request()->routeIs('user.materi*', 'user.quiz*', 'user.karya-saya'))
+    @if (request()->routeIs('user.materi*', 'user.quiz*', 'user.karya-saya', 'user.jadwal', 'user.profil', 'user.masukan-saran'))
         @php
             $toastGalat = filled(session('galat')) ? session('galat') : ($errors->any() ? $errors->first() : null);
         @endphp

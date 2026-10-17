@@ -85,6 +85,24 @@ class ProfilTest extends TestCase
             ->assertSee($user->created_at->translatedFormat('d F Y'));
     }
 
+    public function test_pesan_sukses_profil_memakai_kartu_toast_yang_bisa_ditutup(): void
+    {
+        $user = $this->buatPengguna();
+
+        // Halaman Profil dulu punya kartu sukses inline tanpa tombol tutup
+        // dan tanpa batas waktu. Sekarang pesannya memakai kartu toast yang
+        // sama dengan halaman lain: ada kait data-toast dan tombol tutup
+        // yang dipakai resources/js/app.js untuk memasang timer lima detik.
+        $respons = $this->actingAs($user)
+            ->withSession(['sukses' => 'Profil berhasil diperbarui.'])
+            ->get(route('user.profil'))
+            ->assertOk();
+
+        $respons->assertSee('Profil berhasil diperbarui.')
+            ->assertSee('data-toast', false)
+            ->assertSee('data-toast-tutup', false);
+    }
+
     public function test_tanpa_foto_profil_avatar_menampilkan_satu_huruf_nama_depan(): void
     {
         $user = $this->buatPengguna();

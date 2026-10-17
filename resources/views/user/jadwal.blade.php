@@ -104,17 +104,12 @@
         </div>
     </div>
 
-    {{-- Pesan sukses dari tambah, ubah, atau hapus jadwal. --}}
-    @if (session('sukses'))
-        <div role="status"
-            class="jadwal-sukses">
-            <svg class="h-4 w-4 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
-            </svg>
-
-            <span>{{ session('sukses') }}</span>
-        </div>
-    @endif
+    {{--
+        Pesan sukses dari tambah, ubah, atau hapus jadwal dirender oleh
+        layout lewat komponen x-app.toast: kartu kecil di pojok kanan bawah
+        yang menutup sendiri setelah lima detik dan punya tombol tutup
+        (lihat resources/views/layouts/app.blade.php).
+    --}}
 
     {{-- Dialog konfirmasi hapus jadwal (dikerjakan initKonfirmasi() di
          resources/js/app.js). --}}
