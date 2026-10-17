@@ -49,8 +49,8 @@
 
     <dl class="jadwal-angka">
         <div>
-            <dt>Jam pelajaran</dt>
-            <dd>{{ $ringkasan['jam_label'] }} jam</dd>
+            <dt>Jumlah jadwal</dt>
+            <dd>{{ $ringkasan['jumlah'] }}</dd>
         </div>
 
         <div>

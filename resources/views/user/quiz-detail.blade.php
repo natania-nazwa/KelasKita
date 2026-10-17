@@ -17,17 +17,6 @@
          */
         $kategori = $kartu['kategori'];
 
-        /*
-         * "Lihat semua" pada Daftar Soal mengarah ke daftar quiz di kategori
-         * yang sama, karena tidak ada halaman khusus daftar soal. Tautannya
-         * baru dirender kalau masih ada soal tersembunyi (lihat
-         * x-quiz.detail-daftar-soal), dan kategori kosong tidak pernah
-         * diberi tautan, supaya tidak muncul "kategori=" kosong di URL.
-         */
-        $tautanKategori = filled($kategori['slug'])
-            ? route('user.quiz', ['kategori' => $kategori['slug']])
-            : route('user.quiz');
-
         $tautanBagikan = route('user.quiz.detail', $quiz);
     @endphp
 
@@ -79,7 +68,8 @@
                 <x-quiz.detail-informasi :kartu="$kartu" :jumlah-soal="$jumlahSoal" />
             </div>
 
-            {{-- 3. Daftar soal, melebar penuh di bawah kedua kartu. --}}            <x-quiz.detail-daftar-soal :soal="$soal" :tautan="$tautanKategori" />
+            {{-- 3. Daftar soal, melebar penuh di bawah kedua kartu. --}}
+            <x-quiz.detail-daftar-soal :soal="$soal" />
 
             {{-- 4. Quiz lain di kategori yang sama, kalau ada. --}}
             @if ($rekomendasi !== [])

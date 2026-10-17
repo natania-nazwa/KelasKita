@@ -9095,8 +9095,8 @@ html {
 }
 
 .hasil-item__thumb-ikon {
-    height: 1.5rem;
-    width: 1.5rem;
+    font-size: 1.5rem;
+    line-height: 1;
 }
 
 .hasil-item__teks {
@@ -9258,8 +9258,7 @@ html {
     }
 
     .hasil-item__thumb-ikon {
-        width: 1.25rem;
-        height: 1.25rem;
+        font-size: 1.25rem;
     }
 
     /* Satu baris judul selalu berakhir dengan "..." di ponsel karena
@@ -9444,10 +9443,22 @@ html {
     flex-shrink: 0;
     width: 2rem;
     height: 2rem;
+    overflow: hidden;
     border-radius: 0.6rem;
     color: var(--k);
     background: linear-gradient(140deg, color-mix(in oklab, var(--k) 16%, white) 0%, color-mix(in oklab, var(--k-gelap) 20%, white) 100%);
     box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--k) 22%, transparent);
+}
+
+.hasil-top__foto {
+    height: 100%;
+    width: 100%;
+    object-fit: cover;
+}
+
+.hasil-top__ikon-emoji {
+    font-size: 1rem;
+    line-height: 1;
 }
 
 .hasil-top__judul {
@@ -10704,10 +10715,14 @@ html {
  * Yang SENGAJA tidak ada di sini:
  *   - .saklar::after  tombol bulat di saklar harus tetap putih supaya
  *                     kelihatan melayang di atas relnya.
- *   - .quiz-kepala, .materi-kepala, .simpan-kepala, .karya-kepala, dan
- *     .soal-kepala
- *                     papan ungu di kepala halaman; teksnya sudah putih
- *     dan ungu tua, jadi mengubah latarnya justru merusak kontrasnya.
+ *   - .quiz-kepala dan .soal-kepala
+ *                     papan ungu pekat di kepala halaman Quiz dan saat
+ *                     mengerjakan soal; teksnya sudah putih, jadi
+ *                     mengubah latarnya justru merusak kontrasnya.
+ *                     Kepala Jadwal/Materi/Simpan/Karya kini ikut
+ *                     digelapkan di blok (6) di akhir file.
+ *   - .soal-nav__tombol--kini
+ *                     kotak soal yang sedang dibuka, juga ungu penuh.
  *   - .soal-nav__tombol--kini
  *                     kotak soal yang sedang dibuka, juga ungu penuh.
  *   - .kolom-cari, .kolom-form, .pilih-kategori
@@ -11219,8 +11234,10 @@ html {
 
 /* Badge kesulitan: tiga varian pastelnya punya latarnya sendiri di
    atas thumbnail jadi dibiarkan; hanya fallback netral yang memakai
-   putih, jadi dialihkan ke kartu gelap. */
-[data-theme='gelap'] .dash-kesulitan--netral {
+   putih, jadi dialihkan ke kartu gelap. Kelas .kesulitan-netral
+   dipasang di components/materi/kartu.blade.php untuk padanan yang
+   sama di kartu materi. */
+[data-theme='gelap'] :is(.dash-kesulitan--netral, .kesulitan-netral) {
     background-color: rgba(30, 24, 62, 0.94);
     color: #c4c1d5;
 }
@@ -11519,12 +11536,12 @@ html {
     color: color-mix(in oklab, var(--color-dark) 55%, transparent);
 }
 
-/* Kepala hero Materi/Quiz sengaja dibiarkan seperti mode terang (lihat
-   daftar pengecualian di blok 3), jadi kolom cari dan filter kategori
-   di dalamnya harus kembali putih saat fokus — bukan jadi gelap seperti
-   kolom cari di halaman gelap lainnya. */
-[data-theme='gelap'] .materi-kepala .kolom-cari:focus,
-[data-theme='gelap'] .materi-kepala .pilih-kategori:focus,
+/* Kepala hero Quiz sengaja dibiarkan seperti mode terang (lihat
+   daftar pengecualian di blok 3), jadi filter kategori di dalamnya
+   harus kembali putih saat fokus — bukan jadi gelap seperti kolom
+   cari di halaman gelap lainnya. Kepala Materi kini ikut
+   digelapkan di blok (6), jadi fokusnya memakai kartu gelap biasa
+   dari blok (2). */
 [data-theme='gelap'] .quiz-kepala .pilih-kategori:focus {
     background-color: #fff;
 }
@@ -14448,4 +14465,350 @@ html {
     .jadwal-angka dt {
         font-size: 0.6875rem;
     }
+}
+
+/* ============================================================
+   (6) KEPALA DAN KARTU EMPAT HALAMAN USER
+   Jadwal, Materi, Karya Saya, dan Simpan
+   ============================================================
+   Papan kepala keempat halaman ini ditulis dengan ungu muda dan
+   teks ungu tua khusus untuk mode terang; di mode gelap latarnya
+   tetap pastel, sehingga teks yang sudah dibalik (khususnya kepala
+   Jadwal di blok sebelumnya) jadi tenggelam, dan kartu-kartu di
+   bawahnya masih memakai thumbnail pastel serta chip berwarna
+   pekat --k-gelap. Blok ini menggelapkan semuanya dengan rumus yang
+   sama dengan blok dasbor (5d): putih di dalam color-mix() diganti
+   kartu gelap #191336, teks pekat dibalik ke campuran aksen terang
+   dan #ece8ff, tanpa mengubah layout, ukuran, atau satu pun kelas
+   mode terang.
+
+   Pengecualian yang disengaja tetap seperti mode terang: gradasi
+   ungu pekat berteks putih (tab aktif Simpan, halaman aktif
+   pagination, hari aktif strip) mengikuti pola token yang sudah
+   dipakai di dasbor; pill pastel kesulitan dan tenggat PR sudah
+   punya aturan sendiri; halaman Quiz/Soal di luar cakupan. */
+
+/* ---------- Kepala halaman (hero) ----------
+   Dasar gradasi digelapkan; pola titik (::before) dan lingkaran
+   besar (::after) ikut diturunkan supaya tidak menyala di atasnya.
+   Box-shadow papan dibiarkan: bayangan ungu gelapnya memang teruji
+   di atas latar .latar-atas yang sudah gelap. */
+[data-theme='gelap'] :is(.jadwal-kepala, .materi-kepala, .simpan-kepala) {
+    background-image:
+        radial-gradient(38rem 20rem at 88% -10%, rgba(167, 139, 250, 0.15), transparent 62%),
+        linear-gradient(135deg, #2a2158 0%, #241d50 48%, #221b4a 100%);
+}
+
+/* Karya Saya memakai tiga kabut warna (violet, biru langit, peach)
+   di atas dasar pastel; di sini ketiganya diturunkan jadi kabut
+   gelap tipis di atas dasar ungu tua, supaya identitas halaman
+   tetap terasa beda dari tiga kepala lainnya. */
+[data-theme='gelap'] .karya-kepala {
+    background-image:
+        radial-gradient(22rem 16rem at 88% -14%, rgba(167, 139, 250, 0.14), transparent 66%),
+        radial-gradient(19rem 14rem at 6% 116%, rgba(125, 211, 252, 0.1), transparent 68%),
+        radial-gradient(17rem 13rem at 100% 108%, rgba(253, 186, 186, 0.08), transparent 70%),
+        linear-gradient(135deg, #292055 0%, #221a4c 44%, #211e4e 100%);
+}
+
+[data-theme='gelap'] :is(.jadwal-kepala, .materi-kepala, .simpan-kepala, .karya-kepala)::before {
+    background-image: radial-gradient(rgba(196, 181, 253, 0.22) 1px, transparent 1px);
+}
+
+[data-theme='gelap'] :is(.jadwal-kepala, .materi-kepala, .simpan-kepala, .karya-kepala)::after {
+    background: radial-gradient(circle, rgba(236, 232, 255, 0.07), transparent 68%);
+}
+
+/* Isi kepala Materi/Simpan/Karya: mengulang aturan yang sudah ada
+   untuk .jadwal-kepala__* di blok sebelumnya — lencana kaca gelap,
+   judul terang, deskripsi redup, chip statistik dan angka ungu. */
+[data-theme='gelap'] :is(.materi-kepala__lencana, .simpan-kepala__lencana, .karya-kepala__lencana) {
+    background-color: color-mix(in oklab, var(--color-primary) 16%, #191336);
+    color: #c4b5fd;
+    box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--color-primary) 30%, transparent);
+}
+
+[data-theme='gelap'] :is(.materi-kepala__judul, .simpan-kepala__judul, .karya-kepala__judul) {
+    color: var(--color-dark);
+}
+
+[data-theme='gelap'] :is(.materi-kepala__deskripsi, .simpan-kepala__deskripsi, .karya-kepala__deskripsi) {
+    color: color-mix(in oklab, var(--color-dark) 70%, transparent);
+}
+
+[data-theme='gelap'] :is(.materi-kepala__statistik > div, .simpan-kepala__statistik > div) {
+    background-color: #241c48;
+    box-shadow: inset 0 0 0 1px var(--color-lavender);
+}
+
+[data-theme='gelap'] :is(.materi-kepala__angka, .simpan-kepala__angka) {
+    color: #b09bff;
+}
+
+[data-theme='gelap'] :is(.materi-kepala__satuan, .simpan-kepala__satuan) {
+    color: color-mix(in oklab, var(--color-dark) 55%, transparent);
+}
+
+/* Petunjuk kecil di kepala Karya Saya (pengganti chip statistik):
+   latarnya kaca putih di mode terang, jadi ikut jadi kartu gelap. */
+[data-theme='gelap'] .karya-kepala__petunjuk > span {
+    background-color: #241c48;
+    color: #c4c1d5;
+    box-shadow: inset 0 0 0 1px var(--color-lavender);
+}
+
+[data-theme='gelap'] .karya-kepala__petunjuk svg {
+    color: #a58bff;
+}
+
+/* Kolom cari dan filter kategori di dalam hero Materi (padanan
+   aturan .jadwal-kepala di blok sebelumnya). Tanpa ini keduanya
+   tetap putih penuh di atas papan yang sudah gelap. */
+[data-theme='gelap'] :is(.materi-kepala .kolom-cari, .materi-kepala .pilih-kategori) {
+    background-color: #221b45;
+}
+
+/* ---------- Tab Materi Saya / Quiz Saya ----------
+   Rel dan item di dalam kepala Simpan ditulis khusus dengan putih
+   harfiah di mode terang; tanpa penimpaan ini relnya jadi pil
+   putih di atas papan gelap dan teksnya ungu pekat (#4a3ab8, saat
+   hover #3a2f8f) yang nyaris tak terbaca (≈1.5–2.1:1). Warna item
+   tab generik (termasuk di halaman Karya Saya) juga dinaikkan dari
+   rumus token supaya punya margin kontras yang lega. */
+[data-theme='gelap'] .simpan-kepala .tab-karya {
+    background-color: rgba(236, 232, 255, 0.08);
+    box-shadow: inset 0 0 0 1px rgba(196, 181, 253, 0.22);
+}
+
+[data-theme='gelap'] .tab-karya__item:not(.tab-karya__item--aktif) {
+    color: #a78bfa;
+}
+
+[data-theme='gelap'] .tab-karya__item:not(.tab-karya__item--aktif):hover {
+    background-color: #221b45;
+    color: #c9b8ff;
+}
+
+/* Tab aktif Simpan tetap ungu pekat seperti mode terang (putih di
+   atasnya ≈6.5:1); aturan ini juga mengembalikan latarnya saat
+   di-hover, karena aturan hover tab generik di blok sebelumnya
+   menimpanya dengan kartu gelap sehingga tab aktif kehilangan
+   penandanya. */
+[data-theme='gelap'] .simpan-kepala .tab-karya__item--aktif {
+    background-color: #5b46cf;
+    color: #fff;
+}
+
+[data-theme='gelap'] .simpan-kepala .tab-karya__item--aktif:hover {
+    background-color: #4a3ab8;
+}
+
+/* ---------- Strip tujuh hari (Jadwal) ----------
+   Cincin putih tebal dan teks ungu pekatnya ditulis harfiah untuk
+   latar pastel; di sini cincin berganti garis lavender dan teksnya
+   memakai --color-dark yang sudah terbalik. Hover kotak non-aktif
+   juga harus menggeser latarnya, karena aturan hover mode terang
+   menulis #fff dengan spesifisitas lebih tinggi dari daftar paksa. */
+[data-theme='gelap'] .jadwal-hari__item {
+    box-shadow: inset 0 0 0 1px var(--color-lavender);
+}
+
+[data-theme='gelap'] .jadwal-hari__item:hover {
+    background-color: #221b45;
+}
+
+[data-theme='gelap'] .jadwal-hari__angka {
+    color: var(--color-dark);
+}
+
+[data-theme='gelap'] .jadwal-hari__nama {
+    color: color-mix(in oklab, var(--color-dark) 60%, transparent);
+}
+
+[data-theme='gelap'] .jadwal-hari__jumlah {
+    color: color-mix(in oklab, var(--color-dark) 55%, transparent);
+}
+
+[data-theme='gelap'] .jadwal-hari__jumlah--kosong {
+    color: color-mix(in oklab, var(--color-dark) 50%, transparent);
+}
+
+/* ---------- Teks kartu jadwal ----------
+   Warna pekat --k-gelap (jam mulai, kategori, ikon, label PR dan
+   "sedang berlangsung") dibalik ke campuran aksen terang supaya
+   terbaca di atas chip yang latarnya sudah digelapkan di blok (5b). */
+[data-theme='gelap'] .jadwal-item__mulai {
+    color: color-mix(in oklab, var(--k) 45%, #ece8ff);
+}
+
+[data-theme='gelap'] .jadwal-item__selesai {
+    color: color-mix(in oklab, var(--color-dark) 52%, transparent);
+}
+
+[data-theme='gelap'] .jadwal-item__kategori {
+    color: color-mix(in oklab, var(--k) 45%, #ece8ff);
+}
+
+[data-theme='gelap'] .jadwal-item--lewat .jadwal-item__kategori {
+    opacity: 0.7;
+}
+
+[data-theme='gelap'] .jadwal-ikon-kotak {
+    color: color-mix(in oklab, var(--k) 45%, #ece8ff);
+}
+
+[data-theme='gelap'] .jadwal-sekarang__label {
+    color: color-mix(in oklab, var(--k) 55%, #ece8ff);
+}
+
+[data-theme='gelap'] .jadwal-pr__label {
+    color: color-mix(in oklab, var(--k) 55%, #ece8ff);
+}
+
+/* Label badge "selesai": latarnya sudah digelapkan di blok (5c),
+   tapi teksnya masih redup 45% (≈3.7:1); dinaikkan ke 60% (≈5.3:1). */
+[data-theme='gelap'] .jadwal-status--selesai {
+    color: color-mix(in oklab, var(--color-dark) 60%, transparent);
+}
+
+/* Label kecil kelas/ruang di kartu jadwal dan ringkasan tiga angka
+   (≈3.2–4.0:1 → ≈5.1–5.4:1). */
+[data-theme='gelap'] :is(.jadwal-item__meta dt, .jadwal-angka dt) {
+    color: color-mix(in oklab, var(--color-dark) 55%, transparent);
+}
+
+/* Kotak ikon kartu sidebar dan empty state: latarnya campuran
+   lavender-putih jadi abu-abu terang di mode gelap dan ikon ungu
+   pekat nyaris hilang di atasnya (≈1:1); diganti tint aksen seperti
+   kotak ikon dasbor (≈5.6:1). */
+[data-theme='gelap'] :is(.jadwal-kartu__ikon, .jadwal-kosong__ikon) {
+    background-color: color-mix(in oklab, var(--color-primary) 14%, #191336);
+    color: #a78bfa;
+}
+
+/* ---------- Kartu Materi / Quiz (termasuk turunannya di Karya
+   dan Simpan) ----------
+   Thumbnail tanpa foto memakai gradasi putih yang dicampur --k;
+   di sini diganti kartu gelap seperti .dash-materi__gambar. Foto
+   asli yang menutupi banner tidak terpengaruh. */
+[data-theme='gelap'] :is(.kartu-materi__gambar, .kartu-quiz__gambar) {
+    background:
+        radial-gradient(
+            circle at 78% 20%,
+            color-mix(in oklab, var(--k) 30%, transparent),
+            transparent 58%
+        ),
+        linear-gradient(
+            135deg,
+            color-mix(in oklab, var(--k) 18%, #191336),
+            color-mix(in oklab, var(--k) 40%, #191336)
+        );
+}
+
+[data-theme='gelap'] :is(.kartu-materi__aksen, .kartu-quiz__aksen) {
+    background-image: linear-gradient(
+        90deg,
+        var(--k, var(--color-primary)),
+        color-mix(in oklab, var(--k, var(--color-primary)) 45%, #191336)
+    );
+}
+
+/* Lencana kategori, pil "Baca"/"Lihat", dan chip durasi: latarnya
+   sudah digelapkan di blok (3) dan (5b); teksnya --k-gelap pekat
+   harus dibalik ke aksen terang seperti di dasbor. */
+[data-theme='gelap'] :is(
+        .kartu-materi__lencana,
+        .kartu-quiz__lencana,
+        .kartu-materi__aksi,
+        .kartu-quiz__aksi,
+        .kartu-quiz__durasi,
+        .kartu-quiz__durasi-teks
+    ) {
+    color: color-mix(in oklab, var(--k) 70%, #ece8ff);
+}
+
+[data-theme='gelap'] .kartu-quiz__milik {
+    color: #c9b8ff;
+}
+
+/* Judul saat kartu di-hover: --k-gelap pekat jadi campuran aksen
+   terang, sama seperti aturan hover dasbor. Berlaku juga untuk
+   tautan judul di kartu Karya Saya. */
+[data-theme='gelap'] :is(
+        .kartu-materi:hover .kartu-materi__judul,
+        .kartu-materi:focus-within .kartu-materi__judul,
+        .kartu-quiz:hover .kartu-quiz__judul,
+        .kartu-quiz:focus-within .kartu-quiz__judul,
+        .karya-judul a:hover
+    ) {
+    color: color-mix(in oklab, var(--k) 55%, #f3f0ff);
+}
+
+/* ---------- Karya Saya ---------- */
+
+/* Tombol "Lihat": gradasi terang berteks putih (≈1.4–2.4:1 bahkan
+   di mode terang) diganti gradasi ungu gelap; putih di atasnya
+   minimal ≈5.7:1 untuk seluruh palet warna kategori (kasus terburuk
+   kuning). Tombol Hapus tidak ikut: ia punya latarnya sendiri di
+   blok (5c), dan hover merahnya harus tetap terlihat di bawah. */
+[data-theme='gelap'] .karya-aksi__tombol:not(.karya-aksi__tombol--hapus) {
+    background: linear-gradient(
+        135deg,
+        color-mix(in oklab, var(--k) 42%, #191336),
+        color-mix(in oklab, var(--k-gelap, var(--color-primary-dark)) 65%, #191336)
+    );
+    color: #fff;
+}
+
+/* Kabut pastel tiga sudut di empty state diturunkan mengikuti
+   kepala halaman di atasnya, supaya tidak jadi sumber cahaya. */
+[data-theme='gelap'] .karya-kosong::before {
+    background-image:
+        radial-gradient(24rem 14rem at 88% -12%, rgba(167, 139, 250, 0.14), transparent 70%),
+        radial-gradient(20rem 13rem at -6% 112%, rgba(125, 211, 252, 0.1), transparent 72%),
+        radial-gradient(16rem 11rem at 46% 122%, rgba(254, 205, 211, 0.08), transparent 74%);
+}
+
+/* Halaman aktif pagination: aturan !important di blok (5) menimpa
+   putih !important dari mode terang, jadi labelnya jadi teks terang
+   di atas gradasi ungu (tenggelam, ≈2.5:1). Kembalikan putih di
+   sini dengan !important dan spesifisitas lebih tinggi (≈5.6:1 di
+   sisi gradasi paling terang). */
+[data-theme='gelap'] .karya-hal nav [aria-current='page'] span {
+    color: #fff !important;
+}
+
+/* Tanggal di baris informasi: aturan .karya-info__butir di blok (5)
+   tidak menyadari varian --sepuh yang latarnya transparan, jadi
+   tanggalnya ikut kena tint chip. Kembalikan tampilan redupnya. */
+[data-theme='gelap'] .karya-info__butir--sepuh {
+    background-color: transparent;
+    box-shadow: none;
+    color: color-mix(in oklab, var(--color-dark) 55%, transparent);
+}
+
+[data-theme='gelap'] .karya-info__butir--sepuh svg {
+    color: color-mix(in oklab, var(--color-dark) 40%, transparent);
+}
+
+/* ---------- Kotak merah harfiah ----------
+   Beberapa komponen menulis warna merah muda Tailwind secara
+   langsung (kotak "Alasan ditolak admin", peringatan form Jadwal,
+   ikon dialog konfirmasi, toast galat). Tanpa aturan ini latarnya
+   tetap pastel di atas halaman gelap. Rumusnya mengikuti blok (5c);
+   berlaku juga untuk halaman lain yang memakai kelas yang sama. */
+[data-theme='gelap'] .bg-\[\#fdecee\] {
+    background-color: color-mix(in oklab, #c2414a 12%, #191336);
+}
+
+[data-theme='gelap'] :is(.border-\[\#f4c7cd\], .border-\[\#f3c9cb\]) {
+    border-color: color-mix(in oklab, #c2414a 35%, #191336);
+}
+
+[data-theme='gelap'] .text-\[\#a8323c\] {
+    color: color-mix(in oklab, #a8323c 50%, #ece8ff);
+}
+
+[data-theme='gelap'] .text-\[\#c2414a\] {
+    color: color-mix(in oklab, #c2414a 55%, #ece8ff);
 }

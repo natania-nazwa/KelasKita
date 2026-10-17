@@ -60,6 +60,7 @@
                      * halaman yang sama.
                      */
                     $tag = filled($item['tautan']) ? 'a' : 'div';
+                    $namaIkon = \App\Models\Notifikasi::ikon($item['jenis']);
                 @endphp
 
                 <{{ $tag }} @if ($item['tautan']) href="{{ $item['tautan'] }}" @endif
@@ -67,11 +68,15 @@
                     data-notif-item data-notif-baca="{{ route('user.notifikasi.baca', $item['id']) }}">
                     <span class="notif__item-kiri" aria-hidden="true">
                         <span class="notif__item-ikon">
-                            <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="1.9"
-                                viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round"
-                                    d="{{ \App\Support\Ikon::path(\App\Models\Notifikasi::ikon($item['jenis'])) }}" />
-                            </svg>
+                            @if ($namaIkon === 'piala')
+                                <x-piala :diam="true" />
+                            @else
+                                <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="1.9"
+                                    viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                        d="{{ \App\Support\Ikon::path($namaIkon) }}" />
+                                </svg>
+                            @endif
                         </span>
                     </span>
 

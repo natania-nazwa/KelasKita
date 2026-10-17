@@ -438,7 +438,14 @@ class HasilHalamanTest extends TestCase
             ->get('/user/hasil')
             ->assertOk()
             ->assertSee('Quiz Milik Saya')
-            ->assertDontSee('Quiz Milik Orang Lain');
+            /*
+             * Kartu "Quiz Terpopuler" menghitung pengerjaan seluruh
+             * pengguna, jadi judul quiz orang lain boleh muncul di sana.
+             * Yang tetap dijaga adalah riwayat: baris milik orang lain
+             * tidak ikut tampil, dan itu dicek lewat tautan detailnya
+             * karena hanya riwayat yang memuat tautan itu.
+             */
+            ->assertDontSee(route('user.hasil.detail', $milikOrangLain->getKey()), false);
 
         // Membuka detail milik orang lain harus ditolak, bukan disembunyikan.
         $this->actingAs($saya)
@@ -446,6 +453,45 @@ class HasilHalamanTest extends TestCase
             ->assertForbidden();
 
         $this->actingAs($saya)->get('/user/hasil/9999')->assertNotFound();
+    }
+
+    /**
+     * Kartu "Quiz Terpopuler" menghitung pengerjaan seluruh pengguna, jadi
+     * pengunjung yang belum pernah mengerjakan apa pun tetap melihat quiz
+     * yang paling sering dikerjakan orang lain, lengkap dengan gambarnya.
+     */
+    public function test_quiz_terpopuler_dihitung_dari_seluruh_pengguna_dan_menampilkan_thumbnail(): void
+    {
+        $pengunjung = $this->buatPengguna('Pengunjung', 'pengunjung@example.com');
+        $rajin = $this->buatPengguna('Rajin', 'rajin@example.com');
+
+        $populer = $this->buatQuiz('Quiz Paling Populer');
+        $populer->update(['thumbnail' => 'thumbnails-quiz/populer.jpg']);
+
+        $sekali = $this->buatQuiz('Quiz Sekali Saja');
+
+        // Dikerjakan pengguna lain: tiga kali untuk yang populer, sekali
+        // untuk yang jarang, supaya urutannya pasti.
+        $this->buatPengerjaan($rajin, $populer);
+        $this->buatPengerjaan($rajin, $populer);
+        $this->buatPengerjaan($rajin, $populer);
+        $this->buatPengerjaan($rajin, $sekali);
+
+        $isi = $this->actingAs($pengunjung)
+            ->get('/user/hasil')
+            ->assertOk()
+            ->assertSee('Quiz Paling Populer')
+            ->assertSee('Quiz Sekali Saja')
+            ->assertSee('thumbnails-quiz/populer.jpg', false)
+            ->getContent();
+
+        // Yang paling sering dikerjakan muncul lebih dulu.
+        $posisiPopuler = strpos($isi, 'Quiz Paling Populer');
+        $posisiSekali = strpos($isi, 'Quiz Sekali Saja');
+
+        $this->assertIsInt($posisiPopuler);
+        $this->assertIsInt($posisiSekali);
+        $this->assertLessThan($posisiSekali, $posisiPopuler);
     }
 
     public function test_tamu_diarahkan_ke_login(): void
@@ -482,7 +528,7 @@ class HasilHalamanTest extends TestCase
 
         // Sidebar juga tetap ada, dengan pesan yang jujur.
         $respons->assertSee('Statistik Belajar');
-        $respons->assertSee('Quiz yang paling sering kamu kerjakan akan muncul di sini.');
+        $respons->assertSee('Quiz yang paling sering dikerjakan akan muncul di sini.');
     }
 
     public function test_halaman_detail_menampilkan_nilai_dan_daftar_soal(): void

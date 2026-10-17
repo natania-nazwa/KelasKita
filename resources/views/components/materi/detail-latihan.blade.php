@@ -32,9 +32,7 @@
 
         <div class="flex items-start gap-4 p-5 sm:p-7">
             <span class="latihan-kartu__ikon" aria-hidden="true">
-                <svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.9" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="{{ \App\Support\Ikon::path('piala') }}" />
-                </svg>
+                <x-piala ukuran="text-xl" :diam="true" />
             </span>
 
             <div class="min-w-0 flex-1">

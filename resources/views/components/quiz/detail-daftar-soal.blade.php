@@ -1,8 +1,6 @@
 @props([
     // Daftar soal dari App\Support\DaftarSoal.
     'soal' => [],
-    // Tautan "Lihat semua": daftar quiz lain di kategori yang sama.
-    'tautan' => null,
     /*
      * Jumlah soal yang tampil sejak awal, sekaligus langkah tombol
      * "Lihat semua" di bawah daftar. Kirim 0 (atau null) kalau daftar
@@ -18,9 +16,8 @@
 
     /*
      * Masih ada baris soal yang tersembunyi di balik batas. Nilai ini
-     * menentukan dua hal sekaligus: tautan "Lihat semua" di kepala dan
-     * tombol buka/tutup di bawah daftar. Kalau soal habis dalam satu
-     * tampilan (mis. quiz berisi lima soal), keduanya tidak dirender —
+     * menentukan tombol buka/tutup di bawah daftar. Kalau soal habis dalam
+     * satu tampilan (mis. quiz berisi lima soal), tombolnya tidak dirender —
      * tidak ada yang bisa ditawarkan "Lihat semua"-nya.
      */
     $adaSisa = $batas > 0 && $jumlahSoal > $batas;
@@ -42,11 +39,6 @@
     (lihat initDaftarSoal di resources/js/quiz-detail.js). Tanpa JS
     seluruh baris dibuka kembali lewat aturan noscript di layout, jadi
     tidak ada soal yang terkunci permanen.
-
-    Tautan "Lihat semua" di kepala (daftar quiz satu kategori) ikut
-    disembunyikan begitu tidak ada soal tersembunyi: teks yang sama muncul
-    dua tempat dengan tujuan berbeda hanya membingungkan, dan pada quiz
-    berisi lima soal tautan itu tidak menawarkan apa pun.
 --}}
 
 <section {{ $attributes->class(['mt-6 sm:mt-7']) }} aria-labelledby="judul-daftar-soal" data-daftar-soal>
@@ -54,12 +46,6 @@
         <h2 id="judul-daftar-soal" class="text-base font-extrabold tracking-tight text-dark sm:text-lg">
             Daftar Soal
         </h2>
-
-        @if (filled($tautan) && $adaSisa)
-            <a href="{{ $tautan }}" class="text-xs font-semibold text-primary transition hover:text-primary-dark">
-                Lihat semua
-            </a>
-        @endif
     </div>
 
     @if ($jumlahSoal === 0)

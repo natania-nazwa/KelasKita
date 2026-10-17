@@ -40,9 +40,7 @@
                 @if (filled($item['thumbnail']))
                     <img src="{{ $item['thumbnail'] }}" alt="" class="hasil-item__foto" loading="lazy" decoding="async">
                 @else
-                    <svg class="hasil-item__thumb-ikon" fill="none" stroke="currentColor" stroke-width="1.7" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="{{ $item['kategori']['ikon'] }}" />
-                    </svg>
+                    <span class="hasil-item__thumb-ikon">{{ $item['kategori']['ikon'] }}</span>
                 @endif
             </span>
 

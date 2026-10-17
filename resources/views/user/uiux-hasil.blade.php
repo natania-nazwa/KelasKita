@@ -98,9 +98,7 @@
                                  membuat judul terpotong. --}}
                             <section data-reveal class="uiux-hasil__kartu uiux-hasil__kepala">
                                 <span class="uiux-hasil__lencana">
-                                    <svg class="h-9 w-9" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-                                        <path stroke-linecap="round" stroke-linejoin="round" d="{{ \App\Support\Ikon::path('piala') }}" />
-                                    </svg>
+                                    <x-piala ukuran="text-4xl" />
 
                                     <svg class="uiux-hasil__kilau" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
                                         <path stroke-linecap="round" stroke-linejoin="round" d="{{ \App\Support\Ikon::path('kilau') }}" />
@@ -278,9 +276,7 @@
                             @if ($tautanPeringkat !== null)
                                 <div data-reveal class="uiux-hasil__aksi">
                                     <a href="{{ $tautanPeringkat }}" class="uiux-hasil__tombol uiux-hasil__tombol--peringkat">
-                                        <svg class="h-4 w-4 shrink-0" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-                                            <path stroke-linecap="round" stroke-linejoin="round" d="{{ \App\Support\Ikon::path('piala') }}" />
-                                        </svg>
+                                        <x-piala :diam="true" />
 
                                         Lihat Peringkat
                                     </a>

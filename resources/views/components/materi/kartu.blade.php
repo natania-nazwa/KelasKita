@@ -75,7 +75,7 @@
 
         {{-- Lencana tingkat kesulitan, melayang di pojok kiri atas. --}}
         @if (filled($materi['tingkat_kesulitan'] ?? null))
-            <span class="kartu-materi__kesulitan capitalize {{ $warnaKesulitan[$kesulitan] ?? 'bg-white/90 text-dark/60' }}">
+            <span class="kartu-materi__kesulitan capitalize {{ $warnaKesulitan[$kesulitan] ?? 'bg-white/90 text-dark/60 kesulitan-netral' }}">
                 {{ $materi['tingkat_kesulitan'] }}
             </span>
         @endif

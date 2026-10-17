@@ -26,20 +26,26 @@
             'judul' => 'Hasil tidak ditemukan',
             'deskripsi' => 'Tidak ada pengerjaan quiz yang cocok dengan filter atau kata kunci itu. Coba kata yang lebih umum, atau ganti tabnya.',
             'ikon' => \App\Support\Ikon::path('dokumen'),
+            'emoji' => null,
         ]
         : [
             'judul' => 'Belum Ada Hasil Quiz',
             'deskripsi' => 'Kamu belum memiliki riwayat pengerjaan quiz. Yuk mulai belajar dan kerjakan quiz pertamamu!',
-            'ikon' => \App\Support\Ikon::path('piala'),
+            'ikon' => null,
+            'emoji' => '🏆',
         ];
 @endphp
 
 <div {{ $attributes->class(['flex flex-col items-center px-6 py-12 text-center']) }}>
 
     <span class="hasil-kosong__ikon" aria-hidden="true">
-        <svg class="h-full w-full" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-            <path stroke-linecap="round" stroke-linejoin="round" d="{{ $isi['ikon'] }}" />
-        </svg>
+        @if (filled($isi['emoji']))
+            <x-piala ukuran="text-4xl" :diam="true" />
+        @else
+            <svg class="h-full w-full" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path stroke-linecap="round" stroke-linejoin="round" d="{{ $isi['ikon'] }}" />
+            </svg>
+        @endif
     </span>
 
     <h3 class="mt-4 text-base font-bold tracking-tight text-dark">{{ $isi['judul'] }}</h3>

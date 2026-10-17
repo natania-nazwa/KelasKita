@@ -64,7 +64,7 @@
     @if ($alasan === 'kosong')
         {{-- Tombol yang sama dengan tombol di kepala panel, jadi pengguna
              mengenali satu tombol "Tambah Jadwal" di dua tempat. --}}
-        <x-jadwal.tambah :tanggal="$tanggal" class="mt-5" />
+        <x-jadwal.tambah class="mt-5" />
     @elseif ($alasan === 'libur')
         <a href="{{ route('user.jadwal') }}" class="tombol-utama mt-5">
             <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="1.9" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">

@@ -28,9 +28,7 @@
             <section data-reveal="zoom" class="peringkat-kepala">
                 <div class="flex min-w-0 items-center gap-3">
                     <span class="peringkat-kepala__ikon" aria-hidden="true">
-                        <svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="{{ \App\Support\Ikon::path('piala') }}" />
-                        </svg>
+                        <x-piala ukuran="text-xl" :diam="true" />
                     </span>
 
                     <div class="min-w-0">

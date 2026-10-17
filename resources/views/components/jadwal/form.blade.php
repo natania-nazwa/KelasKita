@@ -1,9 +1,6 @@
 @props([
     // Jadwal yang sedang diedit. Null = mode tambah, isian kosong.
     'jadwal' => null,
-    // Hari yang terpilih di halaman jadwal, dipakai sebagai nilai awal
-    // dropdown hari di mode tambah. Null = pakai hari ini.
-    'hariAktif' => null,
 ])
 
 {{--
@@ -24,11 +21,13 @@
 --}}
 
 @php
-    $hariSekarang = (int) ($hariAktif ?? now()->dayOfWeek);
     $modeEdit = $jadwal !== null;
 
-    $jamMulai = old('mulai', $modeEdit ? $jadwal->jamMulai() : '08:00');
-    $jamSelesai = old('selesai', $modeEdit ? $jadwal->jamSelesai() : '09:30');
+    // Mode tambah sengaja terbuka kosong: pengguna memilih hari dan jam
+    // sendiri, supaya tidak ada nilai default yang terkirim tanpa disadari.
+    $hariTerpilih = old('hari', $jadwal?->hari);
+    $jamMulai = old('mulai', $modeEdit ? $jadwal->jamMulai() : '');
+    $jamSelesai = old('selesai', $modeEdit ? $jadwal->jamSelesai() : '');
 @endphp
 
 <section {{ $attributes->class(['kartu-form']) }}>
@@ -51,8 +50,15 @@
 
             <div class="relative mt-1.5">
                 <select id="hari" name="hari" required class="kolom-form pilih-form">
+                    @unless ($modeEdit)
+                        {{-- Placeholder supaya dropdown benar-benar kosong di
+                             mode tambah; browser menolak submit sampai hari
+                             sungguhan dipilih. --}}
+                        <option value="" disabled @selected($hariTerpilih === null)>Pilih hari</option>
+                    @endunless
+
                     @foreach (\App\Support\DaftarJadwal::pilihanHari() as $item)
-                        <option value="{{ $item['nilai'] }}" @selected((int) old('hari', $jadwal?->hari ?? $hariSekarang) === $item['nilai'])>
+                        <option value="{{ $item['nilai'] }}" @selected($hariTerpilih !== null && (int) $hariTerpilih === $item['nilai'])>
                             {{ $item['nama'] }}
                         </option>
                     @endforeach

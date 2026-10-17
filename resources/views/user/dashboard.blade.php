@@ -166,10 +166,14 @@
 
                         <span
                             class="stat-ringkas__chip relative flex h-9 w-9 items-center justify-center rounded-full shadow-[0_2px_8px_-3px_rgba(33,26,58,0.25)] {{ $warna['chip'] }}">
-                            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.8"
-                                viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="{{ $stat['ikon'] }}" />
-                            </svg>
+                            @if (filled($stat['emoji'] ?? null))
+                                <x-piala :diam="true" />
+                            @else
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="1.8"
+                                    viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="{{ $stat['ikon'] }}" />
+                                </svg>
+                            @endif
                         </span>
 
                         <p class="stat-ringkas__label relative mt-3 text-[13px] font-medium text-dark/55">{{ $stat['label'] }}</p>

@@ -6,9 +6,9 @@
 {{--
     Kartu "Quiz Terpopuler" untuk kolom kanan.
 
-    Angkanya dihitung dari pengerjaan milik pengguna yang sedang login,
-    jadi kalau baru beberapa kali dikerjakan, angka itulah yang tampil.
-    Tidak ada jumlah ribuan yang dikarang.
+    Angkanya dihitung dari pengerjaan seluruh pengguna, jadi quiz yang
+    tampil memang yang paling sering dikerjakan di platform. Tidak ada
+    jumlah ribuan yang dikarang.
 --}}
 
 <section {{ $attributes->class(['hasil-panel']) }}>
@@ -30,13 +30,17 @@
                     {{ $item['peringkat'] }}
                 </span>
 
-                {{-- Ikon kategori, warna diambil dari Pelajaran::KATALOG
-                     supaya konsisten dengan kartu quiz di halaman lain. --}}
+                {{-- Thumbnail quiz. Kalau quiz belum punya gambar, dipakai
+                     ikon kategori (emoji dari Pelajaran::KATALOG) supaya
+                     kotaknya tidak kosong. --}}
                 <span class="hasil-top__ikon" style="--k: {{ $item['kategori']['warna'] }}; --k-gelap: {{ $item['kategori']['warna_gelap'] }};"
                     aria-hidden="true">
-                    <svg class="h-4 w-4" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="{{ $item['kategori']['ikon'] }}" />
-                    </svg>
+                    @if (filled($item['thumbnail']))
+                        <img src="{{ $item['thumbnail'] }}" alt="" class="hasil-top__foto"
+                            loading="lazy" decoding="async">
+                    @else
+                        <span class="hasil-top__ikon-emoji">{{ $item['kategori']['ikon'] }}</span>
+                    @endif
                 </span>
 
                 <span class="min-w-0 flex-1">
@@ -59,7 +63,7 @@
             </a>
         @empty
             <p class="hasil-panel__kosong">
-                Quiz yang paling sering kamu kerjakan akan muncul di sini.
+                Quiz yang paling sering dikerjakan akan muncul di sini.
             </p>
         @endforelse
     </div>

@@ -67,9 +67,7 @@
         =====================
              DAFTAR SOAL
         ======================
-        Tanpa prop $tautan: tautan "Lihat semua" milik halaman pengguna, dan
-        admin/quiz disaring published-only tanpa kategori yang selalu
-        tersedia, jadi tidak ada halaman daftar yang bisa ditunjuknya.
+        Komponen yang sama dengan halaman pengguna: judul dan daftar soalnya.
     --}}
     <div class="ad-seksi">
         <x-quiz.detail-daftar-soal :soal="$soal" />

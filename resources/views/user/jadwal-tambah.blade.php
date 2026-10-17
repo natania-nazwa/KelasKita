@@ -97,7 +97,7 @@
                     @method('PUT')
                 @endif
 
-                <x-jadwal.form :jadwal="$jadwal" :hari-aktif="$hariAktif ?? null" />
+                <x-jadwal.form :jadwal="$jadwal" />
             </form>
 
             {{-- =========================

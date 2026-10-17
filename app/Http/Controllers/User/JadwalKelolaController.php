@@ -29,7 +29,6 @@ class JadwalKelolaController extends Controller
 
         return view('user.jadwal-tambah', [
             'jadwal' => $item,
-            'hariAktif' => $item->hari,
         ]);
     }
 

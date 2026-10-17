@@ -193,7 +193,7 @@ class JadwalHalamanTest extends TestCase
             ->assertOk()
             ->assertSee('Belum Ada Jadwal')
             ->assertSee('supaya kartu di dashboard ikut terisi')
-            ->assertSee(route('user.jadwal.tambah', ['tanggal' => $tanggal->toDateString()]), false);
+            ->assertSee(route('user.jadwal.tambah'), false);
     }
 
     public function test_kartu_dashboard_akun_baru_menampilkan_empty_state_mini(): void

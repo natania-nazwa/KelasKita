@@ -944,8 +944,8 @@ class QuizKelolaHalamanTest extends TestCase
         $this->assertStringNotContainsString(route('admin.quiz.edit', $quiz), $html);
         $this->assertStringNotContainsString('Edit Quiz', $html);
 
-        // Tautan "Lihat semua" di Daftar Soal milik halaman pengguna, dan
-        // admin/quiz tidak punya daftar yang bisa ditunjuknya.
+        // Tombol "Lihat semua" hanya milik daftar soal di halaman pengguna,
+        // dan admin/quiz tidak punya daftar yang bisa ditunjuknya.
         $this->assertStringNotContainsString('Lihat semua', $html);
     }
 

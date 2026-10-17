@@ -85,15 +85,14 @@ class JadwalController extends Controller
     /**
      * Form tambah jadwal.
      *
-     * Tanggal yang sedang dibaca di halaman jadwal ikut dibawa, jadi tombol
-     * "Tambah Jadwal" di hari tertentu langsung membuka form untuk hari itu
-     * dan setelah disimpan pengguna kembali ke hari tersebut.
+     * Form selalu terbuka kosong: hari dan jam dipilih sendiri di form,
+     * bukan diwarisi dari tanggal yang sedang dibuka di halaman jadwal.
+     * Setelah simpan, pengguna kembali ke hari jadwal yang baru dibuat.
      */
-    public function create(Request $request): View
+    public function create(): View
     {
         return view('user.jadwal-tambah', [
             'jadwal' => null,
-            'hariAktif' => DaftarJadwal::tanggalDariQuery($request->query('tanggal'))?->dayOfWeek,
         ]);
     }
 

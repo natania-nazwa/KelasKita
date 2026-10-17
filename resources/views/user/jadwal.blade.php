@@ -77,7 +77,7 @@
                             <x-jadwal.cari :tanggal="$tanggal" :kategori="$kategori"
                                 :kategori-aktif="$kategoriAktif" :kata-kunci="$kataKunci" />
 
-                            <x-jadwal.tambah :tanggal="$tanggal" />
+                            <x-jadwal.tambah />
                         </div>
                     </header>
 

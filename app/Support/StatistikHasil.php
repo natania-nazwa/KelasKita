@@ -8,8 +8,11 @@ use App\Models\Quiz;
 use Carbon\CarbonInterface;
 
 /**
- * Menghitung seluruh angka untuk halaman "Hasil" dari data milik satu
- * pengguna saja.
+ * Menghitung seluruh angka untuk halaman "Hasil".
+ *
+ * Semua angka dihitung dari pengerjaan milik pengguna yang sedang login,
+ * kecuali kartu "Quiz Terpopuler" yang menghitung pengerjaan seluruh
+ * pengguna supaya benar-benar mencerminkan quiz paling populer.
  *
  * Semua angka berasal dari query ke tb_pengerjaan_quiz, tidak ada angka
  * yang ditulis manual di view. Kalau pengguna belum pernah mengerjakan
@@ -88,7 +91,7 @@ final class StatistikHasil
                 $durasiMenit,
                 $idPengguna,
             ),
-            'terpopuler' => self::terpopuler($idPengguna),
+            'terpopuler' => self::terpopuler(),
         ];
     }
 
@@ -315,18 +318,21 @@ final class StatistikHasil
     }
 
     /**
-     * Quiz yang paling banyak dikerjakan pengguna yang sedang login.
+     * Quiz yang paling banyak dikerjakan seluruh pengguna.
      *
-     * Dihitung dari pengerjaan miliknya sendiri, jadi angkanya jujur
-     * meskipun belum ada ribuan peserta.
+     * Dihitung dari semua pengerjaan yang sudah ditutup, bukan hanya
+     * milik pengguna yang sedang login, supaya "Terpopuler" benar-benar
+     * berarti populer di platform. Hanya quiz yang sudah tayang yang
+     * ikut dihitung, sama seperti daftar di halaman Quiz, supaya kartu
+     * ini tidak menautkan ke quiz yang belum dipublikasikan.
      *
      * @return array<int, array<string, mixed>>
      */
-    private static function terpopuler(?int $idPengguna): array
+    private static function terpopuler(): array
     {
         $baris = PengerjaanQuiz::query()
-            ->milik($idPengguna)
             ->selesai()
+            ->whereIn('quiz_id', Quiz::query()->terbit()->select('tb_quiz.id'))
             ->select('quiz_id')
             ->selectRaw('COUNT(*) AS jumlah_pengerjaan')
             ->selectRaw('COALESCE(AVG(nilai), 0) AS rata_nilai')
@@ -361,6 +367,7 @@ final class StatistikHasil
             $hasil[] = [
                 'peringkat' => count($hasil) + 1,
                 'judul' => $satu->judul,
+                'thumbnail' => BerkasQuiz::url($satu->thumbnail),
                 'jumlah_pengerjaan' => (int) $item->jumlah_pengerjaan,
                 'rata_nilai' => (int) round((float) $item->rata_nilai),
                 'kategori' => [

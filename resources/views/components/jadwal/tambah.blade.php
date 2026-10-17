@@ -1,16 +1,13 @@
 @props([
-    // Tanggal yang sedang dibuka di halaman jadwal, supaya tombol ini
-    // membuka form untuk hari yang sama. Null = hari ini.
-    'tanggal' => null,
     'label' => 'Tambah Jadwal',
 ])
 
 {{--
-    Tombol "Tambah Jadwal". Kalau $tanggal diisi, ?tanggal ikut dibawa
-    supaya form yang terbuka sudah terisi hari yang sedang dilihat.
+    Tombol "Tambah Jadwal". Form yang terbuka selalu kosong — hari dan jam
+    dipilih sendiri di form, bukan diwarisi dari tanggal yang sedang dibuka.
 --}}
 
-<a href="{{ route('user.jadwal.tambah', array_filter(['tanggal' => $tanggal?->toDateString()], fn ($nilai) => filled($nilai))) }}"
+<a href="{{ route('user.jadwal.tambah') }}"
     {{ $attributes->class([
         'tombol-utama shrink-0 text-xs',
     ]) }}>

@@ -31,10 +31,10 @@
         : 'Lihat riwayat pengerjaan quiz kamu dan pantau perkembangan belajarmu di Kelas Kita.';
 
     $dekorasi = [
-        ['ikon' => 'piala', 'kelas' => 'hasil-banner__dekor--piala'],
-        ['ikon' => 'grafik', 'kelas' => 'hasil-banner__dekor--grafik'],
-        ['ikon' => 'centang', 'kelas' => 'hasil-banner__dekor--check'],
-        ['ikon' => 'bintang', 'kelas' => 'hasil-banner__dekor--bintang'],
+        ['ikon' => 'piala', 'kelas' => 'hasil-banner__dekor--piala', 'emoji' => '🏆'],
+        ['ikon' => 'grafik', 'kelas' => 'hasil-banner__dekor--grafik', 'emoji' => null],
+        ['ikon' => 'centang', 'kelas' => 'hasil-banner__dekor--check', 'emoji' => null],
+        ['ikon' => 'bintang', 'kelas' => 'hasil-banner__dekor--bintang', 'emoji' => null],
     ];
 @endphp
 
@@ -43,9 +43,13 @@
     {{-- Dekorasi di lapisan background di sisi kanan banner. --}}
     @foreach ($dekorasi as $dekor)
         <span class="hasil-banner__dekor {{ $dekor['kelas'] }}" aria-hidden="true">
-            <svg class="h-full w-full" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                <path stroke-linecap="round" stroke-linejoin="round" d="{{ \App\Support\Ikon::path($dekor['ikon']) }}" />
-            </svg>
+            @if (filled($dekor['emoji']))
+                <x-piala ukuran="text-4xl" :diam="true" />
+            @else
+                <svg class="h-full w-full" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="{{ \App\Support\Ikon::path($dekor['ikon']) }}" />
+                </svg>
+            @endif
         </span>
     @endforeach
 

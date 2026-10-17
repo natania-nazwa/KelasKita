@@ -125,7 +125,8 @@ class DashboardController extends Controller
                 'perubahan' => $pengerjaan['jumlah'] === 0
                     ? 'Belum ada nilai'
                     : 'Dari '.$pengerjaan['jumlah'].' quiz selesai',
-                'ikon' => Ikon::path('piala'),
+                // Piala memakai emoji, bukan ikon SVG: lihat components/piala.
+                'emoji' => '🏆',
                 'warna' => 'oranye',
             ],
             [

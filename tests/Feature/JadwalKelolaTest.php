@@ -103,7 +103,7 @@ class JadwalKelolaTest extends TestCase
         $this->get('/user/jadwal/tambah')->assertRedirect(route('login'));
     }
 
-    public function test_form_tambah_terbuka_dengan_hari_yang_sedang_dibuka(): void
+    public function test_form_tambah_terbuka_dengan_isian_kosong(): void
     {
         $respons = $this->actingAs($this->buatPengguna())
             ->get('/user/jadwal/tambah?tanggal='.$this->tanggalSenin())
@@ -111,9 +111,13 @@ class JadwalKelolaTest extends TestCase
             ->assertSee('Tambah Jadwal')
             ->assertSee('Simpan Jadwal');
 
-        // Hari dari halaman jadwal harus terpilih di dropdown, jadi tombol
-        // dari panel daftar langsung membuka form untuk hari itu.
-        $respons->assertSee('<option value="1" selected', false);
+        // Form tambah sengaja terbuka kosong: hari memakai placeholder dan
+        // jam tidak punya nilai awal, supaya tidak ada nilai default yang
+        // terkirim tanpa disadari. Parameter ?tanggal tidak mengisi apa pun.
+        $respons->assertSee('<option value="" disabled selected', false)
+            ->assertDontSee('<option value="1" selected', false)
+            ->assertDontSee('value="08:00"', false)
+            ->assertDontSee('value="09:30"', false);
     }
 
     public function test_form_tambah_tanpa_pencarian_lonceng_dan_foto_profil(): void
