@@ -44,6 +44,31 @@
         })();
     </script>
 
+    {{--
+        Lebar sidebar desktop (penuh / mini) juga harus terpasang sebelum
+        halaman digambar, sama seperti tema: kalau tidak, sidebar tergambar
+        penuh sekejap dulu lalu menyusut setiap kali halaman dimuat dalam
+        keadaan mini.
+
+        Kuncinya "kk-nav" dan dibagi dengan sidebar halaman user, jadi
+        pilihan yang dibuat di satu tempat ikut berlaku di tempat lain.
+        Menyimpannya dari sini bukan tugas tombolnya, melainkan fungsi
+        initNavSisi() di resources/js/app.js yang juga mengurus aria.
+    --}}
+    <script>
+        (function () {
+            try {
+                var tersimpan = window.localStorage.getItem('kk-nav');
+
+                if (tersimpan === 'buka' || tersimpan === 'tutup') {
+                    document.documentElement.dataset.nav = tersimpan;
+                }
+            } catch (e) {
+                // Storage diblokir (mode privat): biarkan sidebar penuh.
+            }
+        })();
+    </script>
+
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 
     {{--
@@ -333,7 +358,7 @@
                     @class([
                         'ad-sisi__tautan',
                         'ad-sisi__tautan--aktif' => $menu['aktif'],
-                    ]) @if ($menu['aktif']) aria-current="page" @endif>
+                    ]) @if ($menu['aktif']) aria-current="page" @endif title="{{ $menu['label'] }}">
 
                     <span class="ad-sisi__ikon">
                         <x-admin.ikon :nama="$menu['ikon']" />
@@ -354,7 +379,7 @@
                     @class([
                         'ad-sisi__tautan',
                         'ad-sisi__tautan--aktif' => $menu['aktif'],
-                    ]) @if ($menu['aktif']) aria-current="page" @endif>
+                    ]) @if ($menu['aktif']) aria-current="page" @endif title="{{ $menu['label'] }}">
 
                     <span class="ad-sisi__ikon">
                         <x-admin.ikon :nama="$menu['ikon']" />
@@ -377,6 +402,32 @@
             </div>
 
             {{--
+                Tombol lipat sidebar (khusus desktop). Saat ditekan, sidebar
+                menyusut jadi kolom ikon dan ruang konten bergeser mengikuti,
+                persis seperti sidebar halaman user supaya dua area tidak
+                berbeda rasa.
+
+                Tombol ini disembunyikan di bawah 1024px oleh .ad-sisi__lipat:
+                di lebar itu sidebar sudah jadi drawer dan punya tombol
+                tutupnya sendiri (tanda silang di kepala sidebar).
+
+                data-nav-toggle menyerahkan urusannya ke initNavSisi() di
+                resources/js/app.js: fungsi itu membalik data-nav di <html>,
+                menyimpan pilihan ke localStorage, dan menyetel aria-expanded
+                / aria-label. Tanpa JavaScript tombolnya tidak berbuat apa-apa
+                dan sidebar tetap penuh, jadi tidak ada menu yang hilang.
+            --}}
+            <button type="button" class="ad-sisi__lipat" data-nav-toggle aria-controls="sisi-admin"
+                aria-expanded="true" aria-label="Perkecil menu">
+                <x-admin.ikon nama="panel-tutup" ukuran="w-4 h-4"
+                    class="ad-sisi__lipat-ikon ad-sisi__lipat-ikon--tutup" />
+                <x-admin.ikon nama="panel-buka" ukuran="w-4 h-4"
+                    class="ad-sisi__lipat-ikon ad-sisi__lipat-ikon--buka" />
+
+                <span class="ad-sisi__teks-lipat">Perkecil menu</span>
+            </button>
+
+            {{--
                 Keluar memakai form POST ke route "logout" yang sudah ada.
                 Sebelumnya tombolnya hanya tautan ke "/" sehingga tidak
                 benar-benar mengeluarkan akun.
@@ -387,7 +438,7 @@
                 <button type="submit" class="ad-sisi__keluar">
                     <x-admin.ikon nama="pintu-keluar" ukuran="w-4 h-4" />
 
-                    Keluar
+                    <span class="ad-sisi__teks-lipat">Keluar</span>
                 </button>
             </form>
         </div>

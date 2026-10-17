@@ -151,6 +151,12 @@ class Ikon
         'naik' => 'M2.25 18 9 11.25l4.306 4.306a11.95 11.95 0 0 1 5.814-5.518l2.74-1.22m0 0-5.94-2.28m5.94 2.28-2.28 5.941',
         // Tiga garis horizontal: tombol buka drawer di mobile.
         'menu' => 'M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5',
+        // Panel kiri dengan panah menutup: tombol yang menyusutkan sidebar
+        // admin jadi mini di desktop. Berpasangan dengan 'panel-buka'.
+        'panel-tutup' => 'M5 3h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2Z M9 3v18 M16 15l-3-3 3-3',
+        // Panel kiri dengan panah membuka: tombol yang mengembalikan
+        // sidebar mini ke lebar penuh.
+        'panel-buka' => 'M5 3h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2Z M9 3v18 M14 9l3 3-3 3',
         // Menu "Pengguna" dan kartu statistik Pengguna.
         'grup' => 'M18 18.72a9.094 9.094 0 0 0 3.742-.479 3 3 0 0 0-4.682-2.72m.94 3.198.001.031c0 .225-.012.447-.037.666A11.944 11.944 0 0 1 12 21c-2.17 0-4.207-.576-5.963-1.584A6.062 6.062 0 0 1 6 18.719m12 0a5.971 5.971 0 0 0-.941-3.197m0 0A5.995 5.995 0 0 0 12 12.75a5.995 5.995 0 0 0-5.058 2.772m0 0a3 3 0 0 0-4.681 2.72 8.986 8.986 0 0 0 3.74.477m.94-3.197a5.971 5.971 0 0 0-.94 3.197M15 6.75a3 3 0 1 1-6 0 3 3 0 0 1 6 0Zm6 3a2.25 2.25 0 1 1-4.5 0 2.25 2.25 0 0 1 4.5 0Zm-13.5 0a2.25 2.25 0 1 1-4.5 0 2.25 2.25 0 0 1 4.5 0Z',
         // Empty state: kotak masuk untuk kotak yang belum berisi apa pun.

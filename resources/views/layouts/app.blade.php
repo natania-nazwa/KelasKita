@@ -45,6 +45,29 @@
         })();
     </script>
 
+    {{--
+        Keadaan sidebar navigasi (buka/tutup) dipasang SEBELUM stylesheet
+        dimuat, dengan pola yang sama seperti tema di atas: kalau atribut
+        data-nav baru ditulis setelah CSS siap, sidebar sempat terlebih
+        dulu terbuka penuh lalu menyusut (kedip). Nilai "tutup" hanya
+        dipakai kalau pengguna memang pernah menekan tombol toggle;
+        selain itu sidebar tampil penuh seperti biasa. Tanpa JavaScript
+        blok ini tidak jalan dan sidebar tetap terbuka.
+    --}}
+    <script>
+        (function () {
+            var nav;
+
+            try {
+                nav = window.localStorage.getItem('kk-nav');
+            } catch (e) {
+                nav = null;
+            }
+
+            document.documentElement.dataset.nav = nav === 'tutup' ? 'tutup' : 'buka';
+        })();
+    </script>
+
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 
     {{--
@@ -206,30 +229,44 @@
 
     <div class="lg:flex min-h-screen">
 
-        {{-- Sidebar (desktop) --}}
-<aside class="hidden lg:flex lg:flex-col lg:w-64 lg:fixed lg:inset-y-0 bg-brand-bg text-dark border-r border-lavender">
-            <div class="flex items-center gap-3 px-6 h-16 border-b border-lavender">
-                <a href="{{ route('user.dashboard') }}" class="flex items-center gap-3">
+        {{--
+            Sidebar navigasi utama (desktop ≥1024px).
+
+            Kelas "nav-kiri" menjadi jangkar aturan buka-tutup di app.css:
+            ketika <html> memakai data-nav="tutup", lebarnya menyusut jadi
+            7rem lewat satu blok @media, tanpa menyentuh kelas Tailwind
+            lebar di sini. Tombol toggle-nya duduk di kaki sidebar, tepat
+            di atas tombol "Keluar" (bukan di top bar), supaya tetap
+            terjangkau di halaman yang top bar-nya disembunyikan
+            ($sembunyiTopbar).
+
+            Di layar < 1024px sidebar ini tetap hidden; pola navigasi
+            mobile yang sudah ada (header mobile + navigasi bawah) tidak
+            berubah.
+        --}}
+        <aside id="nav-kiri" class="nav-kiri hidden lg:flex lg:flex-col lg:w-64 lg:fixed lg:inset-y-0 bg-brand-bg text-dark border-r border-lavender">
+            <div class="nav-kiri__kepala flex items-center gap-3 px-6 h-16 border-b border-lavender">
+                <a href="{{ route('user.dashboard') }}" class="flex min-w-0 items-center gap-3">
                     <img
                         src="{{ asset('images/logo.png') }}"
                         alt="Logo KelasKita"
-                        class="w-9 h-9 object-contain"
+                        class="w-9 h-9 shrink-0 object-contain"
                     />
 
-                    <span class="text-lg font-semibold text-dark">KelasKita</span>
+                    <span class="nav-kiri__teks text-lg font-semibold text-dark">KelasKita</span>
                 </a>
             </div>
 
             <nav class="flex-1 overflow-y-auto px-4 py-6 space-y-1">
                 @foreach ($menu as $item)
-                    <a href="{{ route($item['route']) }}"
-                        class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium transition-all duration-150 ease-in-out transform {{ $menuAktif($item) ? 'bg-primary text-white' : 'text-primary/80 hover:bg-lavender hover:text-primary-dark hover:translate-x-0.5' }}">
+                    <a href="{{ route($item['route']) }}" title="{{ $item['label'] }}"
+                        class="nav-kiri__tautan flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium transition-all duration-150 ease-in-out transform {{ $menuAktif($item) ? 'bg-primary text-white' : 'text-primary/80 hover:bg-lavender hover:text-primary-dark hover:translate-x-0.5' }}">
 
                         <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                             <path stroke-linecap="round" stroke-linejoin="round" d="{{ $item['ikon'] }}" />
                         </svg>
 
-                        {{ $item['label'] }}
+                        <span class="nav-kiri__teks">{{ $item['label'] }}</span>
                     </a>
                 @endforeach
 
@@ -240,34 +277,66 @@
                 --}}
                 @if (auth()->user()?->isAdmin())
                     <div class="pt-5 mt-5 border-t border-white/10">
-                        <p class="px-4 pb-2 font-mono text-[10px] uppercase tracking-[0.14em] text-white/35">
+                        <p class="nav-kiri__teks px-4 pb-2 font-mono text-[10px] uppercase tracking-[0.14em] text-white/35">
                             Admin
                         </p>
 
-                        <a href="{{ route('admin.dashboard') }}"
-                            class="flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium {{ request()->routeIs('admin.*') ? 'bg-primary text-white' : 'text-white/70 hover:bg-white/10 hover:text-white' }}">
+                        <a href="{{ route('admin.dashboard') }}" title="Dashboard Admin"
+                            class="nav-kiri__tautan flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium {{ request()->routeIs('admin.*') ? 'bg-primary text-white' : 'text-white/70 hover:bg-white/10 hover:text-white' }}">
                             <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.04.147.083.22.127.325.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 0 1 1.37.49l1.296 2.247a1.125 1.125 0 0 1-.26 1.431l-1.003.827c-.293.241-.438.613-.43.992a7.03 7.03 0 0 1 0 .255c-.008.378.137.75.43.991l1.004.827c.424.35.534.954.26 1.43l-1.298 2.247a1.125 1.125 0 0 1-1.369.491l-1.217-.456c-.355-.133-.75-.072-1.076.124a6.47 6.47 0 0 1-.22.128c-.331.183-.581.495-.644.869l-.213 1.281c-.09.543-.56.94-1.11.94h-2.594c-.55 0-1.019-.398-1.11-.94l-.213-1.281c-.062-.374-.312-.686-.644-.87a6.52 6.52 0 0 1-.22-.127c-.325-.196-.72-.257-1.076-.124l-1.217.456a1.125 1.125 0 0 1-1.369-.49l-1.297-2.247a1.125 1.125 0 0 1 .26-1.431l1.004-.827c.292-.24.437-.613.43-.991a6.932 6.932 0 0 1 0-.255c.007-.38-.138-.751-.43-.992l-1.004-.827a1.125 1.125 0 0 1-.26-1.43l1.297-2.247a1.125 1.125 0 0 1 1.37-.491l1.216.456c.356.133.751.072 1.076-.124.072-.044.146-.086.22-.128.332-.183.582-.495.644-.869l.214-1.28Z" />
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
                             </svg>
 
-                            Dashboard Admin
+                            <span class="nav-kiri__teks">Dashboard Admin</span>
                         </a>
                     </div>
                 @endif
             </nav>
 
-            <div class="p-4">
+            <div class="space-y-2 p-4">
+                {{--
+                    Tombol buka/tutup sidebar, diletakkan tepat di atas
+                    tombol "Keluar". Satu tombol memuat dua ikon (panel
+                    kiri dengan panah menutup dan membuka); app.css yang
+                    memilih ikon mana yang tampil sesuai data-nav, jadi
+                    tidak ada kelas yang di-swap dari JavaScript dan
+                    keadaan awal sudah benar sebelum halaman tampil.
+
+                    aria-expanded bernilai "true" saat sidebar terbuka.
+                    Saat JavaScript mati tombolnya tidak bereaksi dan
+                    sidebar tetap terbuka seperti sebelumnya.
+                --}}
+                <button type="button" data-nav-toggle aria-controls="nav-kiri" aria-expanded="true"
+                    aria-label="Tutup menu navigasi" title="Tutup menu"
+                    class="nav-kiri__tautan flex w-full items-center justify-center gap-2 rounded-lg border border-lavender bg-white px-4 py-2.5 text-sm font-semibold text-dark transition hover:border-primary hover:text-primary-dark focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:outline-none">
+                    <svg class="nav-kiri__ikon-tutup w-5 h-5 shrink-0" fill="none" stroke="currentColor"
+                        stroke-width="1.8" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                        <rect width="18" height="18" x="3" y="3" rx="2" />
+                        <path d="M9 3v18" />
+                        <path d="m16 15-3-3 3-3" />
+                    </svg>
+
+                    <svg class="nav-kiri__ikon-buka w-5 h-5 shrink-0" fill="none" stroke="currentColor"
+                        stroke-width="1.8" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                        <rect width="18" height="18" x="3" y="3" rx="2" />
+                        <path d="M9 3v18" />
+                        <path d="m14 9 3 3-3 3" />
+                    </svg>
+
+                    <span class="nav-kiri__teks">Tutup menu</span>
+                </button>
+
                 <form method="POST" action="{{ route('logout') }}">
                     @csrf
 
                     <button type="submit"
-                        class="flex w-full items-center justify-center gap-2 rounded-lg border border-lavender bg-white px-4 py-2.5 text-sm font-semibold text-dark transition hover:border-primary hover:bg-primary hover:text-white">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        class="nav-kiri__tautan flex w-full items-center justify-center gap-2 rounded-lg border border-lavender bg-white px-4 py-2.5 text-sm font-semibold text-dark transition hover:border-primary hover:bg-primary hover:text-white">
+                        <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0 0 13.5 3h-6a2.25 2.25 0 0 0-2.25 2.25v13.5A2.25 2.25 0 0 0 7.5 21h6a2.25 2.25 0 0 0 2.25-2.25V15m3 0 3-3m0 0-3-3m3 3H9" />
                         </svg>
 
-                        Keluar
+                        <span class="nav-kiri__teks">Keluar</span>
                     </button>
                 </form>
             </div>
@@ -450,8 +519,8 @@
                 tidak ada ruang kosong yang ditambahkan.
             --}}
             <div class="{{ $sembunyiNavBawah
-                ? 'flex min-w-0 flex-1 flex-col lg:ml-64'
-                : 'flex min-w-0 flex-1 flex-col pb-20 lg:pb-0 lg:ml-64' }}">
+                ? 'konten-utama flex min-w-0 flex-1 flex-col lg:ml-64'
+                : 'konten-utama flex min-w-0 flex-1 flex-col pb-20 lg:pb-0 lg:ml-64' }}">
 
             @php
                 /*

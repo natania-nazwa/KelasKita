@@ -957,6 +957,63 @@ function initSaringLangsung() {
     });
 }
 
+/*
+ * Sidebar navigasi desktop: tombol buka/tutup.
+ *
+ * Keadaan sebenarnya disimpan pada atribut data-nav di <html> ("buka"
+ * atau "tutup"), karena itulah yang dibaca aturan lebar sidebar dan
+ * margin kolom utama di app.css. Nilai awalnya sudah dipasang script
+ * kecil di <head> dari localStorage "kk-nav", jadi halaman tidak
+ * sempat menampilkan sidebar lebar lalu menyusut.
+ *
+ * Fungsi ini hanya membalik atribut itu, menyimpannya kembali ke
+ * localStorage, dan menyelaraskan atribut aksesibilitas tombolnya
+ * (aria-expanded, aria-label, title). Ikonya sendiri berganti lewat
+ * CSS, bukan dengan menukar kelas dari sini.
+ *
+ * Karena <html> hanya diberi atribut, tidak ada satu pun data
+ * dashboard yang dimuat ulang, dan halaman tidak ikut menggulir ke
+ * atas saat tombol ditekan.
+ */
+function initNavSisi() {
+    const tombol = document.querySelector("[data-nav-toggle]");
+
+    if (!tombol) {
+        return;
+    }
+
+    const terapkan = () => {
+        const tertutup = document.documentElement.dataset.nav === "tutup";
+
+        tombol.setAttribute("aria-expanded", tertutup ? "false" : "true");
+        tombol.setAttribute(
+            "aria-label",
+            tertutup ? "Buka menu navigasi" : "Tutup menu navigasi",
+        );
+        tombol.setAttribute("title", tertutup ? "Buka menu" : "Tutup menu");
+    };
+
+    tombol.addEventListener("click", () => {
+        const berikutnya =
+            document.documentElement.dataset.nav === "tutup"
+                ? "buka"
+                : "tutup";
+
+        document.documentElement.dataset.nav = berikutnya;
+
+        try {
+            window.localStorage.setItem("kk-nav", berikutnya);
+        } catch {
+            // localStorage bisa ditolak (mode privat): keadaan sidebar
+            // tetap berlaku untuk halaman ini, hanya tidak diingat.
+        }
+
+        terapkan();
+    });
+
+    terapkan();
+}
+
 initReveal();
 initScrollProgress();
 initNavSpy();
@@ -969,3 +1026,4 @@ initMuatLebih();
 initKonfirmasi();
 initUiuxNilai();
 initToast();
+initNavSisi();

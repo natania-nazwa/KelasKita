@@ -89,6 +89,93 @@ html {
 }
 
 /* ============================================================
+   NAVIGASI SISI KIRI (BUKA / TUTUP)
+============================================================
+   Sidebar desktop di layouts/app.blade.php punya dua keadaan yang
+   ditulis di <html> lewat atribut data-nav: "buka" (lebar penuh,
+   16rem) dan "tutup" (mini 7rem, teks menu disembunyikan, ikon
+   saja). Atributnya ditulis script kecil di <head> sebelum CSS
+   dimuat, jadi keadaan awal langsung benar tanpa kedip.
+
+   Aturan di sini TIDAK memakai @layer, jadi selalu menang atas
+   kelas utilitas Tailwind (.lg:w-64 dan .lg:ml-64 di markup)
+   berkat pemilih html[data-nav='tutup'] .nav-kiri yang lebih
+   spesifik. Kelas Tailwind-nya sengaja dibiarkan utuh supaya
+   keadaan terbuka — dan tampilan tanpa JavaScript — tetap persis
+   seperti desain semula.
+
+   Transisi hanya menyentuh width dan margin-left, dua properti
+   yang tidak memicu loncatan tata letak di luar area sidebar dan
+   kolom utamanya. overflow-x pada halaman tidak pernah muncul
+   karena kolom utama justru melebar saat sidebar menutup. */
+
+.nav-kiri {
+    /* overflow hidden menahan teks menu yang muncul lebih dulu
+       daripada lebar sidebar saat dibuka lagi, jadi tulisan tidak
+       sempat melimpah menutupi kolom utama selama animasi. */
+    overflow: hidden;
+    transition: width 0.25s ease;
+}
+
+.konten-utama {
+    transition: margin-left 0.25s ease;
+}
+
+/* Dua ikon pada satu tombol toggle: panel-tutup saat sidebar
+   terbuka, panel-buka saat sidebar tertutup. Dipilih lewat CSS
+   supaya JavaScript cukup membalik atribut data-nav. */
+.nav-kiri__ikon-buka {
+    display: none;
+}
+
+html[data-nav='tutup'] .nav-kiri__ikon-tutup {
+    display: none;
+}
+
+html[data-nav='tutup'] .nav-kiri__ikon-buka {
+    display: block;
+}
+
+/* Teks yang ikut disembunyikan saat sidebar mini: nama merek,
+   label tiap menu, judul seksi Admin, dan tulisan "Keluar". */
+html[data-nav='tutup'] .nav-kiri__teks {
+    display: none;
+}
+
+@media (min-width: 1024px) {
+    /* Mini 7rem (112px): cukup untuk logo 36px + tombol toggle 36px
+       berdampingan, jadi tidak ada ikon yang terpotong. */
+    html[data-nav='tutup'] .nav-kiri {
+        width: 7rem;
+    }
+
+    html[data-nav='tutup'] .konten-utama {
+        margin-left: 7rem;
+    }
+
+    /* Kepala sidebar dirapatkan dan logonya ditengahkan (tombol
+       toggle tidak lagi di sini, tapi di kaki sidebar), dan tiap
+       tautan menu menengahkan ikonnya — padding kiri-kanan yang
+       semula memberi ruang teks tidak lagi diperlukan. */
+    html[data-nav='tutup'] .nav-kiri__kepala {
+        justify-content: center;
+        padding-inline: 0.75rem;
+    }
+
+    html[data-nav='tutup'] .nav-kiri__tautan {
+        justify-content: center;
+        padding-inline: 0;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .nav-kiri,
+    .konten-utama {
+        transition: none;
+    }
+}
+
+/* ============================================================
    REveal on scroll
 ============================================================ */
 [data-reveal],

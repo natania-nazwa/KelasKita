@@ -38,6 +38,11 @@
     /* Lebar sidebar desktop: spec 250-270px. */
     --ad-lebar-sisi: 264px;
 
+    /* Lebar sidebar saat admin melipatnya jadi kolom ikon. Cukup untuk
+       logo (2.5rem) dan ikon menu (1.25rem) ditambah angka menunggu,
+       tapi tidak lebih supaya ruang konten bertambah cukup banyak. */
+    --ad-lebar-sisi-mini: 5.5rem;
+
     --ad-bayangan: 0 1px 2px rgba(41, 36, 92, 0.04), 0 14px 30px -24px rgba(41, 36, 92, 0.28);
     --ad-bayangan-naik: 0 2px 4px rgba(41, 36, 92, 0.05), 0 26px 46px -28px rgba(76, 47, 179, 0.32);
 
@@ -210,6 +215,10 @@ body.tubuh-admin {
 @media (min-width: 1024px) {
     .ad-utama {
         margin-left: var(--ad-lebar-sisi);
+
+        /* Konten menggeser mengikuti lebar sidebar yang berubah saat admin
+           melipatnya (lihat blok "Sidebar lipat" di bawah). */
+        transition: margin-left 0.25s ease;
     }
 }
 
@@ -316,6 +325,11 @@ body.tubuh-admin {
     box-shadow: 10px 0 40px -30px rgba(41, 36, 92, 0.9);
     color: #fff;
 
+    /* Label menu dipotong di sisi, bukan dilipat, saat sidebar menyusut jadi
+       mini: tanpa ini teks "Verifikasi" sempat meluber keluar kolom selama
+       animasi lebar berjalan. */
+    overflow: hidden;
+
     /* Di bawah 1024px sidebar jadi drawer: tersembunyi sampai
        admin.js memasang .is-buka pada .ad-sisi dan .ad-sisi__tirai. */
     transform: translateX(-100%);
@@ -331,7 +345,10 @@ body.tubuh-admin {
         z-index: 30;
         max-width: none;
         transform: none;
-        transition: none;
+
+        /* Di desktop sidebar tidak lagi digeser (transform), tapi lebarnya
+           bisa berubah penuh <-> mini, jadi yang dianimasikan adalah width. */
+        transition: width 0.25s ease;
     }
 }
 
@@ -643,6 +660,114 @@ body.tubuh-admin {
 .ad-sisi__keluar:hover {
     background-color: rgba(255, 255, 255, 0.26);
     transform: translateY(-1px);
+}
+
+/* ---------- Sidebar lipat (mini) ----------
+ *
+ * Tombol di kaki sidebar yang menyusutkannya jadi kolom ikon di desktop,
+ * sama seperti sidebar halaman user. Yang berubah saat terlipat: lebar
+ * .ad-sisi mengecil, .ad-utama ikut bergeser, dan teks (merek, label menu,
+ * "Keluar") disembunyikan. Ikonnya tetap di tengah, jadi setiap menu masih
+ * bisa dikenali dan labelnya muncul sebagai tooltip dari atribut title.
+ *
+ * Tombol dan seluruh aturan lipat hanya berlaku di >= 1024px: di bawah itu
+ * sidebar adalah drawer yang dibuka-tutup lewat tombol silang di kepalanya,
+ * jadi tidak ada dua cara berbeda untuk menutup sidebar yang sama.
+ */
+.ad-sisi__lipat {
+    display: none;
+    width: 100%;
+    min-height: 2.6rem;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    margin-bottom: 0.55rem;
+    border: 1px solid rgba(255, 255, 255, 0.22);
+    border-radius: 0.85rem;
+    font-size: 0.8125rem;
+    font-weight: 700;
+    color: rgba(255, 255, 255, 0.9);
+    transition:
+        background-color 0.18s ease,
+        color 0.18s ease;
+}
+
+.ad-sisi__lipat:hover {
+    background-color: rgba(255, 255, 255, 0.14);
+    color: #fff;
+}
+
+/* Satu ikon tampil, satunya disembunyikan: panah-menutup saat sidebar
+ * penuh, panah-membuka saat sidebar mini — persis ikon di sidebar user. */
+.ad-sisi__lipat-ikon--buka {
+    display: none;
+}
+
+html[data-nav='tutup'] .ad-sisi__lipat-ikon--tutup {
+    display: none;
+}
+
+html[data-nav='tutup'] .ad-sisi__lipat-ikon--buka {
+    display: block;
+}
+
+@media (min-width: 1024px) {
+    .ad-sisi__lipat {
+        display: flex;
+    }
+
+    html[data-nav='tutup'] .ad-sisi {
+        width: var(--ad-lebar-sisi-mini);
+    }
+
+    html[data-nav='tutup'] .ad-utama {
+        margin-left: var(--ad-lebar-sisi-mini);
+    }
+
+    html[data-nav='tutup'] .ad-sisi__kepala {
+        justify-content: center;
+        padding-inline: 0.75rem;
+    }
+
+    html[data-nav='tutup'] .ad-sisi__merek-teks,
+    html[data-nav='tutup'] .ad-sisi__label,
+    html[data-nav='tutup'] .ad-sisi__teks-lipat {
+        display: none;
+    }
+
+    html[data-nav='tutup'] .ad-sisi__nav {
+        padding-inline: 0.5rem;
+    }
+
+    html[data-nav='tutup'] .ad-sisi__tautan {
+        justify-content: center;
+        gap: 0.35rem;
+        padding-inline: 0;
+    }
+
+    /* Geser-ke-kanan saat hover dimatikan di mode mini: tidak ada teks yang
+       digeser, dan gerakan mendatar di kolom sempit hanya terlihat goyah. */
+    html[data-nav='tutup'] .ad-sisi__tautan:hover {
+        transform: none;
+    }
+
+    html[data-nav='tutup'] .ad-sisi__kaki {
+        padding-inline: 0.6rem;
+    }
+
+    html[data-nav='tutup'] .ad-sisi__akun {
+        justify-content: center;
+        padding-inline: 0;
+    }
+}
+
+/* Animasi lebar/margin dimatikan kalau pengguna meminta gerak minimal,
+   sama seperti aturan di app.css untuk sidebar halaman user. */
+@media (prefers-reduced-motion: reduce) {
+    .ad-sisi,
+    .ad-utama {
+        transition: none;
+    }
 }
 
 /* ---------- Topbar ---------- */
